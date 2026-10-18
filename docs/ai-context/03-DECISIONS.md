@@ -12,7 +12,87 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-18: Rutas placeholder de Ventas
+
+* Decision: `/ventas/nueva` (Nueva factura), `/ventas/papelera` (Papelera) y `/ventas/:id`
+  (Detalle de factura) existen como paginas "Proximamente" con su titulo y su miga de pan.
+  El listado ya enlaza a ellas.
+* Alternativas consideradas: no enlazar hasta tenerlas; deshabilitar los botones.
+* Motivo: los enlaces del listado y del panel quedan en su sitio definitivo y la ruta no
+  cambia cuando llegue cada pantalla. Nueva factura, detalle, abonos, anular, papelera real,
+  exportar y ordenar por columnas quedan fuera de esta tarea.
+
+## 2026-10-18: Facturas de venta: filtros en el cliente con estado en la URL
+
+* Decision:
+  * `GET /api/sales` se pide una sola vez; busqueda, estado, forma de pago, periodo, orden
+    y paginacion se resuelven en el cliente (ver "Paginacion y filtros en el cliente").
+  * Los filtros y la pagina viven en la query string (`q`, `estado`, `pago`, `periodo`,
+    `pagina`), asi que se conservan al volver desde el detalle y al recargar. Escribir en
+    el buscador reemplaza la entrada del historial; cambiar un filtro vuelve a la pagina 1.
+  * Busqueda por numero de factura o nombre del cliente, sin distinguir mayusculas ni
+    tildes. Una venta sin tercero se muestra y se busca como "Consumidor final".
+  * Periodos por `invoiceDate`, con hoy calculado en America/Bogota (la zona de negocio
+    del backend): Este mes (por defecto), Mes anterior, Este ano y Todas.
+  * Limpiar deja todo en Todos o Todas, periodo incluido, para que el vacio por filtros
+    siempre tenga salida.
+  * Orden por fecha de factura descendente y luego numero descendente (comparacion
+    numerica). Paginas de 25 filas.
+  * Vence muestra la raya en contado o sin `dueDate`.
+* Alternativas consideradas: filtros en estado de React; paginacion en el servidor;
+  Limpiar volviendo a Este mes.
+* Motivo: la URL es la unica fuente que sobrevive a recargar y a la navegacion atras sin
+  otro almacenamiento. Bogota y no la zona del navegador para que el mes coincida con las
+  fechas que asigna el backend. Si Limpiar volviera a Este mes, un mes sin ventas dejaria
+  al usuario en el mismo vacio.
+
+## 2026-10-18: Indicadores de Facturas de venta
+
+* Decision:
+  * Ventas del mes: `totalSales` de `GET /api/reporting/kpis` del primer dia del mes a hoy
+    (Bogota).
+  * Por cobrar: suma de `pendingBalance` de las ventas en estado PENDIENTE; el texto
+    secundario es el numero de esas facturas. No depende del periodo.
+  * Abonos del mes: suma de los movimientos de `GET /api/treasury/movements` con
+    `category=RECAUDO_VENTA` del mes cuya venta es a credito. Movimiento y venta se cruzan
+    por `saleId` en el cliente con la lista de ventas ya cargada.
+  * Ninguno muestra variacion contra el mes anterior (fuera de alcance).
+* Alternativas consideradas: Abonos con todos los RECAUDO_VENTA; filtrar por venta con un
+  `saleId` por peticion.
+* Motivo: el recaudo de una venta de contado es su pago completo al emitirla, no un abono
+  (terminologia en `servibox-backend/docs/ai-context/02-CONVENTIONS.md`). El backend ya
+  excluye los movimientos de facturas anuladas, asi que el cliente no los filtra. Un solo
+  listado de movimientos del mes evita una peticion por factura.
+
+## 2026-10-18: Identidad de sesion guardada junto al token
+
+* Decision: el login devuelve `user` (`username`, `role`) y `tenant` (`name`, `slug`), y
+  `session.ts` los guarda en `sessionStorage` (`servibox.identity`) junto al token. La
+  barra lateral muestra username y rol; la barra superior y el panel, el nombre del tenant.
+  Una sesion guardada sin identidad, o con una ilegible, usa el `sub` y el `role` del JWT y
+  el slug recordado, sin romper.
+* Alternativas consideradas: seguir mostrando el slug; pedir la identidad a otro endpoint.
+* Motivo: el backend ya la entrega en el login, sin peticiones extra. `sessionStorage`
+  porque vive y muere con el token. Reemplaza a "La barra superior muestra el slug de la
+  serviteca".
+
+## 2026-10-18: Estado de stock: Sin stock solo en cero y variante Stock critico
+
+* Decision: `src/lib/stock.ts` separa el cero del critico:
+  * stock 0 (o nulo): "Sin stock";
+  * mayor que 0 y menor o igual al umbral rojo: "Stock critico", tono de error;
+  * mayor que el rojo y menor o igual al amarillo: "Bajo stock", advertencia;
+  * si no, normal. Umbral nulo: amarillo 5 y rojo 2 (Autollantas).
+  * El panel lista los tres primeros estados de menor a mayor stock, hasta 5.
+* Alternativas consideradas: la regla de Autollantas tal cual, con "Sin stock" para todo
+  lo critico.
+* Motivo: "Sin stock" con unidades en bodega confunde. **Stock critico es una variante de
+  `StatusBadge` que el manual no define: debe validarla el disenador.** Reemplaza las
+  etiquetas de "Estado de stock replicado de Autollantas"; los umbrales siguen iguales.
+
 ## 2026-10-18: La barra superior muestra el slug de la serviteca, no su nombre
+
+* Estado: reemplazada por "Identidad de sesion guardada junto al token".
 
 * Decision: la barra superior y el subtitulo del panel muestran el slug guardado en
   `localStorage` al ingresar (`servibox.tenantSlug`) junto al usuario (`sub` del JWT).
@@ -41,6 +121,9 @@ Formato de cada entrada:
   usa. El selector queda fuera, ver la entrada anterior.
 
 ## 2026-10-18: Estado de stock replicado de Autollantas
+
+* Estado: las etiquetas cambiaron en "Estado de stock: Sin stock solo en cero y variante
+  Stock critico"; los umbrales siguen vigentes.
 
 * Decision: `src/lib/stock.ts` decide el estado de un producto con la regla de Autollantas
   (`StockAlertsController.analizarProducto` y `InventoryService.getStockAlertBreakdown`),

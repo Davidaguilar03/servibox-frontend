@@ -55,12 +55,16 @@ Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `d
 `secondary`, `text`, `danger`, mas el estado deshabilitado; sus clases viven en
 `buttonStyles.ts` para los enlaces que se ven como boton), `TextField` (reposo, foco,
 error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
-`warning`, `error`, `info`), `IndicatorCard`, `StatusBadge`, `DataTable` y los estados
-`Skeleton`, `EmptyState` y `ErrorState` (`states.tsx`). Un componente nuevo entra con la
-primera pantalla que lo necesite, no antes.
+`warning`, `error`, `info`), `IndicatorCard` (con texto secundario y su propio error con
+reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
+`SelectField` (selector nativo), `Pagination` (anterior, numeros, siguiente y el texto
+"1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional) y
+`ErrorState` (`states.tsx`). Un componente nuevo entra con la primera pantalla que lo
+necesite, no antes.
 
 * Una sola accion primaria roja por pantalla.
-* `StatusBadge` siempre lleva texto; el color solo acompana.
+* `StatusBadge` siempre lleva texto; el color solo acompana. `STOCK_CRITICO` ("Stock
+  critico", tono de error) no esta en el manual: pendiente de validar con el disenador.
 * `DataTable`: encabezado fijo en mayusculas, fila alterna `row-alt`, hover, texto a la
   izquierda y numeros y montos a la derecha (`align: 'right'`), con numeros tabulares.
 * Cada bloque de datos resuelve sus tres estados: carga (skeleton gris), vacio (que no hay)
@@ -73,8 +77,9 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Moneda: `formatCurrency`, pesos sin decimales con punto de miles (`$ 180.000`, `-$ 3.500`).
 * Fecha en tablas: `formatDate`, dd/mm/aaaa a partir de la fecha ISO del backend, sin pasar
   por `Date` para que la zona horaria no corra el dia.
-* Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". En el codigo se genera con
-  `String.fromCharCode(0x2014)` para respetar la regla 1 de [00-RULES.md](00-RULES.md).
+* Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". Se define una sola vez con el escape
+  unicode de la raya (`\u2014`) para respetar la regla 1 de [00-RULES.md](00-RULES.md);
+  ningun otro archivo escribe la raya.
 * Fechas para la API (`desde`, `hasta`): `toIsoDate`, `AAAA-MM-DD` en hora local.
 
 ## Textos de la interfaz

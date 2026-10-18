@@ -15,7 +15,7 @@ async function fillAndSubmit() {
 describe('formulario de login', () => {
   it('envia los tres campos, guarda la sesion y entra a la pagina pedida', async () => {
     const token = validToken()
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ token }))
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ token, user: { username: 'admin', role: 'ADMIN' }, tenant: { name: 'Serviteca Demo', slug: 'demo' } }))
     vi.stubGlobal('fetch', fetchMock)
     const router = renderRoute('/compras')
 
@@ -29,6 +29,12 @@ describe('formulario de login', () => {
     expect(router.state.location.pathname).toBe('/compras')
     expect(getToken()).toBe(token)
     expect(localStorage.getItem('servibox.tenantSlug')).toBe('demo')
+    expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toEqual({
+      username: 'admin',
+      role: 'ADMIN',
+      tenantName: 'Serviteca Demo',
+      tenantSlug: 'demo',
+    })
   })
 
   it('muestra la alerta ante un 401', async () => {

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { getRememberedTenantSlug } from '../auth/session'
+import { useSession } from '../auth/session'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
 import { IndicatorCard } from '../components/IndicatorCard'
@@ -49,7 +49,7 @@ function Section({ title, link, children }: { title: string; link: { to: string;
 /** Panel de control: cada bloque tiene su consulta y sus estados de carga, vacio y error. */
 export function DashboardPage() {
   const [today] = useState(() => new Date())
-  const [tenantSlug] = useState(getRememberedTenantSlug)
+  const tenantName = useSession()?.tenantName
   const { desde, hasta } = monthToDate(today)
 
   return (
@@ -58,7 +58,7 @@ export function DashboardPage() {
         <div>
           <h1 className="text-h1 text-text">Inicio</h1>
           <p className="mt-1 text-small text-text-muted">
-            Resumen {tenantSlug ? `de ${tenantSlug} · ` : 'de '}
+            Resumen {tenantName ? `de ${tenantName} · ` : 'de '}
             {formatMonth(today)}
           </p>
         </div>
@@ -111,9 +111,10 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
   )
 }
 
-const stockBadge: Record<Exclude<StockStatus, 'NORMAL'>, 'BAJO_STOCK' | 'SIN_STOCK'> = {
+const stockBadge: Record<Exclude<StockStatus, 'NORMAL'>, 'BAJO_STOCK' | 'STOCK_CRITICO' | 'SIN_STOCK'> = {
   BAJO: 'BAJO_STOCK',
-  CRITICO: 'SIN_STOCK',
+  CRITICO: 'STOCK_CRITICO',
+  SIN_STOCK: 'SIN_STOCK',
 }
 
 type LowStockRow = Product & { status: StockStatus }
@@ -124,7 +125,7 @@ const lowStockColumns: Column<LowStockRow>[] = [
   {
     header: 'Stock',
     align: 'right',
-    render: (p) => <span className={p.status === 'CRITICO' ? 'text-error' : ''}>{p.quantity ?? 0}</span>,
+    render: (p) => <span className={p.status === 'BAJO' ? '' : 'text-error'}>{p.quantity ?? 0}</span>,
   },
   { header: 'Estado', render: (p) => p.status !== 'NORMAL' && <StatusBadge status={stockBadge[p.status]} /> },
 ]

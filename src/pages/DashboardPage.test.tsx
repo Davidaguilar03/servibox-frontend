@@ -98,7 +98,7 @@ describe('panel de control', () => {
     expect(stockRows[0]).toContain('LL-004')
     expect(stockRows[0]).toContain('Sin stock')
     expect(stockRows[1]).toContain('LUB-012')
-    expect(stockRows[1]).toContain('Sin stock')
+    expect(stockRows[1]).toContain('Stock crítico')
     expect(stockRows[2]).toContain('LL-003')
     expect(stockRows[2]).toContain('Bajo stock')
     expect(within(stock).queryByText('LL-010')).not.toBeInTheDocument()
@@ -118,6 +118,24 @@ describe('panel de control', () => {
     expect(salesRows[1]).toContain('Crédito')
     expect(salesRows[1]).toContain('$ 2.000')
     expect(salesRows[1]).toContain('Pendiente')
+  })
+
+  it('el shell muestra el usuario abajo en la barra lateral, la miga de pan y el tenant', async () => {
+    mockApi(fullRoutes())
+    saveToken(validToken(), { username: 'laura.gomez', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' })
+    renderRoute('/inicio')
+
+    const sidebar = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
+    expect(within(sidebar).getByText('laura.gomez')).toBeInTheDocument()
+    expect(within(sidebar).getByText('LG')).toBeInTheDocument()
+    expect(within(sidebar).getByText('Administrador')).toBeInTheDocument()
+    expect(within(sidebar).getByRole('button', { name: 'Salir' })).toBeInTheDocument()
+
+    const header = screen.getByRole('banner')
+    expect(within(header).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Inicio')
+    expect(within(header).getByText('Autollantas A&C')).toBeInTheDocument()
+    expect(within(header).queryByRole('searchbox')).not.toBeInTheDocument()
+    expect(await screen.findByText(/Resumen de Autollantas A&C · octubre de 2026/)).toBeInTheDocument()
   })
 
   it('muestra los estados vacios', async () => {
