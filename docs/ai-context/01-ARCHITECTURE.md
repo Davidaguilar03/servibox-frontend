@@ -8,7 +8,7 @@
 * React Router 8 en modo datos (`createBrowserRouter`).
 * TanStack Query para las peticiones al backend.
 * lucide-react para iconos.
-* Fuentes con `@fontsource`: Montserrat 600 y 700, Inter 400 y 500, IBM Plex Mono 400.
+* Fuentes con `@fontsource`: Montserrat 600 y 700, Inter 400, 500 y 600, IBM Plex Mono 400.
 * Vitest, jsdom y Testing Library para pruebas; ESLint con typescript-eslint y las reglas
   de React Hooks.
 * Sin libreria de componentes ni estado global adicional: la sesion es un store minimo
@@ -24,8 +24,11 @@ src/
   index.css           Tailwind, tokens y estilos base
   styles/tokens.css   tokens del manual de estilos (bloque @theme)
   lib/api.ts          cliente API y ApiError
+  lib/format.ts       formatos de moneda, fecha y valor vacio
+  lib/stock.ts        estado de stock (regla de Autollantas)
+  dashboard/          consultas del panel de control
   auth/               sesion, guard de rutas y llamada de login
-  components/         Button, TextField, Alert
+  components/         Button, TextField, Alert, IndicatorCard, StatusBadge, DataTable, estados
   layout/AppShell.tsx barra lateral, barra superior y contenido
   brand/Wordmark.tsx  wordmark provisional
   pages/              una pagina por ruta
@@ -40,7 +43,8 @@ src/
 | `/recuperar-contrasena` | publica | `ComingSoonPage` ("Proximamente") |
 | `/crear-cuenta` | publica | `ComingSoonPage` ("Proximamente") |
 | `/` | privada | redirige a `/inicio` |
-| `/inicio`, `/inventario`, `/ventas`, `/compras`, `/cuentas`, `/reportes`, `/configuracion` | privada | `PlaceholderPage` con el titulo, dentro de `AppShell` |
+| `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
+| `/inventario`, `/ventas`, `/ventas/nueva`, `/compras`, `/cuentas`, `/reportes`, `/configuracion` | privada | `PlaceholderPage` con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
@@ -82,6 +86,21 @@ configura CORS; el motivo esta en [03-DECISIONS.md](03-DECISIONS.md).
 ## Shell de la aplicacion
 
 `AppShell` arma la barra lateral (240 px, 72 contraida, desde `lg`), la barra superior
-(64 px, usuario y boton Salir) y el area de contenido (ancho maximo 1440 px). Por debajo de
+(64 px: slug de la serviteca, usuario y boton Salir) y el area de contenido (ancho maximo 1440 px). Por debajo de
 `lg` la barra lateral se oculta y se abre como menu sobre el contenido desde la barra
 superior.
+
+## Panel de control
+
+`DashboardPage` (`/inicio`) tiene cuatro bloques independientes, cada uno con su consulta
+de TanStack Query y sus estados de carga, vacio y error:
+
+| Bloque | Endpoints | Calculo en el cliente |
+|-|-|-|
+| Indicadores del mes | `GET /api/reporting/kpis?desde&hasta` | `desde` primer dia del mes, `hasta` hoy (`monthToDate`) |
+| Productos con stock bajo | `GET /api/inventory/products`, `GET /api/inventory/categories` | `lowStockProducts`: bajos y criticos, de menor a mayor stock, hasta 5 |
+| Saldos de cuentas | `GET /api/treasury/accounts`, `GET /api/treasury/balance` | ninguno; el total es el del backend |
+| Ultimas ventas | `GET /api/sales` | orden por `invoiceDate` descendente (a igual fecha, id mayor), hasta 5 |
+
+Las consultas viven en `src/dashboard/dashboardApi.ts` con solo los campos que usa el
+panel, nombrados como en los DTO del backend.

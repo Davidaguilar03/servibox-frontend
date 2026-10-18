@@ -15,7 +15,7 @@ export function validToken() {
 
 export function renderRoute(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
-  const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

@@ -2,17 +2,18 @@ import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell } from './layout/AppShell'
 import { ComingSoonPage } from './pages/ComingSoonPage'
+import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 
 const privatePages = [
-  { path: 'inicio', title: 'Inicio' },
   { path: 'inventario', title: 'Inventario' },
   { path: 'ventas', title: 'Ventas' },
   { path: 'compras', title: 'Compras' },
   { path: 'cuentas', title: 'Cuentas' },
   { path: 'reportes', title: 'Reportes' },
   { path: 'configuracion', title: 'Configuración' },
+  { path: 'ventas/nueva', title: 'Registrar venta' },
 ]
 
 export const routes: RouteObject[] = [
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { index: true, element: <Navigate to="/inicio" replace /> },
+          { path: 'inicio', element: <DashboardPage /> },
           ...privatePages.map(({ path, title }) => ({ path, element: <PlaceholderPage title={title} /> })),
         ],
       },
