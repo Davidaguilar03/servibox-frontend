@@ -1,0 +1,17 @@
+# Dependencias y build
+node_modules/
+dist/
+coverage/
+
+# Variables de entorno locales
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+*.iml
+
+# Logs
+logs/
+*.log
+npm-debug.log*
