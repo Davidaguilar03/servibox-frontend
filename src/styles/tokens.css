@@ -12,13 +12,19 @@
 
   /* Color */
   --color-brand: #ff3b30;
+  --color-brand-hover: #eb3629;
   --color-brand-ink: #d32316;
   --color-surface: #ffffff;
   --color-canvas: #f2f3f5;
   --color-nav: #1f2937;
+  --color-nav-hover: #2d3748;
   --color-text: #1f2937;
   --color-text-muted: #6b7280;
+  --color-text-subtle: #9ca3af;
+  --color-text-inverse: #ffffff;
   --color-border: #e5e7eb;
+  --color-row-alt: #fafbfc;
+  --color-overlay: #111827;
 
   --color-neutral-50: #ffffff;
   --color-neutral-100: #f9fafb;
@@ -43,11 +49,15 @@
   /* Fondo del boton primario. Hoy igual a brand; se cambia aqui en un solo lugar. */
   --color-action: var(--color-brand);
 
-  /* Estados de boton: hover oscurece 8 por ciento, activo 14 por ciento. */
-  --color-action-hover: color-mix(in srgb, var(--color-action) 92%, black);
+  /*
+   * Estados de boton. Hover usa los tokens del manual (brand-hover, nav-hover). Activo
+   * oscurece 14 por ciento, y el peligro tambien deriva su hover (8 por ciento): el manual
+   * no trae tokens para esos estados.
+   */
+  --color-action-hover: var(--color-brand-hover);
   --color-action-active: color-mix(in srgb, var(--color-action) 86%, black);
-  --color-dark: var(--color-neutral-800);
-  --color-dark-hover: color-mix(in srgb, var(--color-dark) 92%, black);
+  --color-dark: var(--color-nav);
+  --color-dark-hover: var(--color-nav-hover);
   --color-dark-active: color-mix(in srgb, var(--color-dark) 86%, black);
   --color-danger: var(--color-error);
   --color-danger-hover: color-mix(in srgb, var(--color-danger) 92%, black);
@@ -76,6 +86,7 @@
   --text-body--font-weight: 400;
   --text-button: 14px;
   --text-button--line-height: 1;
+  --text-button--font-weight: 600;
   --text-small: 13px;
   --text-small--line-height: 1.5;
   --text-small--font-weight: 400;

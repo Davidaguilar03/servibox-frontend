@@ -12,6 +12,55 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-18: La barra superior muestra el slug de la serviteca, no su nombre
+
+* Decision: la barra superior y el subtitulo del panel muestran el slug guardado en
+  `localStorage` al ingresar (`servibox.tenantSlug`) junto al usuario (`sub` del JWT).
+* Alternativas consideradas: pedir el nombre del tenant a un endpoint; leerlo del JWT.
+* Motivo: el backend aun no devuelve el nombre del tenant: el login responde solo
+  `{token}` y el JWT trae `sub`, `role` y el id del tenant, no su nombre. Cuando exista un
+  endpoint o un claim con el nombre, se reemplaza el slug.
+
+## 2026-10-18: Lo que queda fuera del panel de control
+
+* Decision: el panel no tiene variacion contra el mes anterior, buscador global, campana
+  de notificaciones ni selector de periodo, aunque la captura del manual los muestra.
+* Alternativas consideradas: implementarlos con lo que hay en la API.
+* Motivo: no hay endpoint de busqueda ni modelo de notificaciones en el backend; la
+  variacion exige definir como se compara un mes en curso contra uno completo, y el
+  selector de periodo depende de esa misma definicion. Se dejan para tareas propias en vez
+  de inventar comportamiento.
+
+## 2026-10-18: Periodo del panel fijo en "Este mes"
+
+* Decision: los indicadores del panel cubren del primer dia del mes en curso a hoy, en
+  fechas locales del navegador, pedidos a `GET /api/reporting/kpis?desde=AAAA-MM-DD&hasta=AAAA-MM-DD`.
+  "Este mes" se muestra como etiqueta fija, sin selector.
+* Alternativas consideradas: KPIs globales (sin desde ni hasta); un selector de periodo.
+* Motivo: el mes en curso es la pregunta diaria del taller y la captura del manual lo
+  usa. El selector queda fuera, ver la entrada anterior.
+
+## 2026-10-18: Estado de stock replicado de Autollantas
+
+* Decision: `src/lib/stock.ts` decide el estado de un producto con la regla de Autollantas
+  (`StockAlertsController.analizarProducto` y `InventoryService.getStockAlertBreakdown`),
+  con los umbrales de su categoria (`yellowStockMin`, `redStockMin`):
+  * stock menor o igual al umbral rojo: critico;
+  * si no, stock menor o igual al umbral amarillo: bajo;
+  * si no, normal.
+  * Umbral nulo: amarillo 5 y rojo 2, los valores por defecto de Autollantas. Stock nulo
+    cuenta como 0, como en la tabla de alertas de Autollantas.
+  * En la interfaz, critico es la etiqueta "Sin stock", bajo es "Bajo stock" y normal es
+    "Disponible". Ojo: un critico puede tener stock mayor que 0 si el umbral rojo lo es.
+  * El panel lista los bajos y criticos de menor a mayor stock, hasta 5.
+* Alternativas consideradas: una regla propia (por ejemplo, "Sin stock" solo con stock 0);
+  pedir el estado al backend.
+* Motivo: mismas alertas que ya conocen los usuarios de Autollantas, y el backend no
+  expone el estado. No se replica el respaldo de Autollantas para un producto sin
+  categoria conocida (usar la categoria "General" o la primera de la lista): en ServiBox la
+  categoria es obligatoria y viene en la misma respuesta. Las categorias sembradas por el
+  perfil dev tienen umbrales 0 y 0, asi que ahi solo el stock 0 es critico.
+
 ## 2026-10-18: Medio de pago segun el tipo de cuenta
 
 * Decision: el medio de pago que se muestra en ventas y compras se deriva del tipo de la

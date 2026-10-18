@@ -50,14 +50,14 @@ export function LoginPage() {
           <Wordmark onDark />
         </div>
         <div className="relative my-auto max-w-md">
-          <p className="font-mono text-label uppercase text-neutral-400">Servitecas y talleres</p>
-          <h1 className="mt-4 text-display text-neutral-50">Tu negocio en buenas manos.</h1>
-          <p className="mt-6 text-body text-neutral-400">
+          <p className="font-mono text-label uppercase text-text-subtle">Servitecas y talleres</p>
+          <h1 className="mt-4 text-display text-text-inverse">Tu negocio en buenas manos.</h1>
+          <p className="mt-6 text-body text-text-subtle">
             Registra una venta y el inventario y la caja se actualizan solos. Sin archivos separados ni
             conciliación a fin de mes.
           </p>
         </div>
-        <p className="relative text-small text-neutral-400">ServiBox · Plataforma web para servitecas · 2026</p>
+        <p className="relative text-small text-text-subtle">ServiBox · Plataforma web para servitecas · 2026</p>
       </section>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-8">

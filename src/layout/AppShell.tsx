@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
 import { Button } from '../components/Button'
-import { clearSession, useSession } from '../auth/session'
+import { clearSession, getRememberedTenantSlug, useSession } from '../auth/session'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
 const navItems = [
@@ -43,13 +43,14 @@ const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-
  */
 export function AppShell() {
   const session = useSession()
+  const [tenantSlug] = useState(getRememberedTenantSlug)
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-canvas">
       {menuOpen && (
-        <div className="fixed inset-0 z-30 bg-neutral-900/40 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden />
+        <div className="fixed inset-0 z-30 bg-overlay/40 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden />
       )}
 
       <aside
@@ -74,7 +75,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 `flex min-h-touch items-center gap-3 rounded-control px-3 text-small font-medium transition-colors duration-(--duration-fast) ${focusRing} ${
                   collapsed ? 'lg:justify-center lg:px-0' : ''
-                } ${isActive ? 'bg-brand text-neutral-50' : 'text-neutral-300 hover:bg-neutral-700 hover:text-neutral-50'}`
+                } ${isActive ? 'bg-brand text-text-inverse' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
               }
             >
               <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
@@ -83,12 +84,12 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="hidden border-t border-neutral-700 p-3 lg:block">
+        <div className="hidden border-t border-nav-hover p-3 lg:block">
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
             aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
-            className={`flex min-h-touch w-full items-center justify-center rounded-control text-neutral-400 transition-colors duration-(--duration-fast) hover:bg-neutral-700 hover:text-neutral-50 ${focusRing}`}
+            className={`flex min-h-touch w-full items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
           >
             {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.5} /> : <PanelLeftClose size={18} strokeWidth={1.5} />}
           </button>
@@ -110,6 +111,12 @@ export function AppShell() {
             <Menu size={20} strokeWidth={1.5} />
           </button>
           <div className="ml-auto flex items-center gap-4">
+            {/* El backend aun no devuelve el nombre del tenant: se muestra el slug guardado. */}
+            {tenantSlug && (
+              <span className="hidden rounded-pill bg-neutral-200 px-3 py-1 text-small font-medium text-text md:inline">
+                {tenantSlug}
+              </span>
+            )}
             <div className="flex items-center gap-2">
               <span className="flex size-8 items-center justify-center rounded-pill bg-neutral-200 text-text-muted">
                 <User size={16} strokeWidth={1.5} aria-hidden />

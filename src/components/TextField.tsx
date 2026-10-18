@@ -17,7 +17,7 @@ export function TextField({ label, hint, error, type = 'text', disabled, ...prop
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className={`text-small font-medium ${disabled ? 'text-neutral-400' : 'text-text'}`}>
+      <label htmlFor={id} className={`text-small font-medium ${disabled ? 'text-text-subtle' : 'text-text'}`}>
         {label}
       </label>
       <div className="relative">
@@ -27,7 +27,7 @@ export function TextField({ label, hint, error, type = 'text', disabled, ...prop
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={messageId}
-          className={`h-control w-full rounded-control border bg-surface px-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-neutral-400 focus:ring-3 disabled:border-border disabled:bg-neutral-200 disabled:text-neutral-400 ${
+          className={`h-control w-full rounded-control border bg-surface px-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-subtle focus:ring-3 disabled:border-border disabled:bg-neutral-200 disabled:text-text-subtle ${
             error ? 'border-error focus:ring-error/20' : 'border-border focus:border-brand focus:ring-brand/20'
           } ${isPassword ? 'pr-12' : ''}`}
           {...props}
@@ -38,7 +38,7 @@ export function TextField({ label, hint, error, type = 'text', disabled, ...prop
             onClick={() => setRevealed((value) => !value)}
             disabled={disabled}
             aria-label={revealed ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            className="absolute inset-y-0 right-0 flex w-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:text-neutral-400"
+            className="absolute inset-y-0 right-0 flex w-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:text-text-subtle"
           >
             {revealed ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
           </button>
