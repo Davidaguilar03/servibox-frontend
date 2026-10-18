@@ -1,8 +1,9 @@
 /**
- * Estado de stock replicado de Autollantas (StockAlertsController.analizarProducto e
- * InventoryService.getStockAlertBreakdown). Regla en docs/ai-context/03-DECISIONS.md.
+ * Estado de stock con los umbrales de Autollantas (StockAlertsController.analizarProducto e
+ * InventoryService.getStockAlertBreakdown), mas un estado propio para el stock en cero.
+ * Regla en docs/ai-context/03-DECISIONS.md.
  */
-export type StockStatus = 'NORMAL' | 'BAJO' | 'CRITICO'
+export type StockStatus = 'NORMAL' | 'BAJO' | 'CRITICO' | 'SIN_STOCK'
 
 /** Umbrales por defecto de Autollantas cuando la categoria no trae los suyos. */
 export const DEFAULT_YELLOW_STOCK_MIN = 5
@@ -13,11 +14,12 @@ export interface StockThresholds {
   redStockMin: number | null
 }
 
-/** Critico si stock <= rojo; bajo si stock <= amarillo; normal en otro caso. */
+/** Sin stock en 0; critico si stock <= rojo; bajo si stock <= amarillo; normal en otro caso. */
 export function stockStatus(quantity: number | null, thresholds?: StockThresholds): StockStatus {
   const stock = quantity ?? 0
   const red = thresholds?.redStockMin ?? DEFAULT_RED_STOCK_MIN
   const yellow = thresholds?.yellowStockMin ?? DEFAULT_YELLOW_STOCK_MIN
+  if (stock <= 0) return 'SIN_STOCK'
   if (stock <= red) return 'CRITICO'
   if (stock <= yellow) return 'BAJO'
   return 'NORMAL'
@@ -32,7 +34,7 @@ interface StockCategory extends StockThresholds {
   id: number
 }
 
-/** Productos bajos o criticos, de menor a mayor stock, con su estado. */
+/** Productos sin stock, criticos o bajos, de menor a mayor stock, con su estado. */
 export function lowStockProducts<P extends StockProduct>(
   products: P[],
   categories: StockCategory[],

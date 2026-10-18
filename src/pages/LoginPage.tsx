@@ -23,9 +23,9 @@ export function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: login,
-    onSuccess: ({ token }, request) => {
+    onSuccess: ({ token, user, tenant }, request) => {
       rememberTenantSlug(request.tenantSlug)
-      saveToken(token)
+      saveToken(token, { username: user.username, role: user.role, tenantName: tenant.name, tenantSlug: tenant.slug })
     },
   })
 

@@ -1,5 +1,5 @@
 /** Lo que se muestra cuando no hay valor: una raya, nunca "N/A". */
-export const EMPTY_VALUE = String.fromCharCode(0x2014)
+export const EMPTY_VALUE = '\u2014'
 
 const integerFormat = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
 

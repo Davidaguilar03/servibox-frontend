@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useMatches } from 'react-router'
 import {
   ChartColumn,
   House,
@@ -11,12 +11,10 @@ import {
   Settings,
   ShoppingCart,
   Truck,
-  User,
   Wallet,
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
-import { Button } from '../components/Button'
-import { clearSession, getRememberedTenantSlug, useSession } from '../auth/session'
+import { clearSession, roleLabel, useSession } from '../auth/session'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
 const navItems = [
@@ -29,13 +27,27 @@ const navItems = [
   { to: '/configuracion', label: 'Configuración', icon: Settings },
 ]
 
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Administrador',
-  MECANICO: 'Mecánico',
-  CAJERO: 'Cajero',
+/** Lo que cada ruta declara en su `handle` para la miga de pan. */
+export interface RouteHandle {
+  breadcrumb: string[]
 }
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+
+function initials(username: string) {
+  const parts = username.split(/[\s._-]+/).filter(Boolean)
+  const letters = parts.length > 1 ? (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') : username.slice(0, 2)
+  return letters.toUpperCase()
+}
+
+function useBreadcrumb(): string[] {
+  const matches = useMatches()
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    const handle = matches[index]?.handle as RouteHandle | undefined
+    if (handle?.breadcrumb) return handle.breadcrumb
+  }
+  return []
+}
 
 /**
  * Barra lateral, barra superior y area de contenido. Desde lg la barra lateral es fija y
@@ -43,7 +55,7 @@ const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-
  */
 export function AppShell() {
   const session = useSession()
-  const [tenantSlug] = useState(getRememberedTenantSlug)
+  const breadcrumb = useBreadcrumb()
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -65,7 +77,7 @@ export function AppShell() {
           {collapsed && <span className="hidden font-display text-h3 font-bold text-brand lg:inline">S</span>}
         </div>
 
-        <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 px-3 py-4">
+        <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -84,7 +96,7 @@ export function AppShell() {
           ))}
         </nav>
 
-        <div className="hidden border-t border-nav-hover p-3 lg:block">
+        <div className="hidden px-3 pb-2 lg:block">
           <button
             type="button"
             onClick={() => setCollapsed((value) => !value)}
@@ -92,6 +104,32 @@ export function AppShell() {
             className={`flex min-h-touch w-full items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
           >
             {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.5} /> : <PanelLeftClose size={18} strokeWidth={1.5} />}
+          </button>
+        </div>
+
+        <div
+          className={`flex shrink-0 items-center gap-3 border-t border-nav-hover px-4 py-4 ${
+            collapsed ? 'lg:flex-col lg:px-0' : ''
+          }`}
+        >
+          <span
+            className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-nav-hover text-small font-semibold text-text-inverse"
+            aria-hidden
+          >
+            {initials(session?.username ?? '')}
+          </span>
+          <span className={`flex min-w-0 flex-1 flex-col ${collapsed ? 'lg:sr-only' : ''}`}>
+            <span className="truncate text-small font-medium text-text-inverse">{session?.username}</span>
+            <span className="truncate text-small text-text-subtle">{roleLabel(session?.role ?? '')}</span>
+          </span>
+          <button
+            type="button"
+            onClick={clearSession}
+            aria-label="Salir"
+            title="Salir"
+            className={`flex size-touch shrink-0 items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
+          >
+            <LogOut size={18} strokeWidth={1.5} aria-hidden />
           </button>
         </div>
       </aside>
@@ -110,27 +148,33 @@ export function AppShell() {
           >
             <Menu size={20} strokeWidth={1.5} />
           </button>
-          <div className="ml-auto flex items-center gap-4">
-            {/* El backend aun no devuelve el nombre del tenant: se muestra el slug guardado. */}
-            {tenantSlug && (
-              <span className="hidden rounded-pill bg-neutral-200 px-3 py-1 text-small font-medium text-text md:inline">
-                {tenantSlug}
-              </span>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-pill bg-neutral-200 text-text-muted">
-                <User size={16} strokeWidth={1.5} aria-hidden />
-              </span>
-              <span className="hidden flex-col sm:flex">
-                <span className="text-small font-medium text-text">{session?.username}</span>
-                <span className="text-small text-text-muted">{roleLabels[session?.role ?? ''] ?? session?.role}</span>
-              </span>
-            </div>
-            <Button variant="secondary" onClick={clearSession}>
-              <LogOut size={16} strokeWidth={1.5} aria-hidden />
-              Salir
-            </Button>
-          </div>
+          <nav aria-label="Miga de pan" className="min-w-0">
+            <ol className="flex items-center gap-2 text-small">
+              {breadcrumb.map((crumb, index) => {
+                const current = index === breadcrumb.length - 1
+                return (
+                  <li key={crumb} className="flex min-w-0 items-center gap-2">
+                    {index > 0 && (
+                      <span className="text-text-subtle" aria-hidden>
+                        /
+                      </span>
+                    )}
+                    <span
+                      className={`truncate ${current ? 'font-medium text-text' : 'text-text-muted'}`}
+                      aria-current={current ? 'page' : undefined}
+                    >
+                      {crumb}
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          </nav>
+          {session?.tenantName && (
+            <span className="ml-auto hidden shrink-0 rounded-pill bg-neutral-200 px-3 py-1 text-small font-medium text-text sm:inline">
+              {session.tenantName}
+            </span>
+          )}
         </header>
 
         <main className="mx-auto w-full max-w-content flex-1 px-6 py-6 lg:px-8 lg:py-8">

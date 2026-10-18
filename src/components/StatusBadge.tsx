@@ -1,6 +1,7 @@
 export type BadgeStatus =
   | 'DISPONIBLE'
   | 'BAJO_STOCK'
+  | 'STOCK_CRITICO'
   | 'SIN_STOCK'
   | 'PAGADA'
   | 'PENDIENTE'
@@ -11,6 +12,8 @@ export type BadgeStatus =
 const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   DISPONIBLE: { label: 'Disponible', tone: 'bg-success-bg text-success' },
   BAJO_STOCK: { label: 'Bajo stock', tone: 'bg-warning-bg text-warning' },
+  // Variante que el manual no define: pendiente de validar con el disenador.
+  STOCK_CRITICO: { label: 'Stock crítico', tone: 'bg-error-bg text-error' },
   SIN_STOCK: { label: 'Sin stock', tone: 'bg-error-bg text-error' },
   PAGADA: { label: 'Pagada', tone: 'bg-success-bg text-success' },
   PENDIENTE: { label: 'Pendiente', tone: 'bg-warning-bg text-warning' },

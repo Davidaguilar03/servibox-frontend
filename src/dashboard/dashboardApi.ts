@@ -1,6 +1,6 @@
 import { apiFetch } from '../lib/api'
 
-// Solo los campos que usa el panel. Nombres iguales a los DTO del backend.
+// Solo los campos que usan el panel y Ventas. Nombres iguales a los DTO del backend.
 
 export interface Kpis {
   totalSales: number
@@ -24,9 +24,12 @@ export interface Sale {
   invoiceNumber: string
   customer: { name: string } | null
   invoiceDate: string
+  dueDate: string | null
   paymentType: 'CONTADO' | 'CREDITO'
   status: 'PAGADA' | 'PENDIENTE' | 'ANULADA'
   total: number
+  /** Lo que falta por cobrar; 0 en una ANULADA. */
+  pendingBalance: number
 }
 
 export interface Product {

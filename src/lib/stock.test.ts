@@ -4,8 +4,13 @@ import { lowStockProducts, stockStatus } from './stock'
 const thresholds = { yellowStockMin: 10, redStockMin: 3 }
 
 describe('stockStatus', () => {
-  it('es critico en el umbral rojo o por debajo', () => {
-    expect(stockStatus(0, thresholds)).toBe('CRITICO')
+  it('es sin stock solo en cero', () => {
+    expect(stockStatus(0, thresholds)).toBe('SIN_STOCK')
+    expect(stockStatus(1, thresholds)).toBe('CRITICO')
+  })
+
+  it('es critico por encima de cero y hasta el umbral rojo', () => {
+    expect(stockStatus(1, thresholds)).toBe('CRITICO')
     expect(stockStatus(3, thresholds)).toBe('CRITICO')
   })
 
@@ -19,20 +24,23 @@ describe('stockStatus', () => {
   })
 
   it('sin umbrales usa los de Autollantas: amarillo 5 y rojo 2', () => {
+    expect(stockStatus(0)).toBe('SIN_STOCK')
     expect(stockStatus(2)).toBe('CRITICO')
+    expect(stockStatus(3)).toBe('BAJO')
     expect(stockStatus(5)).toBe('BAJO')
     expect(stockStatus(6)).toBe('NORMAL')
+    expect(stockStatus(2, { yellowStockMin: null, redStockMin: null })).toBe('CRITICO')
     expect(stockStatus(5, { yellowStockMin: null, redStockMin: null })).toBe('BAJO')
   })
 
-  it('con umbrales en cero solo el stock cero es critico', () => {
+  it('con umbrales en cero solo el stock cero se marca', () => {
     const zero = { yellowStockMin: 0, redStockMin: 0 }
-    expect(stockStatus(0, zero)).toBe('CRITICO')
+    expect(stockStatus(0, zero)).toBe('SIN_STOCK')
     expect(stockStatus(1, zero)).toBe('NORMAL')
   })
 
   it('un stock nulo cuenta como cero', () => {
-    expect(stockStatus(null, thresholds)).toBe('CRITICO')
+    expect(stockStatus(null, thresholds)).toBe('SIN_STOCK')
   })
 })
 
@@ -43,7 +51,7 @@ describe('lowStockProducts', () => {
   ]
   const product = (id: number, quantity: number, categoryId: number) => ({ id, quantity, categoryId })
 
-  it('deja solo bajos y criticos, de menor a mayor stock, hasta el limite', () => {
+  it('deja sin stock, criticos y bajos, de menor a mayor stock, hasta el limite', () => {
     const products = [
       product(1, 8, 1),
       product(2, 50, 1),
@@ -58,6 +66,6 @@ describe('lowStockProducts', () => {
     const rows = lowStockProducts(products, categories, 5)
 
     expect(rows.map((p) => p.id)).toEqual([3, 8, 5, 1, 6])
-    expect(rows.map((p) => p.status)).toEqual(['CRITICO', 'CRITICO', 'CRITICO', 'BAJO', 'BAJO'])
+    expect(rows.map((p) => p.status)).toEqual(['SIN_STOCK', 'SIN_STOCK', 'CRITICO', 'BAJO', 'BAJO'])
   })
 })

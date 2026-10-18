@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Inbox, TriangleAlert } from 'lucide-react'
 import { Button } from './Button'
 
@@ -7,11 +8,12 @@ export function Skeleton({ className = '' }: { className?: string }) {
 }
 
 /** Estado vacio: que no hay y, si aplica, que hacer. */
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({ message, action }: { message: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
       <Inbox size={20} strokeWidth={1.5} className="text-text-subtle" aria-hidden />
       <p className="text-small text-text-muted">{message}</p>
+      {action && <div className="mt-2">{action}</div>}
     </div>
   )
 }
