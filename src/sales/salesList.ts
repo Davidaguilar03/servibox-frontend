@@ -1,4 +1,5 @@
 import type { Sale } from '../dashboard/dashboardApi'
+import { normalizeText } from '../lib/text'
 import type { Movement } from './salesApi'
 
 // Logica del listado de facturas de venta. Reglas en docs/ai-context/03-DECISIONS.md.
@@ -7,7 +8,8 @@ export type Period = 'este-mes' | 'mes-anterior' | 'este-ano' | 'todas'
 
 export interface SalesFilters {
   q: string
-  estado: Sale['status'] | ''
+  /** Las anuladas no estan en el listado: van a la Papelera. */
+  estado: Exclude<Sale['status'], 'ANULADA'> | ''
   pago: Sale['paymentType'] | ''
   periodo: Period
   pagina: number
@@ -18,7 +20,7 @@ export const DEFAULT_FILTERS: SalesFilters = { q: '', estado: '', pago: '', peri
 /** Lo que deja Limpiar: sin busqueda, todos los estados, todas las formas de pago y periodos. */
 export const CLEARED_FILTERS: SalesFilters = { ...DEFAULT_FILTERS, periodo: 'todas' }
 
-const statuses: Array<Sale['status']> = ['PAGADA', 'PENDIENTE', 'ANULADA']
+const statuses: Array<SalesFilters['estado']> = ['PAGADA', 'PENDIENTE']
 const paymentTypes: Array<Sale['paymentType']> = ['CONTADO', 'CREDITO']
 const periods: Period[] = ['este-mes', 'mes-anterior', 'este-ano', 'todas']
 
@@ -83,11 +85,6 @@ export function periodPrefix(period: Period, today: string): string | null {
   }
 }
 
-/** Minusculas y sin tildes, para buscar sin distinguir ninguna de las dos. */
-export function normalizeText(value: string): string {
-  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim()
-}
-
 export function customerName(sale: Sale): string {
   return sale.customer?.name ?? CONSUMIDOR_FINAL
 }
@@ -101,12 +98,17 @@ export function sortSales(sales: Sale[]): Sale[] {
   )
 }
 
+/** Las facturas del listado: todas menos las anuladas, que estan en la Papelera. */
+export function activeSales(sales: Sale[]): Sale[] {
+  return sales.filter((sale) => sale.status !== 'ANULADA')
+}
+
 /** Aplica busqueda, estado, forma de pago y periodo, y ordena. La pagina va aparte. */
 export function filterSales(sales: Sale[], filters: SalesFilters, today: string): Sale[] {
   const prefix = periodPrefix(filters.periodo, today)
   const query = normalizeText(filters.q)
   return sortSales(
-    sales.filter(
+    activeSales(sales).filter(
       (sale) =>
         (prefix === null || sale.invoiceDate.startsWith(prefix)) &&
         (!filters.estado || sale.status === filters.estado) &&

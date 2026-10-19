@@ -57,7 +57,10 @@ Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `d
 error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
 `warning`, `error`, `info`), `IndicatorCard` (con texto secundario y su propio error con
 reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
-`SelectField` (selector nativo), `Pagination` (anterior, numeros, siguiente y el texto
+`SelectField` (selector nativo, con ayuda opcional), `ComboboxField` (selector con
+busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
+`overlay`, sombra `modal`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
+los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
 "1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional) y
 `ErrorState` (`states.tsx`). Un componente nuevo entra con la primera pantalla que lo
 necesite, no antes.

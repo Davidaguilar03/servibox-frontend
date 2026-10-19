@@ -19,6 +19,14 @@
   }
 }
 
+/* Entrada de los avisos (Toaster): sube y aparece. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 /* Sin animaciones para quien las desactiva en su sistema. */
 @media (prefers-reduced-motion: reduce) {
   *,

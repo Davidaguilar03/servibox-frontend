@@ -69,6 +69,8 @@ describe('periodos', () => {
     // 03:00 UTC del 1 de noviembre son las 22:00 del 31 de octubre en Bogota.
     expect(businessToday(new Date('2026-11-01T03:00:00Z'))).toBe('2026-10-31')
     expect(businessToday(new Date('2026-11-01T06:00:00Z'))).toBe('2026-11-01')
+    // Fecha por defecto de una factura nueva: 03:00 UTC del 19 es aun el 18 en Bogota.
+    expect(businessToday(new Date('2026-10-19T03:00:00Z'))).toBe('2026-10-18')
   })
 
   it('cada periodo cubre su prefijo de fecha', () => {
@@ -86,18 +88,22 @@ describe('periodos', () => {
 
 describe('filterSales', () => {
   it('ordena por fecha descendente y luego por numero descendente', () => {
-    expect(ids(filterSales(sales, CLEARED_FILTERS, today))).toEqual([10, 4, 2, 1, 3, 5])
+    expect(ids(filterSales(sales, CLEARED_FILTERS, today))).toEqual([10, 2, 1, 3, 5])
+  })
+
+  it('deja fuera las anuladas: van a la Papelera', () => {
+    expect(ids(filterSales(sales, CLEARED_FILTERS, today))).not.toContain(4)
+    expect(parseFilters(new URLSearchParams('estado=ANULADA')).estado).toBe('')
   })
 
   it('filtra por periodo', () => {
-    expect(ids(filterSales(sales, DEFAULT_FILTERS, today))).toEqual([10, 4, 2, 1])
+    expect(ids(filterSales(sales, DEFAULT_FILTERS, today))).toEqual([10, 2, 1])
     expect(ids(filterSales(sales, { ...CLEARED_FILTERS, periodo: 'mes-anterior' }, today))).toEqual([3])
-    expect(ids(filterSales(sales, { ...CLEARED_FILTERS, periodo: 'este-ano' }, today))).toEqual([10, 4, 2, 1, 3])
+    expect(ids(filterSales(sales, { ...CLEARED_FILTERS, periodo: 'este-ano' }, today))).toEqual([10, 2, 1, 3])
   })
 
   it('filtra por estado y por forma de pago', () => {
     expect(ids(filterSales(sales, { ...CLEARED_FILTERS, estado: 'PENDIENTE' }, today))).toEqual([2, 3])
-    expect(ids(filterSales(sales, { ...CLEARED_FILTERS, estado: 'ANULADA' }, today))).toEqual([4])
     expect(ids(filterSales(sales, { ...CLEARED_FILTERS, pago: 'CREDITO' }, today))).toEqual([2, 3, 5])
     expect(ids(filterSales(sales, { ...CLEARED_FILTERS, pago: 'CONTADO', estado: 'PAGADA' }, today))).toEqual([10, 1])
   })
@@ -111,7 +117,7 @@ describe('filterSales', () => {
     expect(search('boyaca')).toEqual([2])
     expect(search('fv-0003')).toEqual([3])
     expect(search('  FV-001')).toEqual([10])
-    expect(search('consumidor')).toEqual([4])
+    expect(search('consumidor')).toEqual([])
     expect(search('nadie')).toEqual([])
   })
 })

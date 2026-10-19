@@ -14,6 +14,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
+import { Toaster } from '../components/Toaster'
 import { clearSession, roleLabel, useSession } from '../auth/session'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
@@ -181,6 +182,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <Toaster />
     </div>
   )
 }

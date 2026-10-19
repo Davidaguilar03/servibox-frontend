@@ -37,6 +37,8 @@ export interface Product {
   code: string
   description: string
   quantity: number | null
+  /** Precio de venta sugerido, sin IVA. */
+  suggestedPrice: number | null
   categoryId: number | null
 }
 
@@ -45,6 +47,8 @@ export interface Category {
   name: string
   yellowStockMin: number | null
   redStockMin: number | null
+  /** `rate` es una fraccion (0.19); solo cuentan para el IVA las de `isVat`. */
+  taxTypes: Array<{ rate: number | null; isVat: boolean | null }>
 }
 
 /** desde y hasta en `yyyy-MM-dd` (`@DateTimeFormat(iso = DATE)` en el backend). */

@@ -115,21 +115,21 @@ describe('facturas de venta', () => {
     expect(fetchMock.mock.calls.filter(([url]) => url === '/api/sales')).toHaveLength(1)
 
     expect(screen.getByLabelText('Periodo')).toHaveValue('este-mes')
-    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0004', 'FV-0002', 'FV-0001']))
+    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001']))
+    expect(screen.queryByText('Anulada')).not.toBeInTheDocument()
+    expect(within(screen.getByLabelText('Estado')).queryByRole('option', { name: 'Anulada' })).not.toBeInTheDocument()
     const rows = within(table()).getAllByRole('row')
-    expect(rows[1]).toHaveTextContent('Consumidor final')
-    expect(rows[1]).toHaveTextContent('Anulada')
-    expect(rows[2]).toHaveTextContent('10/10/2026')
-    expect(rows[2]).toHaveTextContent('09/11/2026')
-    expect(rows[2]).toHaveTextContent('Crédito')
-    expect(rows[2]).toHaveTextContent('$ 2.380.000')
-    expect(rows[2]).toHaveTextContent('Pendiente')
-    expect(within(rows[3] as HTMLElement).getAllByRole('cell')[3]).toHaveTextContent(EMPTY_VALUE)
-    expect(within(rows[3] as HTMLElement).getByRole('link', { name: 'Ver detalle' })).toHaveAttribute('href', '/ventas/1')
-    expect(screen.getByText('1 a 3 de 3 facturas')).toBeInTheDocument()
+    expect(rows[1]).toHaveTextContent('10/10/2026')
+    expect(rows[1]).toHaveTextContent('09/11/2026')
+    expect(rows[1]).toHaveTextContent('Crédito')
+    expect(rows[1]).toHaveTextContent('$ 2.380.000')
+    expect(rows[1]).toHaveTextContent('Pendiente')
+    expect(within(rows[2] as HTMLElement).getAllByRole('cell')[3]).toHaveTextContent(EMPTY_VALUE)
+    expect(within(rows[2] as HTMLElement).getByRole('link', { name: 'Ver detalle' })).toHaveAttribute('href', '/ventas/1')
+    expect(screen.getByText('1 a 2 de 2 facturas')).toBeInTheDocument()
 
     const cards = screen.getByRole('list', { name: 'Facturas' })
-    expect(within(cards).getAllByRole('link')).toHaveLength(3)
+    expect(within(cards).getAllByRole('link')).toHaveLength(2)
   })
 
   it('lee los filtros de la URL y los escribe al cambiarlos', async () => {
@@ -151,7 +151,7 @@ describe('facturas de venta', () => {
 
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     expect(router.state.location.search).toBe('?periodo=todas')
-    expect(invoiceNumbers()).toEqual(['FV-0004', 'FV-0002', 'FV-0001', 'FV-0003'])
+    expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001', 'FV-0003'])
     expect(screen.getByLabelText('Buscar')).toHaveValue('')
   })
 
@@ -201,7 +201,7 @@ describe('facturas de venta', () => {
     expect(alert).toHaveTextContent('No pudimos cargar este dato.')
     expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
     expect(within(indicator('Por cobrar')).getByText('$ 2.530.000')).toBeInTheDocument()
-    expect(invoiceNumbers()).toHaveLength(3)
+    expect(invoiceNumbers()).toHaveLength(2)
 
     await userEvent.click(within(alert).getByRole('button', { name: 'Reintentar' }))
 
@@ -224,7 +224,7 @@ describe('facturas de venta', () => {
 
     await userEvent.click(screen.getAllByRole('button', { name: 'Reintentar' })[0] as HTMLElement)
 
-    await waitFor(() => expect(invoiceNumbers()).toHaveLength(3))
+    await waitFor(() => expect(invoiceNumbers()).toHaveLength(2))
   })
 
   it('las rutas de nueva factura, papelera y detalle son placeholders', async () => {

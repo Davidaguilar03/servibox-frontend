@@ -28,10 +28,13 @@ src/
   lib/stock.ts        estado de stock (umbrales de Autollantas)
   lib/pagination.ts   paginas de 25 y numeros de pagina a mostrar
   dashboard/          consultas del panel de control (y de ventas: kpis, sales)
-  sales/              consulta de recaudos y logica del listado de facturas
+  lib/text.ts         normalizar texto para buscar sin mayusculas ni tildes
+  sales/              consultas de ventas y terceros, logica del listado y de la
+                      nueva factura (newSale.ts)
   auth/               sesion, guard de rutas y llamada de login
-  components/         Button, TextField, SearchField, SelectField, Alert, IndicatorCard,
-                      StatusBadge, DataTable, Pagination, estados
+  components/         Button, TextField, SearchField, SelectField, ComboboxField, Alert,
+                      IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
+                      (y su store toast.ts), estados
   layout/AppShell.tsx barra lateral, barra superior y contenido
   brand/Wordmark.tsx  wordmark provisional
   pages/              una pagina por ruta
@@ -48,7 +51,8 @@ src/
 | `/` | privada | redirige a `/inicio` |
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
-| `/ventas/nueva`, `/ventas/papelera`, `/ventas/:id` | privada | `PlaceholderPage` ("Proximamente") con su titulo: Nueva factura, Papelera, Detalle de factura |
+| `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
+| `/ventas/papelera`, `/ventas/:id` | privada | `PlaceholderPage` ("Proximamente") con su titulo: Papelera, Detalle de factura |
 | `/inventario`, `/compras`, `/cuentas`, `/reportes`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -141,3 +145,27 @@ la query string) vive en `src/sales/salesList.ts`; la paginacion en
   y `pagina`. Solo se escriben los valores distintos de los de por defecto.
 * Bajo `md` (768 px) la tabla se reemplaza por tarjetas apiladas con numero, cliente,
   total y estado, que enlazan al detalle.
+* Las facturas ANULADAS no salen en el listado ni en el filtro de estado; la Papelera las
+  listara filtrando el mismo `GET /api/sales`. Los indicadores no cambian.
+
+## Nueva factura de venta
+
+`NewSaleInvoicePage` (`/ventas/nueva`). Logica pura (calculo, validacion, cuerpo del POST,
+avisos de stock, medio de pago, vencimiento) en `src/sales/newSale.ts`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoints |
+|-|-|
+| Numero sugerido | `GET /api/sales/next-invoice-number` (no reserva) |
+| Datos generales | `GET /api/counterparties?role=CLIENTE`, `GET /api/treasury/accounts`; `POST /api/counterparties` desde el modal Nuevo cliente |
+| Productos | `GET /api/inventory/products`, `GET /api/inventory/categories` (umbrales y `taxTypes` para la tasa de IVA) |
+| Guardar | `POST /api/sales` |
+
+* Cada bloque tiene skeleton, error con reintentar y vacio (sin cuentas, sin productos).
+* Cambios sin guardar: `useBlocker` del router de datos (`createBrowserRouter`) muestra el
+  modal "Descartar cambios" en cualquier navegacion interna, Cancelar incluido;
+  `beforeunload` cubre recargar o cerrar la pestana. Tras guardar se permite la salida.
+* El aviso de exito es un toast: `showToast` (`components/toast.ts`) y `Toaster`, montado
+  en `AppShell` para que sobreviva a la navegacion hacia `/ventas`.
+* Bajo `md` cada linea es una tarjeta apilada con sus etiquetas visibles; desde `md` es una
+  fila con encabezado.
