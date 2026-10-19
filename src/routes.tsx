@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 
 const privatePages = [
@@ -15,7 +16,6 @@ const privatePages = [
   { path: 'reportes', title: 'Reportes', breadcrumb: ['Reportes'] },
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
   { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
-  { path: 'ventas/:id', title: 'Detalle de factura', breadcrumb: ['Ventas', 'Detalle de factura'] },
 ]
 
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
@@ -38,6 +38,12 @@ export const routes: RouteObject[] = [
             path: 'ventas/nueva',
             element: <NewSaleInvoicePage />,
             handle: handle(['Ventas', 'Facturas de venta', 'Nueva factura']),
+          },
+          {
+            path: 'ventas/:id',
+            element: <SaleDetailPage />,
+            // El ultimo tramo lo reemplaza la pagina por el numero de la factura.
+            handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
           },
           ...privatePages.map(({ path, title, breadcrumb }) => ({
             path,

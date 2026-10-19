@@ -23,6 +23,7 @@ import {
   CREDIT_DAY_OPTIONS,
   addDays,
   buildSaleRequest,
+  defaultCashAccount,
   defaultDueDate,
   invoiceTotals,
   isDuplicateNumberError,
@@ -89,6 +90,8 @@ export function NewSaleInvoicePage() {
   const [initial] = useState(() => initialForm(today))
   const [form, setForm] = useState<SaleForm>(initial)
   const [customerModalOpen, setCustomerModalOpen] = useState(false)
+  // Mientras el usuario no elija cuenta, en contado se propone la primera de efectivo.
+  const [accountTouched, setAccountTouched] = useState(false)
   const nextKey = useRef(1)
   const allowLeave = useRef(false)
 
@@ -104,10 +107,14 @@ export function NewSaleInvoicePage() {
   // Sin eleccion del usuario el cliente es el Consumidor final; no cuenta como cambio.
   const customerId = form.customerId ?? consumidorFinal?.id ?? null
   const customer = customers.data?.find((item) => item.id === customerId)
-  const account = accounts.data?.find((item) => item.id === form.accountId)
+  const cashAccount = defaultCashAccount(accounts.data)
+  const proposeCash = form.paymentType === 'CONTADO' && !accountTouched
+  const accountId = proposeCash ? (cashAccount?.id ?? null) : form.accountId
+  const paymentMethod = proposeCash ? (paymentMethodsFor(cashAccount?.type).options[0] ?? '') : form.paymentMethod
+  const account = accounts.data?.find((item) => item.id === accountId)
   const methods = paymentMethodsFor(account?.type)
 
-  const effectiveForm = { ...form, customerId }
+  const effectiveForm = { ...form, customerId, accountId, paymentMethod }
   const validation = validateSale(effectiveForm, productsById)
   const dirty = JSON.stringify(form) !== JSON.stringify(initial)
 
@@ -178,6 +185,7 @@ export function NewSaleInvoicePage() {
 
   function changePaymentType(paymentType: SaleForm['paymentType']) {
     if (paymentType === form.paymentType) return
+    setAccountTouched(false)
     update(
       paymentType === 'CONTADO'
         ? { paymentType, dueDate: form.invoiceDate }
@@ -188,6 +196,7 @@ export function NewSaleInvoicePage() {
   function changeAccount(value: string) {
     const accountId = value ? Number(value) : null
     const type = accounts.data?.find((item) => item.id === accountId)?.type
+    setAccountTouched(true)
     update({ accountId, paymentMethod: paymentMethodsFor(type).options[0] ?? '' })
   }
 
@@ -316,17 +325,17 @@ export function NewSaleInvoicePage() {
                     { value: '', label: 'Elige una cuenta' },
                     ...accounts.data.map((item) => ({ value: String(item.id), label: item.name })),
                   ]}
-                  value={form.accountId === null ? '' : String(form.accountId)}
+                  value={accountId === null ? '' : String(accountId)}
                   onChange={(event) => changeAccount(event.target.value)}
                 />
                 <SelectField
-                  label="Medio de pago"
+                  label="Método de pago"
                   options={
                     methods.options.length
                       ? methods.options.map((method) => ({ value: method, label: paymentMethodLabels[method] }))
                       : [{ value: '', label: 'Elige primero la cuenta' }]
                   }
-                  value={form.paymentMethod}
+                  value={paymentMethod}
                   disabled={methods.locked}
                   onChange={(event) => update({ paymentMethod: event.target.value as PaymentMethod })}
                   hint={methods.locked && account ? `Se asigna automáticamente con ${account.name}` : undefined}

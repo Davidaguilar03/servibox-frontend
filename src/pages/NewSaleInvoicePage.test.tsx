@@ -122,11 +122,39 @@ describe('nueva factura de venta', () => {
     expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Nueva factura')
   })
 
+  it('en contado propone la primera cuenta de efectivo por id, con Efectivo bloqueado', async () => {
+    await setup({
+      ...fullRoutes(),
+      'GET /api/treasury/accounts': () =>
+        jsonResponse([
+          { id: 12, name: 'Caja Sede Norte', type: 'EFECTIVO', currentBalance: 0 },
+          { id: 11, name: 'Bancolombia', type: 'BANCO', currentBalance: 0 },
+          { id: 10, name: 'Caja General', type: 'EFECTIVO', currentBalance: 0 },
+        ]),
+    })
+
+    expect(await screen.findByLabelText('Cuenta')).toHaveValue('10')
+    expect(screen.getByLabelText('Método de pago')).toHaveValue('EFECTIVO')
+    expect(screen.getByLabelText('Método de pago')).toBeDisabled()
+    expect(screen.queryByLabelText('Medio de pago')).not.toBeInTheDocument()
+    expect(screen.queryByText('Elige la cuenta donde entra el dinero.')).not.toBeInTheDocument()
+  })
+
+  it('sin cuentas de efectivo no propone ninguna', async () => {
+    await setup({
+      ...fullRoutes(),
+      'GET /api/treasury/accounts': () => jsonResponse([{ id: 11, name: 'Bancolombia', type: 'BANCO', currentBalance: 0 }]),
+    })
+
+    expect(await screen.findByLabelText('Cuenta')).toHaveValue('')
+    expect(screen.getByText('Elige la cuenta donde entra el dinero.')).toBeInTheDocument()
+  })
+
   it('guarda una factura de contado en efectivo y vuelve al listado con un aviso', async () => {
     const { fetchMock, user, router } = await setup()
 
     await user.selectOptions(await screen.findByLabelText('Cuenta'), 'Caja General')
-    const method = screen.getByLabelText('Medio de pago')
+    const method = screen.getByLabelText('Método de pago')
     expect(method).toHaveValue('EFECTIVO')
     expect(method).toBeDisabled()
     expect(screen.getByText('Se asigna automáticamente con Caja General')).toBeInTheDocument()
@@ -164,8 +192,8 @@ describe('nueva factura de venta', () => {
     const { fetchMock, user } = await setup()
 
     await user.selectOptions(await screen.findByLabelText('Cuenta'), 'Bancolombia')
-    expect(screen.getByLabelText('Medio de pago')).toBeEnabled()
-    expect(within(screen.getByLabelText('Medio de pago')).getAllByRole('option').map((o) => o.textContent)).toEqual([
+    expect(screen.getByLabelText('Método de pago')).toBeEnabled()
+    expect(within(screen.getByLabelText('Método de pago')).getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Transferencia',
       'Tarjeta débito',
       'Tarjeta crédito',
@@ -173,7 +201,7 @@ describe('nueva factura de venta', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Crédito' }))
     expect(screen.queryByLabelText('Cuenta')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Medio de pago')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Método de pago')).not.toBeInTheDocument()
     const due = screen.getByLabelText('Fecha de vencimiento')
     expect(due).toHaveValue('2026-11-17')
     await user.click(screen.getByRole('button', { name: '60 días' }))
@@ -219,6 +247,9 @@ describe('nueva factura de venta', () => {
 
     await user.clear(price)
     await user.type(price, '400000')
+    expect(save).toBeEnabled()
+
+    await user.selectOptions(screen.getByLabelText('Cuenta'), 'Elige una cuenta')
     expect(screen.getByText('Elige la cuenta donde entra el dinero.')).toBeInTheDocument()
     expect(save).toBeDisabled()
 

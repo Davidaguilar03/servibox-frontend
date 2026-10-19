@@ -52,7 +52,8 @@ Otras reglas del manual:
 ## Componentes
 
 Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `dark`,
-`secondary`, `text`, `danger`, mas el estado deshabilitado; sus clases viven en
+`secondary`, `text`, `danger`, `dangerSecondary` para una accion destructiva que no es la
+principal, como Anular, mas el estado deshabilitado; sus clases viven en
 `buttonStyles.ts` para los enlaces que se ven como boton), `TextField` (reposo, foco,
 error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
 `warning`, `error`, `info`), `IndicatorCard` (con texto secundario y su propio error con

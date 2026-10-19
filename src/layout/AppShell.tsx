@@ -16,6 +16,7 @@ import {
 import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
 import { clearSession, roleLabel, useSession } from '../auth/session'
+import { useBreadcrumbTailValue } from './breadcrumb'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
 const navItems = [
@@ -43,9 +44,10 @@ function initials(username: string) {
 
 function useBreadcrumb(): string[] {
   const matches = useMatches()
+  const tail = useBreadcrumbTailValue()
   for (let index = matches.length - 1; index >= 0; index -= 1) {
     const handle = matches[index]?.handle as RouteHandle | undefined
-    if (handle?.breadcrumb) return handle.breadcrumb
+    if (handle?.breadcrumb) return tail ? [...handle.breadcrumb.slice(0, -1), tail] : handle.breadcrumb
   }
   return []
 }

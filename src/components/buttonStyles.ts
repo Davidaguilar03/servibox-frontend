@@ -1,4 +1,4 @@
-export type ButtonVariant = 'primary' | 'dark' | 'secondary' | 'text' | 'danger'
+export type ButtonVariant = 'primary' | 'dark' | 'secondary' | 'text' | 'danger' | 'dangerSecondary'
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-action text-text-inverse hover:bg-action-hover active:bg-action-active',
@@ -6,6 +6,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   secondary: 'border border-border bg-surface text-text hover:bg-neutral-100 active:bg-neutral-200',
   text: 'bg-transparent text-brand-ink hover:bg-neutral-100 active:bg-neutral-200',
   danger: 'bg-danger text-text-inverse hover:bg-danger-hover active:bg-danger-active',
+  /** Accion destructiva que no es la principal de la pantalla (Anular). */
+  dangerSecondary: 'border border-border bg-surface text-error hover:bg-error-bg active:bg-error-bg',
 }
 
 /** Clases de boton, compartidas por Button y por los enlaces que se ven como boton. */

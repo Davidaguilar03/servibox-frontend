@@ -52,13 +52,16 @@ src/
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
-| `/ventas/papelera`, `/ventas/:id` | privada | `PlaceholderPage` ("Proximamente") con su titulo: Papelera, Detalle de factura |
+| `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
+| `/ventas/papelera` | privada | `PlaceholderPage` ("Proximamente") con su titulo |
 | `/inventario`, `/compras`, `/cuentas`, `/reportes`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
 guardando la ruta pedida en `state.from`; tras el login se vuelve a ella. Cada ruta privada
 declara su miga de pan en `handle` (`{ breadcrumb: ['Ventas', 'Facturas de venta'] }`).
+Una pagina que solo conoce el ultimo tramo con sus datos (el numero de una factura) lo
+reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada.
 
 ## Cliente API
 
@@ -169,3 +172,23 @@ avisos de stock, medio de pago, vencimiento) en `src/sales/newSale.ts`; reglas e
   en `AppShell` para que sobreviva a la navegacion hacia `/ventas`.
 * Bajo `md` cada linea es una tarjeta apilada con sus etiquetas visibles; desde `md` es una
   fila con encabezado.
+* En contado se propone la primera cuenta de tipo EFECTIVO por id, hasta que el usuario
+  elija otra.
+
+## Detalle de factura de venta
+
+`SaleDetailPage` (`/ventas/:id`). Logica pura (botones por estado, resumen, rango y
+validacion del abono) en `src/sales/saleDetail.ts`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoint |
+|-|-|
+| Factura (encabezado, datos, productos, resumen) | `GET /api/sales/{id}` |
+| Abonos o pago recibido | `GET /api/treasury/movements?saleId&category=RECAUDO_VENTA` (trae `accountName`) |
+| Modal Registrar abono | `GET /api/treasury/accounts`, `POST /api/sales/{id}/collections` |
+| Modal Anular | `POST /api/sales/{id}/annul` |
+
+* La factura y los abonos cargan y fallan por separado, con skeleton y reintentar.
+* Tras abonar o anular se invalidan las consultas de ventas, tesoreria, productos y KPIs.
+  Un rechazo del backend tambien las refresca: la factura pudo cambiar en otra pestana.
+* Columnas 70 y 30 desde `lg`; bajo `md` productos y abonos pasan a tarjetas.
