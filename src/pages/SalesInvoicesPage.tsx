@@ -16,6 +16,7 @@ import { paginate } from '../lib/pagination'
 import { fetchSaleCollections } from '../sales/salesApi'
 import {
   CLEARED_FILTERS,
+  activeSales,
   businessToday,
   creditCollections,
   customerName,
@@ -36,7 +37,6 @@ const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'PAGADA', label: 'Pagada' },
   { value: 'PENDIENTE', label: 'Pendiente' },
-  { value: 'ANULADA', label: 'Anulada' },
 ]
 
 const paymentOptions = [
@@ -205,7 +205,7 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
     content = (
       <DataTable columns={columns} rows={undefined} rowKey={(s) => s.id} loading error={false} onRetry={onRetry} emptyMessage="" skeletonRows={8} />
     )
-  } else if (sales.length === 0) {
+  } else if (activeSales(sales).length === 0) {
     content = (
       <EmptyState
         message="Aún no registras ventas. Crea tu primera factura."

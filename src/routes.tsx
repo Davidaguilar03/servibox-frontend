@@ -4,6 +4,7 @@ import { AppShell, type RouteHandle } from './layout/AppShell'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 
@@ -13,7 +14,6 @@ const privatePages = [
   { path: 'cuentas', title: 'Cuentas', breadcrumb: ['Cuentas'] },
   { path: 'reportes', title: 'Reportes', breadcrumb: ['Reportes'] },
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
-  { path: 'ventas/nueva', title: 'Nueva factura', breadcrumb: ['Ventas', 'Nueva factura'] },
   { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
   { path: 'ventas/:id', title: 'Detalle de factura', breadcrumb: ['Ventas', 'Detalle de factura'] },
 ]
@@ -34,6 +34,11 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/inicio" replace /> },
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
+          {
+            path: 'ventas/nueva',
+            element: <NewSaleInvoicePage />,
+            handle: handle(['Ventas', 'Facturas de venta', 'Nueva factura']),
+          },
           ...privatePages.map(({ path, title, breadcrumb }) => ({
             path,
             element: <PlaceholderPage title={title} />,

@@ -12,7 +12,128 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-18: Lo que queda fuera de Nueva factura de venta
+
+* Decision: no se implementan utilidad por linea ni total, comision del pago con tarjeta
+  como gasto operativo, detalle de factura, abonos, anular, Papelera real, pantalla de
+  Clientes, edicion de terceros ni envio de la factura por correo.
+* Alternativas consideradas: mostrar la utilidad como en la captura; registrar la
+  comision de tarjeta al guardar.
+* Motivo: la utilidad exige el costo de cada producto y una regla de costo (ultimo o
+  promedio) que el frontend no debe inventar; la comision es un GASTO_OPERATIVO aparte
+  con su propia tarifa por cuenta, que el backend no modela en la venta. El resto son
+  pantallas propias con tareas propias.
+
+## 2026-10-18: Cambios sin guardar en Nueva factura
+
+* Decision: con datos digitados, Cancelar y cualquier navegacion interna muestran el modal
+  "Descartar cambios" (Seguir editando, Descartar cambios) con `useBlocker`, que existe
+  porque la app usa el router de datos (`createBrowserRouter`). Recargar o cerrar la
+  pestana avisa con `beforeunload`. Tras un guardado correcto se deja salir sin preguntar.
+  "Datos digitados" es cualquier diferencia con el formulario inicial; el Consumidor final
+  por defecto no cuenta.
+* Alternativas consideradas: el patron de Autollantas.
+* Motivo: en Autollantas `NavigationGuard` existe pero SaleForm no lo implementa: guarda
+  el formulario en cache al salir y Cancelar descarta sin preguntar. En la web no hay
+  cache de vistas, asi que perder lo digitado sin aviso seria peor.
+
+## 2026-10-18: Toast de exito
+
+* Decision: un aviso minimo (`showToast` y `Toaster` montado en `AppShell`): entra en 200
+  ms (`duration-base`), se cierra solo a los 5 segundos y se anuncia con `aria-live`. Hoy
+  solo lo usa "Factura FV-xxxx guardada".
+* Alternativas consideradas: un Alert en el listado leido de `state` de la navegacion.
+* Motivo: el aviso tiene que sobrevivir a la navegacion a `/ventas`; un store minimo
+  fuera de las paginas lo resuelve sin libreria.
+
+## 2026-10-18: Modal de nuevo cliente
+
+* Decision: el modal pide nombre, tipo de documento (CC, NIT, CE, RUT, PASAPORTE, los del
+  enum del backend), numero, correo y celular, y hace `POST /api/counterparties` con role
+  CLIENTE. Un 201 (nuevo) o un 200 (era proveedor y pasa a AMBOS) selecciona el tercero
+  de la respuesta, no lo escrito. Un 409 (ya es cliente) o un 400 muestran el mensaje del
+  backend dentro del modal.
+* Alternativas consideradas: crear el tercero al guardar la factura, como Autollantas.
+* Motivo: con el 200 el backend devuelve el tercero existente con sus datos, que pueden
+  diferir de lo escrito; mostrar el de la respuesta evita facturar a un nombre que no es
+  el guardado.
+
+## 2026-10-18: Numero sugerido y POST sin invoiceNumber
+
+* Decision: el campo Numero muestra `GET /api/sales/next-invoice-number` con "Se confirma
+  al guardar" y el POST va sin `invoiceNumber`. Si el backend responde 409 "Ya existe una
+  factura con el numero" (otra factura tomo el consecutivo al tiempo) se reintenta una sola
+  vez; si falla de nuevo se muestra el mensaje.
+* Alternativas consideradas: enviar el numero sugerido.
+* Motivo: el endpoint no reserva el numero; el backend asigna el consecutivo dentro de la
+  transaccion. El toast muestra el numero que devolvio el POST.
+
+## 2026-10-18: Fecha, vencimiento y tipo de pago de una factura nueva
+
+* Decision: la fecha por defecto es hoy en America/Bogota, calculada con `Intl` y esa zona
+  (`businessToday`), no con la del navegador; es editable. En Contado el vencimiento es la
+  fecha y no se edita, y no se envia `dueDate`. En Credito el vencimiento por defecto es la
+  fecha mas 30 dias, los botones 30, 60 y 90 dias lo recalculan desde la fecha, no puede
+  ser anterior a ella, y cambiar la fecha vuelve a proponer 30 dias.
+* Alternativas consideradas: un mes calendario como Autollantas (`plusMonths(1)`).
+* Motivo: 30 dias es lo que piden los botones y coincide con el primero. Bogota es la zona
+  de negocio del backend.
+
+## 2026-10-18: Medio de pago con los valores del diccionario
+
+* Decision: el medio de pago de una venta de contado se deriva del tipo de la cuenta, no de
+  su nombre: EFECTIVO fija EFECTIVO y bloquea el campo; BANCO o DIGITAL ofrecen
+  TRANSFERENCIA (por defecto), TARJETA_DEBITO y TARJETA_CREDITO. Se envian esos valores,
+  que son los que lista el diccionario de datos del backend para `medio_pago_venta`
+  (EFECTIVO, TARJETA_DEBITO, TARJETA_CREDITO, TRANSFERENCIA); en pantalla se muestran como
+  Efectivo, Transferencia, Tarjeta debito y Tarjeta credito. En credito no se envian ni
+  cuenta ni medio.
+* Alternativas consideradas: Efectivo, Transferencia y Tarjeta como en Autollantas, que
+  ademas decide por el nombre de la cuenta (si contiene "caja").
+* Motivo: el backend guarda texto libre y aun no valida, pero el diccionario manda; el
+  tipo de cuenta es un dato, el nombre no. Reemplaza a "Medio de pago segun el tipo de
+  cuenta".
+
+## 2026-10-18: Calculo del IVA espejo del backend y etiqueta IVA
+
+* Decision: `invoiceTotals` replica `SalesService.crearFactura`: por linea `base = precio *
+  cantidad` e `iva = base * tasa`, sumados en doubles en el orden de las lineas;
+  `total = subtotal + iva generado`. La tasa es la suma de las `rate` (fraccion, 0.19) de
+  los impuestos con `isVat` de la categoria del producto. El backend no redondea en el
+  servicio: redondean las columnas NUMERIC(14,2) al guardar, mitad hacia arriba sobre el
+  valor decimal; el frontend aplica ese mismo `round2` al subtotal, al total y al IVA de
+  cada linea. El resumen dice "IVA" y muestra total menos subtotal; la pantalla formatea
+  sin decimales.
+* Alternativas consideradas: redondear cada linea y sumar; mostrar `ivaPorPagar`.
+* Motivo: diferencia cero con lo que devuelve el backend (verificado en la prueba real).
+  `ivaPorPagar` es IVA generado menos descontable, otro concepto, y no es lo que paga el
+  cliente.
+
+## 2026-10-18: Aviso de stock al facturar
+
+* Decision: despues de agregar o cambiar una linea, si lo que quedaria del producto da
+  bajo, critico o sin stock con `stockStatus` (umbrales de su categoria, por defecto
+  amarillo 5 y rojo 2), se muestra un Alert no bloqueante de advertencia (bajo) o de error
+  (critico o sin stock) con el codigo y las unidades que quedarian. La cantidad no puede
+  superar el stock (`max` del campo y mensaje), y un producto ya agregado no se ofrece de
+  nuevo; tampoco los que tienen stock 0.
+* Alternativas consideradas: el aviso de Autollantas, que llega como toast despues de
+  guardar y toma 0 como umbral por defecto.
+* Motivo: avisar antes de guardar deja corregir la cantidad; la regla es la misma del
+  panel, sin duplicarla.
+
+## 2026-10-18: Facturas anuladas fuera del listado
+
+* Decision: el listado de Facturas de venta deja fuera las ANULADAS y el filtro de estado
+  queda en Todos, Pagada y Pendiente. La Papelera las listara filtrando el mismo
+  `GET /api/sales` en el cliente. Los indicadores no cambian.
+* Alternativas consideradas: mantenerlas con el filtro Anulada (version anterior).
+* Motivo: el diseno manda las anuladas a la Papelera y el subtitulo del listado lo dice.
+
 ## 2026-10-18: Rutas placeholder de Ventas
+
+* Estado: `/ventas/nueva` ya no es placeholder, ver "Nueva factura de venta" en
+  [01-ARCHITECTURE.md](01-ARCHITECTURE.md).
 
 * Decision: `/ventas/nueva` (Nueva factura), `/ventas/papelera` (Papelera) y `/ventas/:id`
   (Detalle de factura) existen como paginas "Proximamente" con su titulo y su miga de pan.
@@ -145,6 +266,8 @@ Formato de cada entrada:
   perfil dev tienen umbrales 0 y 0, asi que ahi solo el stock 0 es critico.
 
 ## 2026-10-18: Medio de pago segun el tipo de cuenta
+
+* Estado: reemplazada por "Medio de pago con los valores del diccionario".
 
 * Decision: el medio de pago que se muestra en ventas y compras se deriva del tipo de la
   cuenta: `EFECTIVO` es "Efectivo"; `BANCO` o `DIGITAL` es "Transferencia" o "Tarjeta"; una
