@@ -45,7 +45,7 @@ export function TextField({ label, hint, error, type = 'text', disabled, ...prop
         )}
       </div>
       {message && (
-        <p id={messageId} className={`text-small ${error ? 'text-error' : 'text-text-muted'}`}>
+        <p id={messageId} aria-live={error ? 'polite' : undefined} className={`text-small ${error ? 'text-error' : 'text-text-muted'}`}>
           {message}
         </p>
       )}

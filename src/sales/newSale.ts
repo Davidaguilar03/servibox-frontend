@@ -1,4 +1,4 @@
-import type { AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
+import type { Account, AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
 import { ApiError } from '../lib/api'
 import { stockStatus } from '../lib/stock'
 import type { SaleRequest } from './salesApi'
@@ -88,6 +88,11 @@ export function paymentMethodsFor(type: AccountType | undefined): { options: Pay
     return { options: ['TRANSFERENCIA', 'TARJETA_DEBITO', 'TARJETA_CREDITO'], locked: false }
   }
   return { options: [], locked: true }
+}
+
+/** La primera cuenta de tipo EFECTIVO por id ascendente: la que se propone para cobrar. */
+export function defaultCashAccount(accounts: Account[] | undefined): Account | undefined {
+  return [...(accounts ?? [])].sort((a, b) => a.id - b.id).find((account) => account.type === 'EFECTIVO')
 }
 
 /** Fecha `yyyy-MM-dd` mas n dias, sin pasar por la zona horaria. */

@@ -12,6 +12,78 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-18: Nueva factura: etiqueta Metodo de pago y cuenta de efectivo propuesta
+
+* Decision: el campo del medio de pago se rotula "Metodo de pago", como en la captura (los
+  valores siguen siendo los del diccionario). En contado se propone la primera cuenta de
+  tipo EFECTIVO por id ascendente, con su metodo Efectivo bloqueado, hasta que el usuario
+  elija otra; si no hay cuenta de efectivo no se propone ninguna. La propuesta no cuenta
+  como cambio sin guardar.
+* Alternativas consideradas: proponer la primera cuenta de la lista sin importar el tipo.
+* Motivo: el contado en caja es el caso diario del taller y la captura lo muestra asi.
+  Elegir por tipo y no por nombre sigue la regla del medio de pago.
+
+## 2026-10-18: Detalle de factura sin PDF ni otras acciones
+
+* Decision: el detalle no tiene Descargar PDF ni imprimir, y no edita ni elimina abonos,
+  no edita la factura, no recupera una anulada ni envia la factura por correo.
+* Alternativas consideradas: generar el PDF en el navegador.
+* Motivo: el backend no tiene un endpoint de PDF ni el formato de factura definido
+  (numeracion, resolucion de facturacion, datos del taller); un PDF hecho en el cliente
+  podria pasar por documento fiscal sin serlo. El resto son tareas propias (la recuperacion
+  va con la Papelera).
+
+## 2026-10-18: Anular factura y factura anulada en solo lectura
+
+* Decision: Anular abre un modal de confirmacion: la factura pasa a la papelera, el stock
+  vuelve al inventario, se revierten el saldo de las cuentas y los pagos registrados, y se
+  puede recuperar desde la Papelera. Botones Cancelar (con el foco inicial) y Anular
+  factura. En exito: toast "Factura FV-xxxx anulada" y vuelta a `/ventas`, donde ya no
+  aparece. Un error del backend queda en el modal. Una factura ANULADA se abre en solo
+  lectura, sin botones y con un aviso; abonado y saldo se muestran con la raya y la
+  seccion de abonos dice que sus pagos se revirtieron.
+* Alternativas consideradas: el texto de Autollantas ("Esta accion es irreversible").
+* Motivo: en ServiBox anular no es irreversible: el backend tiene restaurar. En una
+  ANULADA el backend fija `pendingBalance` en 0 y oculta sus movimientos, asi que mostrar
+  "Abonado = total" seria falso.
+
+## 2026-10-18: Abonos: rango de fecha y sin metodo de pago
+
+* Decision: el modal Registrar abono pide cuenta (se propone la primera EFECTIVO), valor
+  (por defecto el saldo pendiente) y fecha (por defecto hoy en America/Bogota). Valida en
+  el cliente: valor mayor que cero y no mayor que el saldo pendiente, fecha entre la fecha
+  de la factura y hoy. Envia `{accountId, amount, date}`. Los abonos se listan con fecha,
+  cuenta y valor, sin metodo de pago.
+* Alternativas consideradas: aceptar la tolerancia de un peso del backend en el cliente;
+  una columna de metodo como en la captura.
+* Motivo: el backend rechaza fechas futuras pero no las anteriores a la factura; un abono
+  antes de facturar no tiene sentido, asi que el cliente lo impide. La tolerancia de un
+  peso existe en el backend para los centavos; el cliente no la ofrece para no invitar a
+  abonar de mas. El backend no guarda metodo de pago en un abono (`CollectionRequest` solo
+  trae cuenta, monto y fecha): guardarlo exige una columna nueva en movimientos, es decir
+  una migracion V2.
+
+## 2026-10-18: Abonado es total menos pendingBalance
+
+* Decision: el resumen muestra Abonado = total menos `pendingBalance` y Saldo pendiente =
+  `pendingBalance`, los dos del backend.
+* Alternativas consideradas: sumar los movimientos RECAUDO_VENTA en el cliente.
+* Motivo: el backend calcula el saldo como total menos la suma de los recaudos de la
+  venta (contado o abonos) y lo pone en 0 si queda menor a un peso. Por eso abonado y suma
+  de movimientos coinciden salvo en dos casos: un saldo menor a un peso (el abonado
+  muestra el total aunque falten esos centavos) y una ANULADA (ver "Anular factura y
+  factura anulada en solo lectura").
+
+## 2026-10-18: Botones del detalle segun el estado
+
+* Decision: Registrar abono solo en PENDIENTE; Anular en PAGADA o PENDIENTE (con o sin
+  abonos, contado o credito); una ANULADA no tiene botones.
+* Alternativas consideradas: anular solo facturas sin abonos.
+* Motivo: es lo que acepta el backend: `registrarAbono` exige PENDIENTE y `anularFactura`
+  solo rechaza una ya anulada, y revierte el contado y los abonos. Autollantas habilita
+  Registrar abono con saldo mayor que 0 y estado distinto de PAGADA y ANULADA, y Anular en
+  todo lo que no este anulado: la misma regla.
+
 ## 2026-10-18: Lo que queda fuera de Nueva factura de venta
 
 * Decision: no se implementan utilidad por linea ni total, comision del pago con tarjeta

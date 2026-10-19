@@ -61,3 +61,36 @@ export interface SaleRequest {
 }
 
 export const createSale = (request: SaleRequest) => apiFetch<Sale>('/sales', { method: 'POST', body: request })
+
+/** `SaleResponse` completo de `GET /api/sales/{id}`: cliente con sus datos y las lineas. */
+export interface SaleDetail extends Omit<Sale, 'customer'> {
+  customer: Counterparty | null
+  paymentMethod: string | null
+  subtotal: number
+  details: Array<{
+    id: number
+    productId: number | null
+    productCode: string | null
+    productDescription: string | null
+    quantity: number
+    price: number
+    /** IVA congelado al facturar. */
+    ivaAmount: number
+  }>
+}
+
+/** 404 si no existe o es de otro tenant. */
+export const fetchSale = (id: number) => apiFetch<SaleDetail>(`/sales/${id}`)
+
+/** Recaudos activos de una venta (el contado o los abonos). Los de una anulada no salen. */
+export const fetchSaleMovements = (saleId: number) =>
+  apiFetch<Array<Movement & { accountId: number | null; accountName: string | null }>>(
+    `/treasury/movements?saleId=${saleId}&category=RECAUDO_VENTA`,
+  )
+
+/** Abono a una factura PENDIENTE. Responde el movimiento RECAUDO_VENTA creado. */
+export const createCollection = (saleId: number, request: { accountId: number; amount: number; date: string }) =>
+  apiFetch<Movement>(`/sales/${saleId}/collections`, { method: 'POST', body: request })
+
+/** Anula la factura: devuelve el stock y revierte el saldo de sus movimientos. */
+export const annulSale = (saleId: number) => apiFetch<SaleDetail>(`/sales/${saleId}/annul`, { method: 'POST' })
