@@ -116,6 +116,14 @@ describe('detalle de factura de venta', () => {
     expect(screen.getByRole('button', { name: 'Anular' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /PDF/ })).not.toBeInTheDocument()
 
+    // Anular es secundario neutro; el rojo queda solo en el boton del modal.
+    const annulButton = screen.getByRole('button', { name: 'Anular' })
+    expect(annulButton).toHaveClass('bg-surface', 'text-text')
+    expect(annulButton.className).not.toMatch(/error|danger/)
+    await userEvent.setup().click(annulButton)
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Anular factura' })).toHaveClass('bg-danger')
+    await userEvent.setup().click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
+
     const data = screen.getByRole('region', { name: 'Datos de la factura' })
     expect(within(data).getByText('NIT 900123456')).toBeInTheDocument()
     expect(within(data).getByText('compras@transboyaca.co')).toBeInTheDocument()
@@ -126,8 +134,8 @@ describe('detalle de factura de venta', () => {
 
     const products = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
     const productRows = within(products).getAllByRole('row').slice(1)
-    expect(productRows[0]).toHaveTextContent('LL-009Llanta Continental8$ 200.000$ 304.000$ 1.904.000')
-    expect(productRows[1]).toHaveTextContent('$ 476.000')
+    expect(productRows[0]).toHaveTextContent('LL-009Llanta Continental8$ 200.000$ 304.000$ 1.600.000')
+    expect(productRows[1]).toHaveTextContent('LUB-015Aceite Castrol GTX10$ 40.000$ 76.000$ 400.000')
 
     const collections = screen.getByRole('region', { name: 'Abonos registrados' })
     const collectionRows = within(within(collections).getByRole('table')).getAllByRole('row').slice(1)

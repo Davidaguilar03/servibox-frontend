@@ -52,11 +52,11 @@ Otras reglas del manual:
 ## Componentes
 
 Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `dark`,
-`secondary`, `text`, `danger`, `dangerSecondary` para una accion destructiva que no es la
-principal, como Anular, mas el estado deshabilitado; sus clases viven en
+`secondary`, `text`, `danger`, mas el estado deshabilitado; el rojo de `danger` es solo
+para confirmar una accion destructiva dentro de un modal; sus clases viven en
 `buttonStyles.ts` para los enlaces que se ven como boton), `TextField` (reposo, foco,
 error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
-`warning`, `error`, `info`), `IndicatorCard` (con texto secundario y su propio error con
+`warning`, `error`, `info`), `IndicatorCard` (con texto secundario, variacion opcional y su propio error con
 reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
 `SelectField` (selector nativo, con ayuda opcional), `ComboboxField` (selector con
 busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
@@ -94,11 +94,25 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Botones en infinitivo (`Ingresar`, `Guardar cambios`).
 * Titulos con mayuscula solo en la inicial (`Inicia sesion`, no `Inicia Sesion`).
 * Etiquetas de tabla en mayusculas sostenidas (`text-label uppercase`).
-* Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`),
-  nunca el mensaje crudo del backend ni un codigo HTTP.
+* Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`).
+  Hoy hay excepciones, ver Manejo de errores.
 
 ## Manejo de errores
 
 Toda peticion pasa por `apiFetch`, que lanza `ApiError` con el `status` del backend. La
 pantalla decide el texto segun el codigo; el criterio de codigos (400, 401, 404, 409) es el
 del backend, ver Manejo de errores en `servibox-backend/docs/ai-context/02-CONVENTIONS.md`.
+
+Lo que muestra hoy el `Alert` de error:
+
+* Cualquier error HTTP (`ApiError`): el mensaje que devuelve el backend, tal cual.
+* Error de red (no hay respuesta): un mensaje generico con la voz del manual
+  (`Intenta de nuevo en unos minutos.`, o `Revisa tu conexion e intenta de nuevo.` en Reportes).
+
+Pendientes:
+
+* En errores 5xx deberia mostrarse un mensaje generico con la voz del manual, no el del backend.
+* `apiDownload` con una respuesta de error que no es JSON arma
+  `No pudimos descargar el archivo (error <codigo>)...`, que le muestra el codigo HTTP al usuario.
+* Los mensajes del backend no llevan tildes, y `ReportsPage` usa una tilde en "conexion"
+  mientras el resto de mensajes no.

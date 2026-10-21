@@ -12,6 +12,84 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-19: Descarga de archivos con apiDownload
+
+* Decision: `lib/api.ts` agrega `apiDownload(path)` junto a `apiFetch`, sin cambiar este:
+  GET con el mismo Bearer y `Accept: */*`; un 401 cierra la sesion; un error se lee como el
+  JSON del backend (`{"error", "status"}`) y se lanza como `ApiError`, y si el cuerpo no es
+  JSON el mensaje es generico con el codigo. En exito descarga el blob con
+  `URL.createObjectURL` y un enlace temporal con `download`, con el nombre de
+  `Content-Disposition` (respaldo `archivo`), libera la URL en la siguiente vuelta y
+  devuelve el nombre. Sin librerias.
+* Alternativas consideradas: `window.open` de la URL (no lleva el token, que vive en
+  `sessionStorage`); una libreria de descargas.
+* Motivo: el token va en la cabecera, asi que la descarga tiene que pasar por `fetch`. La
+  usaran tambien Cuentas (Exportar a Excel) y los reportes que vengan. Liberar la URL tras
+  el click en la misma vuelta puede cortar la descarga en algunos navegadores.
+
+## 2026-10-19: Reportes: tipos, periodo y limite
+
+* Decision: la pantalla ofrece Estado de resultados y Movimientos de cuentas, los dos
+  tipos que exporta el backend (`ReportType`: `ESTADO_RESULTADOS`, `MOVIMIENTOS`). Ventas y
+  Compras se muestran deshabilitadas con "Proximamente" y no se pueden elegir. El periodo
+  por defecto va del primer dia del mes en curso a hoy, en America/Bogota
+  (`businessToday` y `monthRange`). El cliente valida lo mismo que el backend: las dos
+  fechas, desde no posterior a hasta y a lo sumo 366 dias contando los dos extremos
+  (`ReportExportService.MAX_DIAS`); con un error el boton queda deshabilitado y no se
+  llama al backend. `accountId` solo viaja en Movimientos con una cuenta concreta; "Todas
+  las cuentas" no lo envia. Los errores que solo sabe el backend (cuenta inexistente, mas
+  de 20000 movimientos) se muestran con su mensaje en un Alert de la pantalla.
+* Alternativas consideradas: ocultar Ventas y Compras; dejar que el backend valide el
+  rango.
+* Motivo: la captura muestra los cuatro tipos, y mostrarlos deshabilitados dice que vienen
+  sin prometer un archivo que no existe. Validar en el cliente evita una peticion que
+  seguro falla; el mensaje del backend se muestra tal cual porque es el unico que conoce
+  el tope de filas y la cuenta.
+
+## 2026-10-19: Vista previa del Estado de resultados desde /kpis
+
+* Decision: la vista previa (solo con Estado de resultados y un rango valido) pide
+  `GET /api/reporting/kpis` del rango con una espera de 400 ms al cambiar las fechas, y
+  muestra Ventas totales y Utilidad neta como indicadores y una tabla Concepto y Valor con
+  las cinco filas del archivo: compras y gastos con signo menos y en rojo, utilidad neta
+  con fondo verde o de error segun su signo. El titulo es el mes ("Octubre de 2026") si el
+  rango es un mes calendario completo y, si no, "dd/MM/aaaa a dd/MM/aaaa".
+* Alternativas consideradas: calcular la vista previa en el cliente; mostrar el PDF dentro
+  de la pagina.
+* Motivo: `ReportExportService.estadoDeResultados` arma el archivo con
+  `ReportingService.getPeriodKpis` del mismo rango, asi que la vista previa y el archivo
+  muestran las mismas cifras sin una formula propia (verificado en la prueba real con el
+  PDF y el xlsx).
+
+## 2026-10-19: Variacion contra el periodo anterior de igual duracion
+
+* Decision: la variacion de Ventas totales y Utilidad neta compara con el periodo de igual
+  duracion que termina el dia anterior a desde (del 01/10 al 18/10 se compara con el 13/09
+  al 30/09), pedido con una segunda llamada a `/kpis`. Es (actual menos anterior) sobre el
+  valor absoluto del anterior, redondeado al entero, con flecha de Lucide, texto ("12% vs.
+  periodo anterior") y una palabra para lectores de pantalla (Subio, Bajo); verde si sube,
+  rojo si baja. Con anterior 0 no hay porcentaje: "Sin datos del periodo anterior". Si esa
+  llamada falla, la vista previa sale sin variacion, con un aviso discreto y reintentar.
+* Alternativas consideradas: el "vs. mes anterior" de la captura.
+* Motivo: el rango es libre; comparar un mes en curso de 19 dias con un mes completo
+  siempre daria una caida falsa. Con igual duracion la comparacion es justa para cualquier
+  rango, y en un mes completo el anterior cubre la misma cantidad de dias. El valor
+  absoluto evita que una utilidad negativa invierta el signo de la variacion.
+
+## 2026-10-19: Total de linea sin IVA y Anular como boton secundario
+
+* Decision: en el Detalle de factura el total de cada linea es precio por cantidad, sin
+  IVA, con el IVA en su propia columna, como en la captura (8 x 200.000 es 1.600.000). Nueva
+  factura ya usaba esa definicion (`lineAmounts().base`). El resumen no cambia: subtotal,
+  IVA (total menos subtotal) y total. El boton Anular del detalle es un secundario neutro;
+  el rojo queda solo en Anular factura del modal de confirmacion. Se elimina la variante
+  `dangerSecondary`, que no tenia otro uso.
+* Alternativas consideradas: mantener precio por cantidad mas IVA en la linea; Anular en
+  rojo secundario.
+* Motivo: con IVA en la linea, la suma de los totales no daba el subtotal del resumen y
+  el IVA se veia dos veces. Un solo rojo por pantalla deja el peligro en la confirmacion,
+  donde se decide.
+
 ## 2026-10-18: Nueva factura: etiqueta Metodo de pago y cuenta de efectivo propuesta
 
 * Decision: el campo del medio de pago se rotula "Metodo de pago", como en la captura (los
