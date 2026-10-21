@@ -139,7 +139,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
         {(actions.canAnnul || actions.canCollect) && (
           <div className="flex flex-wrap items-center gap-3">
             {actions.canAnnul && (
-              <Button variant="dangerSecondary" onClick={() => setModal('annul')}>
+              <Button variant="secondary" onClick={() => setModal('annul')}>
                 Anular
               </Button>
             )}
@@ -196,7 +196,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
                   <p className="text-body text-text">{line.productDescription}</p>
                   <p className="tabular mt-2 flex justify-between gap-3 text-small text-text-muted">
                     <span>
-                      {line.quantity} × {formatCurrency(line.price)} + IVA {formatCurrency(line.ivaAmount)}
+                      {line.quantity} × {formatCurrency(line.price)} · IVA {formatCurrency(line.ivaAmount)}
                     </span>
                     <span className="font-medium whitespace-nowrap text-text">{formatCurrency(lineTotal(line))}</span>
                   </p>

@@ -33,9 +33,9 @@ export function saleSummary(sale: Pick<SaleDetail, 'subtotal' | 'total' | 'pendi
   }
 }
 
-/** Total de una linea: precio por cantidad mas su IVA congelado. */
-export function lineTotal(line: Pick<SaleDetail['details'][number], 'price' | 'quantity' | 'ivaAmount'>): number {
-  return round2(line.price * line.quantity + line.ivaAmount)
+/** Total de una linea: precio por cantidad, sin IVA; el IVA va en su propia columna. */
+export function lineTotal(line: Pick<SaleDetail['details'][number], 'price' | 'quantity'>): number {
+  return round2(line.price * line.quantity)
 }
 
 /** Recaudos por fecha descendente y, a igual fecha, el mas reciente primero. */

@@ -56,9 +56,9 @@ describe('resumen', () => {
     })
   })
 
-  it('el total de una linea es precio por cantidad mas su IVA', () => {
-    expect(lineTotal({ price: 200000, quantity: 8, ivaAmount: 304000 })).toBe(1904000)
-    expect(lineTotal({ price: 176366.83, quantity: 2, ivaAmount: 67019.4 })).toBe(419753.06)
+  it('el total de una linea es precio por cantidad, sin IVA', () => {
+    expect(lineTotal({ price: 200000, quantity: 8 })).toBe(1600000)
+    expect(lineTotal({ price: 176366.83, quantity: 2 })).toBe(352733.66)
   })
 
   it('ordena los abonos por fecha descendente', () => {

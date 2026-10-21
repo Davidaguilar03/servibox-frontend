@@ -31,6 +31,7 @@ src/
   lib/text.ts         normalizar texto para buscar sin mayusculas ni tildes
   sales/              consultas de ventas y terceros, logica del listado y de la
                       nueva factura (newSale.ts)
+  reports/            logica pura de Reportes (reports.ts)
   auth/               sesion, guard de rutas y llamada de login
   components/         Button, TextField, SearchField, SelectField, ComboboxField, Alert,
                       IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
@@ -54,7 +55,8 @@ src/
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/ventas/papelera` | privada | `PlaceholderPage` ("Proximamente") con su titulo |
-| `/inventario`, `/compras`, `/cuentas`, `/reportes`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
+| `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
+| `/inventario`, `/compras`, `/cuentas`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
@@ -74,6 +76,15 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
   es JSON se usan `statusText` y el codigo HTTP.
 * Un 401 con `auth` cierra la sesion; el guard redirige a `/login`. Las rutas publicas
   (login) usan `auth: false`: no envian token y su 401 no cierra nada, solo se muestra.
+
+`apiDownload(path)` descarga un archivo (GET) sin cambiar `apiFetch`:
+
+* Mismo Bearer, con `Accept: */*`. Un 401 cierra la sesion igual que `apiFetch`.
+* Un error se convierte en `ApiError` leyendo el JSON del backend; si el cuerpo no es JSON,
+  el mensaje es generico con el codigo HTTP.
+* En exito toma el blob, saca el nombre de `Content-Disposition` (`filename` o
+  `filename*`; si falta, `FALLBACK_FILE_NAME`), lo descarga con `URL.createObjectURL` y un
+  enlace temporal con `download`, libera la URL en la siguiente vuelta y devuelve el nombre.
 
 ## Proxy de desarrollo
 
@@ -192,3 +203,29 @@ validacion del abono) en `src/sales/saleDetail.ts`; reglas en
 * Tras abonar o anular se invalidan las consultas de ventas, tesoreria, productos y KPIs.
   Un rechazo del backend tambien las refresca: la factura pudo cambiar en otra pestana.
 * Columnas 70 y 30 desde `lg`; bajo `md` productos y abonos pasan a tarjetas.
+
+## Reportes
+
+`ReportsPage` (`/reportes`). Logica pura (tipos, validacion del rango, periodo anterior,
+variacion, titulo del periodo, ruta de exportacion y filas del estado de resultados) en
+`src/reports/reports.ts`; reglas en [03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoint |
+|-|-|
+| Selector de cuenta (solo Movimientos de cuentas) | `GET /api/treasury/accounts` |
+| Vista previa del Estado de resultados | `GET /api/reporting/kpis?desde&hasta` del rango |
+| Variacion | `GET /api/reporting/kpis` del periodo anterior de igual duracion |
+| Generar reporte | `apiDownload` de `GET /api/reporting/export?type&format&desde&hasta[&accountId]` |
+
+* `type` es `ESTADO_RESULTADOS` o `MOVIMIENTOS`; `format` es `PDF` o `XLSX`; `desde` y
+  `hasta` en `AAAA-MM-DD`; `accountId` solo con `MOVIMIENTOS` y una cuenta concreta (con
+  `ESTADO_RESULTADOS` el backend responde 400).
+* El backend responde `Content-Disposition: attachment; filename="<tipo>_<desde>_<hasta>.<ext>"`
+  con `estado-resultados` o `movimientos-cuentas` y `pdf` o `xlsx`.
+* Vista previa y variacion cargan y fallan por separado, con skeleton y reintentar. La
+  vista previa sigue al rango con una espera de 400 ms (`PREVIEW_DEBOUNCE_MS`) y solo si es
+  valido.
+* Un error del backend al generar queda en un `Alert` en la pantalla, con lo digitado
+  intacto; el exito es un toast con el nombre del archivo.
+* Bajo `md` las fechas se apilan; desde `lg` el formulario y la vista previa van en dos
+  columnas (2 y 3).

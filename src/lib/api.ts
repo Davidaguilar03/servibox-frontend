@@ -43,6 +43,65 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   return (await response.json()) as T
 }
 
+/** Nombre con el que se guarda un archivo cuya respuesta no trae Content-Disposition. */
+export const FALLBACK_FILE_NAME = 'archivo'
+
+/**
+ * Descarga un archivo del backend (GET) con el mismo token que apiFetch y lo guarda con
+ * el nombre de Content-Disposition. Devuelve ese nombre. Un 401 cierra la sesion y un
+ * error se lanza como ApiError, igual que apiFetch.
+ */
+export async function apiDownload(path: string): Promise<string> {
+  const headers: Record<string, string> = { Accept: '*/*' }
+  const token = getToken()
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const response = await fetch(BASE_URL + path, { headers })
+  if (!response.ok) {
+    if (response.status === 401) clearSession()
+    throw await toDownloadError(response)
+  }
+
+  const fileName = fileNameFrom(response.headers.get('Content-Disposition')) ?? FALLBACK_FILE_NAME
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.append(link)
+  link.click()
+  link.remove()
+  // Se libera en la siguiente vuelta: algunos navegadores leen la URL despues del click.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
+  return fileName
+}
+
+/** `attachment; filename="x.pdf"` (o `filename*=UTF-8''x.pdf`) a `x.pdf`. */
+export function fileNameFrom(header: string | null): string | null {
+  if (!header) return null
+  const encoded = /filename\*\s*=\s*[^']*''([^;]+)/i.exec(header)
+  if (encoded?.[1]) {
+    try {
+      return decodeURIComponent(encoded[1].trim())
+    } catch {
+      // Sigue con filename sin codificar.
+    }
+  }
+  const plain = /filename\s*=\s*("([^"]*)"|[^;]+)/i.exec(header)
+  const name = (plain?.[2] ?? plain?.[1])?.trim()
+  return name || null
+}
+
+/** El error de una descarga: el JSON del backend o, si no lo es, un mensaje generico. */
+async function toDownloadError(response: Response): Promise<ApiError> {
+  try {
+    const data = (await response.json()) as { error?: unknown; status?: unknown }
+    if (typeof data.error !== 'string') throw new Error('Sin mensaje')
+    return new ApiError(data.error, typeof data.status === 'number' ? data.status : response.status)
+  } catch {
+    return new ApiError(`No pudimos descargar el archivo (error ${response.status}). Intenta de nuevo.`, response.status)
+  }
+}
+
 async function toApiError(response: Response): Promise<ApiError> {
   try {
     const data = (await response.json()) as { error?: unknown; status?: unknown }
