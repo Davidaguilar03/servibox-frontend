@@ -1,6 +1,6 @@
 import type { Kpis } from '../dashboard/dashboardApi'
+import { addDays } from '../lib/businessDate'
 import { formatDate } from '../lib/format'
-import { addDays } from '../sales/newSale'
 
 // Logica de la pantalla Reportes. Reglas en docs/ai-context/03-DECISIONS.md.
 

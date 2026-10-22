@@ -1,4 +1,5 @@
-import type { Account, AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
+import type { AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
+import { accountPaymentMethods } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
 import { stockStatus } from '../lib/stock'
 import type { SaleRequest } from './salesApi'
@@ -81,31 +82,12 @@ export const paymentMethodLabels: Record<PaymentMethod, string> = {
   TARJETA_CREDITO: 'Tarjeta crédito',
 }
 
-/** El medio sale del tipo de la cuenta, no de su nombre. El primero es el de por defecto. */
+/** El medio sale del tipo de la cuenta, con los valores de venta. El primero es el de por defecto. */
 export function paymentMethodsFor(type: AccountType | undefined): { options: PaymentMethod[]; locked: boolean } {
-  if (type === 'EFECTIVO') return { options: ['EFECTIVO'], locked: true }
-  if (type === 'BANCO' || type === 'DIGITAL') {
-    return { options: ['TRANSFERENCIA', 'TARJETA_DEBITO', 'TARJETA_CREDITO'], locked: false }
-  }
-  return { options: [], locked: true }
-}
-
-/** La primera cuenta de tipo EFECTIVO por id ascendente: la que se propone para cobrar. */
-export function defaultCashAccount(accounts: Account[] | undefined): Account | undefined {
-  return [...(accounts ?? [])].sort((a, b) => a.id - b.id).find((account) => account.type === 'EFECTIVO')
-}
-
-/** Fecha `yyyy-MM-dd` mas n dias, sin pasar por la zona horaria. */
-export function addDays(date: string, days: number): string {
-  const [year = 0, month = 1, day = 1] = date.split('-').map(Number)
-  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
-}
-
-export const DEFAULT_CREDIT_DAYS = 30
-export const CREDIT_DAY_OPTIONS = [30, 60, 90]
-
-export function defaultDueDate(invoiceDate: string): string {
-  return addDays(invoiceDate, DEFAULT_CREDIT_DAYS)
+  return accountPaymentMethods<PaymentMethod>(type, {
+    cash: 'EFECTIVO',
+    nonCash: ['TRANSFERENCIA', 'TARJETA_DEBITO', 'TARJETA_CREDITO'],
+  })
 }
 
 export interface LineErrors {

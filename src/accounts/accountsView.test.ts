@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Account } from '../dashboard/dashboardApi'
-import { businessToday } from '../sales/salesList'
+import { businessToday } from '../lib/businessDate'
 import type { TreasuryMovement } from './accountsApi'
 import {
   accountMovements,

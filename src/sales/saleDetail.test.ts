@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { businessToday } from '../lib/businessDate'
 import {
   buildCollectionRequest,
   collectionDateRange,
@@ -9,7 +10,6 @@ import {
   sortCollections,
   validateCollection,
 } from './saleDetail'
-import { businessToday } from './salesList'
 
 describe('botones segun el estado', () => {
   it('PENDIENTE (credito, con o sin abonos): abonar y anular', () => {

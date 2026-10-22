@@ -68,7 +68,9 @@ busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fond
 `overlay`, sombra `modal`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
 los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
 "1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional) y
-`ErrorState` (`states.tsx`). Un componente nuevo entra con la primera pantalla que lo
+`ErrorState` (`states.tsx`) y `UnsavedChangesGuard` (modal "Descartar cambios" con
+`useBlocker` y aviso de `beforeunload`). `NewCounterpartyModal` (`src/counterparties/`) crea un
+cliente o un proveedor segun el rol. Un componente nuevo entra con la primera pantalla que lo
 necesite, no antes.
 
 * Una sola accion primaria roja por pantalla.

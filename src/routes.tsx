@@ -6,18 +6,25 @@ import { CategoriesPage } from './pages/CategoriesPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
+import { PurchaseInvoicesPage } from './pages/PurchaseInvoicesPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 
 const privatePages = [
-  { path: 'compras', title: 'Compras', breadcrumb: ['Compras'] },
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
   { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
+  { path: 'compras/papelera', title: 'Papelera', breadcrumb: ['Compras', 'Papelera'] },
+  {
+    path: 'compras/:id',
+    title: 'Detalle de factura de compra',
+    breadcrumb: ['Compras', 'Facturas de compra', 'Detalle de factura'],
+  },
 ]
 
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
@@ -46,6 +53,12 @@ export const routes: RouteObject[] = [
             element: <SaleDetailPage />,
             // El ultimo tramo lo reemplaza la pagina por el numero de la factura.
             handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
+          },
+          { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle(['Compras', 'Facturas de compra']) },
+          {
+            path: 'compras/nueva',
+            element: <NewPurchaseInvoicePage />,
+            handle: handle(['Compras', 'Facturas de compra', 'Nueva factura']),
           },
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
           // El ultimo tramo lo reemplaza la pagina por la cuenta seleccionada.

@@ -1,7 +1,8 @@
 import type { Account, AccountType } from '../dashboard/dashboardApi'
+import { defaultCashAccount } from '../lib/accountPayment'
+import { addDays } from '../lib/businessDate'
 import { formatCurrency, formatDate } from '../lib/format'
 import { validateRange } from '../reports/reports'
-import { addDays, defaultCashAccount } from '../sales/newSale'
 import type { TreasuryMovement } from './accountsApi'
 
 // Logica de la pantalla Cuentas. Reglas en docs/ai-context/03-DECISIONS.md.
