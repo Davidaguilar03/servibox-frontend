@@ -9,7 +9,8 @@ import { TextField } from '../components/TextField'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts, fetchKpis, type Kpis } from '../dashboard/dashboardApi'
-import { ApiError, apiDownload } from '../lib/api'
+import { apiDownload } from '../lib/api'
+import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency } from '../lib/format'
 import {
   REPORT_OPTIONS,
@@ -219,7 +220,7 @@ export function ReportsPage() {
 
           {download.isError && (
             <Alert tone="error" title="No pudimos generar el reporte">
-              {download.error instanceof ApiError ? download.error.message : 'Revisa tu conexión e intenta de nuevo.'}
+              {errorMessage(download.error)}
             </Alert>
           )}
 

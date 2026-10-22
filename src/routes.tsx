@@ -1,17 +1,19 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell, type RouteHandle } from './layout/AppShell'
+import { CategoriesPage } from './pages/CategoriesPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { ProductFormPage } from './pages/ProductFormPage'
+import { ProductsPage } from './pages/ProductsPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 
 const privatePages = [
-  { path: 'inventario', title: 'Inventario', breadcrumb: ['Inventario'] },
   { path: 'compras', title: 'Compras', breadcrumb: ['Compras'] },
   { path: 'cuentas', title: 'Cuentas', breadcrumb: ['Cuentas'] },
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
@@ -46,6 +48,18 @@ export const routes: RouteObject[] = [
             handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
           },
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
+          { path: 'inventario', element: <ProductsPage />, handle: handle(['Inventario', 'Productos']) },
+          {
+            path: 'inventario/nuevo',
+            element: <ProductFormPage />,
+            handle: handle(['Inventario', 'Productos', 'Nuevo producto']),
+          },
+          {
+            path: 'inventario/:id/editar',
+            element: <ProductFormPage />,
+            handle: handle(['Inventario', 'Productos', 'Editar producto']),
+          },
+          { path: 'inventario/categorias', element: <CategoriesPage />, handle: handle(['Inventario', 'Categorías']) },
           ...privatePages.map(({ path, title, breadcrumb }) => ({
             path,
             element: <PlaceholderPage title={title} />,

@@ -15,6 +15,7 @@ import { showToast } from '../components/toast'
 import { fetchAccounts } from '../dashboard/dashboardApi'
 import { useBreadcrumbTail } from '../layout/breadcrumb'
 import { ApiError } from '../lib/api'
+import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { defaultCashAccount, paymentMethodLabels, type PaymentMethod } from '../sales/newSale'
 import {
@@ -342,10 +343,6 @@ interface ActionModalProps {
   onClose: () => void
   /** El backend rechazo la accion: la factura pudo cambiar en otra pestana. */
   onRejected: () => void
-}
-
-function errorMessage(error: unknown) {
-  return error instanceof ApiError ? error.message : 'Intenta de nuevo en unos minutos.'
 }
 
 function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProps & { onSaved: () => void }) {
