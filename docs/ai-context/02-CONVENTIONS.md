@@ -74,6 +74,7 @@ necesite, no antes.
 * Una sola accion primaria roja por pantalla.
 * `StatusBadge` siempre lleva texto; el color solo acompana. `STOCK_CRITICO` ("Stock
   critico", tono de error) no esta en el manual: pendiente de validar con el disenador.
+  `INGRESO` y `EGRESO` (tonos de exito y de error) marcan el tipo de un movimiento.
 * `DataTable`: encabezado fijo en mayusculas, fila alterna `row-alt`, hover, texto a la
   izquierda y numeros y montos a la derecha (`align: 'right'`), con numeros tabulares.
 * Cada bloque de datos resuelve sus tres estados: carga (skeleton gris), vacio (que no hay)
