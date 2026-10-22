@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell, type RouteHandle } from './layout/AppShell'
+import { AccountsPage } from './pages/AccountsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -15,7 +16,6 @@ import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 
 const privatePages = [
   { path: 'compras', title: 'Compras', breadcrumb: ['Compras'] },
-  { path: 'cuentas', title: 'Cuentas', breadcrumb: ['Cuentas'] },
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
   { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
 ]
@@ -48,6 +48,8 @@ export const routes: RouteObject[] = [
             handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
           },
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
+          // El ultimo tramo lo reemplaza la pagina por la cuenta seleccionada.
+          { path: 'cuentas', element: <AccountsPage />, handle: handle(['Cuentas', 'Movimientos']) },
           { path: 'inventario', element: <ProductsPage />, handle: handle(['Inventario', 'Productos']) },
           {
             path: 'inventario/nuevo',

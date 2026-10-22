@@ -12,6 +12,103 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-21: Cuentas: una carga de movimientos por periodo y estado en la URL
+
+* Decision: `GET /api/treasury/movements?desde&hasta` se pide una vez por periodo para
+  todas las cuentas; la cuenta seleccionada se filtra en el cliente, asi que cambiar de
+  cuenta no hace otra peticion. Cuenta, periodo, fechas personalizadas y pagina viven en la
+  query string, como en Facturas de venta y Productos. Sin `cuenta` en la URL se selecciona
+  la primera EFECTIVO por id (`defaultCashAccount`, la misma de Nueva factura) o, si no
+  hay, la primera por id. Orden: fecha descendente y luego id descendente (el del backend).
+  Paginas de 25.
+* Alternativas consideradas: `accountId` en la peticion (una peticion por cuenta); estado
+  en React.
+* Motivo: Todas las cuentas necesita la lista completa, y la otra pata de una
+  transferencia esta en otra cuenta: con una sola carga se resuelven las dos cosas.
+
+## 2026-10-21: Periodos de Cuentas en Bogota, semana desde el lunes
+
+* Decision: Hoy, Esta semana (del lunes a hoy; un domingo cubre los seis dias
+  anteriores), Este mes, Mes anterior (mes completo), Este ano (del 1 de enero a hoy) y
+  Personalizado. Hoy sale de `businessToday` (America/Bogota con `Intl`), el mismo reloj de
+  negocio del backend; las fechas se calculan sobre el texto `yyyy-MM-dd` con `addDays`, sin
+  la zona del navegador. Personalizado parte del rango que se veia y valida con
+  `validateRange` de Reportes (las dos fechas, desde no posterior a hasta, a lo sumo 366
+  dias); mientras sea invalido no se consulta ni se exporta. `desde` y `hasta` del backend
+  son inclusivos.
+* Alternativas consideradas: semana de domingo a sabado; Mes anterior hasta el mismo dia.
+* Motivo: la semana laboral del taller empieza el lunes. Reutilizar la validacion de
+  Reportes mantiene un solo limite, que es tambien el de la exportacion.
+
+## 2026-10-21: Ingresos y egresos del periodo incluyen transferencias
+
+* Decision: Ingresos del periodo y Egresos del periodo son la suma de los movimientos
+  INGRESO y EGRESO de la cuenta en el periodo, transferencias incluidas. Con Todas las
+  cuentas suman todas, asi que una transferencia aparece en los dos lados.
+* Alternativas consideradas: excluir las transferencias (o solo en Todas).
+* Motivo: es la misma definicion del reporte de Movimientos (verificado en la prueba real
+  contra el xlsx) y, por cuenta, explica la variacion de su saldo. En Todas, ingresos menos
+  egresos sigue siendo la variacion del total, porque las dos patas se cancelan.
+
+## 2026-10-21: Origen sin codigos inventados
+
+* Decision: la columna Origen muestra `VENTA <numero>` y `COMPRA <numero>` cruzando
+  `saleId` y `purchaseId` con `GET /api/sales` y `GET /api/purchases`, que se piden solo si
+  el periodo tiene esos movimientos; si fallan, queda `VENTA` o `COMPRA` sin numero con un
+  aviso y reintentar, sin bloquear la pantalla. `GASTO OPERATIVO` e `INGRESO OCASIONAL` van
+  sin codigo. La transferencia dice `TRANSFERENCIA a <cuenta>` en la pata EGRESO y
+  `TRANSFERENCIA desde <cuenta>` en la INGRESO: el INGRESO trae `relatedMovementId` con el id
+  del EGRESO, y para el EGRESO se busca el INGRESO que lo apunta. Si la otra pata no esta
+  cargada, solo `TRANSFERENCIA`.
+* Alternativas consideradas: los `G-`, `IO-` y `T-` de la captura.
+* Motivo: el backend no tiene consecutivo para gastos, ingresos ocasionales ni
+  transferencias (03-DECISIONS del backend); un codigo inventado no se podria buscar en
+  ningun lado. El xlsx del backend dice solo `TRANSFERENCIA`; la pantalla agrega la cuenta.
+
+## 2026-10-21: Nueva cuenta y nueva transferencia
+
+* Decision:
+  * Nueva cuenta: nombre obligatorio (el 409 "Ya existe una cuenta con el nombre X" va
+    bajo el campo), tipo EFECTIVO, BANCO o DIGITAL, y saldo inicial opcional, mayor o igual
+    a 0 (vacio es 0). La ayuda dice que queda como saldo actual y no aparece como
+    movimiento: `saveAccount` solo fija `initialBalance` y `currentBalance`. Al guardar,
+    toast "Cuenta creada" y la cuenta nueva queda seleccionada.
+  * Nueva transferencia: origen (la cuenta seleccionada o la primera por id), destino (el
+    selector excluye el origen), monto y concepto opcional (vacio no se envia y el backend
+    usa "Transferencia a/desde X"). **El backend no recibe fecha** (`registrarTransferencia`
+    se llama con null y usa el hoy de negocio) y **no revisa el saldo del origen**: acepta
+    dejar una cuenta en negativo (verificado: 201 y saldo -900000). El cliente exige monto
+    mayor que cero y no mayor que el saldo actual del origen ("Fondos insuficientes en X").
+    Los errores del backend (400 cuentas iguales, monto, cuenta ajena) van en un Alert del
+    modal con `errorMessage`. Un ref y el boton deshabilitado evitan el doble envio. Sin dos
+    cuentas, el boton queda deshabilitado con la explicacion.
+  * Los dos modales piden confirmar al cerrar con datos digitados, como el de categoria.
+* Alternativas consideradas: pedir fecha en la transferencia (el backend la ignoraria);
+  dejar pasar el sobregiro como el backend.
+* Motivo: las compras si exigen saldo (`exigirSaldoSuficiente`); sobregirar una caja con
+  una transferencia es casi siempre un error de digitacion. Pendiente del backend: validar
+  el saldo tambien en las transferencias.
+
+## 2026-10-21: Exportar movimientos a Excel desde Cuentas
+
+* Decision: Exportar a Excel usa `apiDownload` y `exportPath` de Reportes con
+  `type=MOVIMIENTOS`, `format=XLSX`, el rango activo y `accountId` solo con una cuenta
+  concreta. Con un rango invalido o de mas de 366 dias (`REPORT_MAX_DAYS`) el boton queda
+  deshabilitado con la ayuda. Un ref evita el doble click; exito con toast "Reporte
+  generado: <archivo>" y error con `errorMessage`. Va en el encabezado, no como enlace en la
+  tarjeta de movimientos de la captura.
+* Alternativas consideradas: generar el xlsx en el navegador.
+* Motivo: el archivo del backend trae saldos inicial y final que la pantalla no calcula.
+
+## 2026-10-21: Lo que queda fuera de Cuentas
+
+* Decision: no se implementan crear gastos operativos ni ingresos ocasionales, editar o
+  eliminar movimientos o cuentas, saldos inicial y final del periodo en la pantalla ni
+  graficos.
+* Alternativas consideradas: ninguna; son tareas propias.
+* Motivo: alcance de la tarea; el backend ya tiene los endpoints de movimientos manuales
+  para cuando lleguen.
+
 ## 2026-10-21: Mensajes de error segun el estado HTTP
 
 * Decision: un solo helper, `errorMessage(error)` en `src/lib/errorMessage.ts`, decide el

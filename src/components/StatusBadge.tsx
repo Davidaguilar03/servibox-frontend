@@ -8,6 +8,8 @@ export type BadgeStatus =
   | 'ANULADA'
   | 'ACTIVO'
   | 'INACTIVO'
+  | 'INGRESO'
+  | 'EGRESO'
 
 const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   DISPONIBLE: { label: 'Disponible', tone: 'bg-success-bg text-success' },
@@ -20,6 +22,8 @@ const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   ANULADA: { label: 'Anulada', tone: 'bg-neutral-200 text-text-muted' },
   ACTIVO: { label: 'Activo', tone: 'bg-success-bg text-success' },
   INACTIVO: { label: 'Inactivo', tone: 'bg-neutral-200 text-text-muted' },
+  INGRESO: { label: 'Ingreso', tone: 'bg-success-bg text-success' },
+  EGRESO: { label: 'Egreso', tone: 'bg-error-bg text-error' },
 }
 
 /** Etiqueta de estado: siempre lleva texto, el color solo acompana. */

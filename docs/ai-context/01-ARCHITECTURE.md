@@ -33,6 +33,9 @@ src/
   sales/              consultas de ventas y terceros, logica del listado y de la
                       nueva factura (newSale.ts)
   reports/            logica pura de Reportes (reports.ts)
+  accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
+                      origen (accountsView.ts), formularios (accountForms.ts) y los modales
+                      de nueva cuenta y transferencia (AccountModals.tsx)
   inventory/          consultas de Inventario (inventoryApi.ts), logica del listado
                       (productList.ts) y de los formularios de producto y categoria
   auth/               sesion, guard de rutas y llamada de login
@@ -63,7 +66,8 @@ src/
 | `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
 | `/inventario/:id/editar` | privada | `ProductFormPage`, Editar producto; un id no numerico o un 404 muestran "Producto no encontrado" |
 | `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
-| `/compras`, `/cuentas`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
+| `/cuentas` | privada | `AccountsPage`, Cuentas: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
+| `/compras`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
@@ -266,3 +270,26 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 * Cambios sin guardar en el formulario de producto: el mismo patron de Nueva factura
   (`useBlocker` y `beforeunload`). En el modal de categoria, Esc, la X o Cancelar con datos
   digitados cambian el contenido del modal a "Descartar cambios".
+
+## Cuentas
+
+`AccountsPage` (`/cuentas`). Logica pura en `src/accounts/`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoints |
+|-|-|
+| Tarjetas de cuentas | `GET /api/treasury/accounts`, `GET /api/treasury/balance` (Todas las cuentas) |
+| Totales y movimientos del periodo | `GET /api/treasury/movements?desde&hasta`, una sola vez para todas las cuentas |
+| Origen con numero de factura | `GET /api/sales` y `GET /api/purchases`, solo si el periodo tiene movimientos con `saleId` o `purchaseId` |
+| Nueva cuenta | `POST /api/treasury/accounts` |
+| Nueva transferencia | `POST /api/treasury/transfers` |
+| Exportar a Excel | `apiDownload` de `GET /api/reporting/export?type=MOVIMIENTOS&format=XLSX&desde&hasta[&accountId]` |
+
+* Query string: `cuenta` (id o `todas`; sin el parametro, la primera EFECTIVO por id),
+  `periodo` (`hoy`, `esta-semana`, `mes-anterior`, `este-ano`, `personalizado`; sin el
+  parametro es Este mes), `desde` y `hasta` (solo con Personalizado) y `pagina`.
+* Claves de TanStack Query bajo `['treasury']`; crear una cuenta o una transferencia
+  invalida `['treasury']` (cuentas, balance y movimientos).
+* La miga de pan termina en la cuenta seleccionada (`useBreadcrumbTail`).
+* Bajo `md` la tabla de movimientos pasa a tarjetas apiladas; las tarjetas de cuentas se
+  desplazan en horizontal.
