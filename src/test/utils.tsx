@@ -27,3 +27,22 @@ export function renderRoute(path: string) {
 export function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 }
+
+/**
+ * Una tecla tras otra como en el navegador, sin esperar a que React ni el router terminen
+ * entre una y otra: los eventos van fuera de act, que en las pruebas aplica cada
+ * actualizacion antes de la siguiente tecla.
+ */
+export function typeWithoutPause(input: HTMLInputElement, text: string) {
+  const env = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  env.IS_REACT_ACT_ENVIRONMENT = false
+  try {
+    for (const char of text) {
+      setValue?.call(input, input.value + char)
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+  } finally {
+    env.IS_REACT_ACT_ENVIRONMENT = true
+  }
+}

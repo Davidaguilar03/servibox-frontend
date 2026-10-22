@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
+import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL, body: unknown) => Response | Promise<Response>
@@ -164,6 +165,22 @@ describe('cuentas', () => {
     expect(screen.getByText('Corrige el período para ver los movimientos.')).toBeInTheDocument()
     expect(calls(fetchMock, '/api/treasury/movements')).toHaveLength(before)
     expect(screen.getByRole('button', { name: 'Exportar a Excel' })).toBeDisabled()
+  })
+
+  it('las fechas personalizadas se escriben en la URL tras la espera, reemplazando la entrada', async () => {
+    const { router } = await setup('/cuentas?periodo=personalizado&desde=2026-10-12&hasta=2026-10-18')
+    await screen.findByRole('table')
+
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const desde = screen.getByLabelText<HTMLInputElement>('Desde')
+    fireEvent.change(desde, { target: { value: '2026-10-01' } })
+    expect(desde).toHaveValue('2026-10-01')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
+    expect(router.state.location.search).toBe('?periodo=personalizado&desde=2026-10-01&hasta=2026-10-18')
+    expect(router.state.historyAction).toBe('REPLACE')
+
+    await act(() => router.navigate('/cuentas?periodo=personalizado&desde=2026-10-05&hasta=2026-10-18'))
+    expect(desde).toHaveValue('2026-10-05')
   })
 
   it('pagina de 25 en 25 con la pagina en la URL', async () => {

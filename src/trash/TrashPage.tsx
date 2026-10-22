@@ -16,6 +16,7 @@ import { businessToday } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
 import {
   DEFAULT_TRASH_FILTERS,
   annulledInvoices,
@@ -75,6 +76,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
     setSearchParams(trashFiltersToParams({ ...filters, pagina: 1, ...change }), { replace })
   }
   const clearFilters = () => updateFilters(DEFAULT_TRASH_FILTERS)
+  const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
 
   // Recuperar mueve la factura, el stock y los saldos: se refresca todo lo que depende de ellos.
   const refresh = () => {
@@ -182,8 +184,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         <SearchField
           label="Buscar"
           placeholder={`Número de factura o ${config.partyLabel.toLowerCase()}`}
-          value={filters.q}
-          onChange={(event) => updateFilters({ q: event.target.value }, true)}
+          {...search}
         />
         <SelectField
           label="Forma de pago"

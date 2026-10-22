@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
+import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
@@ -66,6 +67,10 @@ describe('productos', () => {
     saveToken(validToken())
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('muestra indicadores, pestanas y la tabla con su estado', async () => {
     mockApi(fullRoutes())
     renderRoute('/inventario')
@@ -113,7 +118,10 @@ describe('productos', () => {
 
     await user.click(screen.getByRole('button', { name: 'Limpiar' }))
     expect(router.state.location.search).toBe('')
+    // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
     await user.type(screen.getByLabelText('Buscar'), 'michelin')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
     expect(codes()).toEqual(['LL-001'])
     expect(router.state.location.search).toBe('?q=michelin')
 
@@ -133,6 +141,30 @@ describe('productos', () => {
     await user.click(screen.getByRole('link', { name: 'Editar LL-001' }))
     expect(router.state.location.pathname).toBe('/inventario/4/editar')
     expect(router.state.location.state).toEqual({ listSearch: '?orden=stock-desc&estado=NORMAL' })
+  })
+
+  it('escribir sin pausa filtra con todo el texto; Limpiar lo vacia y atras lo restaura', async () => {
+    mockApi(fullRoutes())
+    const router = renderRoute('/inventario')
+    await loaded()
+
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const input = screen.getByLabelText<HTMLInputElement>('Buscar')
+    typeWithoutPause(input, 'BAT-004')
+    expect(input).toHaveValue('BAT-004')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
+    expect(router.state.location.search).toBe('?q=BAT-004')
+    expect(router.state.historyAction).toBe('REPLACE')
+    expect(codes()).toEqual(['BAT-004'])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    expect(router.state.location.search).toBe('')
+    expect(input).toHaveValue('')
+
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?q=BAT-004')
+    expect(input).toHaveValue('BAT-004')
+    expect(codes()).toEqual(['BAT-004'])
   })
 
   it('pagina de 25 en 25 con la pagina en la URL', async () => {

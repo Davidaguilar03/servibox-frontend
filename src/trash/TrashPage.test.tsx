@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
+import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Handler = () => Response | Promise<Response>
 type Routes = Record<string, Handler>
@@ -126,7 +127,10 @@ describe('papelera de ventas', () => {
     expect(screen.getByLabelText('Forma de pago')).toHaveValue('CREDITO')
 
     await user.selectOptions(screen.getByLabelText('Forma de pago'), '')
+    // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
     await user.type(screen.getByLabelText('Buscar'), 'JOSE')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
     expect(numbers()).toEqual(['FV-0001'])
     expect(router.state.location.search).toBe('?q=JOSE')
 
@@ -137,6 +141,30 @@ describe('papelera de ventas', () => {
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     expect(router.state.location.search).toBe('')
     expect(numbers()).toEqual(['FV-0001', 'FV-0002'])
+  })
+
+  it('escribir sin pausa filtra con todo el texto; Limpiar lo vacia y atras lo restaura', async () => {
+    mockApi({ 'GET /api/sales': () => jsonResponse(sales) })
+    const router = renderRoute('/ventas/papelera')
+    await waitFor(() => expect(numbers()).toHaveLength(2))
+
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const input = screen.getByLabelText<HTMLInputElement>('Buscar')
+    typeWithoutPause(input, 'FV-0002')
+    expect(input).toHaveValue('FV-0002')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
+    expect(router.state.location.search).toBe('?q=FV-0002')
+    expect(router.state.historyAction).toBe('REPLACE')
+    expect(numbers()).toEqual(['FV-0002'])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    expect(router.state.location.search).toBe('')
+    expect(input).toHaveValue('')
+
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?q=FV-0002')
+    expect(input).toHaveValue('FV-0002')
+    expect(numbers()).toEqual(['FV-0002'])
   })
 
   it('pagina de 25 en 25 con la pagina en la URL', async () => {

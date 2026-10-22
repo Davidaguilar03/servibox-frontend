@@ -81,6 +81,11 @@ necesite, no antes.
   izquierda y numeros y montos a la derecha (`align: 'right'`), con numeros tabulares.
 * Cada bloque de datos resuelve sus tres estados: carga (skeleton gris), vacio (que no hay)
   y error (que paso, con "Reintentar" solo para ese bloque).
+* Todo campo de texto atado a la URL (buscadores, fechas personalizadas de Cuentas) usa
+  `useUrlTextParam` (`src/lib/useUrlTextParam.ts`): estado local en cada tecla y escritura en
+  la URL tras la espera, con Enter o al salir. Nunca `value` leido de la URL con un `onChange`
+  que navega. Las demas entradas atadas a la URL (selectores, pestanas, periodo, pagina)
+  escriben de inmediato. Motivo en [03-DECISIONS.md](03-DECISIONS.md).
 
 ## Formatos
 
