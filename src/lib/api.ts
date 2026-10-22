@@ -2,6 +2,12 @@ import { clearSession, getToken } from '../auth/session'
 
 const BASE_URL = '/api'
 
+/**
+ * Mensaje para cualquier error HTTP que no sea de validacion ni de conflicto, 5xx incluido.
+ * Lo usan `errorMessage` (lib/errorMessage.ts) y las descargas sin cuerpo JSON.
+ */
+export const GENERIC_ERROR_MESSAGE = 'Algo salió mal de nuestro lado. Intenta de nuevo en unos minutos.'
+
 /** Error del backend, que siempre responde `{"error": mensaje, "status": n}`. */
 export class ApiError extends Error {
   readonly status: number
@@ -91,14 +97,17 @@ export function fileNameFrom(header: string | null): string | null {
   return name || null
 }
 
-/** El error de una descarga: el JSON del backend o, si no lo es, un mensaje generico. */
+/**
+ * El error de una descarga: el JSON del backend o, si no lo es, el mensaje generico. El
+ * codigo HTTP queda en `status`, no en el texto.
+ */
 async function toDownloadError(response: Response): Promise<ApiError> {
   try {
     const data = (await response.json()) as { error?: unknown; status?: unknown }
     if (typeof data.error !== 'string') throw new Error('Sin mensaje')
     return new ApiError(data.error, typeof data.status === 'number' ? data.status : response.status)
   } catch {
-    return new ApiError(`No pudimos descargar el archivo (error ${response.status}). Intenta de nuevo.`, response.status)
+    return new ApiError(GENERIC_ERROR_MESSAGE, response.status)
   }
 }
 

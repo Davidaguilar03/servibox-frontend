@@ -1,10 +1,11 @@
-import { useId, useState, type InputHTMLAttributes } from 'react'
+import { useId, useState, type InputHTMLAttributes, type Ref } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
   label: string
   hint?: string
   error?: string
+  ref?: Ref<HTMLInputElement>
 }
 
 /** Campo con etiqueta. Si es de contrasena, trae el boton de mostrar u ocultar. */

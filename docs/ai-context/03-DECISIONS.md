@@ -12,6 +12,112 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-21: Mensajes de error segun el estado HTTP
+
+* Decision: un solo helper, `errorMessage(error)` en `src/lib/errorMessage.ts`, decide el
+  texto de error de toda la interfaz: el mensaje del backend solo en 400 y 409; el generico
+  "Algo salio mal de nuestro lado. Intenta de nuevo en unos minutos." en cualquier otro
+  estado (5xx, 404 y los demas); "Revisa tu conexion e intenta de nuevo." si no hubo
+  respuesta. El 401 sigue en la sesion. `apiDownload` deja de poner el codigo HTTP en el
+  texto de un error que no es JSON. Reemplaza los `error.message` de Nueva factura (y su
+  modal de cliente), Detalle de factura (abono y anular), Reportes y Login (salvo el 401).
+* Alternativas consideradas: mostrar siempre el mensaje del backend (version anterior); un
+  mapa de mensajes por endpoint.
+* Motivo: 400 y 409 son validaciones y conflictos de negocio escritos para el usuario; un
+  500 dice "Error interno del servidor", que no le sirve. Resuelve los dos pendientes de
+  feat/6 (5xx con el mensaje del backend y el codigo en el texto de la descarga). Queda
+  pendiente que los mensajes del backend no llevan tildes.
+
+## 2026-10-21: Indicadores de Productos
+
+* Decision: sobre todo el inventario, sin pestana ni filtros:
+  * Total de productos: numero de productos de `GET /api/inventory/products`.
+  * En stock: productos con `quantity` mayor que 0, cualquiera sea su estado.
+  * Por debajo del minimo: productos en Bajo stock o Stock critico con `stockStatus` y los
+    umbrales de su categoria. Sin stock (0) no cuenta: ya no esta "en stock".
+  * Valor en inventario: suma de `quantity` por `purchaseCost` (costo sin IVA); una
+    cantidad nula o negativa suma 0. Es el criterio de `actualizarKpis` de Autollantas.
+  * Sin variacion contra el mes anterior (la captura la muestra): no hay historico de stock.
+* Alternativas consideradas: valorizar al precio sugerido; contar Sin stock dentro de Por
+  debajo del minimo.
+* Motivo: el costo es lo que el taller pago por lo que tiene en bodega. Con Sin stock
+  dentro, un producto contaria a la vez en "por debajo" y fuera de "en stock".
+
+## 2026-10-21: Productos: filtros en la URL y formulario sin formulas
+
+* Decision:
+  * `GET /api/inventory/products` y `/categories` se piden una vez; pestana de categoria,
+    busqueda (codigo o descripcion, sin mayusculas ni tildes), estado de stock, orden y
+    pagina (25) se resuelven en el cliente y viven en la query string, como en Facturas de
+    venta. Limpiar vuelve todo a lo de por defecto, pestana y orden incluidos.
+  * Orden por defecto Codigo (comparacion numerica, sin mayusculas); Descripcion; Stock de
+    menor a mayor y de mayor a menor; Precio sugerido de menor a mayor. A igualdad, codigo.
+  * Pestanas: Todas y una por categoria, por nombre, con su conteo; desplazables en
+    horizontal. Una `categoria` de la URL que no existe cuenta como Todas.
+  * El formulario no replica las formulas de IVA ni de precio sugerido: al crear dice "Se
+    calcula al guardar" y al editar muestra los valores guardados, de solo lectura. El
+    backend los recalcula en cada guardado.
+  * Costo con punto de miles y coma decimal (`98.500` o `150000,50`), como Autollantas.
+  * Stock: al crear, stock inicial entero mayor o igual a 0; al editar, solo lectura con la
+    explicacion de que cambia con ventas y compras. El PUT no lleva `quantity`.
+  * Un 409 del producto (codigo repetido o codigo bloqueado por facturas) va bajo el campo
+    Codigo con el mensaje del backend, con el foco en el campo; el resto en un Alert con
+    `errorMessage`. Al guardar: toast "Producto guardado" y vuelta al listado con sus
+    filtros.
+* Alternativas consideradas: calcular el precio sugerido en vivo en el cliente; dejar
+  editar el stock como Autollantas.
+* Motivo: el precio sugerido depende de la configuracion financiera (gastos, DIAN, ICA),
+  que el frontend no carga; una copia de la formula se desincronizaria. El stock es el
+  resultado de las facturas (decision del backend del 2026-10-21).
+
+## 2026-10-21: Precio sugerido y costo rotulados sin IVA
+
+* Decision: la tabla rotula "Costo sin IVA" y "Precio sugerido sin IVA", y el subtitulo
+  dice "Costos y precios sin IVA". `taxAmount` se muestra en el formulario como "IVA del
+  costo".
+* Alternativas consideradas: "Costo" y "Precio sugerido" como la captura.
+* Motivo: verificado en `InventoryService.aplicarPrecios`: `suggestedPrice = costo * k /
+  (k - ica - margen)` sobre el costo sin IVA, sin sumar IVA (con configuracion en ceros es
+  costo / (1 - margen)); `taxAmount` es costo por la suma de tasas con `isVat`, el IVA del
+  costo, no del precio. Nueva factura ya suma el IVA aparte sobre ese precio.
+
+## 2026-10-21: Categorias: paleta fija, umbrales y nombre
+
+* Decision:
+  * Color de una paleta fija de 8 (`CATEGORY_COLORS`): rojo, naranja, ambar, verde,
+    turquesa, azul, violeta y gris, todos con contraste de al menos 4.5 a 1 sobre blanco.
+    Se guarda el hexadecimal que espera el backend. Es la unica excepcion a la regla de no
+    escribir hexadecimales fuera de `tokens.css`. Un color guardado fuera de la paleta (las
+    categorias sembradas) se ofrece como "Color actual" para no cambiarlo sin querer.
+  * Umbrales enteros mayores o iguales a 0, con el rojo no mayor que el amarillo (iguales
+    se aceptan, como el 0 y 0 de la siembra). **El backend no valida esta regla** (acepta
+    rojo mayor que amarillo); el cliente la exige porque con rojo mayor el estado Bajo stock
+    no puede darse.
+  * Margen como porcentaje de 0 a 100 (coma decimal), enviado como fraccion con 6
+    decimales, la escala de la columna. Ayuda: cambiar el margen actualiza el precio
+    sugerido de los productos de la categoria.
+  * Impuestos como casillas desde `GET /api/inventory/tax-types`; al crear va marcado el
+    IVA (`isVat`). Solo lectura: crear o editar impuestos queda fuera.
+  * Nombre repetido: el PUT responde 409 y se muestra bajo Nombre; el POST no lo valida, asi
+    que el cliente compara contra las categorias cargadas (sin mayusculas ni tildes) tanto
+    al crear como al editar. El backend guarda el nombre en mayusculas.
+  * Al guardar: toast "Categoria guardada" e invalidacion de `['inventory']` (el backend
+    rehace los precios de los productos de la categoria).
+* Alternativas consideradas: selector libre de color (contraste sin control); un rango de
+  umbrales en el backend (tarea del backend).
+* Motivo: la paleta garantiza contraste y un solo lugar de cambio. Revisar el nombre en el
+  cliente evita duplicados que el POST dejaria pasar.
+
+## 2026-10-21: Lo que queda fuera de Inventario
+
+* Decision: no se implementan borrar productos o categorias, importar o exportar Excel,
+  servicios, crear o editar impuestos, configuracion financiera, la pantalla de alertas de
+  stock ni editar el stock.
+* Alternativas consideradas: ninguna; son tareas propias.
+* Motivo: el backend no tiene DELETE (FK y facturas), servicios ni alta de impuestos; la
+  configuracion financiera y las alertas son pantallas propias; el stock solo cambia con
+  ventas y compras.
+
 ## 2026-10-19: Descarga de archivos con apiDownload
 
 * Decision: `lib/api.ts` agrega `apiDownload(path)` junto a `apiFetch`, sin cambiar este:

@@ -8,6 +8,7 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { ApiError } from '../lib/api'
+import { errorMessage } from '../lib/errorMessage'
 
 const linkClass =
   'rounded-tag font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
@@ -74,7 +75,7 @@ export function LoginPage() {
                 tone="error"
                 title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
               >
-                {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : 'Intenta de nuevo en unos minutos.'}
+                {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage(mutation.error)}
               </Alert>
             )}
             <TextField

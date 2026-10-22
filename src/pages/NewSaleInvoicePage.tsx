@@ -18,6 +18,7 @@ import {
   type Product,
 } from '../dashboard/dashboardApi'
 import { ApiError } from '../lib/api'
+import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import {
   CREDIT_DAY_OPTIONS,
@@ -394,7 +395,7 @@ export function NewSaleInvoicePage() {
 
       {save.isError && (
         <Alert tone="error" title="No pudimos guardar la factura">
-          {save.error instanceof ApiError ? save.error.message : 'Intenta de nuevo en unos minutos.'}
+          {errorMessage(save.error)}
         </Alert>
       )}
 
@@ -744,7 +745,7 @@ function NewCustomerModal({ onClose, onCreated }: { onClose: () => void; onCreat
       >
         {create.isError && (
           <Alert tone="error" title="No pudimos crear el cliente">
-            {create.error instanceof ApiError ? create.error.message : 'Intenta de nuevo en unos minutos.'}
+            {errorMessage(create.error)}
           </Alert>
         )}
         <TextField label="Nombre o razón social" value={name} onChange={(event) => setName(event.target.value)} required />

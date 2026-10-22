@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, FALLBACK_FILE_NAME, apiDownload, apiFetch, fileNameFrom } from './api'
+import { ApiError, FALLBACK_FILE_NAME, GENERIC_ERROR_MESSAGE, apiDownload, apiFetch, fileNameFrom } from './api'
 import { getToken, saveToken } from '../auth/session'
 import { jsonResponse, validToken } from '../test/utils'
 
@@ -125,13 +125,13 @@ describe('apiDownload', () => {
     expect(getToken()).not.toBeNull()
   })
 
-  it('un error que no es JSON da un mensaje generico con el codigo', async () => {
+  it('un error que no es JSON da el mensaje generico y deja el codigo en status', async () => {
     saveToken(validToken())
     stubDownload()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<html>Bad gateway</html>', { status: 502 })))
 
     await expect(apiDownload('/reporting/export')).rejects.toMatchObject({
-      message: 'No pudimos descargar el archivo (error 502). Intenta de nuevo.',
+      message: GENERIC_ERROR_MESSAGE,
       status: 502,
     })
   })

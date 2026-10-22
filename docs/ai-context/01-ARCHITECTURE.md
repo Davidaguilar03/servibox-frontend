@@ -24,6 +24,7 @@ src/
   index.css           Tailwind, tokens y estilos base
   styles/tokens.css   tokens del manual de estilos (bloque @theme)
   lib/api.ts          cliente API y ApiError
+  lib/errorMessage.ts texto de error para el usuario segun el estado (ver 02-CONVENTIONS)
   lib/format.ts       formatos de moneda, fecha y valor vacio
   lib/stock.ts        estado de stock (umbrales de Autollantas)
   lib/pagination.ts   paginas de 25 y numeros de pagina a mostrar
@@ -32,10 +33,12 @@ src/
   sales/              consultas de ventas y terceros, logica del listado y de la
                       nueva factura (newSale.ts)
   reports/            logica pura de Reportes (reports.ts)
+  inventory/          consultas de Inventario (inventoryApi.ts), logica del listado
+                      (productList.ts) y de los formularios de producto y categoria
   auth/               sesion, guard de rutas y llamada de login
   components/         Button, TextField, SearchField, SelectField, ComboboxField, Alert,
                       IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
-                      (y su store toast.ts), estados
+                      (y su store toast.ts), CategoryDot, estados
   layout/AppShell.tsx barra lateral, barra superior y contenido
   brand/Wordmark.tsx  wordmark provisional
   pages/              una pagina por ruta
@@ -56,7 +59,11 @@ src/
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/ventas/papelera` | privada | `PlaceholderPage` ("Proximamente") con su titulo |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
-| `/inventario`, `/compras`, `/cuentas`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
+| `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
+| `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
+| `/inventario/:id/editar` | privada | `ProductFormPage`, Editar producto; un id no numerico o un 404 muestran "Producto no encontrado" |
+| `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
+| `/compras`, `/cuentas`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
@@ -81,7 +88,7 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
 
 * Mismo Bearer, con `Accept: */*`. Un 401 cierra la sesion igual que `apiFetch`.
 * Un error se convierte en `ApiError` leyendo el JSON del backend; si el cuerpo no es JSON,
-  el mensaje es generico con el codigo HTTP.
+  el mensaje es el generico (`GENERIC_ERROR_MESSAGE`) y el codigo queda solo en `status`.
 * En exito toma el blob, saca el nombre de `Content-Disposition` (`filename` o
   `filename*`; si falta, `FALLBACK_FILE_NAME`), lo descarga con `URL.createObjectURL` y un
   enlace temporal con `download`, libera la URL en la siguiente vuelta y devuelve el nombre.
@@ -229,3 +236,33 @@ variacion, titulo del periodo, ruta de exportacion y filas del estado de resulta
   intacto; el exito es un toast con el nombre del archivo.
 * Bajo `md` las fechas se apilan; desde `lg` el formulario y la vista previa van en dos
   columnas (2 y 3).
+
+## Inventario
+
+Logica pura en `src/inventory/`: `productList.ts` (filtros, query string, estado de stock,
+orden, pestanas e indicadores), `productForm.ts` (valores, validacion, cuerpos del POST y
+del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Pantalla | Endpoints |
+|-|-|
+| Productos (`/inventario`) | `GET /api/inventory/products`, `GET /api/inventory/categories` |
+| Formulario de producto | `GET /api/inventory/products/{id}` (al editar), `GET /api/inventory/categories`, `POST /api/inventory/products`, `PUT /api/inventory/products/{id}` |
+| Categorias (`/inventario/categorias`) | `GET /api/inventory/categories`, `GET /api/inventory/products` (conteo), `GET /api/inventory/tax-types`, `POST /api/inventory/categories`, `PUT /api/inventory/categories/{id}` |
+
+* Claves de TanStack Query `['inventory', 'products']` y `['inventory', 'categories']`, las
+  mismas del panel y de Nueva factura (es la misma respuesta). Guardar un producto o una
+  categoria invalida `['inventory']`.
+* Query string de Productos: `q`, `categoria` (id), `estado` (`NORMAL`, `BAJO`, `CRITICO`,
+  `SIN_STOCK`), `orden` (`descripcion`, `stock-asc`, `stock-desc`, `precio`; sin el
+  parametro es `codigo`) y `pagina`. Solo se escriben los valores distintos de los de por
+  defecto.
+* Los enlaces al formulario llevan en `state` la query string del listado (`listSearch`);
+  al guardar o cancelar se vuelve a `/inventario` con ella. Sin `state` se vuelve sin filtros.
+* Indicadores y conteos de pestanas no dependen de la pestana ni de los filtros. Cada
+  bloque (indicadores, pestanas, tabla) carga y falla por separado: los indicadores que solo
+  usan productos siguen visibles si fallan las categorias.
+* Bajo `md` la tabla pasa a tarjetas apiladas que enlazan al formulario.
+* Cambios sin guardar en el formulario de producto: el mismo patron de Nueva factura
+  (`useBlocker` y `beforeunload`). En el modal de categoria, Esc, la X o Cancelar con datos
+  digitados cambian el contenido del modal a "Descartar cambios".

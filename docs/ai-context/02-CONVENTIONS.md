@@ -21,6 +21,10 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
 * Los componentes consumen tokens por medio de las utilidades (`bg-brand`, `text-text-muted`,
   `rounded-control`, `shadow-card`, `h-control`). **Nunca un hexadecimal literal** ni un valor
   arbitrario de color en un componente.
+* Unica excepcion: la paleta de colores de categoria (`CATEGORY_COLORS` en
+  `src/inventory/categoryForm.ts`), 8 hexadecimales definidos en ese solo lugar. No es un
+  estilo de la interfaz sino el dato `color` que guarda el backend; por eso el punto de color
+  (`CategoryDot`) lo aplica con `style`. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * Un valor nuevo se agrega primero al archivo de tokens y despues se usa.
 * `color-action` es el fondo del boton primario; hoy vale lo mismo que `color-brand` y se
   cambia en un solo lugar. El hover de los botones usa los tokens del manual
@@ -58,7 +62,8 @@ para confirmar una accion destructiva dentro de un modal; sus clases viven en
 error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
 `warning`, `error`, `info`), `IndicatorCard` (con texto secundario, variacion opcional y su propio error con
 reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
-`SelectField` (selector nativo, con ayuda opcional), `ComboboxField` (selector con
+`SelectField` (selector nativo, con ayuda o error opcional), `CategoryDot` (punto con el
+color de una categoria), `ComboboxField` (selector con
 busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
 `overlay`, sombra `modal`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
 los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
@@ -95,7 +100,7 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Titulos con mayuscula solo en la inicial (`Inicia sesion`, no `Inicia Sesion`).
 * Etiquetas de tabla en mayusculas sostenidas (`text-label uppercase`).
 * Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`).
-  Hoy hay excepciones, ver Manejo de errores.
+  Excepcion pendiente en Manejo de errores.
 
 ## Manejo de errores
 
@@ -103,16 +108,23 @@ Toda peticion pasa por `apiFetch`, que lanza `ApiError` con el `status` del back
 pantalla decide el texto segun el codigo; el criterio de codigos (400, 401, 404, 409) es el
 del backend, ver Manejo de errores en `servibox-backend/docs/ai-context/02-CONVENTIONS.md`.
 
-Lo que muestra hoy el `Alert` de error:
+El texto que ve el usuario sale siempre de `errorMessage(error)` (`src/lib/errorMessage.ts`),
+nunca de `error.message` directamente:
 
-* Cualquier error HTTP (`ApiError`): el mensaje que devuelve el backend, tal cual.
-* Error de red (no hay respuesta): un mensaje generico con la voz del manual
-  (`Intenta de nuevo en unos minutos.`, o `Revisa tu conexion e intenta de nuevo.` en Reportes).
+* `ApiError` con estado 400 o 409: el mensaje del backend, tal cual. Son validaciones y
+  conflictos de negocio escritos para el usuario.
+* Cualquier otro estado HTTP (404, 5xx y los demas): `GENERIC_ERROR_MESSAGE`, "Algo salio mal
+  de nuestro lado. Intenta de nuevo en unos minutos." (con tilde en la interfaz).
+* Error de red (no es `ApiError`, no hubo respuesta): `NETWORK_ERROR_MESSAGE`, "Revisa tu
+  conexion e intenta de nuevo.".
+* 401: lo maneja la sesion (`apiFetch` la cierra y el guard manda a `/login`); el login
+  muestra su propio texto de credenciales.
+* `apiDownload` con un error que no es JSON lanza `ApiError` con el mensaje generico; el
+  codigo HTTP queda en `status`, no en el texto.
+* Un 404 de la ruta (factura o producto inexistente) no es un Alert: la pantalla muestra su
+  estado "no encontrado". Un 409 que corresponde a un campo (codigo de producto, nombre de
+  categoria) se muestra bajo ese campo, con el mensaje del backend.
 
-Pendientes:
+Pendiente:
 
-* En errores 5xx deberia mostrarse un mensaje generico con la voz del manual, no el del backend.
-* `apiDownload` con una respuesta de error que no es JSON arma
-  `No pudimos descargar el archivo (error <codigo>)...`, que le muestra el codigo HTTP al usuario.
-* Los mensajes del backend no llevan tildes, y `ReportsPage` usa una tilde en "conexion"
-  mientras el resto de mensajes no.
+* Los mensajes del backend no llevan tildes ("Ya existe un producto con el codigo ...").
