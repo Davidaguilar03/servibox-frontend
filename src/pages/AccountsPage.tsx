@@ -43,6 +43,7 @@ import { businessToday } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
 
 const card = 'rounded-card border border-border bg-surface shadow-card'
@@ -79,9 +80,12 @@ export function AccountsPage() {
   const allSelected = accounts.isSuccess && accountId === null
   useBreadcrumbTail(selected?.name ?? (allSelected && accountList.length > 0 ? 'Todas las cuentas' : undefined))
 
-  function update(change: Partial<AccountsFilters>) {
-    setSearchParams(accountsFiltersToParams({ ...filters, pagina: 1, ...change }))
+  // Las fechas personalizadas reemplazan la entrada del historial, como el buscador.
+  function update(change: Partial<AccountsFilters>, replace = false) {
+    setSearchParams(accountsFiltersToParams({ ...filters, pagina: 1, ...change }), { replace })
   }
+  const desdeField = useUrlTextParam(filters.desde, (desde) => update({ desde }, true))
+  const hastaField = useUrlTextParam(filters.hasta, (hasta) => update({ hasta }, true))
 
   function choosePeriod(periodo: PeriodKey) {
     // Personalizado parte del rango que se estaba viendo.
@@ -195,17 +199,15 @@ export function AccountsPage() {
                 <TextField
                   label="Desde"
                   type="date"
-                  value={filters.desde}
+                  {...desdeField}
                   max={today}
-                  onChange={(event) => update({ desde: event.target.value })}
                   error={range.errors.desde}
                 />
                 <TextField
                   label="Hasta"
                   type="date"
-                  value={filters.hasta}
+                  {...hastaField}
                   max={today}
-                  onChange={(event) => update({ hasta: event.target.value })}
                   error={range.errors.hasta}
                 />
               </div>

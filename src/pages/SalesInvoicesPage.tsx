@@ -14,6 +14,7 @@ import { fetchKpis, fetchSales, type Sale } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { fetchSaleCollections } from '../sales/salesApi'
 import {
   CLEARED_FILTERS,
@@ -95,6 +96,7 @@ export function SalesInvoicesPage() {
     setSearchParams(filtersToParams({ ...filters, pagina: 1, ...change }), { replace })
   }
   const clearFilters = () => updateFilters(CLEARED_FILTERS)
+  const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
 
   const pending = sales.data ? receivable(sales.data) : undefined
 
@@ -146,8 +148,7 @@ export function SalesInvoicesPage() {
         <SearchField
           label="Buscar"
           placeholder="Número de factura o cliente"
-          value={filters.q}
-          onChange={(event) => updateFilters({ q: event.target.value }, true)}
+          {...search}
         />
         <SelectField
           label="Estado"

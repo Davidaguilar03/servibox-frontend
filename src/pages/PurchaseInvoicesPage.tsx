@@ -14,6 +14,7 @@ import { fetchKpis } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { PURCHASES_KEY, fetchPurchaseInvoices, fetchPurchasePayments, type Purchase } from '../purchases/purchasesApi'
 import { activePurchases, creditPayments, filterPurchases, payable } from '../purchases/purchasesList'
 import { CLEARED_FILTERS, filtersToParams, monthRange, parseFilters, type SalesFilters } from '../sales/salesList'
@@ -85,6 +86,7 @@ export function PurchaseInvoicesPage() {
     setSearchParams(filtersToParams({ ...filters, pagina: 1, ...change }), { replace })
   }
   const clearFilters = () => updateFilters(CLEARED_FILTERS)
+  const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
 
   const pending = purchases.data ? payable(purchases.data) : undefined
 
@@ -136,8 +138,7 @@ export function PurchaseInvoicesPage() {
         <SearchField
           label="Buscar"
           placeholder="Número de factura o proveedor"
-          value={filters.q}
-          onChange={(event) => updateFilters({ q: event.target.value }, true)}
+          {...search}
         />
         <SelectField
           label="Estado"

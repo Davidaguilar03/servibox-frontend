@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
+import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
@@ -141,7 +142,10 @@ describe('facturas de venta', () => {
     expect(screen.getByLabelText('Estado')).toHaveValue('PENDIENTE')
     expect(screen.getByLabelText('Periodo')).toHaveValue('todas')
 
+    // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
     await user.type(screen.getByLabelText('Buscar'), 'MARIA')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
     expect(invoiceNumbers()).toEqual(['FV-0003'])
     expect(router.state.location.search).toBe('?q=MARIA&estado=PENDIENTE&periodo=todas')
 
@@ -153,6 +157,42 @@ describe('facturas de venta', () => {
     expect(router.state.location.search).toBe('?periodo=todas')
     expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001', 'FV-0003'])
     expect(screen.getByLabelText('Buscar')).toHaveValue('')
+  })
+
+  it('conserva todo lo escrito sin pausa entre teclas', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/ventas?periodo=todas')
+
+    await waitFor(() => expect(invoiceNumbers()).toHaveLength(3))
+    const input = screen.getByLabelText<HTMLInputElement>('Buscar')
+    typeWithoutPause(input, 'FV-0003')
+    expect(input).toHaveValue('FV-0003')
+    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0003']))
+    expect(input).toHaveValue('FV-0003')
+  })
+
+  it('escribir sin pausa filtra con todo el texto; Limpiar lo vacia y atras lo restaura', async () => {
+    mockApi(fullRoutes())
+    const router = renderRoute('/ventas?periodo=todas')
+    await waitFor(() => expect(invoiceNumbers()).toHaveLength(3))
+
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
+    const input = screen.getByLabelText<HTMLInputElement>('Buscar')
+    typeWithoutPause(input, 'FV-0003')
+    expect(input).toHaveValue('FV-0003')
+    await act(() => vi.advanceTimersByTimeAsync(URL_TEXT_DEBOUNCE_MS))
+    expect(router.state.location.search).toBe('?q=FV-0003&periodo=todas')
+    expect(router.state.historyAction).toBe('REPLACE')
+    expect(invoiceNumbers()).toEqual(['FV-0003'])
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    expect(router.state.location.search).toBe('?periodo=todas')
+    expect(input).toHaveValue('')
+
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?q=FV-0003&periodo=todas')
+    expect(input).toHaveValue('FV-0003')
+    expect(invoiceNumbers()).toEqual(['FV-0003'])
   })
 
   it('pagina de 25 en 25 y guarda la pagina en la URL', async () => {

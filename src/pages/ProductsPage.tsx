@@ -34,6 +34,7 @@ import {
 } from '../inventory/productList'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
 import type { StockStatus } from '../lib/stock'
 
 const badgeFor: Record<StockStatus, BadgeStatus> = {
@@ -90,6 +91,7 @@ export function ProductsPage() {
     setSearchParams(productFiltersToParams({ ...filters, pagina: 1, ...change }), { replace })
   }
   const clearFilters = () => updateFilters(DEFAULT_PRODUCT_FILTERS)
+  const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,8 +156,7 @@ export function ProductsPage() {
         <SearchField
           label="Buscar"
           placeholder="Código o descripción"
-          value={filters.q}
-          onChange={(event) => updateFilters({ q: event.target.value }, true)}
+          {...search}
         />
         <SelectField
           label="Estado de stock"

@@ -28,6 +28,7 @@ src/
   lib/format.ts       formatos de moneda, fecha y valor vacio
   lib/stock.ts        estado de stock (umbrales de Autollantas)
   lib/pagination.ts   paginas de 25 y numeros de pagina a mostrar
+  lib/useUrlTextParam.ts campo de texto atado a la URL (estado local y espera, ver 02-CONVENTIONS)
   lib/businessDate.ts hoy en Bogota, sumar dias y vencimiento por defecto (30, 60, 90)
   lib/accountPayment.ts medio de pago por tipo de cuenta (parametrizado por diccionario)
                       y cuenta de efectivo propuesta

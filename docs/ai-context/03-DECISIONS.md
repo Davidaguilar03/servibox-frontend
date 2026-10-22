@@ -12,6 +12,30 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Campos de texto atados a la URL con estado local y espera
+
+* Decision: los buscadores de Facturas de venta, Facturas de compra, Productos y las dos
+  papeleras, y las fechas Desde y Hasta de Cuentas, usan `useUrlTextParam`
+  (`src/lib/useUrlTextParam.ts`). El campo guarda su propio valor y lo cambia en cada tecla;
+  la URL se escribe tras 300 ms sin teclear (`URL_TEXT_DEBOUNCE_MS`), o de inmediato con Enter
+  o al salir del campo si hay algo pendiente, con `replace` en el historial y la pagina en 1
+  como antes. Durante una composicion IME no se escribe; se escribe al terminarla. Si la URL
+  cambia por otra causa (atras o adelante, Limpiar, un enlace) el campo adopta su valor, salvo
+  que haya algo digitado sin escribir: lo digitado gana y se escribe tras la espera. Desmontar
+  cancela la escritura pendiente. Los listados siguen filtrando con el valor de la URL, y los
+  nombres de los parametros no cambian. Las fechas de Cuentas pasan de agregar una entrada al
+  historial por cambio a reemplazarla, como el buscador.
+* Alternativas consideradas: escribir la URL con `flushSync`; espera sin estado local;
+  estado local sin espera.
+* Motivo: causa del bug: el `value` del campo salia de la URL y cada tecla navegaba.
+  `RouterProvider` aplica la navegacion dentro de `React.startTransition` y despues de una
+  promesa, asi que, al teclear rapido, React restauraba el valor viejo del campo controlado
+  antes de que la URL cambiara y la siguiente tecla se sumaba a ese valor viejo: se perdian
+  letras (con teclas sin pausa el campo quedaba vacio). El estado local se actualiza de forma
+  sincrona en el evento; la espera evita una navegacion por letra. En las pruebas `act` aplica
+  cada actualizacion antes de la siguiente tecla y ocultaba el bug; `typeWithoutPause`
+  (`src/test/utils.tsx`) envia los eventos fuera de `act` para reproducirlo.
+
 ## 2026-10-22: Papelera como filtro en el cliente y componente compartido
 
 * Decision: las papeleras de ventas y compras piden el mismo `GET /api/sales` o
