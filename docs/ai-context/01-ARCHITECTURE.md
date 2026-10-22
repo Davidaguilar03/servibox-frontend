@@ -28,10 +28,16 @@ src/
   lib/format.ts       formatos de moneda, fecha y valor vacio
   lib/stock.ts        estado de stock (umbrales de Autollantas)
   lib/pagination.ts   paginas de 25 y numeros de pagina a mostrar
+  lib/businessDate.ts hoy en Bogota, sumar dias y vencimiento por defecto (30, 60, 90)
+  lib/accountPayment.ts medio de pago por tipo de cuenta (parametrizado por diccionario)
+                      y cuenta de efectivo propuesta
   dashboard/          consultas del panel de control (y de ventas: kpis, sales)
   lib/text.ts         normalizar texto para buscar sin mayusculas ni tildes
   sales/              consultas de ventas y terceros, logica del listado y de la
                       nueva factura (newSale.ts)
+  purchases/          consultas de compras (purchasesApi.ts), logica del listado
+                      (purchasesList.ts) y de la nueva factura de compra (newPurchase.ts)
+  counterparties/     modal compartido Nuevo cliente o Nuevo proveedor
   reports/            logica pura de Reportes (reports.ts)
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
@@ -41,7 +47,7 @@ src/
   auth/               sesion, guard de rutas y llamada de login
   components/         Button, TextField, SearchField, SelectField, ComboboxField, Alert,
                       IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
-                      (y su store toast.ts), CategoryDot, estados
+                      (y su store toast.ts), CategoryDot, UnsavedChangesGuard, estados
   layout/AppShell.tsx barra lateral, barra superior y contenido
   brand/Wordmark.tsx  wordmark provisional
   pages/              una pagina por ruta
@@ -67,7 +73,10 @@ src/
 | `/inventario/:id/editar` | privada | `ProductFormPage`, Editar producto; un id no numerico o un 404 muestran "Producto no encontrado" |
 | `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
 | `/cuentas` | privada | `AccountsPage`, Cuentas: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
-| `/compras`, `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
+| `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
+| `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
+| `/compras/papelera`, `/compras/:id` | privada | `PlaceholderPage` ("Proximamente") con el titulo Papelera o Detalle de factura de compra |
+| `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
@@ -293,3 +302,38 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 * La miga de pan termina en la cuenta seleccionada (`useBreadcrumbTail`).
 * Bajo `md` la tabla de movimientos pasa a tarjetas apiladas; las tarjetas de cuentas se
   desplazan en horizontal.
+
+## Facturas de compra
+
+`PurchaseInvoicesPage` (`/compras`) calca Facturas de venta: tres consultas independientes,
+cada una con carga, vacio y error con reintentar.
+
+| Bloque | Endpoint | Uso |
+|-|-|-|
+| Facturas | `GET /api/purchases` (clave `['purchases']`, la misma de Cuentas) | listado, Por pagar y el cruce de Pagos del mes |
+| Compras del mes | `GET /api/reporting/kpis?desde&hasta` del mes en curso | `totalPurchases` |
+| Pagos del mes | `GET /api/treasury/movements?category=PAGO_COMPRA&desde&hasta` | cruzado con las compras por `purchaseId` |
+
+* Logica pura en `src/purchases/purchasesList.ts`. Los filtros, su query string (`q`,
+  `estado`, `pago`, `periodo`, `pagina`), los periodos y Limpiar son los de
+  `src/sales/salesList.ts`, reutilizados sin cambios.
+* Orden por fecha descendente y luego id descendente. Sin ANULADAS (van a la Papelera).
+* Bajo `md` la tabla pasa a tarjetas apiladas que enlazan a `/compras/:id`.
+
+## Nueva factura de compra
+
+`NewPurchaseInvoicePage` (`/compras/nueva`). Logica pura (calculo, saldo, validacion, cuerpo
+del POST, medio de pago, errores 409) en `src/purchases/newPurchase.ts`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoints |
+|-|-|
+| Datos generales | `GET /api/counterparties?role=PROVEEDOR`, `GET /api/treasury/accounts`; `POST /api/counterparties` desde el modal Nuevo proveedor |
+| Productos | `GET /api/inventory/products` (con `purchaseCost`), `GET /api/inventory/categories` (`taxTypes` para la tasa) |
+| Guardar | `POST /api/purchases` |
+
+* Comparte con Nueva factura de venta: `lib/businessDate.ts`, `lib/accountPayment.ts`,
+  `NewCounterpartyModal` (rol PROVEEDOR) y `UnsavedChangesGuard` (`useBlocker` y
+  `beforeunload`).
+* Un 409 de numero repetido va bajo el campo; un 409 de saldo va en un Alert y refresca
+  `['treasury', 'accounts']`. Tras guardar se invalidan compras, productos, tesoreria y KPIs.

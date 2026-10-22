@@ -17,7 +17,7 @@ describe('formulario de login', () => {
     const token = validToken()
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ token, user: { username: 'admin', role: 'ADMIN' }, tenant: { name: 'Serviteca Demo', slug: 'demo' } }))
     vi.stubGlobal('fetch', fetchMock)
-    const router = renderRoute('/compras')
+    const router = renderRoute('/configuracion')
 
     await fillAndSubmit()
 
@@ -25,8 +25,8 @@ describe('formulario de login', () => {
     expect(url).toBe('/api/auth/login')
     expect(init.method).toBe('POST')
     expect(JSON.parse(init.body as string)).toEqual({ tenantSlug: 'demo', username: 'admin', password: 'admin123' })
-    expect(await screen.findByRole('heading', { name: 'Compras' })).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/compras')
+    expect(await screen.findByRole('heading', { name: 'Configuración' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/configuracion')
     expect(getToken()).toBe(token)
     expect(localStorage.getItem('servibox.tenantSlug')).toBe('demo')
     expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toEqual({

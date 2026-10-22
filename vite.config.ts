@@ -8,6 +8,15 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [react(), tailwindcss()],
+    // Las dependencias van en su propio archivo: el codigo de la app paso de 500 kB en un solo
+    // chunk. Ver docs/ai-context/03-DECISIONS.md.
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: { groups: [{ name: 'vendor', test: /node_modules/ }] },
+        },
+      },
+    },
     server: {
       proxy: {
         '/api': {

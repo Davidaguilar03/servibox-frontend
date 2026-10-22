@@ -10,6 +10,7 @@ import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts, fetchKpis, type Kpis } from '../dashboard/dashboardApi'
 import { apiDownload } from '../lib/api'
+import { businessToday } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency } from '../lib/format'
 import {
@@ -23,7 +24,7 @@ import {
   type ReportFormat,
   type ReportType,
 } from '../reports/reports'
-import { businessToday, monthRange } from '../sales/salesList'
+import { monthRange } from '../sales/salesList'
 
 const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
 const focusWithin = 'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand'

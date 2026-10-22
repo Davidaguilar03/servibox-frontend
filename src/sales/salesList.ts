@@ -26,9 +26,6 @@ const periods: Period[] = ['este-mes', 'mes-anterior', 'este-ano', 'todas']
 
 export const CONSUMIDOR_FINAL = 'Consumidor final'
 
-/** Zona del negocio, la misma del backend (`servibox.business.time-zone`). */
-const BUSINESS_TIME_ZONE = 'America/Bogota'
-
 function pick<T extends string>(value: string | null, allowed: T[], fallback: T): T {
   return allowed.includes(value as T) ? (value as T) : fallback
 }
@@ -54,11 +51,6 @@ export function filtersToParams(filters: SalesFilters): URLSearchParams {
   if (filters.periodo !== DEFAULT_FILTERS.periodo) params.set('periodo', filters.periodo)
   if (filters.pagina > 1) params.set('pagina', String(filters.pagina))
   return params
-}
-
-/** Hoy en la zona del negocio, `yyyy-MM-dd`. */
-export function businessToday(now = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: BUSINESS_TIME_ZONE }).format(now)
 }
 
 /** Del primer dia del mes de hoy a hoy, para los indicadores del mes. */

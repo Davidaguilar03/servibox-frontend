@@ -21,9 +21,9 @@ describe('guard de rutas privadas', () => {
 
   it('con sesion muestra la pagina privada', async () => {
     saveToken(validToken())
-    renderRoute('/compras')
+    renderRoute('/configuracion')
 
-    expect(await screen.findByRole('heading', { name: 'Compras' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Configuración' })).toBeInTheDocument()
   })
 
   it('la raiz redirige a /inicio', async () => {

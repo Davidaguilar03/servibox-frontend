@@ -1,15 +1,16 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useBlocker, useNavigate } from 'react-router'
+import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useNavigate } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
-import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
+import { NewCounterpartyModal } from '../counterparties/NewCounterpartyModal'
 import {
   fetchAccounts,
   fetchCategories,
@@ -17,15 +18,13 @@ import {
   type Category,
   type Product,
 } from '../dashboard/dashboardApi'
+import { defaultCashAccount } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
+import { CREDIT_DAY_OPTIONS, addDays, businessToday, defaultDueDate } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import {
-  CREDIT_DAY_OPTIONS,
-  addDays,
   buildSaleRequest,
-  defaultCashAccount,
-  defaultDueDate,
   invoiceTotals,
   isDuplicateNumberError,
   lineAmounts,
@@ -38,29 +37,12 @@ import {
   type SaleForm,
   type SaleLine,
 } from '../sales/newSale'
-import {
-  createCounterparty,
-  createSale,
-  fetchCustomers,
-  fetchNextInvoiceNumber,
-  type Counterparty,
-  type DocumentType,
-  type SaleRequest,
-} from '../sales/salesApi'
-import { businessToday } from '../sales/salesList'
+import { createSale, fetchCustomers, fetchNextInvoiceNumber, type Counterparty, type SaleRequest } from '../sales/salesApi'
 
 /** Documento del tercero Consumidor final que crea el backend en cada tenant. */
 const CONSUMIDOR_FINAL_DOCUMENT = '222222222222'
 
 const CUSTOMERS_KEY = ['counterparties', 'CLIENTE']
-
-const documentTypes: Array<{ value: DocumentType; label: string }> = [
-  { value: 'CC', label: 'CC' },
-  { value: 'NIT', label: 'NIT' },
-  { value: 'CE', label: 'CE' },
-  { value: 'RUT', label: 'RUT' },
-  { value: 'PASAPORTE', label: 'Pasaporte' },
-]
 
 const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
 const lineInput =
@@ -129,18 +111,6 @@ export function NewSaleInvoicePage() {
   const totals = invoiceTotals(pricedLines)
   const totalUnits = pricedLines.reduce((sum, line) => sum + (Number.isInteger(line.quantity) ? line.quantity : 0), 0)
   const warnings = stockWarnings(form.lines, productsById, categoriesById)
-
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      dirty && !allowLeave.current && currentLocation.pathname !== nextLocation.pathname,
-  )
-
-  useEffect(() => {
-    if (!dirty) return
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
 
   const save = useMutation({
     // Otra factura pudo tomar el mismo consecutivo al tiempo: se reintenta una sola vez.
@@ -483,27 +453,10 @@ export function NewSaleInvoicePage() {
       </section>
 
       {customerModalOpen && (
-        <NewCustomerModal onClose={() => setCustomerModalOpen(false)} onCreated={handleCustomerCreated} />
+        <NewCounterpartyModal role="CLIENTE" onClose={() => setCustomerModalOpen(false)} onCreated={handleCustomerCreated} />
       )}
 
-      {blocker.state === 'blocked' && (
-        <Modal
-          title="Descartar cambios"
-          onClose={() => blocker.reset()}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => blocker.reset()}>
-                Seguir editando
-              </Button>
-              <Button variant="danger" onClick={() => blocker.proceed()}>
-                Descartar cambios
-              </Button>
-            </>
-          }
-        >
-          <p className="text-body text-text">Si sales ahora, se pierde lo que digitaste en esta factura.</p>
-        </Modal>
-      )}
+      <UnsavedChangesGuard dirty={dirty} allowLeave={allowLeave} />
     </form>
   )
 }
@@ -695,77 +648,5 @@ function LineNumberInput({ label, value, min, max, step, onChange, hint, error }
         </p>
       )}
     </div>
-  )
-}
-
-function NewCustomerModal({ onClose, onCreated }: { onClose: () => void; onCreated: (customer: Counterparty) => void }) {
-  const [name, setName] = useState('')
-  const [documentType, setDocumentType] = useState<DocumentType>('CC')
-  const [documentNumber, setDocumentNumber] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const create = useMutation({ mutationFn: createCounterparty, onSuccess: onCreated })
-  const ready = name.trim() !== '' && documentNumber.trim() !== ''
-
-  function submit() {
-    if (!ready || create.isPending) return
-    create.mutate({
-      role: 'CLIENTE',
-      name: name.trim(),
-      documentType,
-      documentNumber: documentNumber.trim(),
-      ...(email.trim() ? { email: email.trim() } : {}),
-      ...(phone.trim() ? { phone: phone.trim() } : {}),
-    })
-  }
-
-  return (
-    <Modal
-      title="Nuevo cliente"
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={submit} disabled={!ready || create.isPending}>
-            {create.isPending ? 'Guardando…' : 'Guardar cliente'}
-          </Button>
-        </>
-      }
-    >
-      <div
-        className="flex flex-col gap-4"
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
-            event.preventDefault()
-            submit()
-          }
-        }}
-      >
-        {create.isError && (
-          <Alert tone="error" title="No pudimos crear el cliente">
-            {errorMessage(create.error)}
-          </Alert>
-        )}
-        <TextField label="Nombre o razón social" value={name} onChange={(event) => setName(event.target.value)} required />
-        <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)]">
-          <SelectField
-            label="Tipo de documento"
-            options={documentTypes}
-            value={documentType}
-            onChange={(event) => setDocumentType(event.target.value as DocumentType)}
-          />
-          <TextField
-            label="Número de documento"
-            value={documentNumber}
-            onChange={(event) => setDocumentNumber(event.target.value)}
-            required
-          />
-        </div>
-        <TextField label="Correo" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-        <TextField label="Celular" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} />
-      </div>
-    </Modal>
   )
 }

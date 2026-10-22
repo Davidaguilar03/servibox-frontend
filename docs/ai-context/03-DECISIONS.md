@@ -12,6 +12,125 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Indicadores de Facturas de compra
+
+* Decision:
+  * Compras del mes: `totalPurchases` de `GET /api/reporting/kpis` del primer dia del mes a
+    hoy (Bogota).
+  * Por pagar: suma de `pendingBalance` de las compras PENDIENTE; el texto secundario es el
+    numero de esas facturas ("N facturas pendientes de pago"). No depende del periodo.
+  * Pagos del mes: suma de los movimientos de `GET /api/treasury/movements` con
+    `category=PAGO_COMPRA` del mes cuya compra es a credito, cruzando `purchaseId` con la
+    lista de compras ya cargada.
+  * Sin variacion contra el mes anterior.
+* Alternativas consideradas: Pagos con todos los PAGO_COMPRA.
+* Motivo: el backend registra el contado como un PAGO_COMPRA por el total al crear la
+  compra; eso no es un pago a un saldo. Es la misma regla de Abonos del mes en ventas.
+  Verificado en la prueba real: con un contado de 275.286,64 y un pago de 100.000 a credito,
+  Pagos del mes dio 100.000.
+
+## 2026-10-22: Facturas de compra: filtros en la URL reutilizados de ventas
+
+* Decision: `GET /api/purchases` se pide una vez; busqueda (numero de factura o nombre del
+  proveedor, sin mayusculas ni tildes), estado (Todos, Pagada, Pendiente), forma de pago,
+  periodo (por `invoiceDate`, en Bogota) y pagina (25) se resuelven en el cliente y viven en
+  la query string con `parseFilters`, `filtersToParams` y `periodPrefix` de `salesList.ts`,
+  sin copiarlos. Limpiar deja Todas. Orden por fecha descendente y luego id descendente. Las
+  ANULADAS no salen: iran a la Papelera.
+* Alternativas consideradas: un modulo de filtros propio para compras.
+* Motivo: las claves y los valores de la URL son identicos en los dos listados.
+
+## 2026-10-22: Numero de factura del proveedor manual
+
+* Decision: el campo "N.o factura del proveedor" es obligatorio y libre, con maximo 50
+  caracteres (`numero_factura_compra` VARCHAR 50; el backend solo exige `@NotBlank`, y uno
+  mas largo fallaria en la base). Se envia sin espacios al inicio ni al final. El 409 "Ya
+  existe una factura de compra con el numero X" se muestra bajo el campo, con el foco en el,
+  y se borra al editarlo. La unicidad es por tenant, no por proveedor, y sin distinguir
+  mayusculas (`findByInvoiceNumberIgnoreCaseAndTenantId`).
+* Alternativas consideradas: un consecutivo como en ventas.
+* Motivo: el numero lo pone el proveedor; el backend no tiene consecutivo de compras.
+
+## 2026-10-22: IVA descontable espejo del backend
+
+* Decision: `purchaseTotals` replica `PurchasesService.crearFactura`: por linea
+  `base = precio * cantidad` e `iva = base * tasa`, sumados en doubles en el orden de las
+  lineas, y `total = subtotal + iva`. La tasa es la suma de las `rate` con `isVat` de la
+  categoria del producto (`getIvaRateForProduct`); sin categoria o sin IVA es 0. El precio de
+  la linea es el costo unitario sin IVA. El servicio no redondea; redondean las columnas
+  NUMERIC(14,2) de subtotal, IVA, total e IVA de cada linea, cada una por separado, y el
+  frontend aplica `round2` a cada valor igual. A diferencia de ventas, el resumen muestra
+  `ivaTotal` ("IVA descontable") y no total menos subtotal, porque la compra lo guarda. La
+  columna Total de cada linea es precio por cantidad, sin IVA.
+* Alternativas consideradas: IVA como total menos subtotal; redondear por linea.
+* Motivo: diferencia cero con el backend, verificada en la prueba real con precios con
+  decimales (subtotal, IVA, total e IVA por linea iguales al centavo).
+
+## 2026-10-22: Saldo insuficiente validado en el cliente
+
+* Decision: en contado, si el saldo actual de la cuenta es menor que el total sin redondear
+  (la comparacion de `exigirSaldoSuficiente`: `saldo < requerido`), se muestra un Alert de
+  error no bloqueante "Saldo insuficiente en X" con lo disponible y lo necesario, el saldo en
+  rojo bajo la cuenta y en el resumen, y Guardar queda deshabilitado. Igual al total se
+  permite. Si el backend aun responde 409 "Saldo insuficiente en X: hay A y se requieren B"
+  (el saldo cambio en otra pestana), su mensaje va en un Alert del formulario sin perder
+  nada y se refrescan las cuentas. A credito no se valida saldo, como en el backend.
+* Alternativas consideradas: dejar que solo el backend lo rechace.
+* Motivo: el backend lo evalua siempre en contado, antes de mover stock o dinero; el cliente
+  lo anticipa con la misma regla. El mensaje del backend trae los montos como double de Java
+  (`3250000.0`, y en notacion cientifica desde 10 millones), por eso el aviso del cliente usa
+  su propio texto con `formatCurrency`.
+
+## 2026-10-22: Medio de pago de compra con el diccionario
+
+* Decision: el medio de pago de una compra de contado se deriva del tipo de cuenta con los
+  valores de `medio_pago_compra` del diccionario del backend: EFECTIVO fija EFECTIVO y
+  bloquea el campo; BANCO o DIGITAL ofrecen TRANSFERENCIA (por defecto) y CHEQUE. En
+  pantalla: Efectivo, Transferencia, Cheque. En credito no se envian cuenta ni medio. Se
+  propone la primera cuenta EFECTIVO por id, como en ventas.
+* Alternativas consideradas: Efectivo, Transferencia y Tarjeta de Autollantas, decididos por
+  el nombre de la cuenta.
+* Motivo: el backend guarda texto libre y no valida; el diccionario manda.
+
+## 2026-10-22: Costo del producto al comprar
+
+* Decision: el precio de la linea arranca en el `purchaseCost` actual del producto y se
+  puede editar. La cantidad es entera mayor que cero, sin tope de stock. Un producto no se
+  agrega dos veces. La pantalla avisa que al guardar el costo pasa a ser el precio de la
+  compra y se recalcula el precio sugerido.
+* Alternativas consideradas: ninguna.
+* Motivo: verificado en `PurchasesService.sincronizarCosto` y `PurchasesCostSyncTest`: cada
+  linea reescribe `purchaseCost` y llama a `recalculatePrices`, en contado y en credito.
+  Comprobado en la prueba real (costo de 30.000 a 31.000, sugerido de 42.857,14 a 44.285,71).
+
+## 2026-10-22: Piezas compartidas entre Nueva factura de venta y de compra
+
+* Decision: se extrajeron, sin cambiar el comportamiento de ventas:
+  * `lib/businessDate.ts`: `businessToday` (antes en `salesList.ts`), `addDays`,
+    `DEFAULT_CREDIT_DAYS`, `CREDIT_DAY_OPTIONS` y `defaultDueDate` (antes en `newSale.ts`).
+  * `lib/accountPayment.ts`: `accountPaymentMethods(tipo, catalogo)` y `defaultCashAccount`.
+    Ventas conserva `paymentMethodsFor(tipo)` con su catalogo; compras usa
+    `purchasePaymentMethodsFor`.
+  * `counterparties/NewCounterpartyModal.tsx`: el modal Nuevo cliente con el rol (CLIENTE o
+    PROVEEDOR) como parametro, con el mismo manejo de 201, 200 y 409.
+  * `components/UnsavedChangesGuard.tsx`: `useBlocker`, `beforeunload` y el modal
+    "Descartar cambios".
+  * Las pruebas de ventas solo cambiaron rutas de importacion. Las de login y guard usaban
+    `/compras` como ejemplo de pagina placeholder; ahora usan `/configuracion`.
+  * Las dependencias salen en un chunk `vendor` (`build.rolldownOptions.output.codeSplitting`
+    en `vite.config.ts`): el chunk unico paso de 500 kB y el build debe salir sin
+    advertencias.
+* Alternativas consideradas: copiar las piezas en compras; subir el limite de advertencia.
+* Motivo: un solo lugar para reglas que deben coincidir en las dos facturas.
+
+## 2026-10-22: Lo que queda fuera de Compras
+
+* Decision: no se implementan el detalle de la compra, pagos, anulacion, la Papelera real,
+  la pantalla de Proveedores, gastos operativos, edicion de compras ni adjuntos.
+  `/compras/:id` y `/compras/papelera` son paginas Proximamente con su titulo.
+* Alternativas consideradas: ninguna; son tareas propias.
+* Motivo: alcance de la tarea.
+
 ## 2026-10-21: Cuentas: una carga de movimientos por periodo y estado en la URL
 
 * Decision: `GET /api/treasury/movements?desde&hasta` se pide una vez por periodo para

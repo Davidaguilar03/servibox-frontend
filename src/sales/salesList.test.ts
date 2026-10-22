@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Sale } from '../dashboard/dashboardApi'
+import { businessToday } from '../lib/businessDate'
 import type { Movement } from './salesApi'
 import {
   CLEARED_FILTERS,
   DEFAULT_FILTERS,
-  businessToday,
   creditCollections,
   filterSales,
   filtersToParams,

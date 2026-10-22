@@ -31,7 +31,8 @@ export interface Counterparty {
 }
 
 export interface CounterpartyRequest {
-  role: 'CLIENTE'
+  /** Un tercero nuevo es CLIENTE o PROVEEDOR; AMBOS lo asigna el backend. */
+  role: 'CLIENTE' | 'PROVEEDOR'
   name: string
   documentType: DocumentType
   documentNumber: string
@@ -42,7 +43,7 @@ export interface CounterpartyRequest {
 /** Clientes del tenant (CLIENTE y AMBOS), con el Consumidor final incluido. */
 export const fetchCustomers = () => apiFetch<Counterparty[]>('/counterparties?role=CLIENTE')
 
-/** 201 si el documento es nuevo; 200 si era proveedor y pasa a AMBOS; 409 si ya es cliente. */
+/** 201 si el documento es nuevo; 200 si tenia el otro rol y pasa a AMBOS; 409 si ya tiene este rol. */
 export const createCounterparty = (request: CounterpartyRequest) =>
   apiFetch<Counterparty>('/counterparties', { method: 'POST', body: request })
 
