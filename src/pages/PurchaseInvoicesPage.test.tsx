@@ -242,13 +242,10 @@ describe('facturas de compra', () => {
     await waitFor(() => expect(invoiceNumbers()).toHaveLength(2))
   })
 
-  it('la papelera y el detalle aun son placeholders con su titulo', async () => {
+  it('la papelera aun es un placeholder con su titulo', async () => {
     mockApi(fullRoutes())
-    const router = renderRoute('/compras/papelera')
+    renderRoute('/compras/papelera')
     expect(await screen.findByRole('heading', { name: 'Papelera' })).toBeInTheDocument()
     expect(screen.getByText(/Próximamente/)).toBeInTheDocument()
-
-    await router.navigate('/compras/7')
-    expect(await screen.findByRole('heading', { name: 'Detalle de factura de compra' })).toBeInTheDocument()
   })
 })

@@ -36,7 +36,8 @@ src/
   sales/              consultas de ventas y terceros, logica del listado y de la
                       nueva factura (newSale.ts)
   purchases/          consultas de compras (purchasesApi.ts), logica del listado
-                      (purchasesList.ts) y de la nueva factura de compra (newPurchase.ts)
+                      (purchasesList.ts), de la nueva factura de compra (newPurchase.ts)
+                      y del detalle (purchaseDetail.ts)
   counterparties/     modal compartido Nuevo cliente o Nuevo proveedor
   reports/            logica pura de Reportes (reports.ts)
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
@@ -75,7 +76,8 @@ src/
 | `/cuentas` | privada | `AccountsPage`, Cuentas: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
 | `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
 | `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
-| `/compras/papelera`, `/compras/:id` | privada | `PlaceholderPage` ("Proximamente") con el titulo Papelera o Detalle de factura de compra |
+| `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
+| `/compras/papelera` | privada | `PlaceholderPage` ("Proximamente") con el titulo Papelera |
 | `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -337,3 +339,24 @@ del POST, medio de pago, errores 409) en `src/purchases/newPurchase.ts`; reglas 
   `beforeunload`).
 * Un 409 de numero repetido va bajo el campo; un 409 de saldo va en un Alert y refresca
   `['treasury', 'accounts']`. Tras guardar se invalidan compras, productos, tesoreria y KPIs.
+
+## Detalle de factura de compra
+
+`PurchaseDetailPage` (`/compras/:id`), calcado del detalle de venta. Logica propia (botones
+por estado y validacion del pago con el saldo de la cuenta) en `src/purchases/purchaseDetail.ts`;
+el resumen, el id de la ruta, el total de linea, el orden de los pagos, el rango de fecha y el
+cuerpo del POST se reutilizan de `src/sales/saleDetail.ts` sin cambios. Reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoint |
+|-|-|
+| Factura (encabezado, datos, productos, resumen) | `GET /api/purchases/{id}` |
+| Pago realizado o pagos registrados | `GET /api/treasury/movements?purchaseId&category=PAGO_COMPRA` (trae `accountName`) |
+| Cuentas (respaldo del nombre, saldo disponible y modal) | `GET /api/treasury/accounts` |
+| Modal Registrar pago | `POST /api/purchases/{id}/payments` |
+| Modal Anular | `POST /api/purchases/{id}/annul` |
+
+* Factura, pagos y cuentas cargan y fallan por separado, con skeleton y reintentar.
+* Tras pagar o anular, y tambien ante un rechazo del backend, se invalidan compras,
+  tesoreria, productos y KPIs. Un 409 de saldo refresca ademas `['treasury', 'accounts']`.
+* Columnas 70 y 30 desde `lg`; bajo `md` productos y pagos pasan a tarjetas.

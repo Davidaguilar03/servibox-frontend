@@ -11,6 +11,7 @@ import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
+import { PurchaseDetailPage } from './pages/PurchaseDetailPage'
 import { PurchaseInvoicesPage } from './pages/PurchaseInvoicesPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
@@ -20,11 +21,6 @@ const privatePages = [
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
   { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
   { path: 'compras/papelera', title: 'Papelera', breadcrumb: ['Compras', 'Papelera'] },
-  {
-    path: 'compras/:id',
-    title: 'Detalle de factura de compra',
-    breadcrumb: ['Compras', 'Facturas de compra', 'Detalle de factura'],
-  },
 ]
 
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
@@ -59,6 +55,12 @@ export const routes: RouteObject[] = [
             path: 'compras/nueva',
             element: <NewPurchaseInvoicePage />,
             handle: handle(['Compras', 'Facturas de compra', 'Nueva factura']),
+          },
+          {
+            path: 'compras/:id',
+            element: <PurchaseDetailPage />,
+            // El ultimo tramo lo reemplaza la pagina por el numero de la factura.
+            handle: handle(['Compras', 'Facturas de compra', 'Detalle de factura']),
           },
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
           // El ultimo tramo lo reemplaza la pagina por la cuenta seleccionada.

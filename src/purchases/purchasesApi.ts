@@ -65,3 +65,18 @@ export const fetchSuppliers = () => apiFetch<Counterparty[]>('/counterparties?ro
 /** 409 por numero repetido o por saldo insuficiente en la cuenta de contado. */
 export const createPurchase = (request: PurchaseRequest) =>
   apiFetch<Purchase>('/purchases', { method: 'POST', body: request })
+
+/** 404 si no existe o es de otro tenant. */
+export const fetchPurchase = (id: number) => apiFetch<Purchase>(`/purchases/${id}`)
+
+/** Pagos activos de una compra (el contado o los pagos a credito). Los de una anulada no salen. */
+export const fetchPurchaseMovements = (purchaseId: number) =>
+  apiFetch<TreasuryMovement[]>(`/treasury/movements?purchaseId=${purchaseId}&category=PAGO_COMPRA`)
+
+/** Pago a una compra PENDIENTE. Responde el movimiento PAGO_COMPRA creado; 409 si la cuenta no alcanza. */
+export const createPurchasePayment = (purchaseId: number, request: { accountId: number; amount: number; date: string }) =>
+  apiFetch<TreasuryMovement>(`/purchases/${purchaseId}/payments`, { method: 'POST', body: request })
+
+/** Anula la compra: quita el stock que sumo y revierte el saldo de sus pagos. 400 si ese stock ya se vendio. */
+export const annulPurchase = (purchaseId: number) =>
+  apiFetch<Purchase>(`/purchases/${purchaseId}/annul`, { method: 'POST' })
