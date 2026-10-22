@@ -12,6 +12,75 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Detalle de compra: botones por estado y solo lectura de la anulada
+
+* Decision: Registrar pago (primario) solo en PENDIENTE; Anular (secundario neutro) en
+  PAGADA o PENDIENTE, con o sin pagos, contado o credito. Una ANULADA no tiene botones,
+  muestra un aviso y la raya en Pagado y Saldo pendiente. Sin Descargar PDF ni imprimir.
+* Alternativas consideradas: la regla de Autollantas (pagar con saldo mayor que 0 y estado
+  distinto de PAGADA y ANULADA; anular todo lo no anulado).
+* Motivo: es lo que acepta el backend: `registrarPago` exige PENDIENTE ("Solo se puede pagar
+  una compra PENDIENTE, y esta esta X", 400) y `anularFactura` solo rechaza una ya anulada
+  ("La compra X ya esta anulada", 400). En la practica coincide con Autollantas. El PDF queda
+  fuera por lo mismo que en ventas: no hay endpoint ni formato definido.
+
+## 2026-10-22: Pagado es total menos pendingBalance; pagos sin metodo
+
+* Decision: el resumen usa `saleSummary` del detalle de venta: Pagado = total menos
+  `pendingBalance`, Saldo pendiente = `pendingBalance`, IVA = total menos subtotal. Los pagos
+  se listan con fecha, cuenta y valor, por fecha descendente; en credito la seccion es "Pagos
+  registrados" y en contado "Pago realizado".
+* Alternativas consideradas: sumar los PAGO_COMPRA en el cliente; columna de metodo.
+* Motivo: el backend calcula el saldo como total menos todos los PAGO_COMPRA de la compra
+  (activos o no) y lo deja en 0 si es menor a un peso, asi que Pagado coincide con la suma de
+  los movimientos salvo ese resto (verificado en la prueba real: diferencia 0 en las cinco
+  compras). En una ANULADA el backend fija el saldo en 0 y `GET /api/treasury/movements` no
+  devuelve sus movimientos ni filtrando por `purchaseId`. `PaymentRequest` solo trae
+  `accountId`, `amount` y `date`: el backend no guarda metodo de pago en un pago.
+
+## 2026-10-22: Modal Registrar pago con el saldo de la cuenta
+
+* Decision: cuenta (cada opcion con su saldo; se propone la primera EFECTIVO por id), valor
+  (por defecto el saldo pendiente) y fecha (por defecto hoy en America/Bogota, minimo la
+  fecha de la factura, maximo hoy). El cliente exige valor mayor que cero y no mayor que el
+  saldo pendiente, la fecha en el rango y que la cuenta alcance: con saldo menor que el valor
+  (la regla `saldo < requerido` de `exigirSaldoSuficiente`) muestra el Alert "Saldo
+  insuficiente en X: disponible $A, necesitas $B" y deshabilita el boton; igual al valor se
+  permite. Envia `{accountId, amount, date}`. Los 400 y 409 del backend van en un Alert del
+  modal con `errorMessage`, sin perder lo digitado; un 409 de saldo refresca las cuentas.
+* Alternativas consideradas: dejar la tolerancia de un peso del backend; aceptar fechas
+  anteriores a la factura como el backend.
+* Motivo: mismas razones que en el abono de ventas. El backend rechaza fechas futuras ("La
+  fecha del pago (X) no puede ser posterior a hoy (Y)"), montos no positivos ("El monto del
+  pago debe ser mayor a cero") y montos que superan el saldo en mas de un peso ("El pago de
+  A excede el saldo pendiente de B"), todos 400; una cuenta inexistente o de otro tenant es
+  400 "Cuenta no encontrada: id"; el saldo insuficiente es 409 con montos como double de Java.
+
+## 2026-10-22: Texto de anular una compra
+
+* Decision: el modal dice que la factura pasa a la papelera, que se descuentan del
+  inventario las unidades que sumo la compra, que se revierten en las cuentas los pagos
+  registrados y que se puede recuperar desde la Papelera; y, en texto secundario, que el
+  costo de los productos no vuelve al anterior y que si parte de esas unidades ya se vendio
+  no se puede anular. Cancelar tiene el foco inicial; Anular factura es el unico rojo. Un
+  rechazo del backend queda en el modal.
+* Alternativas consideradas: "Esta accion es irreversible" de Autollantas.
+* Motivo: verificado en `PurchasesService.anularFactura`: revisa todo el stock antes de
+  escribir y rechaza con 400 "No se puede anular la compra X: de P quedan N unidades y habria
+  que quitar M. Parte de ese stock ya se vendio." (nunca deja stock negativo); revierte el
+  saldo de cada movimiento sin borrarlo; no toca `purchaseCost` ni el precio sugerido (prueba
+  `anularNoRevierteElCostoDelProducto`). En la prueba real: costo 16.000 antes y despues,
+  stock de 15 a 10 y la caja de vuelta con +95.200. Restaurar existe en el backend.
+
+## 2026-10-22: Lo que queda fuera del detalle de compra
+
+* Decision: no se implementan descargar PDF, imprimir, editar o eliminar pagos, editar la
+  factura, recuperar una anulada, la Papelera ni metodo de pago en los pagos. Los modales de
+  pago y anular no se comparten con ventas: difieren en textos, en el saldo de la cuenta y en
+  las opciones del selector; compartirlos exigiria parametrizar casi todo.
+* Alternativas consideradas: un modal generico para abono y pago.
+* Motivo: alcance de la tarea; duplicar dos modales cortos es mas simple que parametrizarlos.
+
 ## 2026-10-22: Indicadores de Facturas de compra
 
 * Decision:
