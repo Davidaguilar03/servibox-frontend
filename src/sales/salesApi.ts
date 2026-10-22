@@ -95,3 +95,6 @@ export const createCollection = (saleId: number, request: { accountId: number; a
 
 /** Anula la factura: devuelve el stock y revierte el saldo de sus movimientos. */
 export const annulSale = (saleId: number) => apiFetch<SaleDetail>(`/sales/${saleId}/annul`, { method: 'POST' })
+
+/** Saca la factura de la papelera. 409 si una linea ya no tiene stock; 400 si no esta anulada. */
+export const restoreSale = (saleId: number) => apiFetch<SaleDetail>(`/sales/${saleId}/restore`, { method: 'POST' })

@@ -13,14 +13,14 @@ import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { PurchaseDetailPage } from './pages/PurchaseDetailPage'
 import { PurchaseInvoicesPage } from './pages/PurchaseInvoicesPage'
+import { PurchasesTrashPage } from './pages/PurchasesTrashPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
+import { SalesTrashPage } from './pages/SalesTrashPage'
 
 const privatePages = [
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
-  { path: 'ventas/papelera', title: 'Papelera', breadcrumb: ['Ventas', 'Papelera'] },
-  { path: 'compras/papelera', title: 'Papelera', breadcrumb: ['Compras', 'Papelera'] },
 ]
 
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
@@ -39,6 +39,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/inicio" replace /> },
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
+          { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },
           {
             path: 'ventas/nueva',
             element: <NewSaleInvoicePage />,
@@ -51,6 +52,7 @@ export const routes: RouteObject[] = [
             handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
           },
           { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle(['Compras', 'Facturas de compra']) },
+          { path: 'compras/papelera', element: <PurchasesTrashPage />, handle: handle(['Compras', 'Papelera']) },
           {
             path: 'compras/nueva',
             element: <NewPurchaseInvoicePage />,
