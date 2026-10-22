@@ -80,3 +80,7 @@ export const createPurchasePayment = (purchaseId: number, request: { accountId: 
 /** Anula la compra: quita el stock que sumo y revierte el saldo de sus pagos. 400 si ese stock ya se vendio. */
 export const annulPurchase = (purchaseId: number) =>
   apiFetch<Purchase>(`/purchases/${purchaseId}/annul`, { method: 'POST' })
+
+/** Saca la compra de la papelera. 409 si una cuenta no alcanza para sus pagos; 400 si no esta anulada. */
+export const restorePurchase = (purchaseId: number) =>
+  apiFetch<Purchase>(`/purchases/${purchaseId}/restore`, { method: 'POST' })

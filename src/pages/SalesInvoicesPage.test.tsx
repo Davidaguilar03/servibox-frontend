@@ -227,11 +227,12 @@ describe('facturas de venta', () => {
     await waitFor(() => expect(invoiceNumbers()).toHaveLength(2))
   })
 
-  it('la papelera aun es un placeholder', async () => {
+  it('el boton Papelera lleva a la papelera de ventas', async () => {
     mockApi(fullRoutes())
-    renderRoute('/ventas/papelera')
+    const router = renderRoute('/ventas')
 
-    expect(await screen.findByRole('heading', { name: 'Papelera' })).toBeInTheDocument()
-    expect(screen.getByText(/Próximamente/)).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('link', { name: 'Papelera' }))
+    expect(await screen.findByRole('heading', { name: 'Papelera de ventas' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/ventas/papelera')
   })
 })

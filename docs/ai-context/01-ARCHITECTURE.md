@@ -39,6 +39,8 @@ src/
                       (purchasesList.ts), de la nueva factura de compra (newPurchase.ts)
                       y del detalle (purchaseDetail.ts)
   counterparties/     modal compartido Nuevo cliente o Nuevo proveedor
+  trash/              papelera compartida de ventas y compras (TrashPage.tsx) y su logica
+                      de filtros (trashList.ts)
   reports/            logica pura de Reportes (reports.ts)
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
@@ -67,7 +69,7 @@ src/
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
-| `/ventas/papelera` | privada | `PlaceholderPage` ("Proximamente") con su titulo |
+| `/ventas/papelera` | privada | `SalesTrashPage`, Papelera de ventas (`TrashPage` con la configuracion de ventas) |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
 | `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
 | `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
@@ -77,7 +79,7 @@ src/
 | `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
 | `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
-| `/compras/papelera` | privada | `PlaceholderPage` ("Proximamente") con el titulo Papelera |
+| `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
 | `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -360,3 +362,23 @@ cuerpo del POST se reutilizan de `src/sales/saleDetail.ts` sin cambios. Reglas e
 * Tras pagar o anular, y tambien ante un rechazo del backend, se invalidan compras,
   tesoreria, productos y KPIs. Un 409 de saldo refresca ademas `['treasury', 'accounts']`.
 * Columnas 70 y 30 desde `lg`; bajo `md` productos y pagos pasan a tarjetas.
+
+## Papeleras
+
+`SalesTrashPage` (`/ventas/papelera`) y `PurchasesTrashPage` (`/compras/papelera`) son el mismo
+`TrashPage` (`src/trash/TrashPage.tsx`) con una `TrashConfig` por modulo: titulo, subtitulo,
+ruta y nombre del listado, rotulo y nombre del tercero, clave y consulta del listado, llamada de
+recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoint |
+|-|-|
+| Facturas anuladas | `GET /api/sales` o `GET /api/purchases` (claves `['sales']` y `['purchases']`, las de los listados), filtrando `ANULADA` en el cliente |
+| Recuperar | `POST /api/sales/{id}/restore` o `POST /api/purchases/{id}/restore` |
+
+* Query string: `q`, `pago` (`CONTADO`, `CREDITO`), `periodo` (`este-mes`, `mes-anterior`,
+  `este-ano`; sin el parametro es Todas) y `pagina`. Solo se escriben los valores distintos de
+  los de por defecto.
+* Tras recuperar, y tambien ante un rechazo, se invalidan la clave del listado, `['treasury']`,
+  `['inventory', 'products']` y `['kpis']`.
+* Bajo `md` la tabla pasa a tarjetas apiladas con su boton Recuperar.

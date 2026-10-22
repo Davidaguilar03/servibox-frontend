@@ -12,6 +12,67 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Papelera como filtro en el cliente y componente compartido
+
+* Decision: las papeleras de ventas y compras piden el mismo `GET /api/sales` o
+  `GET /api/purchases` de los listados (misma clave de TanStack Query) y se quedan con las
+  ANULADAS en el cliente. Las dos son `TrashPage` con una configuracion por modulo (tercero,
+  API, textos, rutas y recuperar). Filtros en la URL como en los listados: busqueda por numero
+  o tercero sin mayusculas ni tildes, forma de pago y periodo por la fecha de la factura en
+  Bogota, con Todas por defecto. Orden por fecha descendente y luego id descendente.
+  Paginas de 25.
+* Alternativas consideradas: un endpoint de anuladas; dos pantallas separadas; Este mes por
+  defecto como en los listados.
+* Motivo: el backend ya devuelve las anuladas en el listado completo y no tiene filtro por
+  estado. Las dos pantallas solo difieren en datos y textos. En la papelera se busca una
+  factura concreta, que puede ser de cualquier mes.
+
+## 2026-10-22: Columnas de la papelera, sin fecha de anulacion
+
+* Decision: numero (enlace al detalle de solo lectura), Cliente o Proveedor, fecha de la
+  factura, forma de pago, total, estado Anulada y el boton Recuperar como unica accion de la
+  fila, en secundario para que no haya varios rojos en la pantalla. Recuperar factura del
+  modal es el primario.
+* Alternativas consideradas: una columna Anulada el; Recuperar en rojo por fila.
+* Motivo: ni `Sale` ni `Purchase` guardan cuando se anularon: las respuestas no traen ningun
+  campo de anulacion y el `updatedAt` de la entidad no se expone y cambia con cualquier
+  escritura. Autollantas muestra las mismas columnas (numero, tercero, fecha, total, estado).
+
+## 2026-10-22: Texto y errores de Recuperar
+
+* Decision: el modal "Recuperar factura X" (foco en Cancelar) dice, en ventas, que la factura
+  vuelve al listado como Pagada o Pendiente segun lo abonado, que se descuentan otra vez del
+  inventario las unidades vendidas, que se restablecen en las cuentas el pago y los abonos, y
+  que si algun producto no tiene las unidades suficientes no se puede recuperar; en compras,
+  lo mismo con lo pagado, las unidades que se suman otra vez, los pagos que se descuentan de
+  nuevo de las cuentas, que el costo de los productos queda como esta y que si alguna cuenta
+  no tiene saldo no se puede recuperar. Exito: toast "Factura X recuperada" e invalidacion del
+  listado, tesoreria, productos y KPIs. Un rechazo queda en un Alert del modal con
+  `errorMessage`, sin cerrarlo, y refresca los mismos datos. Un ref evita el doble envio.
+* Alternativas consideradas: el texto de Autollantas ("Volvera a su estado anterior a la
+  anulacion... Confirmas?").
+* Motivo: verificado en `SalesService.restaurarFactura` y `PurchasesService.restaurarCompra`:
+  * Ventas: descuenta el stock con `descontarStock`; si una linea no alcanza, 409 "Stock
+    insuficiente para P: hay N y se piden M" y la transaccion deshace todo. Vuelve a aplicar
+    los ingresos de sus movimientos sin validar.
+  * Compras: simula primero todos los egresos sobre el saldo corriente de cada cuenta y, si
+    uno no alcanza, 409 "Saldo insuficiente en X: hay A y se requieren B" sin escribir nada;
+    despues aplica los egresos y suma el stock. No toca `purchaseCost` ni el precio sugerido.
+  * En los dos: los movimientos nunca se borraron y vuelven a estar activos porque el filtro
+    de activos depende del estado de la factura; el estado es PAGADA si el saldo pendiente
+    (total menos todos sus movimientos) es menor o igual a un peso, si no PENDIENTE.
+    Restaurar una que no esta anulada es 400 ("Solo se puede restaurar una factura ANULADA, y
+    la X esta Y" o "una compra ANULADA"); una inexistente o de otro tenant es 404. Todo es
+    `@Transactional`. Verificado en la prueba real en los dos modulos.
+
+## 2026-10-22: Lo que queda fuera de las papeleras
+
+* Decision: no se implementan eliminar definitivamente, recuperar varias a la vez, la fecha
+  de anulacion ni un contador de papelera en el menu.
+* Alternativas consideradas: ninguna; son tareas propias.
+* Motivo: alcance de la tarea. El backend no tiene borrado de facturas ni fecha de anulacion;
+  Autollantas tampoco ofrece eliminar definitivamente.
+
 ## 2026-10-22: Detalle de compra: botones por estado y solo lectura de la anulada
 
 * Decision: Registrar pago (primario) solo en PENDIENTE; Anular (secundario neutro) en
