@@ -100,6 +100,9 @@ export function PurchaseInvoicesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/compras/gastos" className={buttonClasses('secondary')}>
+            Gastos operativos
+          </Link>
           <Link to="/compras/papelera" className={buttonClasses('secondary')}>
             Papelera
           </Link>

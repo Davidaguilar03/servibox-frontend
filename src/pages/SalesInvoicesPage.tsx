@@ -110,6 +110,9 @@ export function SalesInvoicesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/ventas/ingresos" className={buttonClasses('secondary')}>
+            Ingresos ocasionales
+          </Link>
           <Link to="/ventas/papelera" className={buttonClasses('secondary')}>
             Papelera
           </Link>

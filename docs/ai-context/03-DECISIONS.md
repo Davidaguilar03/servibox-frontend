@@ -12,6 +12,76 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Gastos operativos e Ingresos ocasionales con un componente compartido
+
+* Decision: `ManualMovementsPage` (`src/manualMovements/`) arma las dos pantallas con una
+  configuracion (`category`, textos, ruta de regreso). Rutas `/compras/gastos` (Compras /
+  Gastos operativos) y `/ventas/ingresos` (Ventas / Ingresos ocasionales), con un boton
+  secundario en el encabezado de Facturas de compra y de Facturas de venta y "Volver a" el
+  listado. Datos: `GET /api/treasury/movements?category=X&desde&hasta` y las cuentas, cada
+  bloque con su carga, error y reintento. Solo salen las dos categorias manuales: cobros,
+  pagos y transferencias no aparecen.
+* Alternativas consideradas: una sola pantalla con pestanas; dos pantallas copiadas.
+* Motivo: las dos pantallas solo cambian la categoria y los textos, igual que las papeleras.
+
+## 2026-10-22: Indicadores y periodos de los movimientos manuales
+
+* Decision: "Total del periodo" es la suma de los montos de los movimientos que quedan tras
+  todos los filtros (periodo, cuenta y busqueda) y "Movimientos" su cantidad; cambian con
+  los filtros, no solo con el periodo. Periodos Este mes (por defecto), Mes anterior, Este
+  ano, Todas y Personalizado, con `periodRange` de Cuentas (Bogota) y `validateRange`
+  (Personalizado con las dos fechas, en orden y hasta 366 dias). Todas no manda fechas. El
+  periodo filtra en el backend; la cuenta y el concepto (sin mayusculas ni tildes) en el
+  cliente. Todo en la URL (`q`, `cuenta`, `periodo`, `desde`, `hasta`, `pagina`), orden por
+  fecha y luego id descendentes, paginas de 25. Vacio con los filtros de Limpiar: "No hay
+  gastos registrados" con Nuevo gasto; vacio con filtros propios: Limpiar filtros.
+* Alternativas consideradas: el promedio y el mayor movimiento de Autollantas (cuatro
+  tarjetas); filtrar la cuenta en el backend.
+* Motivo: la tarea pide dos indicadores; un solo pedido por periodo alimenta tabla e
+  indicadores.
+
+## 2026-10-22: Saldo de la cuenta en gastos, ediciones y borrados
+
+* Decision: verificado en `TreasuryService`, el backend **no valida el saldo** de un
+  movimiento manual: un gasto, una edicion o el borrado de un ingreso pueden dejar la cuenta
+  en negativo (probado: borrar un ingreso dejo Caja General en -$ 53.750). El cliente no
+  bloquea: muestra un Alert de advertencia "Saldo insuficiente en X: disponible $A,
+  necesitas $B" con "Puedes guardarlo igual: la cuenta queda en negativo." y deja guardar.
+  El calculo sigue lo que hace el backend: editar revierte el efecto anterior en la cuenta
+  anterior y aplica el nuevo en la nueva, asi que en un gasto editado en la misma cuenta el
+  disponible incluye el monto que ya habia salido, y mover o bajar un ingreso puede dejar
+  la cuenta anterior en negativo. Una cuenta a la que la operacion solo le suma no avisa,
+  aunque ya este en negativo. Un saldo que queda justo en cero no avisa.
+* Alternativas consideradas: bloquear como en Nueva transferencia; no avisar.
+* Motivo: Autollantas y el backend permiten el negativo (el backend lo deja como punto
+  abierto); bloquear en el cliente seria una regla que el backend no tiene.
+
+## 2026-10-22: Editar y eliminar movimientos manuales
+
+* Decision: editar usa `PUT /api/treasury/movements/{id}` con el movimiento completo
+  (cuenta, concepto, monto, fecha y observaciones; la categoria es la de la pantalla y el
+  backend no deja cambiarla). La fecha se envia siempre: sin ella el backend pondria la de
+  hoy. Eliminar usa `DELETE` (204), que revierte el efecto y borra la fila (borrado fisico).
+  La confirmacion dice el saldo exacto que queda: "Vuelven $X a Caja General: su saldo pasa
+  de $A a $B" en un gasto y "Se descuentan $X de ..." en un ingreso, con "La cuenta queda
+  en negativo." si aplica. Foco inicial en Cancelar; un error del backend queda dentro del
+  modal. Formulario: concepto y observaciones hasta 255 (columnas VARCHAR 255; el backend no
+  las valida y pasarse daria un 500), fecha por defecto hoy en Bogota y maximo hoy (el
+  backend aceptaria una futura), monto mayor que cero, cuenta con su saldo en el selector y,
+  solo en gastos, la primera EFECTIVO por id preseleccionada. Acciones de fila: dos iconos
+  con etiqueta accesible ("Editar gasto X", "Eliminar gasto X"). `DiscardableModal` pasa a
+  `src/components` para compartirlo con Cuentas.
+* Alternativas consideradas: menu de tres puntos (mas codigo de foco y teclado para dos
+  acciones).
+* Motivo: dos iconos son operables con teclado sin un componente nuevo.
+
+## 2026-10-22: Lo que queda fuera de Gastos e Ingresos
+
+* Categorias de gasto, adjuntos, gastos recurrentes, comision de tarjeta, exportar y editar
+  movimientos de facturas o de transferencias (el backend responde 400 "se gestiona desde
+  su operacion"). Los KPIs no tienen un campo de otros ingresos: un ingreso ocasional cambia
+  el saldo de la cuenta pero no las ventas ni la utilidad del panel ni de Reportes.
+
 ## 2026-10-22: Rutas publicas y la raiz como landing
 
 * Decision: `/` deja de redirigir a `/inicio` y muestra la landing; se suman `/registro` y

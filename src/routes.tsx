@@ -9,6 +9,8 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
+import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
+import { OperationalExpensesPage } from './pages/OperationalExpensesPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
@@ -46,6 +48,7 @@ export const routes: RouteObject[] = [
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
           { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },
+          { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle(['Ventas', 'Ingresos ocasionales']) },
           {
             path: 'ventas/nueva',
             element: <NewSaleInvoicePage />,
@@ -59,6 +62,7 @@ export const routes: RouteObject[] = [
           },
           { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle(['Compras', 'Facturas de compra']) },
           { path: 'compras/papelera', element: <PurchasesTrashPage />, handle: handle(['Compras', 'Papelera']) },
+          { path: 'compras/gastos', element: <OperationalExpensesPage />, handle: handle(['Compras', 'Gastos operativos']) },
           {
             path: 'compras/nueva',
             element: <NewPurchaseInvoicePage />,
