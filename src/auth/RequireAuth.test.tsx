@@ -26,12 +26,44 @@ describe('guard de rutas privadas', () => {
     expect(await screen.findByRole('heading', { name: 'Configuración' })).toBeInTheDocument()
   })
 
-  it('la raiz redirige a /inicio', async () => {
+  it('con sesion la raiz muestra la landing, no redirige', async () => {
     saveToken(validToken())
     const router = renderRoute('/')
 
-    expect(await screen.findByRole('heading', { name: 'Inicio' })).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/inicio')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Una venta. Inventario y caja al día.' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/')
+  })
+
+  it('una ruta desconocida sin sesion termina en /login', async () => {
+    const router = renderRoute('/no-existe')
+
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
+    expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('la barra lateral muestra el nombre completo y sus iniciales', async () => {
+    saveToken(validToken(), {
+      username: 'laura.gomez',
+      role: 'ADMIN',
+      tenantName: 'Serviteca El Roble',
+      tenantSlug: 'el-roble',
+      fullName: 'Laura María Gómez',
+    })
+    renderRoute('/configuracion')
+
+    await screen.findByRole('heading', { name: 'Configuración' })
+    expect(screen.getByText('Laura María Gómez')).toBeInTheDocument()
+    expect(screen.getByText('LG')).toBeInTheDocument()
+    expect(screen.getByText('Serviteca El Roble')).toBeInTheDocument()
+  })
+
+  it('sin nombre completo la barra lateral muestra el username', async () => {
+    saveToken(validToken(), { username: 'admin', role: 'ADMIN', tenantName: 'Demo', tenantSlug: 'demo' })
+    renderRoute('/configuracion')
+
+    await screen.findByRole('heading', { name: 'Configuración' })
+    expect(screen.getByText('admin')).toBeInTheDocument()
+    expect(screen.getByText('AD')).toBeInTheDocument()
   })
 
   it('al cerrar la sesion vuelve a /login', async () => {

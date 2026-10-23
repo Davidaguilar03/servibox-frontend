@@ -1,19 +1,21 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
-import { login } from '../auth/authApi'
-import { getRememberedTenantSlug, rememberTenantSlug, saveToken, useSession } from '../auth/session'
-import { Wordmark } from '../brand/Wordmark'
+import { login, startSession } from '../auth/authApi'
+import { getRememberedTenantSlug, rememberTenantSlug, useSession } from '../auth/session'
+import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
+import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
   'rounded-tag font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 export function LoginPage() {
+  usePageMeta('Inicia sesión · ServiBox', 'Ingresa a ServiBox con los datos de tu serviteca.')
   const session = useSession()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/inicio'
@@ -24,9 +26,9 @@ export function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: login,
-    onSuccess: ({ token, user, tenant }, request) => {
+    onSuccess: (response, request) => {
       rememberTenantSlug(request.tenantSlug)
-      saveToken(token, { username: user.username, role: user.role, tenantName: tenant.name, tenantSlug: tenant.slug })
+      startSession(response)
     },
   })
 
@@ -48,7 +50,7 @@ export function LoginPage() {
           aria-hidden
         />
         <div className="relative">
-          <Wordmark onDark />
+          <WordmarkLink onDark />
         </div>
         <div className="relative my-auto max-w-md">
           <p className="font-mono text-label uppercase text-text-subtle">Servitecas y talleres</p>
@@ -63,7 +65,7 @@ export function LoginPage() {
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-8">
         <div className="mb-8 lg:hidden">
-          <Wordmark />
+          <WordmarkLink />
         </div>
         <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8 shadow-card">
           <h2 className="text-h2 text-text">Inicia sesión</h2>
@@ -116,7 +118,7 @@ export function LoginPage() {
 
           <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
             ¿Tu serviteca aún no usa ServiBox?{' '}
-            <Link to="/crear-cuenta" className={linkClass}>
+            <Link to="/registro" className={linkClass}>
               Crea tu cuenta
             </Link>
           </p>

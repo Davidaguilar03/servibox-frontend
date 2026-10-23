@@ -62,10 +62,12 @@ src/
 
 | Ruta | Acceso | Pagina |
 |-|-|-|
+| `/` | publica | `LandingPage`, la landing. Con sesion muestra "Ir al panel" en lugar de iniciar sesion y crear cuenta |
 | `/login` | publica | `LoginPage`. Con sesion activa redirige a la pagina pedida o a `/inicio` |
+| `/registro` | publica | `RegisterPage`, registro de serviteca. Con sesion activa redirige a `/inicio` |
+| `/terminos` | publica | `TermsPage` ("Proximamente") |
 | `/recuperar-contrasena` | publica | `ComingSoonPage` ("Proximamente") |
-| `/crear-cuenta` | publica | `ComingSoonPage` ("Proximamente") |
-| `/` | privada | redirige a `/inicio` |
+| `/crear-cuenta` | publica | redirige a `/registro` (enlace viejo del login) |
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
@@ -84,7 +86,8 @@ src/
 | `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
-Las rutas privadas cuelgan de `RequireAuth`, que sin sesion valida redirige a `/login`
+Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las
+privadas cuelgan de `RequireAuth` (ruta de layout sin path), que sin sesion valida redirige a `/login`
 guardando la ruta pedida en `state.from`; tras el login se vuelve a ella. Cada ruta privada
 declara su miga de pan en `handle` (`{ breadcrumb: ['Ventas', 'Facturas de venta'] }`).
 Una pagina que solo conoce el ultimo tramo con sus datos (el numero de una factura) lo
@@ -120,9 +123,13 @@ configura CORS; el motivo esta en [03-DECISIONS.md](03-DECISIONS.md).
 ## Autenticacion
 
 * `POST /api/auth/login` con `tenantSlug`, `username` y `password`; responde `token`,
-  `user` (`username`, `role`) y `tenant` (`name`, `slug`).
+  `user` (`username`, `role`, `fullName`, null en usuarios anteriores al registro) y
+  `tenant` (`name`, `slug`).
+* `POST /api/auth/register` (201) responde lo mismo que el login. Los dos guardan la sesion
+  con `startSession` (`auth/authApi.ts`) y recuerdan el slug.
 * El token se guarda en `sessionStorage` (`servibox.token`) y, junto a el, la identidad del
-  login (`servibox.identity`: `username`, `role`, `tenantName`, `tenantSlug`). El slug de la
+  login (`servibox.identity`: `username`, `role`, `tenantName`, `tenantSlug` y, si viene,
+`fullName`). El slug de la
   serviteca se recuerda en `localStorage` (`servibox.tenantSlug`) para precargar el campo.
 * `auth/session.ts` decodifica el payload del JWT solo para leer `sub`, `role` y `exp`; no
   verifica la firma, eso lo hace el backend en cada peticion. Un token ilegible o vencido
@@ -143,7 +150,8 @@ configura CORS; el motivo esta en [03-DECISIONS.md](03-DECISIONS.md).
 el area de contenido (ancho maximo 1440 px):
 
 * Barra lateral: wordmark, menu, boton de contraer (desde `lg`) y abajo el bloque de
-  usuario: iniciales en un circulo, username, rol y el boton Salir.
+  usuario: iniciales en un circulo, nombre completo (o username si no hay), rol y el boton
+  Salir. `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan a la izquierda, tomada del `handle` de la ruta, y el
   nombre del tenant a la derecha. Sin buscador ni campana.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
@@ -383,3 +391,14 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
 * Tras recuperar, y tambien ante un rechazo, se invalidan la clave del listado, `['treasury']`,
   `['inventory', 'products']` y `['kpis']`.
 * Bajo `md` la tabla pasa a tarjetas apiladas con su boton Recuperar.
+
+## Landing y registro
+
+* `LandingPage`: encabezado con anclas (menu desplegable bajo `lg`), portada con la vista de
+  ejemplo armada con `IndicatorCard`, `StatusBadge` y `DataTable` (`aria-hidden`, `inert`),
+  El problema, Modulos, Como funciona, llamado final y pie (`#contacto`) con los valores de
+  marca. El desplazamiento suave lo da `index.css` solo con `#landing` montada y sin
+  movimiento reducido.
+* `RegisterPage`: reglas, sugerencia y normalizacion del identificador y cuerpo del POST en
+  `auth/registerForm.ts`. Errores del servidor segun
+  [03-DECISIONS.md](03-DECISIONS.md).

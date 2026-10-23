@@ -87,6 +87,17 @@ necesite, no antes.
   que navega. Las demas entradas atadas a la URL (selectores, pestanas, periodo, pagina)
   escriben de inmediato. Motivo en [03-DECISIONS.md](03-DECISIONS.md).
 
+## Rutas publicas y titulo de pagina
+
+* Una ruta publica se declara en el primer bloque de `src/routes.tsx`, fuera de
+  `RequireAuth` y sin `AppShell`. Si no tiene sentido con sesion (login, registro) la
+  pagina redirige a `/inicio` con `<Navigate replace>` al leer `useSession()`.
+* Cada pagina publica llama a `usePageMeta(titulo, descripcion)` (`src/lib/usePageMeta.ts`):
+  fija `document.title` y la meta description y los restaura al salir. Titulo con el
+  formato `Pagina · ServiBox`; descripcion de una o dos frases con la voz del manual.
+  `index.html` trae la descripcion por defecto. Las privadas no lo usan por ahora.
+* El wordmark de las paginas publicas enlaza a `/` con `WordmarkLink`.
+
 ## Formatos
 
 En `src/lib/format.ts`, nunca a mano en un componente:

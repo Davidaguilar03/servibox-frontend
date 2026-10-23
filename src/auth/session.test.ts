@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clearSession, getToken, readSession, roleLabel, saveToken } from './session'
+import { clearSession, displayName, getToken, initials, readSession, roleLabel, saveToken } from './session'
 import { makeToken, validToken } from '../test/utils'
 
 const identity = { username: 'laura', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' }
@@ -55,5 +55,43 @@ describe('sesion', () => {
     expect(roleLabel('ADMIN')).toBe('Administrador')
     expect(roleLabel('MECANICO')).toBe('Mecánico')
     expect(roleLabel('CAJERO')).toBe('Cajero')
+  })
+
+  it('guarda y lee el nombre completo cuando viene', () => {
+    const token = validToken()
+    saveToken(token, { ...identity, fullName: 'Laura Gómez' })
+
+    expect(readSession(token, sessionStorage.getItem('servibox.identity'))).toMatchObject({ fullName: 'Laura Gómez' })
+  })
+
+  it('una identidad guardada sin nombre completo sigue funcionando', () => {
+    const token = validToken()
+
+    const session = readSession(token, JSON.stringify(identity))
+
+    expect(session).toMatchObject(identity)
+    expect(session?.fullName).toBeUndefined()
+    expect(readSession(token, JSON.stringify({ ...identity, fullName: null }))?.fullName).toBeUndefined()
+  })
+})
+
+describe('nombre e iniciales del usuario', () => {
+  it('dos palabras: primera letra de cada una', () => {
+    expect(initials({ username: 'laura', fullName: 'Laura Gómez' })).toBe('LG')
+  })
+
+  it('mas de dos: primer nombre y ultimo apellido', () => {
+    expect(initials({ username: 'laura', fullName: 'laura maría gómez pérez' })).toBe('LP')
+  })
+
+  it('una sola palabra: sus dos primeras letras', () => {
+    expect(initials({ username: 'x', fullName: 'Ángela' })).toBe('ÁN')
+  })
+
+  it('sin nombre completo usa el username', () => {
+    expect(initials({ username: 'laura.gomez' })).toBe('LG')
+    expect(initials({ username: 'admin', fullName: '  ' })).toBe('AD')
+    expect(displayName({ username: 'admin' })).toBe('admin')
+    expect(displayName({ username: 'laura', fullName: 'Laura Gómez' })).toBe('Laura Gómez')
   })
 })

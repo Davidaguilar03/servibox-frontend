@@ -27,6 +27,13 @@
   }
 }
 
+/* Desplazamiento suave a las anclas de la landing, solo sin movimiento reducido. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(#landing) {
+    scroll-behavior: smooth;
+  }
+}
+
 /* Sin animaciones para quien las desactiva en su sistema. */
 @media (prefers-reduced-motion: reduce) {
   *,

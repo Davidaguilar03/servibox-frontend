@@ -4,12 +4,14 @@ const TOKEN_KEY = 'servibox.token'
 const IDENTITY_KEY = 'servibox.identity'
 const TENANT_SLUG_KEY = 'servibox.tenantSlug'
 
-/** Quien entro y a que serviteca, tal como lo devuelve el login. */
+/** Quien entro y a que serviteca, tal como lo devuelve el login o el registro. */
 export interface Identity {
   username: string
   role: string
   tenantName: string
   tenantSlug: string
+  /** Nombre completo del usuario. Falta en los usuarios anteriores al registro publico. */
+  fullName?: string
 }
 
 export interface Session extends Identity {
@@ -91,10 +93,12 @@ function parseIdentity(raw: string | null): Identity | null {
   try {
     const value: unknown = JSON.parse(raw)
     if (typeof value !== 'object' || value === null) return null
-    const { username, role, tenantName, tenantSlug } = value as Record<string, unknown>
+    const { username, role, tenantName, tenantSlug, fullName } = value as Record<string, unknown>
     if (typeof username !== 'string' || typeof role !== 'string') return null
     if (typeof tenantName !== 'string' || typeof tenantSlug !== 'string') return null
-    return { username, role, tenantName, tenantSlug }
+    const identity: Identity = { username, role, tenantName, tenantSlug }
+    if (typeof fullName === 'string' && fullName.trim()) identity.fullName = fullName
+    return identity
   } catch {
     return null
   }
@@ -115,6 +119,25 @@ export function useSession(): Session | null {
   const token = useSyncExternalStore(subscribe, getToken)
   const identity = useSyncExternalStore(subscribe, getStoredIdentity)
   return useMemo(() => (token ? readSession(token, identity) : null), [token, identity])
+}
+
+/** El nombre que ve el usuario: el completo si lo hay, si no el username. */
+export function displayName(session: Pick<Identity, 'username' | 'fullName'>): string {
+  return session.fullName?.trim() || session.username
+}
+
+/**
+ * Dos letras para el circulo del usuario. Con nombre completo: la primera del primer nombre
+ * y la del ultimo apellido; con una sola palabra, sus dos primeras letras. Sin nombre
+ * completo se parte el username por espacios, punto, guion y guion bajo.
+ */
+export function initials(session: Pick<Identity, 'username' | 'fullName'>): string {
+  const fullName = session.fullName?.trim()
+  const parts = fullName ? fullName.split(/\s+/) : session.username.split(/[\s._-]+/).filter(Boolean)
+  const first = parts[0] ?? ''
+  const last = parts[parts.length - 1] ?? ''
+  const letters = parts.length > 1 ? first.charAt(0) + last.charAt(0) : first.slice(0, 2)
+  return letters.toUpperCase()
 }
 
 const roleLabels: Record<string, string> = {
