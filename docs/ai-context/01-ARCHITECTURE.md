@@ -73,6 +73,7 @@ src/
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/ventas/papelera` | privada | `SalesTrashPage`, Papelera de ventas (`TrashPage` con la configuracion de ventas) |
+| `/ventas/ingresos` | privada | `OccasionalIncomePage`, Ingresos ocasionales (`ManualMovementsPage` con `INGRESO_OCASIONAL`) |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
 | `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
 | `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
@@ -83,6 +84,7 @@ src/
 | `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
+| `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
 | `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 

@@ -1,8 +1,8 @@
-import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
-import { Modal } from '../components/Modal'
+import { DiscardableModal } from '../components/DiscardableModal'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
@@ -26,58 +26,6 @@ const typeOptions = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]).map((val
   value,
   label: ACCOUNT_TYPE_LABELS[value],
 }))
-
-interface DiscardableModalProps {
-  title: string
-  dirty: boolean
-  busy: boolean
-  onClose: () => void
-  /** Texto del aviso de descartar. */
-  discardMessage: string
-  footer: (requestClose: () => void) => ReactNode
-  children: ReactNode
-}
-
-/**
- * Modal que, con datos digitados, cambia su contenido a "Descartar cambios" en vez de
- * cerrarse con Esc, la X o Cancelar. Mismo patron que el modal de categoria.
- */
-function DiscardableModal({ title, dirty, busy, onClose, discardMessage, footer, children }: DiscardableModalProps) {
-  const [confirmDiscard, setConfirmDiscard] = useState(false)
-
-  function requestClose() {
-    if (confirmDiscard) setConfirmDiscard(false)
-    else if (dirty && !busy) setConfirmDiscard(true)
-    else if (!busy) onClose()
-  }
-
-  if (confirmDiscard) {
-    return (
-      <Modal
-        title="Descartar cambios"
-        onClose={requestClose}
-        footer={
-          <>
-            <Button variant="secondary" onClick={requestClose}>
-              Seguir editando
-            </Button>
-            <Button variant="danger" onClick={onClose}>
-              Descartar cambios
-            </Button>
-          </>
-        }
-      >
-        <p className="text-body text-text">{discardMessage}</p>
-      </Modal>
-    )
-  }
-
-  return (
-    <Modal title={title} onClose={requestClose} footer={footer(requestClose)}>
-      {children}
-    </Modal>
-  )
-}
 
 /** Enter en un campo de texto envia el formulario del modal. */
 function isEnterInInput(event: KeyboardEvent) {
