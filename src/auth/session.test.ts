@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { clearSession, displayName, getToken, initials, readSession, roleLabel, saveToken } from './session'
+import { clearSession, displayName, getToken, initials, readSession, roleLabel, saveToken, updateTenantName } from './session'
 import { makeToken, validToken } from '../test/utils'
 
 const identity = { username: 'laura', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' }
@@ -93,5 +93,35 @@ describe('nombre e iniciales del usuario', () => {
     expect(initials({ username: 'admin', fullName: '  ' })).toBe('AD')
     expect(displayName({ username: 'admin' })).toBe('admin')
     expect(displayName({ username: 'laura', fullName: 'Laura Gómez' })).toBe('Laura Gómez')
+  })
+})
+
+describe('nombre de la serviteca', () => {
+  it('cambia el nombre en la identidad sin tocar el token ni el resto', () => {
+    const token = validToken()
+    saveToken(token, { ...identity, fullName: 'Laura Gómez' })
+
+    updateTenantName('Autollantas Norte')
+
+    expect(getToken()).toBe(token)
+    expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toEqual({
+      ...identity,
+      fullName: 'Laura Gómez',
+      tenantName: 'Autollantas Norte',
+    })
+  })
+
+  it('sin identidad guardada la arma desde el JWT', () => {
+    localStorage.setItem('servibox.tenantSlug', 'demo')
+    saveToken(validToken())
+
+    updateTenantName('Demo Norte')
+
+    expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toEqual({
+      username: 'admin',
+      role: 'ADMIN',
+      tenantName: 'Demo Norte',
+      tenantSlug: 'demo',
+    })
   })
 })

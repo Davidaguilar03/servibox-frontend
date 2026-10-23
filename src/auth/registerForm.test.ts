@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   EMPTY_REGISTER_VALUES,
+  normalizeNit,
   normalizeSlugInput,
   suggestSlug,
   toRegisterRequest,
@@ -156,5 +157,13 @@ describe('cuerpo del registro', () => {
       password: ' con espacios ',
       acceptTerms: true,
     })
+  })
+})
+
+describe('normalizacion del NIT', () => {
+  it('quita puntos y espacios y conserva el guion', () => {
+    expect(normalizeNit('900.123.456-7')).toBe('900123456-7')
+    expect(normalizeNit(' 900 123 456 ')).toBe('900123456')
+    expect(normalizeNit('')).toBe('')
   })
 })

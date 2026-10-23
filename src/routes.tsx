@@ -11,7 +11,6 @@ import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
 import { OperationalExpensesPage } from './pages/OperationalExpensesPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { PurchaseDetailPage } from './pages/PurchaseDetailPage'
@@ -23,10 +22,7 @@ import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 import { SalesTrashPage } from './pages/SalesTrashPage'
 import { TermsPage } from './pages/TermsPage'
-
-const privatePages = [
-  { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
-]
+import { SettingsPage } from './settings/SettingsPage'
 
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
 
@@ -89,11 +85,7 @@ export const routes: RouteObject[] = [
             handle: handle(['Inventario', 'Productos', 'Editar producto']),
           },
           { path: 'inventario/categorias', element: <CategoriesPage />, handle: handle(['Inventario', 'Categorías']) },
-          ...privatePages.map(({ path, title, breadcrumb }) => ({
-            path,
-            element: <PlaceholderPage title={title} />,
-            handle: handle(breadcrumb),
-          })),
+          { path: 'configuracion', element: <SettingsPage />, handle: handle(['Configuración']) },
         ],
       },
     ],
