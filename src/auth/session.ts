@@ -46,6 +46,25 @@ export function saveToken(token: string, identity?: Identity) {
   notify()
 }
 
+/**
+ * Cambia el nombre de la serviteca en la identidad guardada, sin tocar el token: la barra
+ * superior lo muestra sin recargar. Una sesion sin identidad guardada la arma desde el JWT.
+ */
+export function updateTenantName(name: string) {
+  const token = getToken()
+  const session = token ? readSession(token, getStoredIdentity()) : null
+  if (!session) return
+  const identity: Identity = {
+    username: session.username,
+    role: session.role,
+    tenantName: name,
+    tenantSlug: session.tenantSlug,
+    ...(session.fullName ? { fullName: session.fullName } : {}),
+  }
+  sessionStorage.setItem(IDENTITY_KEY, JSON.stringify(identity))
+  notify()
+}
+
 export function clearSession() {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(IDENTITY_KEY)

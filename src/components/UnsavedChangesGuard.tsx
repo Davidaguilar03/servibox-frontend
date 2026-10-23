@@ -7,13 +7,19 @@ interface UnsavedChangesGuardProps {
   dirty: boolean
   /** En true deja salir sin preguntar (despues de guardar). Es un ref porque se navega en la misma vuelta. */
   allowLeave: RefObject<boolean>
+  /** Texto del aviso; por defecto el de una factura nueva. */
+  message?: string
 }
 
 /**
- * Aviso de cambios sin guardar de una factura nueva: `useBlocker` para la navegacion
+ * Aviso de cambios sin guardar de un formulario de pagina (factura nueva, Configuracion): `useBlocker` para la navegacion
  * interna (Cancelar incluido) y `beforeunload` para recargar o cerrar la pestana.
  */
-export function UnsavedChangesGuard({ dirty, allowLeave }: UnsavedChangesGuardProps) {
+export function UnsavedChangesGuard({
+  dirty,
+  allowLeave,
+  message = 'Si sales ahora, se pierde lo que digitaste en esta factura.',
+}: UnsavedChangesGuardProps) {
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
       dirty && !allowLeave.current && currentLocation.pathname !== nextLocation.pathname,
@@ -42,7 +48,7 @@ export function UnsavedChangesGuard({ dirty, allowLeave }: UnsavedChangesGuardPr
         </>
       }
     >
-      <p className="text-body text-text">Si sales ahora, se pierde lo que digitaste en esta factura.</p>
+      <p className="text-body text-text">{message}</p>
     </Modal>
   )
 }

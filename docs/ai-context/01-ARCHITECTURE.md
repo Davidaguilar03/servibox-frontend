@@ -85,7 +85,7 @@ src/
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
 | `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
-| `/configuracion` | privada | `PlaceholderPage` ("Proximamente") con el titulo, dentro de `AppShell` |
+| `/configuracion` | privada | `SettingsPage`, Configuracion: pestanas Datos de la serviteca, Usuarios (Proximamente) y Configuracion financiera en `?tab=` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las

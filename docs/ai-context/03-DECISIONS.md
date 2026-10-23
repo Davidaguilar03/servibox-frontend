@@ -12,6 +12,85 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Configuracion con pestanas en la URL
+
+* Decision: `/configuracion` (`src/settings/SettingsPage.tsx`) reemplaza el placeholder con
+  tres pestanas: Datos de la serviteca, Usuarios y Configuracion financiera. La activa vive en
+  `?tab=datos|usuarios|financiera`; sin parametro o con un valor desconocido es Datos (que se
+  escribe sin `tab`). Patron de pestanas de ARIA con activacion automatica: flechas, Inicio y
+  Fin. Con cambios sin guardar, cambiar de pestana pide "Descartar cambios"; salir a otra
+  pagina lo frena `UnsavedChangesGuard`, que ahora recibe su texto; recargar o cerrar,
+  `beforeunload`. Atras o adelante entre pestanas no pregunta. `PlaceholderPage` se elimina:
+  era su ultimo uso.
+* Alternativas consideradas: una ruta por pestana; estado local sin URL.
+* Motivo: la pestana se puede enlazar y sobrevive a recargar.
+
+## 2026-10-22: Permisos de Configuracion en la interfaz y el 403
+
+* Decision: sin rol ADMIN en la identidad de la sesion, Datos y Configuracion financiera se
+  ven deshabilitados, sin Guardar y con "Solo un administrador puede editar estos datos."
+  `PUT /api/tenant` lo respalda con 403 "Solo un administrador puede editar los datos de la
+  serviteca": si llega, el mensaje del backend va en un Alert (no pasa por `errorMessage`,
+  que daria el generico) y el formulario queda en solo lectura. **`PUT
+  /api/inventory/financial-settings` no revisa el rol en el backend**: el bloqueo de esa
+  pestana es solo de la interfaz. No hay usuarios de otro rol para probarlo de verdad; lo
+  cubren las pruebas.
+* Alternativas consideradas: ocultar la pantalla a quien no es ADMIN.
+* Motivo: los demas roles pueden consultar los datos; solo el administrador los cambia.
+
+## 2026-10-22: Datos de la serviteca
+
+* Decision: `GET` y `PUT /api/tenant`. El cuerpo lleva solo `name`, `nit` y `phone`, nunca
+  el slug. El identificador se muestra en solo lectura: es lo que el equipo escribe en
+  "Serviteca" al iniciar sesion y el backend no lo deja cambiar (cambiarlo romperia el login
+  de todos). NIT y telefono son opcionales: en blanco se envian como null, que es lo que el
+  backend guarda tambien con cadena vacia. El NIT acepta puntos y espacios; `normalizeNit`
+  los quita antes de validar y de enviar (y al salir del campo), y el maximo de 25 cuenta
+  sobre el valor normalizado. Las reglas y mensajes de nombre, NIT y telefono salen de
+  `auth/registerForm.ts` (`businessNameError`, `nitError`, `phoneError`, `normalizeNit`),
+  compartidos con el registro, que no cambia de comportamiento: sigue sin normalizar. Al
+  guardar, `updateTenantName` cambia el nombre en la identidad de la sesion y la barra
+  superior lo muestra sin recargar.
+* Alternativas consideradas: normalizar tambien en el registro (queda para su propia rama).
+* Motivo: una sola fuente para las reglas del tenant, igual que en el backend.
+
+## 2026-10-22: Unidades de la configuracion financiera
+
+* Decision: verificado en `FinancialSettings` e `InventoryService.aplicarPrecios`, las cuatro
+  tasas del backend son fracciones de 0 a 1, **incluido el ICA**: 0.0082 son 8,2 por mil y
+  entra tal cual en la formula. La interfaz muestra Gastos, DIAN y Comision en porcentaje
+  (0 a 100, se divide por 100) y el ICA en por mil (0 a 1000, se divide por 1000), como
+  Autollantas. Acepta coma o punto; muestra coma. Hasta 4 decimales en los porcentajes y 3
+  en el ICA: la columna guarda la fraccion con 6 decimales y 8,2345 por mil quedaria en
+  8,235 (comprobado contra el backend dev). La division se redondea a 10 decimales para no
+  enviar 0.008199999. `GET` sin configuracion guardada responde todo en cero; la interfaz lo
+  muestra con "Aun no has configurado estos valores" (no distingue una configuracion
+  guardada en cero). `PUT` responde solo la configuracion, sin el numero de productos
+  recalculados; se invalidan productos y categorias.
+* Alternativas consideradas: mostrar las fracciones del backend.
+* Motivo: el usuario piensa en porcentajes y en por mil.
+
+## 2026-10-22: Aviso de recalculo y advertencia del divisor
+
+* Decision: un texto fijo avisa "Al guardar se recalcula el precio sugerido de todos los
+  productos." Con los valores escritos y las categorias cargadas, un Alert de advertencia
+  lista las categorias cuyo divisor `k - ICA - margen`, con `k = (1 - gastos) * (1 - DIAN)`,
+  es menor o igual a cero: para ellas el backend deja el precio sugerido igual al costo.
+  **Solo replica la condicion de validez**, no calcula precios. No bloquea guardar.
+* Motivo: avisar antes de un recalculo masivo que deja precios en el costo.
+
+## 2026-10-22: Comision de tarjeta guardada sin uso y Usuarios Proximamente
+
+* Decision: `cardCommissionRate` se guarda (0 si no llega) pero ningun calculo del backend
+  lo usa; el campo lo dice en su ayuda. La pestana Usuarios es un "Proximamente" sin tabla
+  ni permisos: la captura muestra el diseno futuro y no hay endpoints.
+
+## 2026-10-22: Lo que queda fuera de Configuracion
+
+* Usuarios y roles, cambio del identificador, logo y color del tenant, zona horaria, idioma
+  o moneda, comision de tarjeta aplicada a calculos, zona de peligro o eliminar la serviteca
+  y normalizar el NIT del registro.
+
 ## 2026-10-22: Gastos operativos e Ingresos ocasionales con un componente compartido
 
 * Decision: `ManualMovementsPage` (`src/manualMovements/`) arma las dos pantallas con una

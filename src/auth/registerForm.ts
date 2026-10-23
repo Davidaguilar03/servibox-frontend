@@ -73,21 +73,36 @@ function required(value: string, max: number, empty: string): string | undefined
   return undefined
 }
 
+/** NIT tal como lo pega o escribe el usuario (`900.123.456-7`), sin puntos ni espacios. */
+export function normalizeNit(value: string): string {
+  return value.replace(/[.\s]/g, '')
+}
+
+/** Error de un NIT ya recortado y no vacio; lo comparten el registro y Configuracion. */
+export function nitError(nit: string): string | undefined {
+  if (nit.length > 25) return 'Usa máximo 25 caracteres.'
+  if (!NIT.test(nit)) return 'Usa solo dígitos y, si quieres, un guion con el dígito de verificación. Por ejemplo, 900123456-7.'
+  return undefined
+}
+
+/** Error de un telefono ya recortado y no vacio. */
+export function phoneError(phone: string): string | undefined {
+  if (phone.length > 25) return 'Usa máximo 25 caracteres.'
+  if (!PHONE.test(phone)) return 'Usa solo dígitos, espacios, +, - y paréntesis.'
+  return undefined
+}
+
+export function businessNameError(name: string): string | undefined {
+  return required(name, 150, 'Escribe el nombre comercial.')
+}
+
 /** Un mensaje por campo con error, en la voz del manual. */
 export function validateRegister(values: RegisterValues): RegisterErrors {
   const errors: RegisterErrors = {}
 
-  errors.businessName = required(values.businessName, 150, 'Escribe el nombre comercial.')
-
-  errors.nit = required(values.nit, 25, 'Escribe el NIT.')
-  if (!errors.nit && !NIT.test(values.nit.trim())) {
-    errors.nit = 'Usa solo dígitos y, si quieres, un guion con el dígito de verificación. Por ejemplo, 900123456-7.'
-  }
-
-  errors.phone = required(values.phone, 25, 'Escribe el teléfono.')
-  if (!errors.phone && !PHONE.test(values.phone.trim())) {
-    errors.phone = 'Usa solo dígitos, espacios, +, - y paréntesis.'
-  }
+  errors.businessName = businessNameError(values.businessName)
+  errors.nit = values.nit.trim() ? nitError(values.nit.trim()) : 'Escribe el NIT.'
+  errors.phone = values.phone.trim() ? phoneError(values.phone.trim()) : 'Escribe el teléfono.'
 
   const slug = values.slug.trim()
   if (!slug) errors.slug = 'Escribe el identificador.'
