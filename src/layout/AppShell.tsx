@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
-import { clearSession, roleLabel, useSession } from '../auth/session'
+import { clearSession, displayName, initials, roleLabel, useSession } from '../auth/session'
 import { useBreadcrumbTailValue } from './breadcrumb'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
@@ -35,12 +35,6 @@ export interface RouteHandle {
 }
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
-
-function initials(username: string) {
-  const parts = username.split(/[\s._-]+/).filter(Boolean)
-  const letters = parts.length > 1 ? (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '') : username.slice(0, 2)
-  return letters.toUpperCase()
-}
 
 function useBreadcrumb(): string[] {
   const matches = useMatches()
@@ -119,10 +113,10 @@ export function AppShell() {
             className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-nav-hover text-small font-semibold text-text-inverse"
             aria-hidden
           >
-            {initials(session?.username ?? '')}
+            {session ? initials(session) : ''}
           </span>
           <span className={`flex min-w-0 flex-1 flex-col ${collapsed ? 'lg:sr-only' : ''}`}>
-            <span className="truncate text-small font-medium text-text-inverse">{session?.username}</span>
+            <span className="truncate text-small font-medium text-text-inverse">{session && displayName(session)}</span>
             <span className="truncate text-small text-text-subtle">{roleLabel(session?.role ?? '')}</span>
           </span>
           <button

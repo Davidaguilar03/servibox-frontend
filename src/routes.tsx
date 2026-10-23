@@ -5,6 +5,7 @@ import { AccountsPage } from './pages/AccountsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
@@ -14,10 +15,12 @@ import { ProductsPage } from './pages/ProductsPage'
 import { PurchaseDetailPage } from './pages/PurchaseDetailPage'
 import { PurchaseInvoicesPage } from './pages/PurchaseInvoicesPage'
 import { PurchasesTrashPage } from './pages/PurchasesTrashPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 import { SalesTrashPage } from './pages/SalesTrashPage'
+import { TermsPage } from './pages/TermsPage'
 
 const privatePages = [
   { path: 'configuracion', title: 'Configuración', breadcrumb: ['Configuración'] },
@@ -26,17 +29,20 @@ const privatePages = [
 const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
 
 export const routes: RouteObject[] = [
+  // Publicas: sin RequireAuth ni AppShell. Cada una fija su titulo con usePageMeta.
+  { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
+  { path: '/registro', element: <RegisterPage /> },
+  { path: '/terminos', element: <TermsPage /> },
   { path: '/recuperar-contrasena', element: <ComingSoonPage title="Recuperar tu contraseña" /> },
-  { path: '/crear-cuenta', element: <ComingSoonPage title="Crear tu cuenta" /> },
+  { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   {
-    path: '/',
+    // Ruta de layout sin path: las privadas siguen colgando de la raiz.
     element: <RequireAuth />,
     children: [
       {
         element: <AppShell />,
         children: [
-          { index: true, element: <Navigate to="/inicio" replace /> },
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
           { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },

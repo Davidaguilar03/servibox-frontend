@@ -1,8 +1,10 @@
 import { Link } from 'react-router'
 import { Wordmark } from '../brand/Wordmark'
+import { usePageMeta } from '../lib/usePageMeta'
 
 /** Placeholder de las rutas publicas que aun no existen. */
 export function ComingSoonPage({ title }: { title: string }) {
+  usePageMeta(`${title} · ServiBox`, `${title} estará disponible pronto en ServiBox.`)
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-6">
       <div className="w-full max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-card">

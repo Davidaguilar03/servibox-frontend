@@ -12,6 +12,99 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-22: Rutas publicas y la raiz como landing
+
+* Decision: `/` deja de redirigir a `/inicio` y muestra la landing; se suman `/registro` y
+  `/terminos` (Proximamente) a `/login` y `/recuperar-contrasena`. Las privadas cuelgan de
+  `RequireAuth` como ruta de layout sin path, asi que ninguna cambia de URL. Con sesion,
+  `/login` y `/registro` redirigen a `/inicio`; la landing cambia Iniciar sesion y Crear
+  cuenta por "Ir al panel", tambien en la portada y el llamado final (Crear cuenta llevaria
+  a `/registro`, que con sesion rebota). `/crear-cuenta` redirige a `/registro`. Cada pagina
+  publica fija titulo y meta description con `usePageMeta`.
+* Alternativas consideradas: landing en otra ruta (`/inicio-publico`); sitio estatico
+  aparte.
+* Motivo: la raiz es lo primero que abre quien no conoce el producto.
+
+## 2026-10-22: Textos de la landing sin datos inventados
+
+* Decision: los textos salen de la tarea (propuesta, problema en tres tarjetas, para quien
+  es, esencia de marca) y de las capturas 135930 y 140014 (titulo de la portada, titulos de
+  seccion, Modulos, los tres pasos y el llamado final), ajustados a la voz del manual. Sin
+  cifras, clientes, testimonios, precios, telefonos, correos ni redes. La captura no trae
+  datos de contacto: la ancla Contacto lleva al pie. Diferencias con la captura: los dos
+  botones del encabezado son secundarios (la captura tiene Crear cuenta en rojo), la
+  portada usa "Crea tu cuenta" e "Iniciar sesion" en lugar de "Crear mi serviteca" y "Ver
+  como funciona", las tarjetas del problema son las tres de la tarea, Compras no menciona
+  gastos operativos (no hay pantalla) y el pie dice "ServiBox · v1.0 · 2026".
+* Alternativas consideradas: copiar la captura tal cual.
+* Motivo: una sola accion primaria por tramo y nada que el producto no haga hoy.
+
+## 2026-10-22: Vista de ejemplo del panel sin imagenes
+
+* Decision: la portada arma la vista de ejemplo con `IndicatorCard`, `StatusBadge` y
+  `DataTable` reales y datos ficticios obvios ("Cliente de ejemplo 1"), con `aria-hidden` e
+  `inert`. Sin imagenes, sin archivos en `public` y sin la barra lateral de la captura.
+* Alternativas consideradas: una captura en PNG; un SVG dibujado.
+* Motivo: sigue a los componentes y los tokens sin mantener un archivo aparte, y no ofrece
+  nada al teclado ni al lector de pantalla.
+
+## 2026-10-22: Registro que entra directo con la sesion devuelta
+
+* Decision: `POST /api/auth/register` responde lo mismo que el login; el 201 se guarda con
+  `startSession` (la misma funcion del login), se recuerda el slug, se muestra el toast
+  "Serviteca creada. Bienvenido a ServiBox." y la redireccion por sesion lleva a `/inicio`
+  con replace. El cuerpo lleva los textos recortados, el slug en minusculas, la contrasena
+  tal cual y `acceptTerms: true`; el boton Crear serviteca solo se habilita con el
+  formulario valido.
+* Reglas en el cliente, espejo de `TenantRegistrationService` (`auth/registerForm.ts`):
+  nombre comercial y nombre completo obligatorios hasta 150; NIT hasta 25 con `\d+(-\d)?`;
+  telefono hasta 25 con digitos, espacios, `+`, `-` y parentesis; identificador de 3 a 30,
+  minusculas, numeros y guiones, sin guion a los lados y fuera de la lista reservada (copia
+  de `SLUGS_RESERVADOS`); correo `algo@dominio.tld` hasta 150; usuario de 3 a 50 con letras,
+  numeros, punto, guion y guion bajo; contrasena de 8 a 72 caracteres y 72 bytes UTF-8.
+  Los mensajes son propios, con la voz del manual; los del backend quedan para el Alert.
+* Alternativas consideradas: un login automatico despues del registro; validar solo en el
+  servidor.
+* Motivo: el backend ya devuelve la sesion; validar antes evita un viaje por cada regla. Si
+  el backend cambia una regla o la lista reservada, hay que cambiarla aqui.
+
+## 2026-10-22: Sugerencia y normalizacion del identificador
+
+* Decision: mientras el usuario no edite el identificador, se sugiere desde el nombre
+  comercial: sin tildes ni enies (NFD), minusculas, cualquier otro caracter a un guion,
+  guiones repetidos en uno, sin guion a los lados y maximo 30. Al editarlo a mano deja de
+  sugerirse. Lo que se escribe pasa a minusculas y pierde lo no permitido al vuelo.
+* Alternativas consideradas: convertir en el servidor (el backend rechaza mayusculas a
+  proposito); sugerir siempre.
+* Motivo: el usuario ve el identificador que de verdad queda y no pierde lo que escribio.
+
+## 2026-10-22: Errores del registro
+
+* Decision: 409 (identificador repetido) bajo el campo Identificador con el mensaje del
+  backend, foco en el campo y boton deshabilitado hasta cambiarlo. 400 en un Alert arriba
+  con `errorMessage`. 403 (registro apagado) en un Alert propio: "El registro no esta
+  disponible". 5xx y red con el mensaje generico de `errorMessage`. Lo digitado se conserva
+  siempre; la contrasena solo vive en el estado del formulario. Un `useRef` evita el doble
+  envio antes de que `isPending` llegue al boton.
+* Alternativas consideradas: mostrar el 403 con el texto del backend (sin tildes).
+* Motivo: cada error queda donde el usuario puede corregirlo.
+
+## 2026-10-22: Nombre completo e iniciales en la barra lateral
+
+* Decision: la identidad guarda `fullName` cuando el login o el registro lo traen; una
+  identidad sin el sigue valiendo. La barra lateral muestra el nombre completo y sus
+  iniciales (primer nombre y ultimo apellido; una sola palabra, sus dos primeras letras);
+  sin nombre completo, el username y sus iniciales como antes.
+* Alternativas consideradas: el primer nombre y el primer apellido (falla con dos
+  nombres).
+* Motivo: es el dato que el usuario reconoce como suyo.
+
+## 2026-10-22: Lo que queda fuera de la landing y el registro
+
+* Recuperar contrasena, verificacion de correo, captcha, el texto de los terminos,
+  formulario de contacto, precios, testimonios, blog, internacionalizacion y analitica.
+  Las paginas privadas no fijan titulo de documento.
+
 ## 2026-10-22: Campos de texto atados a la URL con estado local y espera
 
 * Decision: los buscadores de Facturas de venta, Facturas de compra, Productos y las dos

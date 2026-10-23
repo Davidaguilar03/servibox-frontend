@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { getToken } from '../auth/session'
+import { getToken, saveToken } from '../auth/session'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 async function fillAndSubmit() {
@@ -55,5 +55,51 @@ describe('formulario de login', () => {
     renderRoute('/login')
 
     expect(await screen.findByLabelText('Serviteca')).toHaveValue('autollantas')
+  })
+
+  it('guarda el nombre completo cuando el login lo devuelve', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          token: validToken(),
+          user: { username: 'laura.gomez', role: 'ADMIN', fullName: 'Laura Gómez' },
+          tenant: { name: 'Serviteca El Roble', slug: 'el-roble' },
+        }),
+      ),
+    )
+    renderRoute('/configuracion')
+
+    await fillAndSubmit()
+
+    await screen.findByRole('heading', { name: 'Configuración' })
+    expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toMatchObject({ fullName: 'Laura Gómez' })
+    expect(screen.getByText('Laura Gómez')).toBeInTheDocument()
+  })
+
+  it('Crea tu cuenta lleva a /registro y el wordmark a la landing', async () => {
+    renderRoute('/login')
+
+    expect(await screen.findByRole('link', { name: 'Crea tu cuenta' })).toHaveAttribute('href', '/registro')
+    expect(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' })).toHaveAttribute('href', '/recuperar-contrasena')
+    for (const link of screen.getAllByRole('link', { name: 'ServiBox, ir a la página principal' })) {
+      expect(link).toHaveAttribute('href', '/')
+    }
+    expect(document.title).toBe('Inicia sesión · ServiBox')
+  })
+
+  it('con sesion redirige a /inicio', async () => {
+    saveToken(validToken())
+    const router = renderRoute('/login')
+
+    await screen.findByRole('heading', { name: 'Inicio' })
+    expect(router.state.location.pathname).toBe('/inicio')
+  })
+
+  it('la ruta vieja /crear-cuenta lleva al registro', async () => {
+    const router = renderRoute('/crear-cuenta')
+
+    await screen.findByRole('heading', { name: 'Crea tu serviteca' })
+    expect(router.state.location.pathname).toBe('/registro')
   })
 })
