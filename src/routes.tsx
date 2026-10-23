@@ -4,6 +4,7 @@ import { AppShell, type RouteHandle } from './layout/AppShell'
 import { AccountsPage } from './pages/AccountsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { ComingSoonPage } from './pages/ComingSoonPage'
+import { CustomersPage } from './pages/CustomersPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
@@ -21,6 +22,7 @@ import { ReportsPage } from './pages/ReportsPage'
 import { SaleDetailPage } from './pages/SaleDetailPage'
 import { SalesInvoicesPage } from './pages/SalesInvoicesPage'
 import { SalesTrashPage } from './pages/SalesTrashPage'
+import { SuppliersPage } from './pages/SuppliersPage'
 import { TermsPage } from './pages/TermsPage'
 import { SettingsPage } from './settings/SettingsPage'
 
@@ -45,6 +47,7 @@ export const routes: RouteObject[] = [
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
           { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },
           { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle(['Ventas', 'Ingresos ocasionales']) },
+          { path: 'ventas/clientes', element: <CustomersPage />, handle: handle(['Ventas', 'Clientes']) },
           {
             path: 'ventas/nueva',
             element: <NewSaleInvoicePage />,
@@ -59,6 +62,7 @@ export const routes: RouteObject[] = [
           { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle(['Compras', 'Facturas de compra']) },
           { path: 'compras/papelera', element: <PurchasesTrashPage />, handle: handle(['Compras', 'Papelera']) },
           { path: 'compras/gastos', element: <OperationalExpensesPage />, handle: handle(['Compras', 'Gastos operativos']) },
+          { path: 'compras/proveedores', element: <SuppliersPage />, handle: handle(['Compras', 'Proveedores']) },
           {
             path: 'compras/nueva',
             element: <NewPurchaseInvoicePage />,

@@ -109,7 +109,10 @@ export function SalesInvoicesPage() {
             Ventas de contado y a crédito. Las facturas anuladas están en la papelera.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/ventas/clientes" className={buttonClasses('secondary')}>
+            Clientes
+          </Link>
           <Link to="/ventas/ingresos" className={buttonClasses('secondary')}>
             Ingresos ocasionales
           </Link>

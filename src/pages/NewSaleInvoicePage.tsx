@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { Alert } from '../components/Alert'
@@ -70,7 +70,7 @@ export function NewSaleInvoicePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
-  const [initial] = useState(() => initialForm(today))
+  const [initial, setInitial] = useState(() => initialForm(today))
   const [form, setForm] = useState<SaleForm>(initial)
   const [customerModalOpen, setCustomerModalOpen] = useState(false)
   // Mientras el usuario no elija cuenta, en contado se propone la primera de efectivo.
@@ -80,6 +80,19 @@ export function NewSaleInvoicePage() {
 
   const nextNumber = useQuery({ queryKey: ['sales', 'next-invoice-number'], queryFn: fetchNextInvoiceNumber })
   const customers = useQuery({ queryKey: CUSTOMERS_KEY, queryFn: fetchCustomers })
+
+  // ?cliente=<id> desde Clientes: se elige una vez, al llegar la lista. Un id que no esta en ella (no
+  // existe o no es cliente) se ignora. Es el valor inicial, asi que no cuenta como cambio.
+  const [searchParams] = useSearchParams()
+  const [preselectDone, setPreselectDone] = useState(false)
+  if (!preselectDone && customers.data) {
+    setPreselectDone(true)
+    const id = Number(searchParams.get('cliente'))
+    if (customers.data.some((item) => item.id === id)) {
+      setInitial((current) => ({ ...current, customerId: id }))
+      setForm((current) => ({ ...current, customerId: current.customerId ?? id }))
+    }
+  }
   const accounts = useQuery({ queryKey: ['treasury', 'accounts'], queryFn: fetchAccounts })
   const products = useQuery({ queryKey: ['inventory', 'products'], queryFn: fetchProducts })
   const categories = useQuery({ queryKey: ['inventory', 'categories'], queryFn: fetchCategories })

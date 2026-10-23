@@ -1,5 +1,5 @@
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { ACCOUNTS_KEY } from '../accounts/accountsApi'
@@ -66,7 +66,7 @@ export function NewPurchaseInvoicePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
-  const [initial] = useState(() => initialForm(today))
+  const [initial, setInitial] = useState(() => initialForm(today))
   const [form, setForm] = useState<PurchaseForm>(initial)
   const [supplierModalOpen, setSupplierModalOpen] = useState(false)
   // Mientras el usuario no elija cuenta, en contado se propone la primera de efectivo.
@@ -78,6 +78,19 @@ export function NewPurchaseInvoicePage() {
   const allowLeave = useRef(false)
 
   const suppliers = useQuery({ queryKey: SUPPLIERS_KEY, queryFn: fetchSuppliers })
+
+  // ?proveedor=<id> desde Proveedores: se elige una vez, al llegar la lista. Un id que no esta en ella (no
+  // existe o no es proveedor) se ignora. Es el valor inicial, asi que no cuenta como cambio.
+  const [searchParams] = useSearchParams()
+  const [preselectDone, setPreselectDone] = useState(false)
+  if (!preselectDone && suppliers.data) {
+    setPreselectDone(true)
+    const id = Number(searchParams.get('proveedor'))
+    if (suppliers.data.some((item) => item.id === id)) {
+      setInitial((current) => ({ ...current, supplierId: id }))
+      setForm((current) => ({ ...current, supplierId: current.supplierId ?? id }))
+    }
+  }
   const accounts = useQuery({ queryKey: ACCOUNTS_KEY, queryFn: fetchAccounts })
   const products = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts })
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
