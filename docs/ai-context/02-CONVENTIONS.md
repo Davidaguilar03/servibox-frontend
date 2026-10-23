@@ -71,7 +71,7 @@ los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
 `ErrorState` (`states.tsx`) y `UnsavedChangesGuard` (modal "Descartar cambios" con
 `useBlocker` y aviso de `beforeunload`), `DiscardableModal` (modal de formulario que, con
 datos digitados, pide "Descartar cambios" al cerrarse). `NewCounterpartyModal` (`src/counterparties/`) crea un
-cliente o un proveedor segun el rol. Un componente nuevo entra con la primera pantalla que lo
+cliente o un proveedor segun el rol, o edita un tercero; el aviso de descartar es opcional. Un componente nuevo entra con la primera pantalla que lo
 necesite, no antes.
 
 * Una sola accion primaria roja por pantalla.

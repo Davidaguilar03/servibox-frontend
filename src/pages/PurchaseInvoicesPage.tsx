@@ -99,7 +99,10 @@ export function PurchaseInvoicesPage() {
             Compras de contado y a crédito. Las facturas anuladas están en la papelera.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/compras/proveedores" className={buttonClasses('secondary')}>
+            Proveedores
+          </Link>
           <Link to="/compras/gastos" className={buttonClasses('secondary')}>
             Gastos operativos
           </Link>

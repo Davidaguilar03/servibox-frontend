@@ -12,6 +12,109 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-23: Clientes y Proveedores con un componente compartido
+
+* Decision: `CounterpartiesPage` (`src/counterparties/`) arma las dos pantallas con una
+  configuracion (rol, textos, clave y consulta de terceros, clave y consulta de facturas,
+  rotulo del saldo, ruta de Nueva factura y toasts). Rutas `/ventas/clientes` (Ventas /
+  Clientes) y `/compras/proveedores` (Compras / Proveedores), con un boton secundario
+  "Clientes" o "Proveedores" en el encabezado de Facturas de venta y de compra (el grupo de
+  botones pasa a `flex-wrap` para bajar de linea en pantallas angostas) y "Volver a" el
+  listado. Datos: `GET /api/counterparties?role=CLIENTE` o `PROVEEDOR` (el backend devuelve
+  tambien los AMBOS) con las claves de los formularios de factura
+  (`['counterparties', 'CLIENTE']` y `['counterparties', 'PROVEEDOR']`), y `GET /api/sales` o
+  `GET /api/purchases` con las claves de los listados. Cada bloque carga y falla por separado;
+  si fallan solo las facturas, la tabla sigue con el saldo en raya y un aviso con reintento.
+* Alternativas consideradas: una pantalla de Terceros con pestanas; dos pantallas copiadas.
+* Motivo: las dos pantallas solo cambian el rol, los textos y la fuente del saldo, igual que
+  las papeleras y los movimientos manuales.
+
+## 2026-10-23: Saldo por tercero e indicadores de Clientes y Proveedores
+
+* Decision: el saldo de un tercero se calcula en el cliente: suma de `pendingBalance` de sus
+  facturas PENDIENTE (las PAGADA no deben nada y las ANULADA quedan en 0) y cuantas son, que
+  se muestra como texto secundario. La venta trae el tercero en `customer` y la compra en
+  `supplier`. Indicadores sobre la lista completa del rol, sin depender de los filtros:
+  "Total de clientes" (o de proveedores) cuenta los terceros sin el Consumidor final; "Con
+  saldo pendiente" cuenta los que tienen saldo mayor que cero; "Total por cobrar" (o por
+  pagar) suma los saldos de la lista, Consumidor final incluido. Filtros en la URL: `q`
+  (nombre, documento o correo, sin mayusculas ni tildes, con `useUrlTextParam`), `saldo`
+  (`pendiente`; sin el parametro es Todos), `orden` (`saldo`, de mayor a menor; sin el
+  parametro es Nombre ascendente) y `pagina` (25). Sin saldos cargados el filtro de saldo y
+  el orden por saldo no se aplican. Vacio: sin terceros (fuera del Consumidor final) invita
+  a crear; con filtros, Limpiar filtros. Bajo `md` la tabla pasa a tarjetas.
+* Alternativas consideradas: un endpoint de saldos en el backend; contar el Consumidor final
+  como cliente.
+* Motivo: las facturas ya traen `pendingBalance` y el volumen es bajo (ver Paginacion y
+  filtros en el cliente). El Consumidor final siempre existe en el listado de clientes (el
+  GET lo crea), asi que contarlo haria imposible el estado vacio de un tenant nuevo.
+
+## 2026-10-23: Consumidor final como tercero del sistema
+
+* Decision: se reconoce por el documento `222222222222` (`CONSUMIDOR_FINAL_DOCUMENT`, el
+  `DOCUMENTO_CONSUMIDOR_FINAL` del backend). Sale con la etiqueta "Sistema", sin Editar (el
+  PUT responderia 409 "El tercero Consumidor final es del sistema y no se puede editar") y
+  con Nueva factura. Un AMBOS lleva la etiqueta "Cliente y proveedor". El formulario rechaza
+  ese documento en cualquier otro tercero con "Ese numero es del Consumidor final" (con
+  tilde en la interfaz): el backend todavia no lo reserva, y un alta de proveedor con ese
+  documento convertiria el Consumidor final en AMBOS.
+* Alternativas consideradas: esperar a que el backend lo reserve.
+* Motivo: proteger el tercero que usan todas las ventas sin cliente.
+
+## 2026-10-23: Modal de tercero reutilizado con modo edicion
+
+* Decision: `NewCounterpartyModal` suma `counterparty` (editar), `onUpdated` y
+  `guardUnsaved`. Campos: nombre o razon social (obligatorio, 150), tipo de documento (los
+  cinco del enum con rotulo legible: Cedula de ciudadania, NIT, Cedula de extranjeria, RUT,
+  Pasaporte), numero (obligatorio, 25, recortado), correo (opcional, 150, con formato) y
+  celular (opcional, 25, digitos, espacios, +, - y parentesis). El rotulo es "Celular", como
+  en los detalles de factura y en el backend. El rol no se pide ni se edita. Errores por
+  campo al salir del campo o al guardar; sin doble envio. Crear: POST con el rol de la
+  pantalla y el cuerpo de siempre (correo y celular solo si tienen algo). Editar: PUT con los
+  cinco campos (correo o celular vacios en null), precargado, con el texto fijo "Los cambios
+  tambien se veran en las facturas ya emitidas" (el backend arma el tercero de la factura
+  desde la fila actual), toast "Cambios guardados". Un 409 con "documento" en el mensaje va
+  bajo el campo y se borra al cambiar el numero; el Alert del modal dice "Revisa el numero de
+  documento". Los demas 400 y 409 van en el Alert con `errorMessage`. Al guardar en las
+  pantallas se invalida `['counterparties']` (la pantalla y los formularios de venta y
+  compra) y, al editar, `['sales']` y `['purchases']`, que muestran el nombre del tercero.
+  * `guardUnsaved` (aviso "Descartar cambios" con Esc, la X o Cancelar) solo lo activan
+    Clientes y Proveedores: en las facturas el modal se cierra con Esc aunque tenga datos,
+    como fija una prueba existente de Nueva factura de venta.
+  * Las facturas lo usan sin cambios en sus pantallas: el boton Guardar ya no se deshabilita
+    con campos vacios (las validaciones se muestran al guardar) y no muestran toast.
+* Alternativas consideradas: un modal nuevo para editar; activar el aviso tambien en las
+  facturas (rompia su prueba).
+* Motivo: un solo formulario de tercero con las mismas reglas en las cuatro pantallas.
+
+## 2026-10-23: 201, 200 y 409 al crear un tercero
+
+* Decision: `apiFetch` no expone el codigo, asi que la pantalla distingue por el rol de la
+  respuesta: con el backend actual un 201 devuelve el rol pedido y un 200 solo ocurre al
+  promover un tercero del otro rol, que vuelve como AMBOS. Toasts: "Cliente creado" o
+  "Proveedor creado"; en la promocion "Ya existia como proveedor: ahora tambien es
+  cliente. Se conservan el nombre y los datos que ya tenia registrados." (o el inverso),
+  porque el backend ignora el nombre y el tipo de documento enviados y solo completa correo y
+  celular vacios. Un 409 (ya tiene ese rol o es AMBOS) va bajo el documento con el mensaje
+  del backend.
+* Alternativas consideradas: cambiar `apiFetch` para devolver el estado.
+* Motivo: el rol de la respuesta da la misma informacion sin tocar el cliente API.
+
+## 2026-10-23: Nueva factura con tercero preseleccionado
+
+* Decision: la accion de fila Nueva factura enlaza a `/ventas/nueva?cliente=<id>` o
+  `/compras/nueva?proveedor=<id>`. Al llegar la lista de terceros, la pantalla elige ese id
+  una sola vez si esta en la lista (que ya viene filtrada por rol: un id inexistente o de
+  otro rol se ignora sin error) y lo toma como valor inicial del formulario, asi que no
+  cuenta como cambio para el aviso de salir. Nada mas cambia en esas pantallas.
+* Alternativas consideradas: pasar el tercero en `state` de la navegacion.
+* Motivo: un enlace con parametro se puede abrir en otra pestana y sobrevive a recargar.
+
+## 2026-10-23: Lo que queda fuera de Clientes y Proveedores
+
+* Borrar o desactivar terceros, historial de facturas por tercero, estado de cuenta,
+  importar o exportar, cambiar el rol y un consecutivo de terceros.
+
 ## 2026-10-22: Configuracion con pestanas en la URL
 
 * Decision: `/configuracion` (`src/settings/SettingsPage.tsx`) reemplaza el placeholder con

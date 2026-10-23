@@ -39,7 +39,9 @@ src/
   purchases/          consultas de compras (purchasesApi.ts), logica del listado
                       (purchasesList.ts), de la nueva factura de compra (newPurchase.ts)
                       y del detalle (purchaseDetail.ts)
-  counterparties/     modal compartido Nuevo cliente o Nuevo proveedor
+  counterparties/     Clientes y Proveedores (CounterpartiesPage.tsx), su logica de saldos y
+                      filtros (counterpartyList.ts), el formulario (counterpartyForm.ts) y el
+                      modal compartido de crear y editar tercero
   trash/              papelera compartida de ventas y compras (TrashPage.tsx) y su logica
                       de filtros (trashList.ts)
   reports/            logica pura de Reportes (reports.ts)
@@ -74,6 +76,7 @@ src/
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/ventas/papelera` | privada | `SalesTrashPage`, Papelera de ventas (`TrashPage` con la configuracion de ventas) |
 | `/ventas/ingresos` | privada | `OccasionalIncomePage`, Ingresos ocasionales (`ManualMovementsPage` con `INGRESO_OCASIONAL`) |
+| `/ventas/clientes` | privada | `CustomersPage`, Clientes (`CounterpartiesPage` con el rol CLIENTE) |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
 | `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
 | `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
@@ -85,6 +88,7 @@ src/
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
 | `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
+| `/compras/proveedores` | privada | `SuppliersPage`, Proveedores (`CounterpartiesPage` con el rol PROVEEDOR) |
 | `/configuracion` | privada | `SettingsPage`, Configuracion: pestanas Datos de la serviteca, Usuarios (Proximamente) y Configuracion financiera en `?tab=` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -393,6 +397,27 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
 * Tras recuperar, y tambien ante un rechazo, se invalidan la clave del listado, `['treasury']`,
   `['inventory', 'products']` y `['kpis']`.
 * Bajo `md` la tabla pasa a tarjetas apiladas con su boton Recuperar.
+
+## Clientes y Proveedores
+
+`CustomersPage` (`/ventas/clientes`) y `SuppliersPage` (`/compras/proveedores`) son el mismo
+`CounterpartiesPage` con una `CounterpartiesConfig` por rol. Logica pura en
+`src/counterparties/counterpartyList.ts` y `counterpartyForm.ts`; reglas en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+| Bloque | Endpoint |
+|-|-|
+| Terceros | `GET /api/counterparties?role=CLIENTE` o `PROVEEDOR` (claves `['counterparties', rol]`, las de los formularios de factura) |
+| Saldos | `GET /api/sales` o `GET /api/purchases` (claves `['sales']` y `['purchases']`) |
+| Crear | `POST /api/counterparties` |
+| Editar | `PUT /api/counterparties/{id}` |
+
+* Query string: `q`, `saldo` (`pendiente`), `orden` (`saldo`; sin el parametro es nombre) y
+  `pagina`. Solo se escriben los valores distintos de los de por defecto.
+* Tras crear se invalida `['counterparties']`; tras editar, tambien `['sales']` y
+  `['purchases']`.
+* Nueva factura desde la fila: `/ventas/nueva?cliente=<id>` y `/compras/nueva?proveedor=<id>`.
+* Bajo `md` la tabla pasa a tarjetas apiladas con sus dos acciones.
 
 ## Landing y registro
 
