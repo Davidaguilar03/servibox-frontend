@@ -12,6 +12,52 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Otros ingresos en la utilidad neta y costo al anular o recuperar una compra
+
+* Contexto: el backend ya mergeo `feat/34-other-income-in-kpis` y
+  `fix/35-cost-revert-on-annulment` (ver su `03-DECISIONS.md`). Verificado en el codigo:
+  * `GET /api/reporting/kpis` responde `desde`, `hasta`, `totalSales`, `totalPurchases`,
+    `grossProfit`, `operatingExpenses`, `otherIncome` y `netProfit`, con
+    `netProfit = grossProfit + otherIncome - operatingExpenses` (`KpisResponse.of`).
+  * El Estado de resultados exportado (`ReportExportService`) tiene seis filas: Ventas
+    totales, Compras totales (negativo), Utilidad bruta, Otros ingresos, Gastos operativos
+    (negativo) y Utilidad neta.
+  * Anular (`PurchasesService.revertirCostos`): por cada producto, si su costo todavia es el
+    precio de su ultima linea en esta compra (tolerancia de medio centavo), pasa al precio de
+    la ultima linea de la compra no anulada mas reciente (mayor id) sin contar esta; si el
+    costo es otro o no hay otra compra no anulada, no se toca.
+  * Recuperar (`reaplicarCostos`): si ninguna otra compra no anulada del producto tiene mayor
+    id, el costo pasa al precio de su linea en esta compra; si no, no se toca.
+* Decision:
+  * El tipo `Kpis` agrega `otherIncome`. Los datos de prueba con la forma completa de kpis lo
+    incluyen; los que solo traen el campo que usa la pantalla (`totalSales` o
+    `totalPurchases`) no cambian.
+  * Vista previa del Estado de resultados: seis filas en el orden del archivo, con Otros
+    ingresos en positivo y en el color de texto normal (`text-text`), sin tono de exito ni
+    de error; en cero se muestra "$ 0". Utilidad neta, su indicador y su variacion siguen
+    leyendo `netProfit`, que ahora incluye los otros ingresos. El skeleton pasa a seis
+    filas.
+  * Panel: los cuatro indicadores del mes no cambian de codigo; la utilidad neta del panel
+    ya incluye los otros ingresos porque viene de `netProfit`. No habia texto de ayuda,
+    tooltip ni definicion de la utilidad en el panel ni en los listados, asi que no se
+    agrego ninguno. La descripcion de la opcion de reporte ("Ventas, compras, gastos y
+    utilidad del periodo") no describe la formula y no cambia.
+  * Anular compra: el texto secundario dice que el costo de cada producto vuelve al de su
+    compra anterior si todavia venia de esta compra, y que si el producto no tiene otra
+    compra el costo se queda como esta.
+  * Recuperar compra: el texto dice que el costo de cada producto pasa al de esta compra si
+    es la mas reciente de ese producto.
+  * Ventas (anular y recuperar) no mencionan el costo y no cambian.
+* Alternativas consideradas: dejar la vista previa en cinco filas y sumar los otros ingresos
+  solo en la utilidad neta; calcular la utilidad neta en el cliente.
+* Motivo: la vista previa tiene que mostrar las mismas filas y cifras que el PDF y el xlsx
+  (ver *Vista previa del Estado de resultados desde /kpis*); sin la fila, la utilidad neta
+  no cuadraria con las filas de arriba. Los textos de compras repiten la regla del backend
+  sin jerga (sin "id" ni "no anulada").
+* Reemplaza: la frase de KPIs de *Lo que queda fuera de Gastos e Ingresos*, las "cinco
+  filas" de *Vista previa del Estado de resultados desde /kpis* y el texto del costo de
+  *Texto de anular una compra* y de *Texto y errores de Recuperar*.
+
 ## 2026-10-24: Ninguna pantalla desborda y toda tabla tiene tarjetas
 
 * Decision: corrige RESP-01 a RESP-04 de la auditoria visual sin cambiar el aspecto desde
@@ -407,6 +453,8 @@ Formato de cada entrada:
   movimientos de facturas o de transferencias (el backend responde 400 "se gestiona desde
   su operacion"). Los KPIs no tienen un campo de otros ingresos: un ingreso ocasional cambia
   el saldo de la cuenta pero no las ventas ni la utilidad del panel ni de Reportes.
+  **Reemplazado el 2026-10-24**: `otherIncome` suma a la utilidad neta. Ver *Otros ingresos
+  en la utilidad neta y costo al anular o recuperar una compra*.
 
 ## 2026-10-22: Rutas publicas y la raiz como landing
 
@@ -562,6 +610,8 @@ Formato de cada entrada:
   no tiene saldo no se puede recuperar. Exito: toast "Factura X recuperada" e invalidacion del
   listado, tesoreria, productos y KPIs. Un rechazo queda en un Alert del modal con
   `errorMessage`, sin cerrarlo, y refresca los mismos datos. Un ref evita el doble envio.
+  **Reemplazado el 2026-10-24** el texto del costo en compras: pasa al de esta compra si es la
+  mas reciente del producto.
 * Alternativas consideradas: el texto de Autollantas ("Volvera a su estado anterior a la
   anulacion... Confirmas?").
 * Motivo: verificado en `SalesService.restaurarFactura` y `PurchasesService.restaurarCompra`:
@@ -638,6 +688,8 @@ Formato de cada entrada:
   costo de los productos no vuelve al anterior y que si parte de esas unidades ya se vendio
   no se puede anular. Cancelar tiene el foco inicial; Anular factura es el unico rojo. Un
   rechazo del backend queda en el modal.
+  **Reemplazado el 2026-10-24** el texto del costo: el backend ya revierte el costo. Ver *Otros
+  ingresos en la utilidad neta y costo al anular o recuperar una compra*.
 * Alternativas consideradas: "Esta accion es irreversible" de Autollantas.
 * Motivo: verificado en `PurchasesService.anularFactura`: revisa todo el stock antes de
   escribir y rechaza con 400 "No se puede anular la compra X: de P quedan N unidades y habria
@@ -1019,6 +1071,7 @@ Formato de cada entrada:
   las cinco filas del archivo: compras y gastos con signo menos y en rojo, utilidad neta
   con fondo verde o de error segun su signo. El titulo es el mes ("Octubre de 2026") si el
   rango es un mes calendario completo y, si no, "dd/MM/aaaa a dd/MM/aaaa".
+  **Desde el 2026-10-24** son seis filas, con Otros ingresos despues de Utilidad bruta.
 * Alternativas consideradas: calcular la vista previa en el cliente; mostrar el PDF dentro
   de la pagina.
 * Motivo: `ReportExportService.estadoDeResultados` arma el archivo con

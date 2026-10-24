@@ -69,7 +69,7 @@ const movements = [movement(1, 1, 4212600), movement(2, 2, 1000000), movement(3,
 function fullRoutes(): Routes {
   return {
     '/api/purchases': () => jsonResponse(purchases),
-    '/api/reporting/kpis': () => jsonResponse({ totalSales: 0, totalPurchases: 6592600, grossProfit: 0, operatingExpenses: 0, netProfit: 0 }),
+    '/api/reporting/kpis': () => jsonResponse({ totalSales: 0, totalPurchases: 6592600, grossProfit: 0, operatingExpenses: 0, otherIncome: 0, netProfit: 0 }),
     '/api/treasury/movements': () => jsonResponse(movements),
   }
 }

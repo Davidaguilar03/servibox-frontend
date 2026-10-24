@@ -12,7 +12,7 @@ const config: TrashConfig<Purchase> = {
   fetchInvoices: fetchPurchaseInvoices,
   restore: restorePurchase,
   restoreText:
-    'La factura vuelve al listado como Pagada o Pendiente, según lo que tenga pagado. Se suman otra vez al inventario las unidades compradas y se descuentan de nuevo de las cuentas los pagos que tenía. El costo de los productos queda como está. Si alguna cuenta no tiene saldo para esos pagos, no se puede recuperar.',
+    'La factura vuelve al listado como Pagada o Pendiente, según lo que tenga pagado. Se suman otra vez al inventario las unidades compradas y se descuentan de nuevo de las cuentas los pagos que tenía. El costo de cada producto pasa al de esta compra si es la más reciente de ese producto. Si alguna cuenta no tiene saldo para esos pagos, no se puede recuperar.',
 }
 
 /** Papelera de compras: las facturas de compra anuladas, con Recuperar. */

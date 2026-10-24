@@ -115,12 +115,13 @@ export interface StatementRow {
   total?: boolean
 }
 
-/** Las cinco filas del archivo exportado, con compras y gastos en negativo. */
+/** Las seis filas del archivo exportado, con compras y gastos en negativo. */
 export function incomeStatementRows(kpis: Kpis): StatementRow[] {
   return [
     { concept: 'Ventas totales', value: kpis.totalSales },
     { concept: 'Compras totales', value: -kpis.totalPurchases },
     { concept: 'Utilidad bruta', value: kpis.grossProfit },
+    { concept: 'Otros ingresos', value: kpis.otherIncome },
     { concept: 'Gastos operativos', value: -kpis.operatingExpenses },
     { concept: 'Utilidad neta', value: kpis.netProfit, total: true },
   ]
