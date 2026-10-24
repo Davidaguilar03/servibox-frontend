@@ -100,16 +100,16 @@ export function PurchaseInvoicesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link to="/compras/proveedores" className={buttonClasses('secondary')}>
+          <Link to="/compras/proveedores" className={buttonClasses('secondary')} data-variant="secondary">
             Proveedores
           </Link>
-          <Link to="/compras/gastos" className={buttonClasses('secondary')}>
+          <Link to="/compras/gastos" className={buttonClasses('secondary')} data-variant="secondary">
             Gastos operativos
           </Link>
-          <Link to="/compras/papelera" className={buttonClasses('secondary')}>
+          <Link to="/compras/papelera" className={buttonClasses('secondary')} data-variant="secondary">
             Papelera
           </Link>
-          <Link to="/compras/nueva" className={buttonClasses('primary')}>
+          <Link to="/compras/nueva" className={buttonClasses('primary')} data-variant="primary">
             Nueva factura
           </Link>
         </div>
@@ -206,11 +206,7 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
     content = (
       <EmptyState
         message="Aún no registras compras. Crea tu primera factura de compra."
-        action={
-          <Link to="/compras/nueva" className={buttonClasses('primary')}>
-            Nueva factura
-          </Link>
-        }
+        action={{ label: 'Nueva factura', to: '/compras/nueva' }}
       />
     )
   } else {
@@ -219,11 +215,7 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
       page.total === 0 ? (
         <EmptyState
           message="No hay facturas con esos filtros."
-          action={
-            <Button variant="secondary" onClick={onClear}>
-              Limpiar filtros
-            </Button>
-          }
+          action={{ label: 'Limpiar filtros', onClick: onClear }}
         />
       ) : (
         <>

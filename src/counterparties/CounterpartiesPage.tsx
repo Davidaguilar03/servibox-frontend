@@ -176,7 +176,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
     content = (
       <EmptyState
         message={`Aún no registras ${config.plural}. Crea el primero.`}
-        action={<Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>}
+        action={{ label: `Nuevo ${config.singular}`, onClick: () => setDialog({ kind: 'create' }) }}
       />
     )
   } else {
@@ -185,11 +185,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
       page.total === 0 ? (
         <EmptyState
           message={`No hay ${config.plural} con esos filtros.`}
-          action={
-            <Button variant="secondary" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          }
+          action={{ label: 'Limpiar filtros', onClick: clearFilters }}
         />
       ) : (
         <>
@@ -231,7 +227,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link to={config.listPath} className={buttonClasses('secondary')}>
+          <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
             Volver a {config.listLabel}
           </Link>
           <Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>

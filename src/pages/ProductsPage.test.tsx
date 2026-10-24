@@ -3,7 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
-import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
@@ -192,6 +192,18 @@ describe('productos', () => {
 
     expect(await screen.findByText('Aún no tienes productos. Crea el primero.')).toBeInTheDocument()
     expect(within(indicator('Total de productos')).getByText('0')).toBeInTheDocument()
+  })
+
+  it('sin productos el unico primario es Nuevo producto del encabezado', async () => {
+    mockApi(fullRoutes([]))
+    renderRoute('/inventario')
+
+    expect(await screen.findByText('Aún no tienes productos. Crea el primero.')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nuevo producto')
+    expect(emptyStateOf('Aún no tienes productos. Crea el primero.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no tienes productos. Crea el primero.')).getByRole('link', { name: 'Nuevo producto' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('sin resultados por filtros ofrece limpiarlos', async () => {

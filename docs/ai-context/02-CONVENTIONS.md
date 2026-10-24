@@ -76,14 +76,29 @@ color de una categoria), `ComboboxField` (selector con
 busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
 `overlay`, sombra `modal`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
 los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
-"1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional) y
+"1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional, secundaria por defecto) y
 `ErrorState` (`states.tsx`) y `UnsavedChangesGuard` (modal "Descartar cambios" con
 `useBlocker` y aviso de `beforeunload`), `DiscardableModal` (modal de formulario que, con
 datos digitados, pide "Descartar cambios" al cerrarse). `NewCounterpartyModal` (`src/counterparties/`) crea un
 cliente o un proveedor segun el rol, o edita un tercero; el aviso de descartar es opcional. Un componente nuevo entra con la primera pantalla que lo
 necesite, no antes.
 
-* Una sola accion primaria roja por pantalla.
+* Una sola accion primaria roja visible por pantalla, en todos sus estados (normal, vacio,
+  error). Si el encabezado de la pagina tiene un primario, ese es el primario.
+* `EmptyState` recibe la accion como `{ label, to | onClick, variant }` y es secundaria por
+  defecto: repite la accion del encabezado sin competir con ella. Solo pasa
+  `variant: 'primary'` (con un comentario que lo explique) en una pantalla sin primario en el
+  encabezado, cuando la accion del vacio es la unica.
+* Cuando el primario depende del estado, se elige en la pagina: en Cuentas, con dos o mas
+  cuentas es Nueva transferencia; con menos, Nueva cuenta, y Nueva transferencia queda
+  secundaria y deshabilitada.
+* Un modal abierto cuenta como una pantalla nueva: dentro del modal hay un solo primario (o un
+  `danger`), aunque detras, atenuado por el overlay, se vea el primario de la pagina.
+* `Button` expone su variante en `data-variant`; los enlaces con `buttonClasses` la ponen a
+  mano. Las pruebas cuentan `[data-variant="primary"]` con `primaryActions()` de
+  `src/test/utils.tsx`.
+* Excepcion temporal: la landing (`/`) tiene dos primarios (portada y llamado final) hasta la
+  fase de rediseno. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * `StatusBadge` siempre lleva texto; el color solo acompana. `STOCK_CRITICO` ("Stock
   critico", tono de error) no esta en el manual: pendiente de validar con el disenador.
   `INGRESO` y `EGRESO` (tonos de exito y de error) marcan el tipo de un movimiento.

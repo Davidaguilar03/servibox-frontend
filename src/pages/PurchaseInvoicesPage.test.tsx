@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
-import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
@@ -221,6 +221,18 @@ describe('facturas de compra', () => {
     expect(await screen.findByText('Aún no registras compras. Crea tu primera factura de compra.')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Nueva factura' })).toHaveLength(2)
     expect(within(indicator('Por pagar')).getByText('0 facturas pendientes de pago')).toBeInTheDocument()
+  })
+
+  it('sin compras el unico primario es Nueva factura del encabezado', async () => {
+    mockApi({ ...fullRoutes(), '/api/purchases': () => jsonResponse([purchases[3]]), '/api/treasury/movements': () => jsonResponse([]) })
+    renderRoute('/compras')
+
+    expect(await screen.findByText('Aún no registras compras. Crea tu primera factura de compra.')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva factura')
+    expect(emptyStateOf('Aún no registras compras. Crea tu primera factura de compra.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras compras. Crea tu primera factura de compra.')).getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('mientras cargan muestra skeleton en cada bloque', async () => {

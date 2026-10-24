@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
+      // Las pruebas de formularios largos pasan de 3 s con la maquina libre y fallaban por
+      // tiempo bajo carga con el limite de 5 s. Ver docs/ai-context/03-DECISIONS.md.
+      testTimeout: 15000,
+      hookTimeout: 15000,
     },
   }
 })

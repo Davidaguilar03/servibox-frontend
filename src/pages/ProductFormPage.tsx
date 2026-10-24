@@ -51,7 +51,7 @@ function NotFound() {
       <PackageSearch size={24} strokeWidth={1.5} className="text-text-subtle" aria-hidden />
       <h1 className="text-h2 text-text">Producto no encontrado</h1>
       <p className="text-small text-text-muted">Revisa el enlace o búscalo en el listado.</p>
-      <Link to={listPath} className={buttonClasses('secondary')}>
+      <Link to={listPath} className={buttonClasses('secondary')} data-variant="secondary">
         Volver a Productos
       </Link>
     </div>

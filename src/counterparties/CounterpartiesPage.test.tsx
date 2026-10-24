@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL, body: unknown) => Response | Promise<Response>
 type Routes = Record<string, Handler>
@@ -214,6 +214,17 @@ describe('Clientes', () => {
     expect(indicator('Total de clientes')).toHaveTextContent('0')
     await user.click(within(screen.getByRole('region', { name: 'Clientes' })).getByRole('button', { name: 'Nuevo cliente' }))
     expect(screen.getByRole('dialog', { name: 'Nuevo cliente' })).toBeInTheDocument()
+  })
+
+  it('sin clientes el unico primario es Nuevo cliente del encabezado', async () => {
+    await openClients('/ventas/clientes', customerRoutes([consumidorFinal], { 'GET /api/sales': () => jsonResponse([]) }))
+
+    expect(await screen.findByText('Aún no registras clientes. Crea el primero.')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nuevo cliente')
+    expect(emptyStateOf('Aún no registras clientes. Crea el primero.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras clientes. Crea el primero.')).getByRole('button', { name: 'Nuevo cliente' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('vacio por filtros ofrece limpiarlos', async () => {
@@ -476,6 +487,17 @@ describe('Proveedores', () => {
   it('vacio sin proveedores invita a crear', async () => {
     await openSuppliers(supplierRoutes([], { 'GET /api/purchases': () => jsonResponse([]) }))
     expect(await screen.findByText('Aún no registras proveedores. Crea el primero.')).toBeInTheDocument()
+  })
+
+  it('sin proveedores el unico primario es Nuevo proveedor del encabezado', async () => {
+    await openSuppliers(supplierRoutes([], { 'GET /api/purchases': () => jsonResponse([]) }))
+
+    expect(await screen.findByText('Aún no registras proveedores. Crea el primero.')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nuevo proveedor')
+    expect(emptyStateOf('Aún no registras proveedores. Crea el primero.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras proveedores. Crea el primero.')).getByRole('button', { name: 'Nuevo proveedor' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('vacio por filtros con saldo pendiente', async () => {

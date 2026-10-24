@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { CATEGORY_COLORS } from '../inventory/categoryForm'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 type Handler = (body: unknown) => Response
 type Routes = Record<string, Handler>
@@ -185,6 +185,19 @@ describe('categorias', () => {
     await user.keyboard('{Escape}')
     await user.click(within(await screen.findByRole('dialog', { name: 'Descartar cambios' })).getByRole('button', { name: 'Descartar cambios' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('sin categorias el unico primario es Nueva categoria del encabezado', async () => {
+    mockApi({ ...fullRoutes(), 'GET /api/inventory/categories': () => jsonResponse([]), 'GET /api/inventory/products': () => jsonResponse([]) })
+    renderRoute('/inventario/categorias')
+
+    const message = 'Aún no tienes categorías. Crea la primera para empezar a cargar productos.'
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva categoría')
+    expect(emptyStateOf(message)).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf(message)).getByRole('button', { name: 'Nueva categoría' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('un error al cargar las categorias ofrece reintentar', async () => {

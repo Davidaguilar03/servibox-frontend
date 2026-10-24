@@ -141,18 +141,14 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
     content = (
       <EmptyState
         message={config.emptyMessage}
-        action={<Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>}
+        action={{ label: config.newLabel, onClick: () => setDialog({ kind: 'create' }) }}
       />
     )
   } else if (filtered.length === 0) {
     content = (
       <EmptyState
         message={config.filteredEmptyMessage}
-        action={
-          <Button variant="secondary" onClick={clearFilters}>
-            Limpiar filtros
-          </Button>
-        }
+        action={{ label: 'Limpiar filtros', onClick: clearFilters }}
       />
     )
   } else {
@@ -205,7 +201,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link to={config.listPath} className={buttonClasses('secondary')}>
+          <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
             Volver a {config.listLabel}
           </Link>
           <Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>

@@ -104,7 +104,7 @@ export function CategoriesPage() {
     content = (
       <EmptyState
         message="Aún no tienes categorías. Crea la primera para empezar a cargar productos."
-        action={<Button onClick={() => setTarget('new')}>Nueva categoría</Button>}
+        action={{ label: 'Nueva categoría', onClick: () => setTarget('new') }}
       />
     )
   } else {

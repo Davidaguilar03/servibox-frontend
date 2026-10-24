@@ -126,11 +126,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
       page.total === 0 ? (
         <EmptyState
           message="No hay facturas anuladas con esos filtros."
-          action={
-            <Button variant="secondary" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          }
+          action={{ label: 'Limpiar filtros', onClick: clearFilters }}
         />
       ) : (
         <>
@@ -175,7 +171,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
           <h1 className="text-h1 text-text">{config.title}</h1>
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
-        <Link to={config.listPath} className={buttonClasses('secondary')}>
+        <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
           Volver a {config.listLabel}
         </Link>
       </div>

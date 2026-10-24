@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '../routes'
@@ -22,6 +22,18 @@ export function renderRoute(path: string) {
     </QueryClientProvider>,
   )
   return router
+}
+
+/** Botones y enlaces con aspecto de primario en la pantalla: debe haber uno solo. */
+export function primaryActions() {
+  return [...document.querySelectorAll<HTMLElement>('[data-variant="primary"]')]
+}
+
+/** El bloque de un EmptyState, a partir de su mensaje. */
+export function emptyStateOf(message: string) {
+  const block = screen.getByText(message).parentElement
+  if (!block) throw new Error(`Sin EmptyState para "${message}"`)
+  return block
 }
 
 export function jsonResponse(body: unknown, status = 200) {
