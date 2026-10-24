@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
-import { jsonResponse, renderRoute, typeWithoutPause, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, typeWithoutPause, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
@@ -224,6 +224,18 @@ describe('facturas de venta', () => {
     expect(screen.getAllByRole('link', { name: 'Nueva factura' })).toHaveLength(2)
     expect(within(indicator('Por cobrar')).getByText('$ 0')).toBeInTheDocument()
     expect(within(indicator('Por cobrar')).getByText('0 facturas pendientes de abono')).toBeInTheDocument()
+  })
+
+  it('sin ventas el unico primario es Nueva factura del encabezado', async () => {
+    mockApi({ ...fullRoutes(), '/api/sales': () => jsonResponse([]), '/api/treasury/movements': () => jsonResponse([]) })
+    renderRoute('/ventas')
+
+    expect(await screen.findByText('Aún no registras ventas. Crea tu primera factura.')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva factura')
+    expect(emptyStateOf('Aún no registras ventas. Crea tu primera factura.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras ventas. Crea tu primera factura.')).getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('un indicador con error no afecta a los demas y se puede reintentar', async () => {

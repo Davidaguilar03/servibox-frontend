@@ -12,6 +12,49 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Limite de tiempo de las pruebas en 15 s y esperas de 5 s
+
+* Decision: `testTimeout` y `hookTimeout` de Vitest pasan de 5 s (valor por defecto) a 15 s en
+  `vite.config.ts`. Ademas, `asyncUtilTimeout` de Testing Library pasa de 1 s a 5 s en
+  `src/test/setup.ts`. No cambia ninguna prueba.
+* Motivo de `asyncUtilTimeout`: las esperas de `findBy*` y `waitFor` tienen un limite propio de
+  1 s que no depende de `testTimeout`. Una prueba de Cuentas ("cambiar el periodo cambia la
+  consulta y la URL") fallo una vez en la suite completa con la maquina cargada y no se
+  reprodujo despues (tres suites completas y cinco corridas aisladas, 341 a 377 ms). Subirlo
+  solo retrasa el momento en que se declara el fallo de una prueba; no hace pasar una prueba
+  incorrecta, porque la asercion se sigue evaluando igual.
+* Alternativas consideradas: subir el limite solo en las pruebas lentas; aligerar las pruebas
+  de formularios largos (menos campos digitados con `user.type`).
+* Motivo: cuatro pruebas de `RegisterPage` pasan de 3 s con la maquina libre y, con otra suite
+  corriendo al mismo tiempo, dos pruebas fallaron por tiempo sin ningun error real. Un limite
+  global evita marcar prueba por prueba; aligerarlas queda como mejora aparte.
+
+## 2026-10-24: Una accion primaria por pantalla y EmptyState secundario
+
+* Decision: el primario de una pantalla es el del encabezado. `EmptyState` recibe la accion
+  como objeto (`label`, `to` u `onClick`, `variant`) y la pinta secundaria por defecto; solo
+  una pantalla sin primario en el encabezado pasa `variant: 'primary'`. Se aplica a las 8 rutas
+  con vacio doble de la auditoria (BTN-01): Facturas de venta, Facturas de compra, Productos,
+  Categorias, Clientes, Proveedores, Gastos operativos e Ingresos ocasionales. No se encontraron
+  otras: los vacios de modales, del panel, de la papelera, de los detalles y de las lineas de
+  factura no tienen accion o la tienen secundaria. Hoy ninguna pantalla necesita `primary`.
+* Cuentas (BTN-03): el primario depende del estado. Con dos o mas cuentas es Nueva
+  transferencia y Nueva cuenta es secundario; con menos, Nueva cuenta es el primario y Nueva
+  transferencia es secundario, deshabilitado y con su explicacion. El vacio de Cuentas repite
+  Nueva cuenta en secundario.
+* Modales (BTN-04): sin cambios. Un modal abierto cuenta como una pantalla nueva con un solo
+  primario (o un `danger`); el primario de la pagina queda atenuado detras del overlay.
+* Landing (BTN-02): excepcion temporal. Conserva los dos primarios (portada y llamado final)
+  porque se rehara en la fase de rediseno; ahi se resuelve.
+* `Button` expone `data-variant` y los enlaces con `buttonClasses` lo ponen a mano (salvo la
+  landing), sin cambiar su aspecto, para que las pruebas cuenten los primarios visibles.
+* Alternativas consideradas: accion del vacio como enlace de texto; ocultar el primario del
+  encabezado cuando hay vacio; dejar `action` como `ReactNode` y que cada pagina elija la
+  variante.
+* Motivo: con la variante dentro de `EmptyState` el valor por defecto ya cumple la regla y una
+  pantalla nueva no puede repetir el rojo por descuido. Mantener el primario en el encabezado
+  hace que el boton no cambie de lugar entre el vacio y el listado.
+
 ## 2026-10-24: Tokens de contraste y boton primario en brand-ink
 
 * Decision: se corrigen los 17 pares que fallaban en la auditoria visual (CON-01 a CON-07 y

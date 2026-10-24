@@ -3,7 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL, body: unknown) => Response | Promise<Response>
 type Routes = Record<string, Handler>
@@ -228,6 +228,44 @@ describe('cuentas', () => {
     expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toHaveAccessibleDescription(
       'Necesitas al menos dos cuentas para transferir.',
     )
+  })
+
+  it('sin cuentas el unico primario es Nueva cuenta del encabezado', async () => {
+    await setup('/cuentas', { ...fullRoutes(), 'GET /api/treasury/accounts': () => jsonResponse([]) })
+
+    const message = 'Aún no tienes cuentas. Crea la caja o el banco donde recibes el dinero.'
+    expect(await screen.findByText(message)).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva cuenta')
+    expect(emptyStateOf(message)).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf(message)).getByRole('button', { name: 'Nueva cuenta' })).toHaveAttribute('data-variant', 'secondary')
+    expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toHaveAttribute('data-variant', 'secondary')
+    expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toBeDisabled()
+  })
+
+  it('con una cuenta el primario es Nueva cuenta y la transferencia queda secundaria', async () => {
+    await setup('/cuentas', { ...fullRoutes(), 'GET /api/treasury/accounts': () => jsonResponse([accounts[1]]) })
+
+    expect(await screen.findByRole('button', { name: /Caja General/ })).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva cuenta')
+    expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toHaveAttribute('data-variant', 'secondary')
+    expect(screen.getByRole('button', { name: 'Nueva transferencia' })).toHaveAccessibleDescription(
+      'Necesitas al menos dos cuentas para transferir.',
+    )
+  })
+
+  it('con dos cuentas el primario es Nueva transferencia', async () => {
+    await setup()
+
+    expect(await screen.findByRole('button', { name: /Bancolombia/ })).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva transferencia')
+    expect(primary).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Nueva cuenta' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('exporta a Excel con accountId de la cuenta y sin el con Todas', async () => {

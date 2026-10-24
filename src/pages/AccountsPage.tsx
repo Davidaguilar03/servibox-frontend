@@ -131,10 +131,12 @@ export function AccountsPage() {
               <FileSpreadsheet size={16} strokeWidth={1.5} aria-hidden />
               {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
             </Button>
-            <Button variant="secondary" onClick={() => setModal('account')}>
+            {/* El primario depende del estado: sin dos cuentas no hay transferencia posible. */}
+            <Button variant={canTransfer ? 'secondary' : 'primary'} onClick={() => setModal('account')}>
               Nueva cuenta
             </Button>
             <Button
+              variant={canTransfer ? 'primary' : 'secondary'}
               onClick={() => setModal('transfer')}
               disabled={!canTransfer}
               aria-describedby={accounts.isSuccess && !canTransfer ? 'transfer-help' : undefined}
@@ -309,7 +311,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
       <div className={card}>
         <EmptyState
           message="Aún no tienes cuentas. Crea la caja o el banco donde recibes el dinero."
-          action={<Button onClick={onNewAccount}>Nueva cuenta</Button>}
+          action={{ label: 'Nueva cuenta', onClick: onNewAccount }}
         />
       </div>
     )
@@ -414,11 +416,7 @@ function MovementsBlock(props: MovementsBlockProps) {
     content = (
       <EmptyState
         message="No hay movimientos en este período."
-        action={
-          <Button variant="secondary" onClick={props.onChangePeriod}>
-            Cambiar el período
-          </Button>
-        }
+        action={{ label: 'Cambiar el período', onClick: props.onChangePeriod }}
       />
     )
   } else {

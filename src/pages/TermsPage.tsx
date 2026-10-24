@@ -13,7 +13,7 @@ export function TermsPage() {
         <WordmarkLink />
         <h1 className="mt-6 text-h2 text-text">Términos y condiciones</h1>
         <p className="mt-2 text-small text-text-muted">Próximamente. Estamos preparando este texto.</p>
-        <Link to="/" className={`mt-6 ${buttonClasses('secondary')}`}>
+        <Link to="/" className={`mt-6 ${buttonClasses('secondary')}`} data-variant="secondary">
           Volver a la página principal
         </Link>
       </div>

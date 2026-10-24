@@ -103,10 +103,10 @@ export function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/inventario/categorias" className={buttonClasses('secondary')}>
+          <Link to="/inventario/categorias" className={buttonClasses('secondary')} data-variant="secondary">
             Categorías
           </Link>
-          <Link to="/inventario/nuevo" state={listState} className={buttonClasses('primary')}>
+          <Link to="/inventario/nuevo" state={listState} className={buttonClasses('primary')} data-variant="primary">
             Nuevo producto
           </Link>
         </div>
@@ -307,11 +307,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
     content = (
       <EmptyState
         message="Aún no tienes productos. Crea el primero."
-        action={
-          <Link to="/inventario/nuevo" state={listState} className={buttonClasses('primary')}>
-            Nuevo producto
-          </Link>
-        }
+        action={{ label: 'Nuevo producto', to: '/inventario/nuevo', state: listState }}
       />
     )
   } else {
@@ -322,11 +318,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
       page.total === 0 ? (
         <EmptyState
           message="No hay productos con esos filtros."
-          action={
-            <Button variant="secondary" onClick={onClear}>
-              Limpiar filtros
-            </Button>
-          }
+          action={{ label: 'Limpiar filtros', onClick: onClear }}
         />
       ) : (
         <>

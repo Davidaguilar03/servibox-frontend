@@ -3,7 +3,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { emptyStateOf, jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL, body: unknown) => Response | Promise<Response>
 type Routes = Record<string, Handler>
@@ -155,6 +155,18 @@ describe('Gastos operativos', () => {
     expect(await screen.findByText('No hay gastos registrados')).toBeInTheDocument()
     const section = screen.getByRole('region', { name: 'Gastos operativos' })
     expect(within(section).getByRole('button', { name: 'Nuevo gasto' })).toBeInTheDocument()
+  })
+
+  it('vacio: el unico primario es Nuevo gasto del encabezado', async () => {
+    mockApi(routes([]))
+    renderRoute('/compras/gastos')
+
+    expect(await screen.findByText('No hay gastos registrados')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nuevo gasto')
+    expect(emptyStateOf('No hay gastos registrados')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('No hay gastos registrados')).getByRole('button', { name: 'Nuevo gasto' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('vacio por filtros ofrece limpiarlos', async () => {
@@ -336,6 +348,18 @@ describe('Ingresos ocasionales', () => {
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
     expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Ventas/Ingresos ocasionales')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
+  })
+
+  it('vacio: el unico primario es Nuevo ingreso del encabezado', async () => {
+    mockApi(routes([]))
+    renderRoute('/ventas/ingresos')
+
+    expect(await screen.findByText('No hay ingresos registrados')).toBeInTheDocument()
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nuevo ingreso')
+    expect(emptyStateOf('No hay ingresos registrados')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('No hay ingresos registrados')).getByRole('button', { name: 'Nuevo ingreso' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('alta con la categoria fija y sin cuenta preseleccionada', async () => {

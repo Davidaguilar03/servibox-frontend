@@ -110,16 +110,16 @@ export function SalesInvoicesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Link to="/ventas/clientes" className={buttonClasses('secondary')}>
+          <Link to="/ventas/clientes" className={buttonClasses('secondary')} data-variant="secondary">
             Clientes
           </Link>
-          <Link to="/ventas/ingresos" className={buttonClasses('secondary')}>
+          <Link to="/ventas/ingresos" className={buttonClasses('secondary')} data-variant="secondary">
             Ingresos ocasionales
           </Link>
-          <Link to="/ventas/papelera" className={buttonClasses('secondary')}>
+          <Link to="/ventas/papelera" className={buttonClasses('secondary')} data-variant="secondary">
             Papelera
           </Link>
-          <Link to="/ventas/nueva" className={buttonClasses('primary')}>
+          <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
             Nueva factura
           </Link>
         </div>
@@ -216,11 +216,7 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
     content = (
       <EmptyState
         message="Aún no registras ventas. Crea tu primera factura."
-        action={
-          <Link to="/ventas/nueva" className={buttonClasses('primary')}>
-            Nueva factura
-          </Link>
-        }
+        action={{ label: 'Nueva factura', to: '/ventas/nueva' }}
       />
     )
   } else {
@@ -229,11 +225,7 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
       page.total === 0 ? (
         <EmptyState
           message="No hay facturas con esos filtros."
-          action={
-            <Button variant="secondary" onClick={onClear}>
-              Limpiar filtros
-            </Button>
-          }
+          action={{ label: 'Limpiar filtros', onClick: onClear }}
         />
       ) : (
         <>
