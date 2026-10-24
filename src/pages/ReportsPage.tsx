@@ -307,7 +307,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
             <StatementTable kpis={current.data} />
           ) : (
             <div className="flex flex-col gap-2">
-              {Array.from({ length: 5 }, (_, index) => (
+              {Array.from({ length: 6 }, (_, index) => (
                 <Skeleton key={index} className="h-8 w-full" />
               ))}
             </div>

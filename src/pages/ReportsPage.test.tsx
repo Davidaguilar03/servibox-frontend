@@ -6,8 +6,8 @@ import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL) => Response | Promise<Response>
 
-const october = { totalSales: 48_620_000, totalPurchases: 29_310_000, grossProfit: 19_310_000, operatingExpenses: 4_440_000, netProfit: 14_870_000 }
-const september = { totalSales: 43_400_000, totalPurchases: 25_000_000, grossProfit: 18_400_000, operatingExpenses: 3_000_000, netProfit: 15_400_000 }
+const october = { totalSales: 48_620_000, totalPurchases: 29_310_000, grossProfit: 19_310_000, operatingExpenses: 4_440_000, otherIncome: 0, netProfit: 14_870_000 }
+const september = { totalSales: 43_400_000, totalPurchases: 25_000_000, grossProfit: 18_400_000, operatingExpenses: 3_000_000, otherIncome: 0, netProfit: 15_400_000 }
 
 const accounts = [
   { id: 10, name: 'Caja General', type: 'EFECTIVO', currentBalance: 0 },
@@ -55,6 +55,11 @@ function kpiCalls(fetchMock: ReturnType<typeof mockApi>) {
 const statementValue = (concept: string) =>
   within(screen.getByRole('table')).getByRole('rowheader', { name: concept }).nextElementSibling
 
+const statementConcepts = () =>
+  within(screen.getByRole('table')).getAllByRole('rowheader').map((header) => header.textContent)
+
+const STATEMENT_ORDER = ['Ventas totales', 'Compras totales', 'Utilidad bruta', 'Otros ingresos', 'Gastos operativos', 'Utilidad neta']
+
 describe('ReportsPage', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -89,9 +94,11 @@ describe('ReportsPage', () => {
     expect(statementValue('Compras totales')).toHaveTextContent('-$ 29.310.000')
     expect(statementValue('Compras totales')).toHaveClass('text-error')
     expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 19.310.000')
+    expect(statementValue('Otros ingresos')).toHaveTextContent('$ 0')
     expect(statementValue('Gastos operativos')).toHaveTextContent('-$ 4.440.000')
     expect(statementValue('Utilidad neta')).toHaveTextContent('$ 14.870.000')
     expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-success-bg', 'text-success-ink')
+    expect(statementConcepts()).toEqual(STATEMENT_ORDER)
 
     // Ventas 48,62 contra 43,4 millones sube 12 %; utilidad 14,87 contra 15,4 baja 3 %.
     expect(await within(preview).findByText(/Subió/)).toBeInTheDocument()
@@ -103,6 +110,39 @@ describe('ReportsPage', () => {
       '/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-19',
       '/api/reporting/kpis?desde=2026-09-12&hasta=2026-09-30',
     ])
+  })
+
+  it('con otros ingresos: seis filas en orden, Otros ingresos en texto normal y utilidad neta y variacion de kpis', async () => {
+    // Cifras de la siembra de demostracion: bruta 267.750 mas 50.000 menos 450.000.
+    const withIncome = { totalSales: 267_750, totalPurchases: 0, grossProfit: 267_750, operatingExpenses: 450_000, otherIncome: 50_000, netProfit: -132_250 }
+    mockApi({
+      'GET /api/reporting/kpis': kpisBy({
+        '2026-10-01|2026-10-19': withIncome,
+        '2026-09-12|2026-09-30': { ...september, netProfit: -264_500 },
+      }),
+    })
+    renderRoute('/reportes')
+
+    const preview = screen.getByRole('region', { name: 'Vista previa · Estado de resultados' })
+    expect(await within(preview).findAllByText('$ 267.750')).toHaveLength(3)
+    expect(statementConcepts()).toEqual(STATEMENT_ORDER)
+    expect(statementValue('Compras totales')).toHaveTextContent('$ 0')
+    expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 267.750')
+    expect(statementValue('Otros ingresos')).toHaveTextContent('$ 50.000')
+    expect(statementValue('Otros ingresos')).toHaveClass('text-text')
+    expect(statementValue('Otros ingresos')).not.toHaveClass('text-error')
+    expect(statementValue('Otros ingresos')).not.toHaveClass('text-success-ink')
+    const incomeRow = screen.getByRole('rowheader', { name: 'Otros ingresos' }).parentElement
+    expect(incomeRow).not.toHaveClass('bg-success-bg')
+    expect(incomeRow).not.toHaveClass('bg-error-bg')
+    expect(statementValue('Gastos operativos')).toHaveTextContent('-$ 450.000')
+    expect(statementValue('Utilidad neta')).toHaveTextContent('-$ 132.250')
+
+    // La variacion usa netProfit: -132.250 contra -264.500 sube 50 %.
+    const profitCard = within(preview).getByText('Utilidad neta', { selector: 'p' }).parentElement!
+    expect(profitCard).toHaveTextContent('-$ 132.250')
+    expect(await within(profitCard).findByText(/Subió/)).toBeInTheDocument()
+    expect(profitCard).toHaveTextContent('Subió 50%vs. período anterior')
   })
 
   it('un mes completo se titula con el mes y sin datos anteriores no hay porcentaje', async () => {

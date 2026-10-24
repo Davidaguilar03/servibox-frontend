@@ -395,9 +395,10 @@ describe('detalle de factura de compra', () => {
     expect(within(dialog).getByText(/pasa a la papelera/)).toHaveTextContent(
       'Se descuentan del inventario las unidades que sumó esta compra y se revierten en las cuentas los pagos registrados. Puedes recuperarla desde la Papelera.',
     )
-    expect(within(dialog).getByText(/El costo de los productos no vuelve al anterior/)).toHaveTextContent(
-      'Si parte de esas unidades ya se vendió, no se puede anular.',
+    expect(within(dialog).getByText(/El costo de cada producto/)).toHaveTextContent(
+      'El costo de cada producto vuelve al de su compra anterior si todavía venía de esta compra. Si el producto no tiene otra compra, el costo se queda como está. Si parte de esas unidades ya se vendió, no se puede anular.',
     )
+    expect(dialog).not.toHaveTextContent('no vuelve al anterior')
     expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     expect(within(dialog).getByRole('button', { name: 'Anular factura' })).toHaveClass('bg-danger')
     await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))

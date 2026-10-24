@@ -116,20 +116,36 @@ describe('exportPath', () => {
 })
 
 describe('incomeStatementRows', () => {
-  it('compras y gastos en negativo, como el archivo', () => {
+  it('seis filas como el archivo: compras y gastos en negativo, otros ingresos en positivo', () => {
     const rows = incomeStatementRows({
       totalSales: 48_620_000,
       totalPurchases: 29_310_000,
       grossProfit: 19_310_000,
       operatingExpenses: 4_440_000,
-      netProfit: 14_870_000,
+      otherIncome: 250_000,
+      netProfit: 15_120_000,
     })
     expect(rows.map((row) => [row.concept, row.value])).toEqual([
       ['Ventas totales', 48_620_000],
       ['Compras totales', -29_310_000],
       ['Utilidad bruta', 19_310_000],
+      ['Otros ingresos', 250_000],
       ['Gastos operativos', -4_440_000],
-      ['Utilidad neta', 14_870_000],
+      ['Utilidad neta', 15_120_000],
     ])
+  })
+
+  it('la utilidad neta es la de kpis y otros ingresos en cero tambien es una fila', () => {
+    const rows = incomeStatementRows({
+      totalSales: 267_750,
+      totalPurchases: 0,
+      grossProfit: 267_750,
+      operatingExpenses: 450_000,
+      otherIncome: 0,
+      netProfit: 267_750 + 50_000 - 450_000,
+    })
+    expect(rows).toHaveLength(6)
+    expect(rows[3]).toEqual({ concept: 'Otros ingresos', value: 0 })
+    expect(rows[5]).toEqual({ concept: 'Utilidad neta', value: -132_250, total: true })
   })
 })

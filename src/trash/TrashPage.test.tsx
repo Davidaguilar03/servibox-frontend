@@ -222,6 +222,7 @@ describe('papelera de ventas', () => {
     expect(dialog).toHaveTextContent(
       'La factura vuelve al listado como Pagada o Pendiente, según lo que tenga abonado. Se descuentan otra vez del inventario las unidades vendidas y se restablecen en las cuentas el pago y los abonos que tenía.',
     )
+    expect(dialog).not.toHaveTextContent(/costo/i)
     expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     expect(within(dialog).getByRole('button', { name: 'Recuperar factura' })).toHaveClass('bg-action')
     await user.keyboard('{Escape}')
@@ -311,8 +312,9 @@ describe('papelera de compras', () => {
 
     await userEvent.click(table().getByRole('button', { name: 'Recuperar factura FC-7' }))
     expect(screen.getByRole('dialog')).toHaveTextContent(
-      'Se suman otra vez al inventario las unidades compradas y se descuentan de nuevo de las cuentas los pagos que tenía. El costo de los productos queda como está.',
+      'Se suman otra vez al inventario las unidades compradas y se descuentan de nuevo de las cuentas los pagos que tenía. El costo de cada producto pasa al de esta compra si es la más reciente de ese producto.',
     )
+    expect(screen.getByRole('dialog')).not.toHaveTextContent('queda como está')
   })
 
   it('un 409 de saldo al recuperar queda en el modal', async () => {

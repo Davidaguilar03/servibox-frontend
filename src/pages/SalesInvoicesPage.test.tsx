@@ -53,7 +53,7 @@ const movements = [
 function fullRoutes(): Routes {
   return {
     '/api/sales': () => jsonResponse(sales),
-    '/api/reporting/kpis': () => jsonResponse({ totalSales: 635000, totalPurchases: 0, grossProfit: 0, operatingExpenses: 0, netProfit: 0 }),
+    '/api/reporting/kpis': () => jsonResponse({ totalSales: 635000, totalPurchases: 0, grossProfit: 0, operatingExpenses: 0, otherIncome: 0, netProfit: 0 }),
     '/api/treasury/movements': () => jsonResponse(movements),
   }
 }

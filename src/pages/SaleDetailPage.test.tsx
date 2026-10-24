@@ -359,6 +359,7 @@ describe('detalle de factura de venta', () => {
     await user.click(await screen.findByRole('button', { name: 'Anular' }))
     let dialog = screen.getByRole('dialog', { name: 'Anular factura FV-0230' })
     expect(within(dialog).getByText(/pasa a la papelera/)).toHaveTextContent('Puedes recuperarla desde la Papelera')
+    expect(dialog).not.toHaveTextContent(/costo/i)
     expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

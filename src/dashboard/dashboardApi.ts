@@ -7,6 +7,9 @@ export interface Kpis {
   totalPurchases: number
   grossProfit: number
   operatingExpenses: number
+  /** Ingresos ocasionales activos del rango. */
+  otherIncome: number
+  /** grossProfit + otherIncome - operatingExpenses. */
   netProfit: number
 }
 

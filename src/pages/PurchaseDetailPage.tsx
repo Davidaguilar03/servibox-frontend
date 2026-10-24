@@ -520,8 +520,8 @@ function AnnulModal({ purchase, onClose, onAnnulled, onRejected }: ActionModalPr
           en las cuentas los pagos registrados. Puedes recuperarla desde la Papelera.
         </p>
         <p className="text-small text-text-muted">
-          El costo de los productos no vuelve al anterior: se queda con el precio de esta compra. Si parte de esas
-          unidades ya se vendió, no se puede anular.
+          El costo de cada producto vuelve al de su compra anterior si todavía venía de esta compra. Si el producto no
+          tiene otra compra, el costo se queda como está. Si parte de esas unidades ya se vendió, no se puede anular.
         </p>
         {annul.isError && (
           <Alert tone="error" title="No pudimos anular la factura">

@@ -6,7 +6,7 @@ import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
-const kpis = { totalSales: 48620000, totalPurchases: 29310000, grossProfit: 19310000, operatingExpenses: 4440000, netProfit: 14870000 }
+const kpis = { totalSales: 48620000, totalPurchases: 29310000, grossProfit: 19310000, operatingExpenses: 4440000, otherIncome: 500000, netProfit: 15370000 }
 const categories = [
   { id: 1, name: 'LLANTAS', yellowStockMin: 5, redStockMin: 2 },
   { id: 2, name: 'ACEITES', yellowStockMin: 0, redStockMin: 0 },
@@ -87,7 +87,8 @@ describe('panel de control', () => {
     expect(await screen.findByText('$ 48.620.000')).toBeInTheDocument()
     expect(screen.getByText('$ 29.310.000')).toBeInTheDocument()
     expect(screen.getByText('$ 19.310.000')).toBeInTheDocument()
-    expect(screen.getByText('$ 14.870.000')).toBeInTheDocument()
+    // Utilidad neta de kpis: bruta 19.310.000 mas otros ingresos 500.000 menos gastos 4.440.000.
+    expect(screen.getByText('$ 15.370.000')).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledWith('/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-18', expect.anything())
     expect(screen.getByText(/Resumen de demo · octubre de 2026/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('href', '/ventas/nueva')
