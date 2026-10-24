@@ -102,7 +102,7 @@ export function ProductsPage() {
             Catálogo de productos con alertas de stock. Costos y precios sin IVA.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link to="/inventario/categorias" className={buttonClasses('secondary')} data-variant="secondary">
             Categorías
           </Link>

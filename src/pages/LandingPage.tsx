@@ -183,10 +183,10 @@ export function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link to="/login" className={`hidden sm:inline-flex ${buttonClasses('secondary')}`}>
+                <Link to="/login" className={`max-sm:hidden ${buttonClasses('secondary')}`}>
                   Iniciar sesión
                 </Link>
-                <Link to="/registro" className={`hidden sm:inline-flex ${buttonClasses('secondary')}`}>
+                <Link to="/registro" className={`max-sm:hidden ${buttonClasses('secondary')}`}>
                   Crear cuenta
                 </Link>
               </>

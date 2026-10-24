@@ -112,6 +112,17 @@ export function AccountsPage() {
   const totals = scopeMovements ? periodTotals(scopeMovements) : undefined
   const scopeName = selected?.name ?? 'Todas las cuentas'
 
+  const transferButton = (
+    <Button
+      variant={canTransfer ? 'primary' : 'secondary'}
+      onClick={() => setModal('transfer')}
+      disabled={!canTransfer}
+      aria-describedby={accounts.isSuccess && !canTransfer ? 'transfer-help' : undefined}
+    >
+      Nueva transferencia
+    </Button>
+  )
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -131,18 +142,12 @@ export function AccountsPage() {
               <FileSpreadsheet size={16} strokeWidth={1.5} aria-hidden />
               {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
             </Button>
-            {/* El primario depende del estado: sin dos cuentas no hay transferencia posible. */}
+            {/* El primario depende del estado (sin dos cuentas no hay transferencia) y va al final. */}
+            {!canTransfer && transferButton}
             <Button variant={canTransfer ? 'secondary' : 'primary'} onClick={() => setModal('account')}>
               Nueva cuenta
             </Button>
-            <Button
-              variant={canTransfer ? 'primary' : 'secondary'}
-              onClick={() => setModal('transfer')}
-              disabled={!canTransfer}
-              aria-describedby={accounts.isSuccess && !canTransfer ? 'transfer-help' : undefined}
-            >
-              Nueva transferencia
-            </Button>
+            {canTransfer && transferButton}
           </div>
           {!range.valid && (
             <p id="export-help" className="text-small text-text-muted">

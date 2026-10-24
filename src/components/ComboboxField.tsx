@@ -13,7 +13,7 @@ export interface ComboboxOption {
 
 interface ComboboxFieldProps {
   label: string
-  /** Etiqueta visible solo bajo md: desde md la tabla ya tiene encabezado. */
+  /** Etiqueta visible solo bajo xl: desde xl la rejilla de lineas ya tiene encabezado. */
   compactLabel?: boolean
   options: ComboboxOption[]
   value: number | null
@@ -67,7 +67,7 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className={`text-small font-medium text-text ${compactLabel ? 'md:sr-only' : ''}`}>
+      <label htmlFor={id} className={`text-small font-medium text-text ${compactLabel ? 'xl:sr-only' : ''}`}>
         {label}
       </label>
       <div className="relative">

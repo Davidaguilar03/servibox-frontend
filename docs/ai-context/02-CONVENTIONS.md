@@ -145,6 +145,28 @@ necesite, no antes.
   (se agrega despues, como la cuenta elegida en Cuentas).
 * Un texto informativo no lleva estilo de boton (el "Este mes" del panel es una etiqueta).
 
+## Responsive
+
+* Ninguna pantalla desborda en ancho, de 360 px en adelante, con la barra lateral abierta o
+  contraida y con un modal abierto. Una tabla puede desplazarse dentro de su contenedor
+  (`overflow-x-auto`), pero no puede ensanchar la pagina.
+* Toda tabla tiene su vista de tarjetas bajo md (768 px) con la misma informacion. Las dos van
+  en el DOM y el cambio es solo por CSS (`hidden md:block` la tabla, `md:hidden` la lista). Con
+  `DataTable` basta pasar `card` (render de la tarjeta) y `cardsLabel`; los listados con
+  paginacion tienen su propia lista.
+* Una rejilla de columnas fijas solo se activa desde el ancho donde cabe con la barra lateral
+  abierta (240 px). Las lineas de factura suman 666 px fijos: rejilla y resumen al lado desde
+  xl (1280 px); por debajo, tarjetas apiladas y el resumen debajo del formulario.
+* Un elemento fijo (toasts) se ancla a los dos lados bajo sm (`left-4 right-4`) y vuelve a su
+  ancho maximo desde sm.
+* Una clase que oculta (`hidden`) no se combina con `buttonClasses`, que trae `inline-flex` y
+  gana; para ocultar un boton bajo sm se usa `max-sm:hidden`.
+* En los encabezados con varios botones el grupo es `flex flex-wrap gap-3` y el primario va al
+  final.
+* Criterio de aceptacion: el script de auditoria de desbordes (cada ruta en 360, 390, 768,
+  1024, 1280 y 1536 px, con datos y con un tenant vacio) no deja desbordes sin justificar. Ver
+  [sessions/2026-10-24-responsive.md](sessions/2026-10-24-responsive.md).
+
 ## Formatos
 
 En `src/lib/format.ts`, nunca a mano en un componente:
