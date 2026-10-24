@@ -119,7 +119,7 @@ describe('nueva factura de venta', () => {
     expect(screen.getByLabelText('Fecha de factura')).toHaveValue('2026-10-18')
     expect(screen.getByRole('button', { name: 'Guardar factura' })).toBeDisabled()
     expect(screen.getByText('Agrega al menos un producto.')).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Nueva factura')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Nueva factura')
   })
 
   it('en contado propone la primera cuenta de efectivo por id, con Efectivo bloqueado', async () => {

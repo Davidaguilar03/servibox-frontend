@@ -26,7 +26,21 @@ import { SuppliersPage } from './pages/SuppliersPage'
 import { TermsPage } from './pages/TermsPage'
 import { SettingsPage } from './settings/SettingsPage'
 
-const handle = (breadcrumb: string[]): RouteHandle => ({ breadcrumb })
+// Destino de cada tramo de la miga cuando no es el ultimo.
+const crumbLinks: Record<string, string> = {
+  Ventas: '/ventas',
+  'Facturas de venta': '/ventas',
+  Compras: '/compras',
+  'Facturas de compra': '/compras',
+  Inventario: '/inventario',
+  Productos: '/inventario',
+  Cuentas: '/cuentas',
+  Movimientos: '/cuentas',
+}
+
+const handle = (breadcrumb: string[]): RouteHandle => ({
+  breadcrumb: breadcrumb.map((label) => ({ label, to: crumbLinks[label] })),
+})
 
 export const routes: RouteObject[] = [
   // Publicas: sin RequireAuth ni AppShell. Cada una fija su titulo con usePageMeta.

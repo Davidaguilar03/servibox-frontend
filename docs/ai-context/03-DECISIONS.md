@@ -12,6 +12,34 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Accesibilidad estructural del shell y de las paginas publicas
+
+* Decision: corrige A11Y-01, A11Y-02, A11Y-03, A11Y-08, A11Y-09, A11Y-11 y PAT-10 de la
+  auditoria visual sin cambiar el aspecto:
+  * Menu movil con `inert` (React 19 lo admite como booleano en JSX): cerrado bajo lg el
+    `aside` es inerte; abierto, el contenido es inerte, el foco entra al primer enlace, Tab
+    queda atrapado, Esc lo cierra y el foco vuelve al boton. El ancho se lee con
+    `matchMedia('(min-width: 1024px)')`; sin `matchMedia` (jsdom) cuenta como movil. El boton
+    Contraer solo se renderiza desde lg (antes estaba oculto por CSS), asi el foco atrapado no
+    depende de medir el layout.
+  * "Saltar al contenido" en `AppShell` hacia `main#contenido`, con el estilo de la landing;
+    el clic enfoca el `main` sin cambiar el hash de la URL.
+  * Titulo por ruta privada: `<ultimo tramo de la miga> · ServiBox`, puesto por `AppShell`.
+  * Login: el titulo del formulario pasa a `h1` y el lema a `p` con `font-display` (mismo
+    aspecto). El registro ya tenia un solo `h1`. `ComingSoonPage` usa `main`; solo se monta
+    como ruta publica, fuera del shell, asi que no anida otro `main`.
+  * "Este mes" del panel pasa a etiqueta de texto (sin estilo de boton ni `data-variant`).
+  * Miga de pan: tramos previos como enlaces (mapa `crumbLinks` por etiqueta en
+    `routes.tsx`), `aria-label` "Ruta de navegacion". Cuentas agrega la cuenta elegida
+    despues de Movimientos en vez de reemplazarlo; Configuracion sigue con un tramo.
+* Pendiente: el detalle abierto desde la papelera sigue mostrando "Facturas de venta" (o de
+  compra) en la miga; corregirlo exige pasar el origen en el estado de navegacion.
+* Alternativas consideradas: ocultar el menu cerrado con `visibility: hidden` (rompe la
+  transicion); un paquete de trampa de foco; rutas de la miga declaradas por cada ruta en vez
+  de un mapa por etiqueta.
+* Motivo: `inert` resuelve foco y lector de pantalla con un solo atributo y React 19 lo
+  soporta; el mapa por etiqueta evita repetir destinos en cada ruta.
+
 ## 2026-10-24: Limite de tiempo de las pruebas en 15 s y esperas de 5 s
 
 * Decision: `testTimeout` y `hookTimeout` de Vitest pasan de 5 s (valor por defecto) a 15 s en

@@ -64,7 +64,7 @@ export function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Periodo fijo: el selector de periodo queda fuera de esta version. */}
-          <span className={buttonClasses('secondary')} data-variant="secondary">Este mes</span>
+          <span className="text-small font-medium text-text-muted">Este mes</span>
           <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
             Registrar venta
           </Link>

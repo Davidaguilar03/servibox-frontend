@@ -108,7 +108,7 @@ describe('detalle de factura de compra', () => {
     renderRoute('/compras/5')
 
     expect(await screen.findByRole('heading', { name: 'IA-777' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Compras/Facturas de compra/IA-777')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/IA-777')
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
     expect(screen.getByText('Importadora Andina SAS · Crédito · Vence el 04/12/2026')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Registrar pago' })).toHaveClass('bg-action')

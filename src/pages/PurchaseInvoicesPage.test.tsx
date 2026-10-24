@@ -111,7 +111,7 @@ describe('facturas de compra', () => {
 
     expect(await screen.findByRole('heading', { name: 'Facturas de compra' })).toBeInTheDocument()
     expect(screen.getByText('Compras de contado y a crédito. Las facturas anuladas están en la papelera.')).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent(
+    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
       'Compras/Facturas de compra',
     )
     expect(screen.getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('href', '/compras/nueva')

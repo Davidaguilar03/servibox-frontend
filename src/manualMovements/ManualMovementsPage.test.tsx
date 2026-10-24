@@ -94,7 +94,7 @@ describe('Gastos operativos', () => {
     expect(rowsText()[1]).toContain('Factura de octubre')
     expect(screen.getByText('Total del período').parentElement).toHaveTextContent('$ 530.000')
     expect(screen.getByText('Movimientos').parentElement).toHaveTextContent('2')
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Compras/Gastos operativos')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Gastos operativos')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
   })
 
@@ -346,7 +346,7 @@ describe('Ingresos ocasionales', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Ingresos ocasionales' })).toBeInTheDocument()
     expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success-ink')
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Ventas/Ingresos ocasionales')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Ingresos ocasionales')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
   })
 

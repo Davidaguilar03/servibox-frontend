@@ -120,8 +120,30 @@ necesite, no antes.
 * Cada pagina publica llama a `usePageMeta(titulo, descripcion)` (`src/lib/usePageMeta.ts`):
   fija `document.title` y la meta description y los restaura al salir. Titulo con el
   formato `Pagina · ServiBox`; descripcion de una o dos frases con la voz del manual.
-  `index.html` trae la descripcion por defecto. Las privadas no lo usan por ahora.
+  `index.html` trae la descripcion por defecto. Las privadas no lo usan: su titulo lo pone
+  `AppShell`.
+* Rutas privadas: `AppShell` fija `document.title` como `<ultimo tramo de la miga> · ServiBox`
+  (`Facturas de venta · ServiBox`; en un detalle, el numero de la factura cuando cargo y
+  `Detalle de factura` mientras tanto) y lo restaura al salir del shell.
 * El wordmark de las paginas publicas enlaza a `/` con `WordmarkLink`.
+* Toda pagina tiene un unico `h1` en todos los anchos y un unico landmark `main`. Un lema
+  decorativo (la columna oscura del login y del registro) va en `p` con `font-display`.
+
+## Accesibilidad del shell
+
+* El primer enfocable de `AppShell` es "Saltar al contenido" (visible solo con foco, mismo
+  estilo que el de la landing); lleva el foco al `main#contenido` (`tabIndex -1`).
+* Menu lateral bajo lg: cerrado es `inert` (ni foco ni lector de pantalla). Abierto, el foco
+  pasa al primer enlace, Tab no sale del menu, Esc o el fondo lo cierran, el foco vuelve al
+  boton "Abrir menu" (`aria-expanded`, `aria-controls="menu-lateral"`) y el resto de la
+  pagina queda `inert`. Desde lg el menu es fijo y nada de esto aplica. El movimiento
+  reducido lo cubre la regla global de `index.css`.
+* Miga de pan: `nav` con `aria-label` "Ruta de navegacion" y una lista ordenada. Los tramos
+  previos son enlaces (destinos en `crumbLinks` de `src/routes.tsx`), el ultimo es texto con
+  `aria-current="page"` y los separadores son `aria-hidden`. Una pagina cambia el ultimo
+  tramo con `useBreadcrumbTail(valor)` (reemplaza) o `useBreadcrumbTail(valor, 'append')`
+  (se agrega despues, como la cuenta elegida en Cuentas).
+* Un texto informativo no lleva estilo de boton (el "Este mes" del panel es una etiqueta).
 
 ## Formatos
 

@@ -104,12 +104,20 @@ describe('detalle de factura de venta', () => {
     vi.useRealTimers()
   })
 
+  it('el titulo del documento pasa al numero de la factura al cargar', async () => {
+    mockApi(routes())
+    renderRoute('/ventas/5')
+
+    expect(await screen.findByRole('heading', { name: 'FV-0230' })).toBeInTheDocument()
+    expect(document.title).toBe('FV-0230 · ServiBox')
+  })
+
   it('credito con abonos: datos, productos, abonos y resumen', async () => {
     const fetchMock = mockApi(routes())
     renderRoute('/ventas/5')
 
     expect(await screen.findByRole('heading', { name: 'FV-0230' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Ventas/Facturas de venta/FV-0230')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Facturas de venta/FV-0230')
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
     expect(screen.getByText('Transportes Boyacá S.A.S. · Crédito · Vence el 04/11/2026')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Registrar abono' })).toBeInTheDocument()

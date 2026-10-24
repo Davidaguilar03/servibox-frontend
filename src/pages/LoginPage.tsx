@@ -54,7 +54,7 @@ export function LoginPage() {
         </div>
         <div className="relative my-auto max-w-md">
           <p className="font-mono text-label uppercase text-text-subtle">Servitecas y talleres</p>
-          <h1 className="mt-4 text-display text-text-inverse">Tu negocio en buenas manos.</h1>
+          <p className="mt-4 font-display text-display text-text-inverse">Tu negocio en buenas manos.</p>
           <p className="mt-6 text-body text-text-subtle">
             Registra una venta y el inventario y la caja se actualizan solos. Sin archivos separados ni
             conciliación a fin de mes.
@@ -68,7 +68,7 @@ export function LoginPage() {
           <WordmarkLink />
         </div>
         <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8 shadow-card">
-          <h2 className="text-h2 text-text">Inicia sesión</h2>
+          <h1 className="text-h2 text-text">Inicia sesión</h1>
           <p className="mt-1 text-small text-text-muted">Ingresa con los datos de tu serviteca.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">

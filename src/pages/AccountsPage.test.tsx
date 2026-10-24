@@ -118,7 +118,7 @@ describe('cuentas', () => {
     const group = await screen.findByRole('group', { name: 'Cuentas' })
     expect(await within(group).findByRole('button', { name: /Caja General/ })).toHaveAttribute('aria-pressed', 'true')
     expect(within(group).getByRole('button', { name: /Todas las cuentas/ })).toHaveTextContent('$ 4.176.900')
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Cuentas/Caja General')
+    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Cuentas/Movimientos/Caja General')
     expect(screen.getByRole('heading', { name: 'Caja General · Este mes' })).toBeInTheDocument()
     expect(calls(fetchMock, '/api/treasury/movements')).toEqual(['/api/treasury/movements?desde=2026-10-01&hasta=2026-10-18'])
 
