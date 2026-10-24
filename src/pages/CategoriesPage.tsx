@@ -305,7 +305,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
               return (
                 <label
                   key={color.value}
-                  className="relative flex size-touch cursor-pointer items-center justify-center rounded-control border border-border has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
+                  className="relative flex size-touch cursor-pointer items-center justify-center rounded-control border border-border-control has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
                   title={color.label}
                 >
                   <input

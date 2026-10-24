@@ -197,7 +197,7 @@ export function ReportsPage() {
 
           <fieldset>
             <legend className="mb-2 text-small font-medium text-text">Formato</legend>
-            <div className="grid grid-cols-2 gap-1 rounded-control border border-border bg-surface p-1">
+            <div className="grid grid-cols-2 gap-1 rounded-control border border-border-control bg-surface p-1">
               {formats.map((option) => (
                 <label
                   key={option.value}
@@ -322,7 +322,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
 function Variation({ value }: { value: number | null }) {
   if (value === null) return <span className="text-text-muted">Sin datos del período anterior</span>
   const Icon = value > 0 ? ArrowUp : value < 0 ? ArrowDown : Minus
-  const tone = value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-text-muted'
+  const tone = value > 0 ? 'text-success-ink' : value < 0 ? 'text-error' : 'text-text-muted'
   const direction = value > 0 ? 'Subió' : value < 0 ? 'Bajó' : 'Sin cambio,'
   return (
     <span className="flex items-center gap-1 text-text-muted">
@@ -352,8 +352,8 @@ function StatementTable({ kpis }: { kpis: Kpis }) {
           const negative = Math.round(row.value) < 0
           const rowClass = row.total
             ? negative
-              ? 'bg-error-bg font-semibold text-error'
-              : 'bg-success-bg font-semibold text-success'
+              ? 'bg-error-bg font-semibold text-error-ink'
+              : 'bg-success-bg font-semibold text-success-ink'
             : 'border-b border-border even:bg-row-alt'
           const valueClass = row.total ? '' : negative ? 'text-error' : 'text-text'
           return (

@@ -28,8 +28,8 @@ export function TextField({ label, hint, error, type = 'text', disabled, ...prop
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={messageId}
-          className={`h-control w-full rounded-control border bg-surface px-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-subtle focus:ring-3 disabled:border-border disabled:bg-neutral-200 disabled:text-text-subtle read-only:bg-neutral-200 read-only:text-text-muted ${
-            error ? 'border-error focus:ring-error/20' : 'border-border focus:border-brand focus:ring-brand/20'
+          className={`h-control w-full rounded-control border bg-surface px-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-muted focus:ring-3 disabled:border-border disabled:bg-neutral-200 disabled:text-text-subtle read-only:bg-neutral-200 read-only:text-text-muted ${
+            error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'
           } ${isPassword ? 'pr-12' : ''}`}
           {...props}
         />

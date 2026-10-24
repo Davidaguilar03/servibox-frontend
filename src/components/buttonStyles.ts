@@ -3,7 +3,7 @@ export type ButtonVariant = 'primary' | 'dark' | 'secondary' | 'text' | 'danger'
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'bg-action text-text-inverse hover:bg-action-hover active:bg-action-active',
   dark: 'bg-dark text-text-inverse hover:bg-dark-hover active:bg-dark-active',
-  secondary: 'border border-border bg-surface text-text hover:bg-neutral-100 active:bg-neutral-200',
+  secondary: 'border border-border-control bg-surface text-text hover:bg-neutral-100 active:bg-neutral-200',
   text: 'bg-transparent text-brand-ink hover:bg-neutral-100 active:bg-neutral-200',
   danger: 'bg-danger text-text-inverse hover:bg-danger-hover active:bg-danger-active',
 }

@@ -227,7 +227,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
             <SummaryRow
               label="Pagado"
               value={summary.paid === null ? EMPTY_VALUE : formatCurrency(summary.paid)}
-              tone={summary.paid ? 'text-success' : undefined}
+              tone={summary.paid ? 'text-success-ink' : undefined}
             />
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Saldo pendiente</dt>

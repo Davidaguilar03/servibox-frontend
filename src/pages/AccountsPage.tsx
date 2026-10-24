@@ -186,7 +186,7 @@ export function AccountsPage() {
                     aria-pressed={active}
                     onClick={() => choosePeriod(option.value)}
                     className={`min-h-touch rounded-pill border px-4 text-small font-medium transition-colors duration-(--duration-fast) ${focusRing} ${
-                      active ? 'border-nav bg-nav text-text-inverse' : 'border-border bg-surface text-text hover:bg-neutral-100'
+                      active ? 'border-nav bg-nav text-text-inverse' : 'border-border-control bg-surface text-text hover:bg-neutral-100'
                     }`}
                   >
                     {option.label}
@@ -213,7 +213,7 @@ export function AccountsPage() {
               </div>
             )}
             <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-              <PeriodTotal label="Ingresos del período" value={totals && formatCurrency(totals.income)} tone="text-success" />
+              <PeriodTotal label="Ingresos del período" value={totals && formatCurrency(totals.income)} tone="text-success-ink" />
               <PeriodTotal label="Egresos del período" value={totals && formatCurrency(totals.expense)} tone="text-error" />
             </dl>
             {range.valid && movements.isError && (
@@ -387,7 +387,7 @@ interface MovementsBlockProps {
 function MovementsBlock(props: MovementsBlockProps) {
   const { filters, rangeValid, movements, scopeMovements, showAccount, origin, numbersFailed, onRetryNumbers } = props
 
-  const amountClass = (movement: TreasuryMovement) => (movement.type === 'INGRESO' ? 'text-success' : 'text-error')
+  const amountClass = (movement: TreasuryMovement) => (movement.type === 'INGRESO' ? 'text-success-ink' : 'text-error')
   const columns: Column<TreasuryMovement>[] = [
     { header: 'Fecha', render: (m) => <span className="tabular whitespace-nowrap">{formatDate(m.date)}</span> },
     ...(showAccount ? [{ header: 'Cuenta', render: (m: TreasuryMovement) => m.accountName ?? '' }] : []),

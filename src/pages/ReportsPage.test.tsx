@@ -91,7 +91,7 @@ describe('ReportsPage', () => {
     expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 19.310.000')
     expect(statementValue('Gastos operativos')).toHaveTextContent('-$ 4.440.000')
     expect(statementValue('Utilidad neta')).toHaveTextContent('$ 14.870.000')
-    expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-success-bg', 'text-success')
+    expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-success-bg', 'text-success-ink')
 
     // Ventas 48,62 contra 43,4 millones sube 12 %; utilidad 14,87 contra 15,4 baja 3 %.
     expect(await within(preview).findByText(/Subió/)).toBeInTheDocument()
@@ -120,7 +120,7 @@ describe('ReportsPage', () => {
     const preview = screen.getByRole('region', { name: 'Vista previa · Estado de resultados' })
     expect(await within(preview).findByText('Septiembre de 2026')).toBeInTheDocument()
     expect(await within(preview).findAllByText('Sin datos del período anterior')).toHaveLength(2)
-    expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-error-bg', 'text-error')
+    expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-error-bg', 'text-error-ink')
     expect(statementValue('Utilidad neta')).toHaveTextContent('-$ 1.000.000')
   })
 

@@ -34,7 +34,7 @@ export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
             </li>
             {pageItems(page.page, page.totalPages).map((item, index) =>
               item === 'gap' ? (
-                <li key={`gap-${index}`} className="px-1 text-small text-text-subtle" aria-hidden>
+                <li key={`gap-${index}`} className="px-1 text-small text-text-muted" aria-hidden>
                   …
                 </li>
               ) : (
@@ -43,8 +43,8 @@ export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
                     type="button"
                     className={`${pageButton} tabular ${
                       item === page.page
-                        ? 'bg-brand text-text-inverse'
-                        : 'border border-border bg-surface text-text hover:bg-neutral-100'
+                        ? 'bg-action text-text-inverse'
+                        : 'border border-border-control bg-surface text-text hover:bg-neutral-100'
                     }`}
                     onClick={() => onPageChange(item)}
                     aria-label={`Página ${item}`}

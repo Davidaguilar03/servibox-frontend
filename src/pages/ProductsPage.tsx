@@ -239,7 +239,7 @@ function CategoryTabs({ categories, products, selected, onSelect }: CategoryTabs
                 }`}
               >
                 {tab.name}
-                <span className="tabular text-small text-text-subtle">{tab.count}</span>
+                <span className="tabular text-small text-text-muted">{tab.count}</span>
               </button>
             </li>
           )

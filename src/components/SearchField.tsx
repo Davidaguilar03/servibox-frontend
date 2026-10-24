@@ -23,7 +23,7 @@ export function SearchField({ label, ...props }: SearchFieldProps) {
         <input
           id={id}
           type="search"
-          className="h-control w-full rounded-control border border-border bg-surface pr-3 pl-9 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-subtle focus:border-brand focus:ring-3 focus:ring-brand/20"
+          className="h-control w-full rounded-control border border-border-control bg-surface pr-3 pl-9 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-muted focus:border-brand focus:ring-3 focus:ring-brand/20"
           {...props}
         />
       </div>
