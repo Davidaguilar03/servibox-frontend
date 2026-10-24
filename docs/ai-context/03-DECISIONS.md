@@ -12,6 +12,48 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Tokens de contraste y boton primario en brand-ink
+
+* Decision: se corrigen los 17 pares que fallaban en la auditoria visual (CON-01 a CON-07 y
+  COL-01) solo con tokens y clases, sin cambiar textos, layout ni logica. Valores y razones
+  (WCAG 2.1, calculadas con la prueba `src/styles/tokens.test.ts`):
+  * `color-action` pasa de `brand` (#ff3b30, blanco encima 3.55 a 1) a `brand-ink` (#d32316,
+    5.22 a 1). `action-hover` es `color-mix` al 92 por ciento con negro (#c22014, 5.98) y
+    `action-active` al 86 por ciento (#b51e13, 6.65). `brand-hover` del manual daba 4.12 con
+    texto blanco y ya no lo usa el primario. Cierra CON-01.
+  * El item activo de la barra lateral y la pagina actual de la paginacion usan `bg-action`
+    (5.22). El relleno del item activo contra el carbon da 2.81, por eso lleva un anillo
+    interior de 1 px `brand` (4.14 contra el carbon, mismo recurso que la tarjeta de cuenta
+    activa). Cierra CON-02.
+  * `border-control` #808792: borde de campos, selectores, buscador, combobox, lineas de
+    factura, botones secundarios, paginacion, controles segmentados, pildoras de periodo y
+    muestras de color. 3.62 sobre surface, 3.26 sobre canvas, 3.50 sobre row-alt. Tarjetas,
+    divisores y menus siguen con `border`. Cierra CON-03.
+  * `success-ink` #15803d (4.57 sobre success-bg, 5.02 sobre blanco, 4.84 sobre row-alt),
+    `warning-ink` #b45309 (4.51 sobre warning-bg), `error-ink` #b91c1c (5.30 sobre error-bg) e
+    `info-ink` #1d4ed8 (5.49 sobre info-bg): texto de StatusBadge (Stock critico incluido),
+    titulos de Alert, fila de utilidad neta de Reportes y montos o textos verdes sobre fondo
+    claro. El color semantico original queda para iconos, bordes y puntos. El texto `error`
+    sobre blanco ya cumplia (4.83) y no cambia. Cierra CON-04 y CON-05.
+  * `text-subtle` deja de usarse como texto informativo (placeholders, conteo de pestanas,
+    separador de la miga, puntos de la paginacion pasan a `text-muted`). Queda para iconos
+    decorativos, estados deshabilitados y texto sobre el carbon (5.78). Cierra CON-06.
+  * `text-muted` pasa de #6b7280 (igual a `neutral-500`) a #5f6673: 5.78 sobre blanco, 5.20
+    sobre canvas y `neutral-200`, 4.73 sobre error-bg. Con el valor anterior fallaban, ademas
+    de los encabezados de tabla, los badges Anulada e Inactivo, el tag Sistema y los campos de
+    solo lectura que cita la auditoria, todos los subtitulos de pagina, que van directo sobre
+    canvas. `neutral-500` no cambia. Cierra CON-07.
+  * Eyebrows de la landing y leyendas del registro pasan de `brand-ink` a `text-muted`: el
+    manual no admite rojo en etiquetas pequenas. Cierra COL-01.
+* Alternativas consideradas: oscurecer solo los encabezados y badges con `neutral-600`;
+  cambiar el fondo de los encabezados de tabla a surface; mantener `brand` en el primario con
+  texto mas grande.
+* Motivo: un cambio de token corrige todos los usos a la vez y la prueba de contraste impide
+  que vuelvan a fallar. El rojo de marca #ff3b30 queda para superficies grandes sin texto
+  pequeno, el wordmark, el anillo de foco (3.55 sobre blanco) y acentos no textuales.
+  **La decision de color esta pendiente de validar con el disenador**: el primario se ve mas
+  oscuro que en las capturas y `text-muted` ya no coincide con `neutral-500`.
+
 ## 2026-10-23: Clientes y Proveedores con un componente compartido
 
 * Decision: `CounterpartiesPage` (`src/counterparties/`) arma las dos pantallas con una

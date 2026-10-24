@@ -87,7 +87,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
 
   const filtered = movements.data ? filterManualMovements(movements.data, filters) : undefined
   const totals = filtered ? manualTotals(filtered) : undefined
-  const amountClass = config.category === 'GASTO_OPERATIVO' ? 'text-error' : 'text-success'
+  const amountClass = config.category === 'GASTO_OPERATIVO' ? 'text-error' : 'text-success-ink'
 
   const actions = (movement: TreasuryMovement) => (
     <div className="flex justify-end gap-1">

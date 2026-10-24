@@ -26,15 +26,24 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
   estilo de la interfaz sino el dato `color` que guarda el backend; por eso el punto de color
   (`CategoryDot`) lo aplica con `style`. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * Un valor nuevo se agrega primero al archivo de tokens y despues se usa.
-* `color-action` es el fondo del boton primario; hoy vale lo mismo que `color-brand` y se
-  cambia en un solo lugar. El hover de los botones usa los tokens del manual
-  (`brand-hover`, `nav-hover`); los estados que el manual no trae (activo, hover de
-  peligro) se derivan con `color-mix` en el mismo archivo.
-* Texto rojo sobre fondo claro: `brand-ink`, no `brand` (contraste).
+* `color-action` es el fondo del boton primario y de los estados activos con texto blanco
+  (item de la barra lateral, pagina actual); vale `brand-ink` y se cambia en un solo lugar.
+  Hover y activo del primario y del peligro se derivan con `color-mix` en el mismo
+  archivo; el oscuro usa `nav-hover`.
+* Texto rojo sobre fondo claro: `brand-ink`, no `brand` (contraste). Nunca `color-brand`
+  como fondo de texto: queda para superficies sin texto pequeno, wordmark y foco.
+* Texto semantico sobre su fondo `-bg` y montos verdes: `success-ink`, `warning-ink`,
+  `error-ink`, `info-ink`. El color semantico sin `-ink` es para iconos, bordes y puntos.
+* Borde de controles (campos, selectores, botones secundarios, paginacion, segmentados):
+  `border-control`. Tarjetas, divisores y menus: `border`.
+* `text-subtle` nunca para informacion: solo iconos decorativos, deshabilitados y texto
+  sobre el carbon. El texto secundario es `text-muted`.
+* Todo par texto sobre fondo (o borde de control) nuevo se agrega a
+  `src/styles/tokens.test.ts`, que exige 4.5 a 1 en texto y 3 a 1 en bordes de controles.
 
 | Grupo | Tokens | Utilidad de ejemplo |
 |-|-|-|
-| Color | `brand`, `brand-hover`, `brand-ink`, `action`, `surface`, `canvas`, `nav`, `nav-hover`, `text`, `text-muted`, `text-subtle`, `text-inverse`, `border`, `row-alt`, `overlay`, `neutral-50` a `neutral-900`, `success`, `warning`, `error`, `info` y su `-bg` | `bg-canvas`, `text-brand-ink` |
+| Color | `brand`, `brand-hover`, `brand-ink`, `action`, `surface`, `canvas`, `nav`, `nav-hover`, `text`, `text-muted`, `text-subtle`, `text-inverse`, `border`, `border-control`, `row-alt`, `overlay`, `neutral-50` a `neutral-900`, `success`, `warning`, `error`, `info` con su `-bg` y su `-ink` | `bg-canvas`, `text-success-ink` |
 | Tipografia | `font-display` (Montserrat), `font-body` (Inter), `font-mono` (IBM Plex Mono); tamanos `display`, `h1`, `h2`, `h3`, `body`, `button`, `small`, `label` con su interlineado y peso | `text-h2`, `font-mono` |
 | Espaciado | base de 4 px: `p-1` 4, `p-2` 8, `p-3` 12, `p-4` 16, `p-6` 24, `p-8` 32, `p-12` 48, `p-16` 64 | `gap-4` |
 | Radios | `tag` 4, `control` 8, `card` 12, `container` 20, `pill` 999 | `rounded-card` |

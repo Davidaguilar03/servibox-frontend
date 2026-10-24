@@ -273,7 +273,7 @@ export function NewSaleInvoicePage() {
         />
         <fieldset className="flex flex-col gap-1.5">
           <legend className="mb-1.5 text-small font-medium text-text">Tipo de pago</legend>
-          <div className="grid h-control grid-cols-2 gap-1 rounded-control border border-border bg-surface p-1">
+          <div className="grid h-control grid-cols-2 gap-1 rounded-control border border-border-control bg-surface p-1">
             {(['CONTADO', 'CREDITO'] as const).map((type) => (
               <label
                 key={type}
@@ -653,7 +653,7 @@ function LineNumberInput({ label, value, min, max, step, onChange, hint, error }
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? `${id}-message` : undefined}
-        className={`${lineInput} ${error ? 'border-error focus:ring-error/20' : 'border-border focus:border-brand focus:ring-brand/20'}`}
+        className={`${lineInput} ${error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'}`}
       />
       {message && (
         <p id={`${id}-message`} aria-live="polite" className={`text-small ${error ? 'text-error' : 'text-text-muted'} md:text-right`}>

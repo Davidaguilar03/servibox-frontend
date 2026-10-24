@@ -332,7 +332,7 @@ describe('Ingresos ocasionales', () => {
     renderRoute('/ventas/ingresos')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ingresos ocasionales' })).toBeInTheDocument()
-    expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success')
+    expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success-ink')
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
     expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Ventas/Ingresos ocasionales')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')

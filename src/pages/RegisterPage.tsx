@@ -24,7 +24,7 @@ import { usePageMeta } from '../lib/usePageMeta'
 const linkClass =
   'rounded-tag font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
-const legendClass = 'font-mono text-label uppercase text-brand-ink'
+const legendClass = 'font-mono text-label uppercase text-text-muted'
 
 /** El 409 de un identificador repetido, atado al slug que lo provoco. */
 interface SlugConflict {

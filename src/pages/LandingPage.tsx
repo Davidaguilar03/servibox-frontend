@@ -275,7 +275,7 @@ export function LandingPage() {
         </section>
 
         <section aria-labelledby="titulo-problema" className="mx-auto max-w-content px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <p className="font-mono text-label uppercase text-brand-ink">El problema</p>
+          <p className="font-mono text-label uppercase text-text-muted">El problema</p>
           <h2 id="titulo-problema" className="mt-2 text-h2 text-text sm:text-h1">
             Deja atrás los tres archivos de Excel
           </h2>
@@ -298,7 +298,7 @@ export function LandingPage() {
 
         <section id="modulos" aria-labelledby="titulo-modulos" className="scroll-mt-16 bg-canvas">
           <div className="mx-auto max-w-content px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-            <p className="font-mono text-label uppercase text-brand-ink">Módulos</p>
+            <p className="font-mono text-label uppercase text-text-muted">Módulos</p>
             <h2 id="titulo-modulos" className="mt-2 text-h2 text-text sm:text-h1">
               Todo lo administrativo, en un solo lugar
             </h2>
@@ -321,7 +321,7 @@ export function LandingPage() {
           aria-labelledby="titulo-como-funciona"
           className="mx-auto max-w-content scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
         >
-          <p className="font-mono text-label uppercase text-brand-ink">Cómo funciona</p>
+          <p className="font-mono text-label uppercase text-text-muted">Cómo funciona</p>
           <h2 id="titulo-como-funciona" className="mt-2 text-h2 text-text sm:text-h1">
             Empieza a usarlo el mismo día
           </h2>

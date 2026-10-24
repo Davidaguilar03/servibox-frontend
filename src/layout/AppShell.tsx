@@ -84,7 +84,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 `flex min-h-touch items-center gap-3 rounded-control px-3 text-small font-medium transition-colors duration-(--duration-fast) ${focusRing} ${
                   collapsed ? 'lg:justify-center lg:px-0' : ''
-                } ${isActive ? 'bg-brand text-text-inverse' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
+                } ${isActive ? 'bg-action text-text-inverse ring-1 ring-brand ring-inset' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
               }
             >
               <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
@@ -152,7 +152,7 @@ export function AppShell() {
                 return (
                   <li key={crumb} className="flex min-w-0 items-center gap-2">
                     {index > 0 && (
-                      <span className="text-text-subtle" aria-hidden>
+                      <span className="text-text-muted" aria-hidden>
                         /
                       </span>
                     )}

@@ -19,10 +19,13 @@
   --color-nav: #1f2937;
   --color-nav-hover: #2d3748;
   --color-text: #1f2937;
-  --color-text-muted: #6b7280;
+  /* Mas oscuro que neutral-500: cumple 4.5 a 1 tambien sobre canvas y neutral-200. */
+  --color-text-muted: #5f6673;
   --color-text-subtle: #9ca3af;
   --color-text-inverse: #ffffff;
   --color-border: #e5e7eb;
+  /* Borde de controles (campos, selectores, botones secundarios): 3 a 1 sobre surface, canvas y row-alt. */
+  --color-border-control: #808792;
   --color-row-alt: #fafbfc;
   --color-overlay: #111827;
 
@@ -46,15 +49,26 @@
   --color-info: #2563eb;
   --color-info-bg: #dbeafe;
 
-  /* Fondo del boton primario. Hoy igual a brand; se cambia aqui en un solo lugar. */
-  --color-action: var(--color-brand);
+  /*
+   * Texto semantico: success, warning, error e info no llegan a 4.5 a 1 sobre su fondo -bg.
+   * El color original queda para iconos, bordes y puntos; el texto usa su -ink.
+   */
+  --color-success-ink: #15803d;
+  --color-warning-ink: #b45309;
+  --color-error-ink: #b91c1c;
+  --color-info-ink: #1d4ed8;
 
   /*
-   * Estados de boton. Hover usa los tokens del manual (brand-hover, nav-hover). Activo
-   * oscurece 14 por ciento, y el peligro tambien deriva su hover (8 por ciento): el manual
-   * no trae tokens para esos estados.
+   * Fondo del boton primario y de los estados activos con texto blanco. Es brand-ink: blanco
+   * sobre brand da 3.55 a 1 y no cumple. brand queda para superficies, wordmark y foco.
    */
-  --color-action-hover: var(--color-brand-hover);
+  --color-action: var(--color-brand-ink);
+
+  /*
+   * Estados de boton. Hover oscurece 8 por ciento y activo 14 por ciento, en el primario y en
+   * el peligro: brand-hover del manual da 4.12 a 1 con texto blanco. El oscuro usa nav-hover.
+   */
+  --color-action-hover: color-mix(in srgb, var(--color-action) 92%, black);
   --color-action-active: color-mix(in srgb, var(--color-action) 86%, black);
   --color-dark: var(--color-nav);
   --color-dark-hover: var(--color-nav-hover);
