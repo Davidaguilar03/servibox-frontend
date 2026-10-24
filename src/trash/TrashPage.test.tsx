@@ -90,7 +90,7 @@ describe('papelera de ventas', () => {
     renderRoute('/ventas/papelera')
 
     expect(await screen.findByRole('heading', { name: 'Papelera de ventas' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Ventas/Papelera')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Papelera')
     expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o recuperarlas.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
     expect(screen.getByLabelText('Periodo')).toHaveValue('todas')
@@ -302,7 +302,7 @@ describe('papelera de compras', () => {
     renderRoute('/compras/papelera')
 
     expect(await screen.findByRole('heading', { name: 'Papelera de compras' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Compras/Papelera')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Papelera')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
     await waitFor(() => expect(numbers()).toEqual(['FC-7', 'FC-6']))
     expect(screen.getByRole('columnheader', { name: 'Proveedor' })).toBeInTheDocument()

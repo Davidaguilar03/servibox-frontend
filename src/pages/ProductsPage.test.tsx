@@ -76,7 +76,7 @@ describe('productos', () => {
     renderRoute('/inventario')
 
     expect(await screen.findByRole('heading', { name: 'Productos' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Inventario/Productos')
+    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Productos')
     expect(screen.getByRole('link', { name: 'Nuevo producto' })).toHaveAttribute('href', '/inventario/nuevo')
     expect(screen.getByRole('link', { name: 'Categorías' })).toHaveAttribute('href', '/inventario/categorias')
 

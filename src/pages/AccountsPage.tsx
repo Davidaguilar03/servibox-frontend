@@ -78,7 +78,7 @@ export function AccountsPage() {
   const accountId = selectedAccountId(filters.cuenta, accountList)
   const selected = accountList.find((account) => account.id === accountId)
   const allSelected = accounts.isSuccess && accountId === null
-  useBreadcrumbTail(selected?.name ?? (allSelected && accountList.length > 0 ? 'Todas las cuentas' : undefined))
+  useBreadcrumbTail(selected?.name ?? (allSelected && accountList.length > 0 ? 'Todas las cuentas' : undefined), 'append')
 
   // Las fechas personalizadas reemplazan la entrada del historial, como el buscador.
   function update(change: Partial<AccountsFilters>, replace = false) {

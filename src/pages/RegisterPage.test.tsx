@@ -40,6 +40,15 @@ async function fillForm(user = userEvent.setup()) {
 const submit = () => screen.getByRole('button', { name: 'Crear serviteca' })
 
 describe('registro de serviteca', () => {
+  it('tiene un unico h1, el titulo del formulario', async () => {
+    renderRoute('/registro')
+
+    const headings = await screen.findAllByRole('heading', { level: 1 })
+    expect(headings).toHaveLength(1)
+    expect(headings[0]).toHaveTextContent('Crea tu serviteca')
+    expect(screen.getByText('Tu serviteca lista en minutos.').tagName).toBe('P')
+  })
+
   it('sugiere el identificador desde el nombre comercial hasta que se edita a mano', async () => {
     const user = userEvent.setup()
     renderRoute('/registro')

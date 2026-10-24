@@ -64,7 +64,7 @@ describe('categorias', () => {
     await setup()
 
     expect(screen.getByRole('heading', { name: 'Categorías' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Inventario/Categorías')
+    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
     const row = screen.getByText('REPUESTOS DEMO').closest('tr') as HTMLElement
     expect(await within(row).findByText('2')).toBeInTheDocument()
     expect(within(row).getByText('10')).toBeInTheDocument()

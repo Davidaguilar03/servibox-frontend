@@ -132,10 +132,21 @@ describe('panel de control', () => {
     expect(within(sidebar).getByRole('button', { name: 'Salir' })).toBeInTheDocument()
 
     const header = screen.getByRole('banner')
-    expect(within(header).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Inicio')
+    expect(within(header).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inicio')
     expect(within(header).getByText('Autollantas A&C')).toBeInTheDocument()
     expect(within(header).queryByRole('searchbox')).not.toBeInTheDocument()
     expect(await screen.findByText(/Resumen de Autollantas A&C · octubre de 2026/)).toBeInTheDocument()
+  })
+
+  it('Este mes es una etiqueta, no un boton ni un enlace', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/inicio')
+
+    const label = await screen.findByText('Este mes')
+    expect(label.tagName).toBe('SPAN')
+    expect(label).not.toHaveAttribute('data-variant')
+    expect(screen.queryByRole('button', { name: 'Este mes' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Este mes' })).not.toBeInTheDocument()
   })
 
   it('muestra los estados vacios', async () => {

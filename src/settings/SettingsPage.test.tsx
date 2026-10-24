@@ -62,7 +62,7 @@ describe('pestanas', () => {
     const datos = screen.getByRole('tab', { name: 'Datos de la serviteca' })
     expect(datos).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', datos.id)
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Configuración')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Configuración')
 
     datos.focus()
     await user.keyboard('{ArrowRight}')

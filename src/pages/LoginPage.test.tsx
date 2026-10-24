@@ -13,6 +13,15 @@ async function fillAndSubmit() {
 }
 
 describe('formulario de login', () => {
+  it('tiene un unico h1, el titulo del formulario', async () => {
+    renderRoute('/login')
+
+    const headings = await screen.findAllByRole('heading', { level: 1 })
+    expect(headings).toHaveLength(1)
+    expect(headings[0]).toHaveTextContent('Inicia sesión')
+    expect(screen.getByText('Tu negocio en buenas manos.').tagName).toBe('P')
+  })
+
   it('envia los tres campos, guarda la sesion y entra a la pagina pedida', async () => {
     const token = validToken()
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ token, user: { username: 'admin', role: 'ADMIN' }, tenant: { name: 'Serviteca Demo', slug: 'demo' } }))

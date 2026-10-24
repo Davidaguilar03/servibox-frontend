@@ -149,7 +149,7 @@ describe('nueva factura de compra', () => {
     expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeDisabled()
     expect(screen.getByText('Elige el proveedor.')).toBeInTheDocument()
     expect(screen.getByText('Escribe el número de factura del proveedor.')).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent('Compras/Facturas de compra/Nueva factura')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/Nueva factura')
   })
 
   it('una cuenta de banco ofrece Transferencia y Cheque', async () => {

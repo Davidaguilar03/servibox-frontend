@@ -98,7 +98,7 @@ describe('facturas de venta', () => {
     renderRoute('/ventas')
 
     expect(await screen.findByRole('heading', { name: 'Facturas de venta' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Miga de pan' })).toHaveTextContent(
+    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
       'Ventas/Facturas de venta',
     )
     expect(screen.getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('href', '/ventas/nueva')
