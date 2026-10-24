@@ -51,7 +51,7 @@ async function setup(routes: Routes = fullRoutes()) {
   const fetchMock = mockApi(routes)
   const user = userEvent.setup()
   renderRoute('/inventario/categorias')
-  await screen.findByRole('button', { name: 'Editar REPUESTOS DEMO' })
+  await screen.findAllByRole('button', { name: 'Editar REPUESTOS DEMO' })
   return { fetchMock, user }
 }
 
@@ -65,7 +65,7 @@ describe('categorias', () => {
 
     expect(screen.getByRole('heading', { name: 'Categorías' })).toBeInTheDocument()
     expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
-    const row = screen.getByText('REPUESTOS DEMO').closest('tr') as HTMLElement
+    const row = within(screen.getByRole('table')).getByText('REPUESTOS DEMO').closest('tr') as HTMLElement
     expect(await within(row).findByText('2')).toBeInTheDocument()
     expect(within(row).getByText('10')).toBeInTheDocument()
     expect(within(row).getByText('3')).toBeInTheDocument()
@@ -73,6 +73,21 @@ describe('categorias', () => {
     expect(within(row).getByText('IVA')).toBeInTheDocument()
     const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1)
     expect(rows.map((item) => item.querySelector('td')?.textContent)).toEqual(['BATERIAS', 'REPUESTOS DEMO'])
+  })
+
+  it('tiene tabla y tarjetas con la misma informacion y la accion de editar', async () => {
+    const { user } = await setup()
+
+    expect(screen.getByRole('table').parentElement).toHaveClass('hidden', 'md:block')
+    const cards = screen.getByRole('list', { name: 'Categorías' })
+    expect(cards).toHaveClass('md:hidden')
+    const card = within(cards).getAllByRole('listitem').find((item) => item.textContent?.includes('REPUESTOS DEMO')) as HTMLElement
+    for (const text of ['Umbral amarillo', '10', 'Umbral rojo', '3', 'Margen objetivo', '30 %', 'Impuestos', 'IVA', 'Productos']) {
+      expect(card).toHaveTextContent(text)
+    }
+    expect(await within(card).findByText('2')).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Editar REPUESTOS DEMO' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('crea con el margen como fraccion y el IVA vigente preseleccionado', async () => {
@@ -132,7 +147,7 @@ describe('categorias', () => {
       ...fullRoutes(),
       'PUT /api/inventory/categories/7': () => jsonResponse({ error: 'Ya existe una categoria con el nombre FILTROS', status: 409 }, 409),
     })
-    await user.click(screen.getByRole('button', { name: 'Editar REPUESTOS DEMO' }))
+    await user.click(within(screen.getByRole('table')).getByRole('button', { name: 'Editar REPUESTOS DEMO' }))
     const dialog = await screen.findByRole('dialog', { name: 'Editar categoría' })
 
     expect(within(dialog).getByLabelText('Margen objetivo (%)')).toHaveValue('30')
@@ -213,6 +228,6 @@ describe('categorias', () => {
     renderRoute('/inventario/categorias')
 
     await user.click(await screen.findByRole('button', { name: 'Reintentar' }))
-    expect(await screen.findByRole('button', { name: 'Editar REPUESTOS DEMO' })).toBeInTheDocument()
+    expect(await screen.findAllByRole('button', { name: 'Editar REPUESTOS DEMO' })).toHaveLength(2)
   })
 })

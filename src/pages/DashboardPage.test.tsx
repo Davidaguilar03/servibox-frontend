@@ -149,6 +149,35 @@ describe('panel de control', () => {
     expect(screen.queryByRole('link', { name: 'Este mes' })).not.toBeInTheDocument()
   })
 
+  it('Stock bajo y Ultimas ventas tienen tabla y tarjetas con la misma informacion', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/inicio')
+
+    const stock = section('Productos con stock bajo')
+    await waitFor(() => expect(bodyRows(stock)).toHaveLength(3))
+    expect(within(stock).getByRole('table').parentElement).toHaveClass('hidden', 'md:block')
+    const stockCards = within(stock).getByRole('list', { name: 'Productos con stock bajo' })
+    expect(stockCards).toHaveClass('md:hidden')
+    const stockItems = within(stockCards).getAllByRole('listitem')
+    expect(stockItems).toHaveLength(3)
+    expect(stockItems[0]).toHaveTextContent('LL-004')
+    expect(stockItems[0]).toHaveTextContent('Llanta Pirelli 225/45 R18')
+    expect(stockItems[0]).toHaveTextContent('Stock 0')
+    expect(stockItems[0]).toHaveTextContent('Sin stock')
+    expect(stockItems[2]).toHaveTextContent('Bajo stock')
+
+    const salesSection = section('Últimas ventas')
+    await waitFor(() => expect(bodyRows(salesSection)).toHaveLength(5))
+    expect(within(salesSection).getByRole('table').parentElement).toHaveClass('hidden', 'md:block')
+    const salesCards = within(salesSection).getByRole('list', { name: 'Últimas ventas' })
+    expect(salesCards).toHaveClass('md:hidden')
+    const saleItems = within(salesCards).getAllByRole('listitem')
+    expect(saleItems.map((item) => /FV-\d+/.exec(item.textContent ?? '')?.[0])).toEqual(['FV-4', 'FV-2', 'FV-6', 'FV-3', 'FV-1'])
+    for (const text of ['FV-2', 'Cliente 2', '28/09/2026', 'Crédito', '$ 2.000', 'Pendiente']) {
+      expect(saleItems[1]).toHaveTextContent(text)
+    }
+  })
+
   it('muestra los estados vacios', async () => {
     mockApi({
       ...fullRoutes(),

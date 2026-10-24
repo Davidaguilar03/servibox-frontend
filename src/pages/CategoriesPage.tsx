@@ -93,6 +93,25 @@ export function CategoriesPage() {
     },
   ]
 
+  // La misma fila en tarjeta, bajo md: cada dato sale del render de su columna.
+  const cell = (c: InventoryCategory, header: string) => columns.find((column) => column.header === header)?.render(c)
+  const categoryCard = (c: InventoryCategory) => (
+    <>
+      <div className="flex items-center justify-between gap-4">
+        <span className="min-w-0 text-body font-medium text-text">{cell(c, 'Nombre')}</span>
+        {cell(c, '')}
+      </div>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-small">
+        {['Umbral amarillo', 'Umbral rojo', 'Margen objetivo', 'Impuestos', 'Productos'].map((header) => (
+          <div key={header} className="contents">
+            <dt className="text-text-muted">{header}</dt>
+            <dd className="tabular text-right text-text">{cell(c, header)}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
+  )
+
   let content: ReactNode
   if (categories.isError) {
     content = <ErrorState message="No pudimos cargar las categorías." onRetry={() => void categories.refetch()} />
@@ -119,7 +138,17 @@ export function CategoriesPage() {
             </Button>
           </div>
         )}
-        <DataTable columns={columns} rows={sorted} rowKey={(c) => c.id} loading={false} error={false} onRetry={() => undefined} emptyMessage="" />
+        <DataTable
+          columns={columns}
+          rows={sorted}
+          rowKey={(c) => c.id}
+          loading={false}
+          error={false}
+          onRetry={() => undefined}
+          emptyMessage=""
+          card={categoryCard}
+          cardsLabel="Categorías"
+        />
       </>
     )
   }

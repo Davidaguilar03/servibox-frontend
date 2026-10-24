@@ -122,6 +122,27 @@ describe('nueva factura de venta', () => {
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Nueva factura')
   })
 
+  it('cada linea tiene sus campos accesibles y la rejilla solo desde xl', async () => {
+    const { user } = await setup()
+    await addProduct(user, 'michelin', '2')
+    await addProduct(user, 'willard')
+
+    const lines = screen.getAllByRole('listitem', { name: /^Línea / })
+    expect(lines).toHaveLength(2)
+    for (const line of lines) {
+      expect(within(line).getByRole('combobox', { name: 'Producto' })).toBeInTheDocument()
+      expect(within(line).getByLabelText('Cantidad')).toBeInTheDocument()
+      expect(within(line).getByLabelText('Precio')).toBeInTheDocument()
+      expect(within(line).getByText('IVA')).toBeInTheDocument()
+      expect(within(line).getByText('Total')).toBeInTheDocument()
+      expect(within(line).getByRole('button', { name: /^Quitar / })).toBeInTheDocument()
+      expect(line).toHaveClass('flex', 'flex-col', 'xl:grid')
+      expect(line.className).not.toMatch(/(^|\s)md:grid/)
+    }
+    expect(lines[0]).toHaveAccessibleName('Línea LL-001')
+    expect(within(lines[0] as HTMLElement).getByText('LL-001')).toBeInTheDocument()
+  })
+
   it('en contado propone la primera cuenta de efectivo por id, con Efectivo bloqueado', async () => {
     await setup({
       ...fullRoutes(),

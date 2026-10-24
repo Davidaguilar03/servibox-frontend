@@ -152,6 +152,25 @@ describe('nueva factura de compra', () => {
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/Nueva factura')
   })
 
+  it('cada linea tiene sus campos accesibles y la rejilla solo desde xl', async () => {
+    const { user } = await setup()
+    await addProduct(user, 'pirelli', '12')
+    await addProduct(user, 'VAL-001', '3')
+
+    const lines = screen.getAllByRole('listitem', { name: /^Línea / })
+    expect(lines).toHaveLength(2)
+    for (const line of lines) {
+      expect(within(line).getByRole('combobox', { name: 'Producto' })).toBeInTheDocument()
+      expect(within(line).getByLabelText('Cantidad')).toBeInTheDocument()
+      expect(within(line).getByLabelText('Precio sin IVA')).toBeInTheDocument()
+      expect(within(line).getByText('IVA')).toBeInTheDocument()
+      expect(within(line).getByText('Total')).toBeInTheDocument()
+      expect(within(line).getByRole('button', { name: /^Quitar / })).toBeInTheDocument()
+      expect(line).toHaveClass('flex', 'flex-col', 'xl:grid')
+      expect(line.className).not.toMatch(/(^|\s)md:grid/)
+    }
+  })
+
   it('una cuenta de banco ofrece Transferencia y Cheque', async () => {
     const { user } = await setup()
 

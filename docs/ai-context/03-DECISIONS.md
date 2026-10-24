@@ -12,6 +12,37 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Ninguna pantalla desborda y toda tabla tiene tarjetas
+
+* Decision: corrige RESP-01 a RESP-04 de la auditoria visual sin cambiar el aspecto desde
+  1280 px:
+  * Lineas de factura (venta y compra): la rejilla `110 / 1fr / 96 / 128 / 104 / 112 / 44`
+    con `gap` de 12 suma 666 px fijos. Con la barra abierta y `md` la columna Producto quedaba
+    en 0 px entre 768 y unos 1280 px, y el combobox (50 px minimo) se montaba sobre la columna
+    Cantidad. La rejilla, su encabezado y el resumen lateral de 320 px pasan de `md`/`lg` a
+    `xl`; por debajo las lineas son tarjetas apiladas, como en movil, y el resumen va debajo.
+    `ComboboxField` con `compactLabel` oculta su etiqueta desde `xl`.
+  * Panel y Categorias: `DataTable` acepta `card` y `cardsLabel`; con ellos la tabla se oculta
+    bajo md y se muestran tarjetas con la misma informacion (las tarjetas de Categorias usan el
+    `render` de cada columna para no duplicar el formato). El desplazamiento horizontal del
+    panel a 360 y 390 px venia de las tarjetas de la rejilla `lg:grid-cols-5`: una celda de
+    rejilla tiene `min-width: auto`, asi que la tabla de Stock bajo fijaba 401 px de ancho
+    minimo a toda la columna aunque la tabla tuviera su propio `overflow-x-auto`.
+  * Toasts: `left-4 right-4` bajo sm y `sm:left-auto sm:w-full sm:max-w-sm` desde sm (antes
+    se salia 16 px por la izquierda bajo 416 px).
+  * Encabezados: los grupos ya pasaban de linea sin desbordar en 360 px; Productos gana
+    `flex-wrap` y Cuentas deja el primario al final (Nueva cuenta con menos de dos cuentas,
+    Nueva transferencia con dos o mas). No se agrega el menu "Mas" que proponia la auditoria.
+  * Landing: "Iniciar sesion" y "Crear cuenta" usaban `hidden sm:inline-flex` junto a
+    `buttonClasses`, cuyo `inline-flex` ganaba; se veian en 360 px, aplastaban el boton de menu
+    a 27 px y el grupo se salia 13 px del encabezado. Pasan a `max-sm:hidden`; desde sm nada
+    cambia.
+* Alternativas consideradas: un componente `MobileCardList` comun (PAT-11), dejar la descripcion
+  de la linea en su propia fila hasta xl, un menu "Mas" en los encabezados.
+* Motivo: tarjetas apiladas hasta xl reutilizan la vista movil que ya existe y no agregan una
+  tercera disposicion; la propiedad de `DataTable` es lo minimo que comparten panel y
+  Categorias.
+
 ## 2026-10-24: Accesibilidad estructural del shell y de las paginas publicas
 
 * Decision: corrige A11Y-01, A11Y-02, A11Y-03, A11Y-08, A11Y-09, A11Y-11 y PAT-10 de la

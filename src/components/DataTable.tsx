@@ -17,6 +17,10 @@ interface DataTableProps<T> {
   onRetry: () => void
   emptyMessage: string
   skeletonRows?: number
+  /** Vista de tarjetas bajo md: con ella la tabla solo se muestra desde md. */
+  card?: (row: T) => ReactNode
+  /** Nombre accesible de la lista de tarjetas. */
+  cardsLabel?: string
 }
 
 /**
@@ -32,14 +36,16 @@ export function DataTable<T>({
   onRetry,
   emptyMessage,
   skeletonRows = 4,
+  card,
+  cardsLabel,
 }: DataTableProps<T>) {
   if (error) return <ErrorState message="No pudimos cargar esta información." onRetry={onRetry} />
   if (!loading && rows?.length === 0) return <EmptyState message={emptyMessage} />
 
   const alignClass = (column: Column<T>) => (column.align === 'right' ? 'text-right' : 'text-left')
 
-  return (
-    <div className="overflow-x-auto">
+  const table = (
+    <div className={`overflow-x-auto ${card ? 'hidden md:block' : ''}`}>
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -80,5 +86,29 @@ export function DataTable<T>({
         </tbody>
       </table>
     </div>
+  )
+  if (!card) return table
+
+  // Bajo md la tabla se oculta y se muestran tarjetas con la misma informacion; las dos
+  // quedan en el DOM y el cambio es solo por CSS, como en los listados.
+  return (
+    <>
+      {table}
+      {loading ? (
+        <div className="flex flex-col gap-3 md:hidden" aria-busy>
+          {Array.from({ length: skeletonRows }, (_, index) => (
+            <Skeleton key={index} className="h-16 w-full rounded-control" />
+          ))}
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-3 md:hidden" aria-label={cardsLabel}>
+          {rows?.map((row) => (
+            <li key={rowKey(row)} className="flex flex-col gap-2 rounded-control border border-border p-4">
+              {card(row)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   )
 }

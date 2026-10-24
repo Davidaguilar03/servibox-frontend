@@ -130,6 +130,25 @@ const lowStockColumns: Column<LowStockRow>[] = [
   { header: 'Estado', render: (p) => p.status !== 'NORMAL' && <StatusBadge status={stockBadge[p.status]} /> },
 ]
 
+/** La misma fila en tarjeta, bajo md. */
+function lowStockCard(p: LowStockRow) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="font-mono text-small text-text">{p.code}</span>
+        <span className="text-body text-text">{p.description}</span>
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <span className="tabular text-small text-text">
+          <span className="text-text-muted">Stock </span>
+          <span className={p.status === 'BAJO' ? '' : 'text-error'}>{p.quantity ?? 0}</span>
+        </span>
+        {p.status !== 'NORMAL' && <StatusBadge status={stockBadge[p.status]} />}
+      </span>
+    </div>
+  )
+}
+
 function LowStockBlock() {
   const products = useQuery({ queryKey: ['inventory', 'products'], queryFn: fetchProducts })
   const categories = useQuery({ queryKey: ['inventory', 'categories'], queryFn: fetchCategories })
@@ -149,6 +168,8 @@ function LowStockBlock() {
           void categories.refetch()
         }}
         emptyMessage="No hay productos con stock bajo."
+        card={lowStockCard}
+        cardsLabel="Productos con stock bajo"
       />
     </Section>
   )
@@ -218,6 +239,25 @@ const salesColumns: Column<Sale>[] = [
   { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
 ]
 
+/** La misma fila en tarjeta, bajo md. */
+function saleCard(s: Sale) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="font-mono text-small text-text">{s.invoiceNumber}</span>
+        <span className="text-body text-text">{s.customer?.name ?? EMPTY_VALUE}</span>
+        <span className="text-small text-text-muted">
+          {formatDate(s.invoiceDate)} · {paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE}
+        </span>
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <span className="tabular text-body font-medium text-text">{formatCurrency(s.total)}</span>
+        <StatusBadge status={s.status} />
+      </span>
+    </div>
+  )
+}
+
 /** Las mas recientes por fecha de factura; a igual fecha, la de id mayor. */
 function latestSales(sales: Sale[]): Sale[] {
   return [...sales]
@@ -238,6 +278,8 @@ function LatestSalesBlock() {
         error={sales.isError}
         onRetry={() => void sales.refetch()}
         emptyMessage="Aún no registras ventas."
+        card={saleCard}
+        cardsLabel="Últimas ventas"
       />
     </Section>
   )
