@@ -262,7 +262,7 @@ describe('Gastos operativos', () => {
     expect(requests(fetchMock, 'POST', '/api/treasury/movements')).toHaveLength(1)
     answer(jsonResponse({ error: 'Cuenta no encontrada: 1', status: 400 }, 400))
 
-    expect(await within(dialog).findByText('Cuenta no encontrada: 1')).toBeInTheDocument()
+    expect(await within(dialog).findByText('No encontramos esa cuenta. Puede que ya no exista.')).toBeInTheDocument()
     expect(within(dialog).getByText('No pudimos registrar el gasto')).toBeInTheDocument()
     expect(within(dialog).getByLabelText('Concepto')).toHaveValue('Pago de agua')
   })
@@ -338,15 +338,15 @@ describe('Gastos operativos', () => {
   })
 })
 
-describe('Ingresos ocasionales', () => {
+describe('Otros ingresos', () => {
   it('pide su categoria y muestra el monto en positivo', async () => {
     const fetchMock = mockApi(routes(incomes))
     renderRoute('/ventas/ingresos')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Ingresos ocasionales' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Otros ingresos' })).toBeInTheDocument()
     expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success-ink')
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Ingresos ocasionales')
+    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Otros ingresos')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
   })
 
@@ -408,7 +408,7 @@ describe('Ingresos ocasionales', () => {
     )
     await user.click(within(dialog).getByRole('button', { name: 'Eliminar' }))
 
-    expect(await within(dialog).findByText('El movimiento 7 es de categoria RECAUDO_VENTA y se gestiona desde su operacion')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Este movimiento se gestiona desde su factura o su transferencia.')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Eliminar ingreso' })).toBeInTheDocument()
   })
 })
@@ -427,8 +427,8 @@ describe('botones de los listados de facturas', () => {
     mockApi(routes(incomes, { 'GET /api/sales': () => jsonResponse([]) }))
     const router = renderRoute('/ventas')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Ingresos ocasionales' }))
+    await userEvent.click(await screen.findByRole('link', { name: 'Otros ingresos' }))
     expect(router.state.location.pathname).toBe('/ventas/ingresos')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Ingresos ocasionales' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Otros ingresos' })).toBeInTheDocument()
   })
 })

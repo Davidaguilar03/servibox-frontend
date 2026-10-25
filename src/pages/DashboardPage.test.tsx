@@ -126,7 +126,7 @@ describe('panel de control', () => {
     expect(stockRows[1]).toContain('LUB-012')
     expect(stockRows[1]).toContain('Stock crítico')
     expect(stockRows[2]).toContain('LL-003')
-    expect(stockRows[2]).toContain('Bajo stock')
+    expect(stockRows[2]).toContain('Stock bajo')
     expect(within(stock).queryByText('LL-010')).not.toBeInTheDocument()
     expect(within(stock).queryByText('LUB-020')).not.toBeInTheDocument()
 
@@ -192,7 +192,7 @@ describe('panel de control', () => {
     expect(stockItems[0]).toHaveTextContent('Llanta Pirelli 225/45 R18')
     expect(stockItems[0]).toHaveTextContent('Stock 0')
     expect(stockItems[0]).toHaveTextContent('Sin stock')
-    expect(stockItems[2]).toHaveTextContent('Bajo stock')
+    expect(stockItems[2]).toHaveTextContent('Stock bajo')
 
     const salesSection = section('Últimas ventas')
     await waitFor(() => expect(bodyRows(salesSection)).toHaveLength(5))

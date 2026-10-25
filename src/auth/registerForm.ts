@@ -1,3 +1,4 @@
+import { nitError, normalizeNit, phoneError } from '../lib/validation/contact'
 import type { RegisterRequest } from './authApi'
 
 // Reglas del registro, espejo de TenantRegistrationService del backend. Ver 03-DECISIONS.md.
@@ -39,8 +40,6 @@ export const RESERVED_SLUGS = new Set([
   'auth', 'inventory', 'treasury', 'counterparties', 'sales', 'purchases', 'reporting', 'demo',
 ])
 
-export const NIT = /^\d+(-\d)?$/
-export const PHONE = /^[0-9 +()-]+$/
 const SLUG = /^[a-z0-9-]{3,30}$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME = /^[A-Za-z0-9._-]{3,50}$/
@@ -73,25 +72,6 @@ function required(value: string, max: number, empty: string): string | undefined
   return undefined
 }
 
-/** NIT tal como lo pega o escribe el usuario (`900.123.456-7`), sin puntos ni espacios. */
-export function normalizeNit(value: string): string {
-  return value.replace(/[.\s]/g, '')
-}
-
-/** Error de un NIT ya recortado y no vacio; lo comparten el registro y Configuracion. */
-export function nitError(nit: string): string | undefined {
-  if (nit.length > 25) return 'Usa máximo 25 caracteres.'
-  if (!NIT.test(nit)) return 'Usa solo dígitos y, si quieres, un guion con el dígito de verificación. Por ejemplo, 900123456-7.'
-  return undefined
-}
-
-/** Error de un telefono ya recortado y no vacio. */
-export function phoneError(phone: string): string | undefined {
-  if (phone.length > 25) return 'Usa máximo 25 caracteres.'
-  if (!PHONE.test(phone)) return 'Usa solo dígitos, espacios, +, - y paréntesis.'
-  return undefined
-}
-
 export function businessNameError(name: string): string | undefined {
   return required(name, 150, 'Escribe el nombre comercial.')
 }
@@ -101,8 +81,9 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
   const errors: RegisterErrors = {}
 
   errors.businessName = businessNameError(values.businessName)
-  errors.nit = values.nit.trim() ? nitError(values.nit.trim()) : 'Escribe el NIT.'
-  errors.phone = values.phone.trim() ? phoneError(values.phone.trim()) : 'Escribe el teléfono.'
+  // NIT y telefono: el modulo comun con Configuracion (lib/validation/contact.ts).
+  errors.nit = nitError(values.nit)
+  errors.phone = phoneError(values.phone)
 
   const slug = values.slug.trim()
   if (!slug) errors.slug = 'Escribe el identificador.'
@@ -143,7 +124,7 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
 export function toRegisterRequest(values: RegisterValues): RegisterRequest {
   return {
     businessName: values.businessName.trim(),
-    nit: values.nit.trim(),
+    nit: normalizeNit(values.nit),
     phone: values.phone.trim(),
     slug: values.slug.trim().toLowerCase(),
     adminFullName: values.adminFullName.trim(),

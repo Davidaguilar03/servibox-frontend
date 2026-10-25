@@ -132,12 +132,12 @@ export function buildPurchaseRequest(form: PurchaseForm): PurchaseRequest {
   return request
 }
 
-/** 409 "Ya existe una factura de compra con el numero X": va bajo el campo del numero. */
+/** 409 "Ya existe una factura de compra X del proveedor Y": va bajo el campo del numero. */
 export function isDuplicatePurchaseNumberError(error: unknown): boolean {
   return (
     error instanceof ApiError &&
     error.status === 409 &&
-    error.message.startsWith('Ya existe una factura de compra con el numero')
+    /^Ya existe una factura de compra /.test(error.message)
   )
 }
 

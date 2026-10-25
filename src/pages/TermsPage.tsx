@@ -56,7 +56,7 @@ export function TermsPage() {
               </li>
               <li>
                 De la operación: productos, categorías, facturas de venta y de compra, abonos y pagos, cuentas,
-                movimientos, gastos, ingresos ocasionales y la configuración para el precio sugerido.
+                movimientos, gastos, otros ingresos y la configuración para el precio sugerido.
               </li>
             </ul>
             <p className="mt-2">

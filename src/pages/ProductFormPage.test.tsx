@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
-import { GENERIC_ERROR_MESSAGE } from '../lib/errorMessage'
+import { MESSAGES } from '../api/errorMessages'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Handler = (body: unknown) => Response
@@ -171,7 +171,7 @@ describe('formulario de producto', () => {
     const code = screen.getByLabelText('Código')
     await waitFor(() => expect(code).toHaveAttribute('aria-invalid', 'true'))
     expect(code).toHaveAccessibleDescription(
-      'El codigo DEMO-001 no se puede cambiar: el producto ya tiene facturas de venta o de compra',
+      'El código DEMO-001 no se puede cambiar: el producto ya tiene facturas de venta o de compra.',
     )
     expect(code).toHaveFocus()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -180,7 +180,7 @@ describe('formulario de producto', () => {
     expect(code).not.toHaveAttribute('aria-invalid')
   })
 
-  it('otros errores van en un Alert con el mensaje generico', async () => {
+  it('otros errores van en un toast con el mensaje generico', async () => {
     mockApi({ ...fullRoutes(), 'POST /api/inventory/products': () => jsonResponse({ error: 'Error interno del servidor', status: 500 }, 500) })
     const user = userEvent.setup()
     renderRoute('/inventario/nuevo')
@@ -190,8 +190,8 @@ describe('formulario de producto', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar producto' }))
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('No pudimos guardar el producto')
-    expect(alert).toHaveTextContent(GENERIC_ERROR_MESSAGE)
+    expect(alert).toHaveTextContent(MESSAGES.network)
+    expect(screen.queryByText('No pudimos guardar el producto')).not.toBeInTheDocument()
     expect(alert).not.toHaveTextContent('Error interno')
     expect(screen.getByLabelText('Código')).toHaveValue('LL-020')
   })

@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
+import { userMessage } from '../api/errorMessages'
 import { register, startSession } from '../auth/authApi'
 import {
   EMPTY_REGISTER_VALUES,
@@ -19,7 +20,6 @@ import { ErrorSummary } from '../components/ErrorSummary'
 import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { revealErrors } from '../lib/formErrors'
 import { usePageMeta } from '../lib/usePageMeta'
 
@@ -63,7 +63,7 @@ export function RegisterPage() {
     },
     onError: (error, request) => {
       if (error instanceof ApiError && error.status === 409) {
-        setSlugConflict({ slug: request.slug, message: error.message })
+        setSlugConflict({ slug: request.slug, message: userMessage(error) })
         slugRef.current?.focus()
       }
     },
@@ -122,7 +122,7 @@ export function RegisterPage() {
             body: 'Por ahora no estamos creando servitecas nuevas. Intenta de nuevo más tarde.',
           }
         : error
-          ? { title: 'No pudimos crear tu serviteca', body: errorMessage(error) }
+          ? { title: 'No pudimos crear tu serviteca', body: userMessage(error) }
           : null
 
   return (

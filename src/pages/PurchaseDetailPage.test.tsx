@@ -122,7 +122,7 @@ describe('detalle de factura de compra', () => {
     expect(within(data).getByText('compras@andina.co')).toBeInTheDocument()
     expect(within(data).getByText('3109876543')).toBeInTheDocument()
     expect(within(data).getByText('05/10/2026')).toBeInTheDocument()
-    expect(within(data).queryByText('Método de pago')).not.toBeInTheDocument()
+    expect(within(data).queryByText('Medio de pago')).not.toBeInTheDocument()
 
     const products = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
     expect(within(products).getAllByRole('columnheader').map((cell) => cell.textContent)).toContain('Precio sin IVA')
@@ -327,7 +327,7 @@ describe('detalle de factura de compra', () => {
     const accountCalls = calls(fetchMock, 'GET', '/api/treasury/accounts').length
     await user.click(within(dialog).getByRole('button', { name: 'Registrar pago' }))
 
-    expect(await within(dialog).findByText('Saldo insuficiente en Bancolombia: hay 1000.0 y se requieren 250000.0')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Saldo insuficiente en Bancolombia: hay $ 1.000 y se necesitan $ 250.000.')).toBeInTheDocument()
     expect(within(dialog).getByText('No pudimos registrar el pago')).toBeInTheDocument()
     expect(amount).toHaveValue(250000)
     expect(within(dialog).getByLabelText('Cuenta')).toHaveValue('1')
@@ -355,7 +355,7 @@ describe('detalle de factura de compra', () => {
     await user.selectOptions(await within(dialog).findByLabelText('Cuenta'), '1')
     await user.click(within(dialog).getByRole('button', { name: 'Registrar pago' }))
 
-    expect(await within(dialog).findByText('Solo se puede pagar una compra PENDIENTE, y esta esta PAGADA')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Esta compra ya está pagada: no se le pueden registrar pagos.')).toBeInTheDocument()
     expect(await screen.findByText('Pagada')).toBeInTheDocument()
     // Se eligio otra cuenta: cerrar pide confirmar.
     await user.keyboard('{Escape}')
@@ -398,7 +398,7 @@ describe('detalle de factura de compra', () => {
     await user.click(await screen.findByRole('button', { name: 'Anular' }))
     let dialog = screen.getByRole('dialog', { name: 'Anular factura IA-777' })
     expect(within(dialog).getByText(/pasa a la papelera/)).toHaveTextContent(
-      'Se descuentan del inventario las unidades que sumó esta compra y se revierten en las cuentas los pagos registrados. Puedes recuperarla desde la Papelera.',
+      'Se descuentan del inventario las unidades que sumó esta compra y se revierten en las cuentas los pagos registrados. Puedes restaurarla desde la Papelera.',
     )
     expect(within(dialog).getByText(/El costo de cada producto/)).toHaveTextContent(
       'El costo de cada producto vuelve al de su compra anterior si todavía venía de esta compra. Si el producto no tiene otra compra, el costo se queda como está. Si parte de esas unidades ya se vendió, no se puede anular.',
@@ -439,7 +439,7 @@ describe('detalle de factura de compra', () => {
     const dialog = screen.getByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: 'Anular factura' }))
 
-    expect(await within(dialog).findByText(/Parte de ese stock ya se vendio/)).toBeInTheDocument()
+    expect(await within(dialog).findByText(/Parte de ese stock ya se vendió/)).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/compras/5')
   })
 

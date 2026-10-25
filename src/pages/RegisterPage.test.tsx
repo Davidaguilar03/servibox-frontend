@@ -92,9 +92,9 @@ describe('registro de serviteca', () => {
     expect(screen.getByText('Escribe el nombre comercial.')).toBeInTheDocument()
     expect(screen.getByLabelText('Nombre comercial')).toHaveAttribute('aria-invalid', 'true')
 
-    await user.type(screen.getByLabelText('NIT'), '901.234.567-8')
+    await user.type(screen.getByLabelText('NIT'), '901234567-8X')
     await user.tab()
-    expect(screen.getByText(/^Usa solo dígitos y, si quieres/)).toBeInTheDocument()
+    expect(screen.getByText(/^El NIT solo admite dígitos/)).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Contraseña'), 'corta')
     await user.tab()
@@ -199,7 +199,7 @@ describe('registro de serviteca', () => {
     await user.click(submit())
 
     const slug = screen.getByLabelText('Código de tu serviteca')
-    expect(await screen.findByText('Ya existe una serviteca con el identificador serviteca-el-roble')).toBeInTheDocument()
+    expect(await screen.findByText('Ya existe una serviteca con el código serviteca-el-roble. Elige otro.')).toBeInTheDocument()
     expect(slug).toHaveAttribute('aria-invalid', 'true')
     await waitFor(() => expect(slug).toHaveFocus())
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -223,7 +223,7 @@ describe('registro de serviteca', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos crear tu serviteca')
-    expect(alert).toHaveTextContent('El identificador demo esta reservado')
+    expect(alert).toHaveTextContent('El código demo está reservado. Elige otro.')
     expect(screen.getByLabelText('Nombre comercial')).toHaveValue('  Serviteca El Roble ')
     expect(getToken()).toBeNull()
   })
@@ -249,13 +249,13 @@ describe('registro de serviteca', () => {
 
     await user.click(submit())
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Revisa tu conexión e intenta de nuevo.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos completar la acción. Revisa tu conexión')
 
     mockFetch(() => Promise.resolve(jsonResponse({ error: 'Error interno del servidor', status: 500 }, 500)))
     await user.click(submit())
 
     await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent('Algo salió mal de nuestro lado. Intenta de nuevo en unos minutos.'),
+      expect(screen.getByRole('alert')).toHaveTextContent('si sigue pasando, escríbenos por WhatsApp'),
     )
     expect(screen.getByLabelText('Contraseña')).toHaveValue('secreta123')
   })

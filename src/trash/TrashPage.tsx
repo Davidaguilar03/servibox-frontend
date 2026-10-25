@@ -1,6 +1,8 @@
+import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
@@ -17,10 +19,10 @@ import { StatusBadge } from '../components/StatusBadge'
 import { EmptyState, ErrorState } from '../components/states'
 import { showToast } from '../components/toast'
 import { businessToday } from '../lib/businessDate'
-import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { periodRange } from '../lib/period'
+import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import {
   DEFAULT_TRASH_FILTERS,
@@ -46,9 +48,12 @@ export interface TrashConfig<T extends TrashInvoice> {
   queryKey: QueryKey
   fetchInvoices: () => Promise<T[]>
   restore: (id: number) => Promise<unknown>
-  /** Que hace recuperar en este modulo, verificado en el backend. */
+  /** Que hace restaurar en este modulo, verificado en el backend. */
   restoreText: string
 }
+
+/** Ancho del recuadro desde el que caben todas las columnas de la papelera. */
+const TRASH_TABLE_FULL = 820
 
 const paymentTypeLabels: Record<TrashInvoice['paymentType'], string> = { CONTADO: 'Contado', CREDITO: 'Crédito' }
 
@@ -67,7 +72,7 @@ const periodOptions: Array<{ value: TrashFilters['periodo']; label: string }> = 
 
 const card = 'rounded-surface border border-border bg-surface'
 
-/** Papelera: las facturas anuladas del modulo, con filtros en la URL y Recuperar. */
+/** Papelera: las facturas anuladas del modulo, con filtros en la URL y Restaurar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
@@ -75,6 +80,9 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
   const filters = parseTrashFilters(searchParams)
   const [restoring, setRestoring] = useState<T | null>(null)
   const invoices = useQuery({ queryKey: config.queryKey, queryFn: config.fetchInvoices })
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  // En un recuadro angosto la fecha y la forma de pago pasan a una segunda linea bajo el tercero.
+  const compact = width < TRASH_TABLE_FULL
 
   function updateFilters(change: Partial<TrashFilters>, replace = false) {
     setSearchParams(trashFiltersToParams({ ...filters, pagina: 1, ...change }), { replace })
@@ -82,7 +90,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
   const clearFilters = () => updateFilters(DEFAULT_TRASH_FILTERS)
   const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
 
-  // Recuperar mueve la factura, el stock y los saldos: se refresca todo lo que depende de ellos.
+  // Restaurar mueve la factura, el stock y los saldos: se refresca todo lo que depende de ellos.
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: config.queryKey })
     void queryClient.invalidateQueries({ queryKey: ['treasury'] })
@@ -100,16 +108,31 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         </CellLink>
       ),
     },
-    { header: 'Fecha', render: (invoice) => formatDate(invoice.invoiceDate) },
-    { header: config.partyLabel, render: config.partyName },
-    { header: 'Forma de pago', render: (invoice) => paymentTypeLabels[invoice.paymentType] ?? EMPTY_VALUE },
+    ...(compact ? [] : [{ header: 'Fecha', render: (invoice: T) => formatDate(invoice.invoiceDate) }]),
+    {
+      header: config.partyLabel,
+      render: (invoice) =>
+        compact ? (
+          <span className="flex flex-col">
+            <span>{config.partyName(invoice)}</span>
+            <span className="text-small text-text-muted">
+              {formatDate(invoice.invoiceDate)} · {paymentTypeLabels[invoice.paymentType] ?? EMPTY_VALUE}
+            </span>
+          </span>
+        ) : (
+          config.partyName(invoice)
+        ),
+    },
+    ...(compact
+      ? []
+      : [{ header: 'Forma de pago', render: (invoice: T) => paymentTypeLabels[invoice.paymentType] ?? EMPTY_VALUE }]),
     { header: 'Estado', render: (invoice) => <StatusBadge status={invoice.status} /> },
     { header: 'Total', align: 'right', render: (invoice) => <span className="monto">{formatCurrency(invoice.total)}</span> },
     {
       header: '',
       render: (invoice) => (
-        <Button variant="secondary" onClick={() => setRestoring(invoice)} aria-label={`Recuperar factura ${invoice.invoiceNumber}`}>
-          Recuperar
+        <Button variant="secondary" onClick={() => setRestoring(invoice)} aria-label={`${GLOSSARY.restore} factura ${invoice.invoiceNumber}`}>
+          {GLOSSARY.restore}
         </Button>
       ),
     },
@@ -135,7 +158,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} rows={page.rows} rowKey={(invoice) => invoice.id} loading={false} error={false} onRetry={() => void invoices.refetch()} emptyMessage="" />
+            <DataTable columns={columns} rows={page.rows} rowKey={(invoice) => invoice.id} loading={false} error={false} onRetry={() => void invoices.refetch()} emptyMessage="" dense={compact} />
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label="Facturas anuladas">
             {page.rows.map((invoice) => (
@@ -155,8 +178,8 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
                     <StatusBadge status={invoice.status} />
                   </span>
                 </div>
-                <Button variant="secondary" onClick={() => setRestoring(invoice)} aria-label={`Recuperar factura ${invoice.invoiceNumber}`}>
-                  Recuperar
+                <Button variant="secondary" onClick={() => setRestoring(invoice)} aria-label={`${GLOSSARY.restore} factura ${invoice.invoiceNumber}`}>
+                  {GLOSSARY.restore}
                 </Button>
               </li>
             ))}
@@ -200,7 +223,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         ]}
       </FilterBar>
 
-      <section className={`${card} p-4`} aria-label="Facturas anuladas">
+      <section ref={sectionRef} className={`${card} p-4`} aria-label="Facturas anuladas">
         {content}
       </section>
 
@@ -240,6 +263,7 @@ function RestoreModal<T extends TrashInvoice>({ invoice, config, onClose, onRest
       onRejected()
     },
   })
+  const restoreError = useReportedError(restore.error)
 
   function confirm() {
     if (submitting.current) return
@@ -249,7 +273,7 @@ function RestoreModal<T extends TrashInvoice>({ invoice, config, onClose, onRest
 
   return (
     <Modal
-      title={`Recuperar factura ${invoice.invoiceNumber}`}
+      title={`${GLOSSARY.restore} factura ${invoice.invoiceNumber}`}
       onClose={onClose}
       footer={
         <>
@@ -257,16 +281,16 @@ function RestoreModal<T extends TrashInvoice>({ invoice, config, onClose, onRest
             Cancelar
           </Button>
           <Button onClick={confirm} disabled={restore.isPending}>
-            {restore.isPending ? 'Recuperando…' : 'Recuperar factura'}
+            {restore.isPending ? 'Restaurando…' : `${GLOSSARY.restore} factura`}
           </Button>
         </>
       }
     >
       <div className="flex flex-col gap-4">
         <p className="text-body text-text">{config.restoreText}</p>
-        {restore.isError && (
-          <Alert tone="error" title="No pudimos recuperar la factura">
-            {errorMessage(restore.error)}
+        {restoreError && restore.isError && (
+          <Alert tone="error" title="No pudimos restaurar la factura">
+            {restoreError}
           </Alert>
         )}
       </div>

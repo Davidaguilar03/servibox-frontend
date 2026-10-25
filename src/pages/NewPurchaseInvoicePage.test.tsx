@@ -144,8 +144,8 @@ describe('nueva factura de compra', () => {
     expect(screen.getByLabelText('Cuenta')).toHaveValue('10')
     expect(screen.getByRole('option', { name: 'Caja General · $ 10.000.000' })).toBeInTheDocument()
     expect(screen.getByText('Saldo disponible: $ 10.000.000')).toBeInTheDocument()
-    expect(screen.getByLabelText('Método de pago')).toHaveValue('EFECTIVO')
-    expect(screen.getByLabelText('Método de pago')).toBeDisabled()
+    expect(screen.getByLabelText('Medio de pago')).toHaveValue('EFECTIVO')
+    expect(screen.getByLabelText('Medio de pago')).toBeDisabled()
     // Regla de Guardar: habilitado aunque falten datos.
     expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeEnabled()
     expect(screen.getByText('Elige el proveedor.')).toBeInTheDocument()
@@ -176,7 +176,7 @@ describe('nueva factura de compra', () => {
     const { user } = await setup()
 
     await user.selectOptions(await screen.findByLabelText('Cuenta'), '11')
-    const method = screen.getByLabelText('Método de pago')
+    const method = screen.getByLabelText('Medio de pago')
     expect(method).toBeEnabled()
     expect(method).toHaveValue('TRANSFERENCIA')
     expect(within(method).getAllByRole('option').map((option) => option.textContent)).toEqual(['Transferencia', 'Cheque'])
@@ -237,7 +237,7 @@ describe('nueva factura de compra', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Crédito' }))
     expect(screen.queryByLabelText('Cuenta')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Método de pago')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Medio de pago')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Fecha de vencimiento')).toHaveValue('2026-11-21')
     await user.click(screen.getByRole('button', { name: '60 días' }))
     expect(screen.getByLabelText('Fecha de vencimiento')).toHaveValue('2026-12-21')
@@ -300,14 +300,14 @@ describe('nueva factura de compra', () => {
     const { user } = await setup({
       ...fullRoutes(),
       'POST /api/purchases': () =>
-        jsonResponse({ error: 'Ya existe una factura de compra con el numero DB-18452', status: 409 }, 409),
+        jsonResponse({ error: 'Ya existe una factura de compra DB-18452 del proveedor Distribuidora Andina', status: 409 }, 409),
     })
     await fillValid(user)
 
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
 
     const field = screen.getByLabelText('N.º factura del proveedor')
-    expect(await screen.findByText('Ya existe una factura de compra con el numero DB-18452')).toHaveAttribute('aria-live', 'polite')
+    expect(await screen.findByText('Ya existe la factura de compra DB-18452 de Distribuidora Andina.')).toHaveAttribute('aria-live', 'polite')
     expect(field).toHaveAttribute('aria-invalid', 'true')
     expect(field).toHaveFocus()
     expect(screen.queryByText('No pudimos guardar la factura')).not.toBeInTheDocument()
@@ -329,7 +329,7 @@ describe('nueva factura de compra', () => {
 
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
 
-    const alert = await screen.findByText('Saldo insuficiente en Caja General: hay 100.0 y se requieren 595000.0')
+    const alert = await screen.findByText('Saldo insuficiente en Caja General: hay $ 100 y se necesitan $ 595.000.')
     expect(alert.closest('[role="alert"]')).toHaveTextContent('No pudimos guardar la factura')
     await waitFor(() => expect(accountCalls()).toBe(2))
     expect(screen.getByLabelText('N.º factura del proveedor')).toHaveValue('DB-18452')
@@ -417,7 +417,7 @@ describe('nueva factura de compra', () => {
     await user.type(within(dialog).getByLabelText('Número de documento'), '900555111')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar proveedor' }))
 
-    expect(await within(dialog).findByText('Ya existe un tercero con el documento 900555111 como PROVEEDOR')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Ya existe un proveedor con el documento 900555111.')).toBeInTheDocument()
     expect(within(dialog).getByText('No pudimos crear el proveedor')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Proveedor' })).toHaveValue('')
   })

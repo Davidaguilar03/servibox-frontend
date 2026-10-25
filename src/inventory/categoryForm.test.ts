@@ -35,7 +35,7 @@ const values = (change: Partial<CategoryFormValues>): CategoryFormValues => ({
 describe('formulario de categoria', () => {
   it('el umbral rojo no puede superar al amarillo; iguales si', () => {
     expect(validateCategory(values({ yellowStockMin: '5', redStockMin: '6' }), []).redStockMin).toBe(
-      'El umbral rojo no puede ser mayor que el amarillo.',
+      'El aviso de stock crítico no puede ser mayor que el de stock bajo.',
     )
     expect(validateCategory(values({ yellowStockMin: '5', redStockMin: '5' }), [])).toEqual({})
     expect(validateCategory(values({ yellowStockMin: '0', redStockMin: '0' }), [])).toEqual({})

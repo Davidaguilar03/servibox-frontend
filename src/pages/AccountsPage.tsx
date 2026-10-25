@@ -2,6 +2,7 @@ import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { FileSpreadsheet, Wallet } from 'lucide-react'
+import { useReportedError } from '../api/reportError'
 import { NewAccountModal, TransferModal } from '../accounts/AccountModals'
 import {
   ACCOUNTS_KEY,
@@ -41,12 +42,15 @@ import { fetchAccounts, fetchBalance, fetchSales, type Account } from '../dashbo
 import { useBreadcrumbTail } from '../layout/breadcrumb'
 import { apiDownload } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
-import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
 import { iconSm } from '../components/icons'
+
+/** Ancho del recuadro desde el que caben todas las columnas de movimientos. */
+const MOVEMENTS_TABLE_FULL = 800
 
 const card = 'rounded-surface border border-border bg-surface'
 const focusRing = 'focus-ring'
@@ -102,6 +106,7 @@ export function AccountsPage() {
       exporting.current = false
     },
   })
+  const downloadError = useReportedError(download.error)
 
   function exportExcel() {
     if (!range.valid || exporting.current) return
@@ -167,9 +172,9 @@ export function AccountsPage() {
         }
       />
 
-      {download.isError && (
+      {downloadError && download.isError && (
         <Alert tone="error" title="No pudimos generar el reporte">
-          {errorMessage(download.error)}
+          {downloadError}
         </Alert>
       )}
 
@@ -377,12 +382,28 @@ function MovementsBlock(props: MovementsBlockProps) {
   const { filters, rangeValid, movements, scopeMovements, showAccount, origin, numbersFailed, onRetryNumbers } = props
 
   const amountClass = (movement: TreasuryMovement) => (movement.type === 'INGRESO' ? 'text-success-ink' : 'text-error')
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  // En un recuadro angosto el origen pasa a una segunda linea bajo el concepto.
+  const compact = width < MOVEMENTS_TABLE_FULL
   const columns: Column<TreasuryMovement>[] = [
     { header: 'Fecha', render: (m) => <span className="tabular whitespace-nowrap">{formatDate(m.date)}</span> },
     ...(showAccount ? [{ header: 'Cuenta', render: (m: TreasuryMovement) => m.accountName ?? '' }] : []),
     { header: 'Tipo', render: (m) => <StatusBadge status={m.type} /> },
-    { header: 'Concepto', render: (m) => m.concept },
-    { header: 'Origen', render: (m) => <span className="text-small whitespace-nowrap">{movementOrigin(m, origin)}</span> },
+    {
+      header: 'Concepto',
+      render: (m) =>
+        compact ? (
+          <span className="flex flex-col">
+            <span>{m.concept}</span>
+            <span className="text-small text-text-muted">{movementOrigin(m, origin)}</span>
+          </span>
+        ) : (
+          m.concept
+        ),
+    },
+    ...(compact
+      ? []
+      : [{ header: 'Origen', render: (m: TreasuryMovement) => <span className="text-small whitespace-nowrap">{movementOrigin(m, origin)}</span> }]),
     {
       header: 'Monto',
       align: 'right',
@@ -419,7 +440,7 @@ function MovementsBlock(props: MovementsBlockProps) {
           </div>
         )}
         <div className="hidden md:block">
-          <DataTable columns={columns} rows={page.rows} rowKey={(m) => m.id} loading={false} error={false} onRetry={() => undefined} emptyMessage="" />
+          <DataTable columns={columns} rows={page.rows} rowKey={(m) => m.id} loading={false} error={false} onRetry={() => undefined} emptyMessage="" dense={compact} />
         </div>
         <ul className="flex flex-col gap-3 md:hidden" aria-label="Movimientos">
           {page.rows.map((movement) => (
@@ -447,7 +468,7 @@ function MovementsBlock(props: MovementsBlockProps) {
   }
 
   return (
-    <section className={`${card} p-4`} aria-labelledby="movements-title">
+    <section ref={sectionRef} className={`${card} p-4`} aria-labelledby="movements-title">
       <h2 id="movements-title" className="mb-4 px-2 text-section text-text">
         Movimientos
       </h2>

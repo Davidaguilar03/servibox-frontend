@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   EMPTY_REGISTER_VALUES,
-  normalizeNit,
   normalizeSlugInput,
   suggestSlug,
   toRegisterRequest,
   validateRegister,
   type RegisterValues,
 } from './registerForm'
+import { NIT_FORMAT_MESSAGE, normalizeNit } from '../lib/validation/contact'
 
 const valid: RegisterValues = {
   businessName: 'Serviteca El Roble',
@@ -73,21 +73,21 @@ describe('validacion del registro', () => {
     expect(errorOf({ businessName: 'a'.repeat(151) }).businessName).toBe('Usa máximo 150 caracteres.')
   })
 
-  it('NIT con y sin digito de verificacion, hasta 25', () => {
+  it('NIT con y sin digito de verificacion, con puntos, hasta 25 (modulo comun con Configuracion)', () => {
     expect(errorOf({ nit: '900123456' }).nit).toBeUndefined()
     expect(errorOf({ nit: '900123456-7' }).nit).toBeUndefined()
-    expect(errorOf({ nit: '901.234.567-8' }).nit).toMatch(/^Usa solo dígitos/)
-    expect(errorOf({ nit: '900123456-78' }).nit).toMatch(/^Usa solo dígitos/)
-    expect(errorOf({ nit: '' }).nit).toBe('Escribe el NIT.')
+    expect(errorOf({ nit: '901.234.567-8' }).nit).toBeUndefined()
+    expect(errorOf({ nit: '900123456-78' }).nit).toBe(NIT_FORMAT_MESSAGE)
+    expect(errorOf({ nit: '' }).nit).toBe('Ingresa el NIT de tu serviteca.')
     expect(errorOf({ nit: '1'.repeat(25) }).nit).toBeUndefined()
-    expect(errorOf({ nit: '1'.repeat(26) }).nit).toBe('Usa máximo 25 caracteres.')
+    expect(errorOf({ nit: '1'.repeat(26) }).nit).toBe('El NIT y el teléfono no pueden superar 25 caracteres.')
   })
 
   it('telefono con digitos, espacios, +, - y parentesis, hasta 25', () => {
     expect(errorOf({ phone: '300 123 4567' }).phone).toBeUndefined()
-    expect(errorOf({ phone: '300-123-abc' }).phone).toBe('Usa solo dígitos, espacios, +, - y paréntesis.')
-    expect(errorOf({ phone: '' }).phone).toBe('Escribe el teléfono.')
-    expect(errorOf({ phone: '1'.repeat(26) }).phone).toBe('Usa máximo 25 caracteres.')
+    expect(errorOf({ phone: '300-123-abc' }).phone).toBe('El teléfono solo admite dígitos, espacios, +, - y paréntesis.')
+    expect(errorOf({ phone: '' }).phone).toBe('Ingresa el teléfono de contacto.')
+    expect(errorOf({ phone: '1'.repeat(26) }).phone).toBe('El NIT y el teléfono no pueden superar 25 caracteres.')
   })
 
   it('identificador de 3 a 30, sin guion a los lados y no reservado', () => {

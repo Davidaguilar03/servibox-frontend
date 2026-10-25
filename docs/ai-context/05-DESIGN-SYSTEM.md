@@ -204,6 +204,23 @@ Categorias):
 * `TabList` con `fill` (Configuracion): las pestanas se reparten el ancho y la etiqueta pasa a
   dos lineas. Sin `fill` (Productos): desplazamiento horizontal, borde derecho difuminado
   mientras haya mas pestanas y la seleccionada se lleva a la vista (`scrollIntoView`).
+* Tablas por prioridad (misma tecnica que las facturas: `useElementWidth` sobre el recuadro y
+  `DataTable dense` en compacto). Bajo el ancho completo, las columnas de menor prioridad pasan
+  a una segunda linea en `small` y `text-muted` bajo la celda principal:
+
+  | Tabla | Ancho completo | En compacto |
+  |-|-|-|
+  | Productos | 940 | categoria y costo bajo la descripcion |
+  | Categorias | 840 | impuestos bajo el nombre |
+  | Papeleras de venta y compra | 820 | fecha y forma de pago bajo el tercero |
+  | Clientes y Proveedores | 820 | correo y celular bajo el nombre |
+  | Movimientos de Cuentas | 800 | origen bajo el concepto |
+  | Gastos y Otros ingresos | 760 | observaciones bajo el concepto |
+
+  Criterio: 0 px de desplazamiento a 1024 con la barra contraida (recuadro 854) y con la barra
+  expandida (686), y a 1280 (942).
+* Barra lateral: contraida por defecto de 1024 a 1279 px (72 px, iconos con `title`) y
+  expandida desde 1280; la eleccion del usuario se recuerda.
 
 ## Formularios, modales y avisos
 
@@ -223,6 +240,8 @@ Categorias):
 * Toast: abajo a la derecha, maximo 3 (se retira el mas antiguo), boton "Cerrar aviso"
   (`IconButton`). Exito: `role="status"`, se cierra a los 5 s; error: `role="alert"`, queda.
   El temporizador se pausa con el cursor encima o el foco dentro y retoma lo que le quedaba.
+  Los errores de red, 5xx, 403 y 404 van aqui (regla en [06-COPY.md](06-COPY.md)); el WhatsApp
+  del texto de red es un enlace.
 * Errores de formulario: bajo cada campo con `aria-invalid` y `aria-describedby`; tras enviar,
   `ErrorSummary` (oculto, `role="alert"`) dice cuantos campos revisar.
 

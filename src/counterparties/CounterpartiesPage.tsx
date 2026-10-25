@@ -16,6 +16,7 @@ import { EmptyState, ErrorState } from '../components/states'
 import { showToast } from '../components/toast'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import type { Counterparty, CounterpartyRequest } from '../sales/salesApi'
 import type { BalanceInvoice } from './counterpartiesApi'
@@ -58,6 +59,9 @@ export interface CounterpartiesConfig {
   promotedToast: string
 }
 
+/** Ancho del recuadro desde el que caben todas las columnas de clientes y proveedores. */
+const COUNTERPARTIES_TABLE_FULL = 820
+
 const card = 'rounded-surface border border-border bg-surface'
 const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-semibold text-text-muted'
 
@@ -82,6 +86,9 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = parseCounterpartyFilters(searchParams)
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  // En un recuadro angosto el correo y el celular pasan a una segunda linea bajo el nombre.
+  const compact = width < COUNTERPARTIES_TABLE_FULL
   const [dialog, setDialog] = useState<Dialog | null>(null)
 
   const counterparties = useQuery({ queryKey: config.counterpartiesKey, queryFn: config.fetchCounterparties })
@@ -158,10 +165,27 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   )
 
   const columns: Column<Counterparty>[] = [
-    { header: 'Nombre', render: nameCell },
+    {
+      header: 'Nombre',
+      render: (counterparty) =>
+        compact ? (
+          <span className="flex flex-col gap-1">
+            {nameCell(counterparty)}
+            <span className="text-small text-text-muted">
+              {[counterparty.email, counterparty.phone].filter(Boolean).join(' · ') || EMPTY_VALUE}
+            </span>
+          </span>
+        ) : (
+          nameCell(counterparty)
+        ),
+    },
     { header: 'Documento', render: documentCell },
-    { header: 'Correo', render: (counterparty) => counterparty.email || EMPTY_VALUE },
-    { header: 'Celular', render: (counterparty) => counterparty.phone || EMPTY_VALUE },
+    ...(compact
+      ? []
+      : [
+          { header: 'Correo', render: (counterparty: Counterparty) => counterparty.email || EMPTY_VALUE },
+          { header: 'Celular', render: (counterparty: Counterparty) => counterparty.phone || EMPTY_VALUE },
+        ]),
     { header: config.balanceLabel, align: 'right', render: balanceCell },
     { header: 'Acciones', align: 'right', render: actions },
   ]
@@ -191,7 +215,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} rows={page.rows} rowKey={(c) => c.id} loading={false} error={false} onRetry={retryCounterparties} emptyMessage="" />
+            <DataTable columns={columns} rows={page.rows} rowKey={(c) => c.id} loading={false} error={false} onRetry={retryCounterparties} emptyMessage="" dense={compact} />
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label={config.title}>
             {page.rows.map((counterparty) => (
@@ -283,7 +307,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         ]}
       </FilterBar>
 
-      <section className={`${card} flex flex-col gap-4 p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className={`${card} flex flex-col gap-4 p-4`} aria-label={config.title}>
         {invoices.isError && counterparties.data && (
           <div role="alert" className="flex flex-wrap items-center gap-2 text-small text-text">
             <TriangleAlert {...iconSm} className="text-error" aria-hidden />

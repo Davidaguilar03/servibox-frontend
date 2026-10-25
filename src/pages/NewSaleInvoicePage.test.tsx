@@ -156,9 +156,8 @@ describe('nueva factura de venta', () => {
     })
 
     expect(await screen.findByLabelText('Cuenta')).toHaveValue('10')
-    expect(screen.getByLabelText('Método de pago')).toHaveValue('EFECTIVO')
-    expect(screen.getByLabelText('Método de pago')).toBeDisabled()
-    expect(screen.queryByLabelText('Medio de pago')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Medio de pago')).toHaveValue('EFECTIVO')
+    expect(screen.getByLabelText('Medio de pago')).toBeDisabled()
     expect(screen.queryByText('Elige la cuenta donde entra el dinero.')).not.toBeInTheDocument()
   })
 
@@ -176,7 +175,7 @@ describe('nueva factura de venta', () => {
     const { fetchMock, user, router } = await setup()
 
     await user.selectOptions(await screen.findByLabelText('Cuenta'), 'Caja General')
-    const method = screen.getByLabelText('Método de pago')
+    const method = screen.getByLabelText('Medio de pago')
     expect(method).toHaveValue('EFECTIVO')
     expect(method).toBeDisabled()
     expect(screen.getByText('Se asigna automáticamente con Caja General')).toBeInTheDocument()
@@ -214,8 +213,8 @@ describe('nueva factura de venta', () => {
     const { fetchMock, user } = await setup()
 
     await user.selectOptions(await screen.findByLabelText('Cuenta'), 'Bancolombia')
-    expect(screen.getByLabelText('Método de pago')).toBeEnabled()
-    expect(within(screen.getByLabelText('Método de pago')).getAllByRole('option').map((o) => o.textContent)).toEqual([
+    expect(screen.getByLabelText('Medio de pago')).toBeEnabled()
+    expect(within(screen.getByLabelText('Medio de pago')).getAllByRole('option').map((o) => o.textContent)).toEqual([
       'Transferencia',
       'Tarjeta débito',
       'Tarjeta crédito',
@@ -223,7 +222,7 @@ describe('nueva factura de venta', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Crédito' }))
     expect(screen.queryByLabelText('Cuenta')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Método de pago')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Medio de pago')).not.toBeInTheDocument()
     const due = screen.getByLabelText('Fecha de vencimiento')
     expect(due).toHaveValue('2026-11-17')
     await user.click(screen.getByRole('button', { name: '60 días' }))
@@ -330,7 +329,7 @@ describe('nueva factura de venta', () => {
     await addProduct(user, 'willard', '3')
     await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
 
-    const alert = await screen.findByText('Stock insuficiente para Batería Willard: hay 2 y se piden 3')
+    const alert = await screen.findByText('No hay stock suficiente de Batería Willard: hay 2 unidades y se piden 3 unidades.')
     expect(alert.closest('[role="alert"]')).toHaveTextContent('No pudimos guardar la factura')
     expect(router.state.location.pathname).toBe('/ventas/nueva')
     expect(screen.getByLabelText('Cantidad')).toHaveValue(3)
@@ -369,7 +368,7 @@ describe('nueva factura de venta', () => {
     await addProduct(user, 'michelin')
     await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
 
-    expect(await screen.findByText('Ya existe una factura con el numero FV-0232')).toBeInTheDocument()
+    expect(await screen.findByText('Ya existe una factura con el número FV-0232.')).toBeInTheDocument()
     expect(posts(fetchMock, '/api/sales')).toHaveLength(2)
   })
 
@@ -412,7 +411,7 @@ describe('nueva factura de venta', () => {
     await user.type(within(dialog).getByLabelText('Número de documento'), '900123456')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cliente' }))
 
-    expect(await within(dialog).findByText('Ya existe un tercero con el documento 900123456 como CLIENTE')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Ya existe un cliente con el documento 900123456.')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Cliente' })).toHaveValue('Consumidor final')
 
     // Con datos digitados, cerrar pide confirmar; Descartar cierra.

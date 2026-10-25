@@ -1,7 +1,9 @@
+import { GLOSSARY } from '../copy/glossary'
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
@@ -25,7 +27,6 @@ import { revealErrors } from '../lib/formErrors'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
 import { CREDIT_DAY_OPTIONS, addDays, businessToday, defaultDueDate } from '../lib/businessDate'
-import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import {
   buildSaleRequest,
@@ -167,6 +168,7 @@ export function NewSaleInvoicePage() {
       }
     },
   })
+  const saveError = useReportedError(save.error)
 
   const update = (change: Partial<SaleForm>) => setForm((current) => ({ ...current, ...change }))
   const updateLine = (key: number, change: Partial<SaleLine>) =>
@@ -297,7 +299,7 @@ export function NewSaleInvoicePage() {
         />
         <div className="flex flex-col gap-2">
           <span id="tipo-pago" className="text-label text-text">
-            Tipo de pago
+            {GLOSSARY.paymentType}
           </span>
           <SegmentedControl
             aria-labelledby="tipo-pago"
@@ -327,7 +329,7 @@ export function NewSaleInvoicePage() {
                   error={formError(/cuenta/)}
                 />
                 <SelectField
-                  label="Método de pago"
+                  label={GLOSSARY.paymentMethod}
                   options={
                     methods.options.length
                       ? methods.options.map((method) => ({ value: method, label: paymentMethodLabels[method] }))
@@ -391,9 +393,9 @@ export function NewSaleInvoicePage() {
         </p>
       </div>
 
-      {save.isError && (
+      {saveError && save.isError && (
         <Alert tone="error" title="No pudimos guardar la factura">
-          {errorMessage(save.error)}
+          {saveError}
         </Alert>
       )}
 

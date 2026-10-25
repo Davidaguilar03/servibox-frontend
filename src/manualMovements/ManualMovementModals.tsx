@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { useReportedError } from '../api/reportError'
 import type { TreasuryMovement } from '../accounts/accountsApi'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -9,7 +10,6 @@ import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import type { Account } from '../dashboard/dashboardApi'
-import { errorMessage } from '../lib/errorMessage'
 import { revealErrors } from '../lib/formErrors'
 import { formatCurrency } from '../lib/format'
 import {
@@ -62,6 +62,7 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
       sending.current = false
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: keyof ManualFormValues) => (value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
@@ -120,9 +121,9 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
           }
         }}
       >
-        {save.isError && (
+        {saveError && save.isError && (
           <Alert tone="error" title={movement ? 'No pudimos guardar los cambios' : `No pudimos registrar el ${noun}`}>
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <TextField
@@ -200,6 +201,7 @@ export function DeleteManualMovementModal({ config, movement, accounts, onClose,
       sending.current = false
     },
   })
+  const removeError = useReportedError(remove.error)
 
   function confirm() {
     if (sending.current) return
@@ -227,9 +229,9 @@ export function DeleteManualMovementModal({ config, movement, accounts, onClose,
           Vas a eliminar el {config.singular} «{movement.concept}» por {formatCurrency(movement.amount)}.{' '}
           {deleteEffectText(movement, accounts)} Esta acción no se puede deshacer.
         </p>
-        {remove.isError && (
+        {removeError && remove.isError && (
           <Alert tone="error" title={`No pudimos eliminar el ${config.singular}`}>
-            {errorMessage(remove.error)}
+            {removeError}
           </Alert>
         )}
       </div>

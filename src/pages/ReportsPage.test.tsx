@@ -279,7 +279,7 @@ describe('ReportsPage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos generar el reporte')
-    expect(alert).toHaveTextContent('El reporte tiene mas de 20000 movimientos: acota el rango de fechas')
+    expect(alert).toHaveTextContent('El reporte tiene más de 20.000 movimientos: acorta el período.')
     expect(screen.getByLabelText('Desde')).toHaveValue('2026-01-01')
     expect(screen.getByRole('radio', { name: /Movimientos de cuentas/ })).toBeChecked()
     expect(getToken()).not.toBeNull()

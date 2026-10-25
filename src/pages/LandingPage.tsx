@@ -48,7 +48,7 @@ const extras = [
   'Compras a proveedores con sus pagos.',
   'Cuentas de efectivo, bancos y billeteras digitales.',
   'Clientes y proveedores.',
-  'Gastos operativos e ingresos ocasionales.',
+  'Gastos operativos y otros ingresos.',
   'Transferencias entre cuentas.',
 ]
 

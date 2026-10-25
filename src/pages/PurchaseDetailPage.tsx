@@ -1,7 +1,9 @@
+import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileQuestion } from 'lucide-react'
+import { useReportedError } from '../api/reportError'
 import { ACCOUNTS_KEY, type TreasuryMovement } from '../accounts/accountsApi'
 import { Alert } from '../components/Alert'
 import { DiscardableModal } from '../components/DiscardableModal'
@@ -21,7 +23,6 @@ import { defaultCashAccount } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
 import { revealErrors } from '../lib/formErrors'
-import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { isInsufficientBalanceError, purchasePaymentMethodLabels, type PurchasePaymentMethod } from '../purchases/newPurchase'
 import { purchaseActions, validatePayment, type PaymentDraft } from '../purchases/purchaseDetail'
@@ -177,7 +178,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
               <Field label="Fecha">{formatDate(data.invoiceDate)}</Field>
               <Field label="Vence">{formatDate(data.dueDate)}</Field>
               <Field label="Forma de pago">{paymentTypeLabels[data.paymentType]}</Field>
-              {method && <Field label="Método de pago">{method}</Field>}
+              {method && <Field label={GLOSSARY.paymentMethod}>{method}</Field>}
             </dl>
           </section>
 
@@ -393,6 +394,7 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
       onRejected()
     },
   })
+  const saveError = useReportedError(save.error)
 
   function submit() {
     if (submitting.current) return
@@ -444,9 +446,9 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
           <span className="text-small text-text-muted">Saldo pendiente</span>
           <span className="monto text-body font-semibold text-text">{formatCurrency(purchase.pendingBalance)}</span>
         </div>
-        {save.isError && (
+        {saveError && save.isError && (
           <Alert tone="error" title="No pudimos registrar el pago">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         {account && insufficient && (
@@ -515,6 +517,7 @@ function AnnulModal({ purchase, onClose, onAnnulled, onRejected }: ActionModalPr
       onRejected()
     },
   })
+  const annulError = useReportedError(annul.error)
 
   function confirm() {
     if (submitting.current) return
@@ -540,15 +543,15 @@ function AnnulModal({ purchase, onClose, onAnnulled, onRejected }: ActionModalPr
       <div className="flex flex-col gap-4">
         <p className="text-body text-text">
           La factura pasa a la papelera. Se descuentan del inventario las unidades que sumó esta compra y se revierten
-          en las cuentas los pagos registrados. Puedes recuperarla desde la Papelera.
+          en las cuentas los pagos registrados. Puedes restaurarla desde la Papelera.
         </p>
         <p className="text-small text-text-muted">
           El costo de cada producto vuelve al de su compra anterior si todavía venía de esta compra. Si el producto no
           tiene otra compra, el costo se queda como está. Si parte de esas unidades ya se vendió, no se puede anular.
         </p>
-        {annul.isError && (
+        {annulError && annul.isError && (
           <Alert tone="error" title="No pudimos anular la factura">
-            {errorMessage(annul.error)}
+            {annulError}
           </Alert>
         )}
       </div>

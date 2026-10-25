@@ -82,7 +82,7 @@ describe('categorias', () => {
     const cards = screen.getByRole('list', { name: 'Categorías' })
     expect(cards).toHaveClass('md:hidden')
     const card = within(cards).getAllByRole('listitem').find((item) => item.textContent?.includes('REPUESTOS DEMO')) as HTMLElement
-    for (const text of ['Umbral amarillo', '10', 'Umbral rojo', '3', 'Margen objetivo', '30 %', 'Impuestos', 'IVA', 'Productos']) {
+    for (const text of ['Stock bajo', '10', 'Stock crítico', '3', 'Margen objetivo', '30 %', 'Impuestos', 'IVA', 'Productos']) {
       expect(card).toHaveTextContent(text)
     }
     expect(await within(card).findByText('2')).toBeInTheDocument()
@@ -104,8 +104,8 @@ describe('categorias', () => {
 
     await user.type(within(dialog).getByLabelText('Nombre'), 'Lubricantes')
     await user.click(within(dialog).getByRole('radio', { name: 'Verde' }))
-    await user.clear(within(dialog).getByLabelText('Umbral amarillo'))
-    await user.type(within(dialog).getByLabelText('Umbral amarillo'), '8')
+    await user.clear(within(dialog).getByLabelText('Avisar con stock bajo en (unidades)'))
+    await user.type(within(dialog).getByLabelText('Avisar con stock bajo en (unidades)'), '8')
     await user.type(within(dialog).getByLabelText('Margen objetivo (%)'), '32,5')
     await user.click(within(dialog).getByRole('checkbox', { name: 'Impoconsumo (8 %)' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar categoría' }))
@@ -131,10 +131,10 @@ describe('categorias', () => {
     await within(dialog).findByRole('checkbox', { name: 'IVA (19 %)' })
 
     await user.type(within(dialog).getByLabelText('Nombre'), 'Lubricantes')
-    await user.clear(within(dialog).getByLabelText('Umbral rojo'))
-    await user.type(within(dialog).getByLabelText('Umbral rojo'), '9')
+    await user.clear(within(dialog).getByLabelText('Avisar con stock crítico en (unidades)'))
+    await user.type(within(dialog).getByLabelText('Avisar con stock crítico en (unidades)'), '9')
     await user.tab()
-    expect(within(dialog).getByText('El umbral rojo no puede ser mayor que el amarillo.')).toBeInTheDocument()
+    expect(within(dialog).getByText('El aviso de stock crítico no puede ser mayor que el de stock bajo.')).toBeInTheDocument()
 
     await user.type(within(dialog).getByLabelText('Margen objetivo (%)'), '120')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar categoría' }))
@@ -151,7 +151,7 @@ describe('categorias', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Editar categoría' })
 
     expect(within(dialog).getByLabelText('Margen objetivo (%)')).toHaveValue('30')
-    expect(within(dialog).getByLabelText('Umbral amarillo')).toHaveValue('10')
+    expect(within(dialog).getByLabelText('Avisar con stock bajo en (unidades)')).toHaveValue('10')
     expect(await within(dialog).findByRole('checkbox', { name: 'IVA (19 %)' })).toBeChecked()
     expect(within(dialog).getByRole('radio', { name: 'Color actual' })).toBeChecked()
 
@@ -162,7 +162,7 @@ describe('categorias', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar categoría' }))
 
     const name = within(dialog).getByLabelText('Nombre')
-    await waitFor(() => expect(name).toHaveAccessibleDescription('Ya existe una categoria con el nombre FILTROS'))
+    await waitFor(() => expect(name).toHaveAccessibleDescription('Ya existe una categoría con el nombre FILTROS.'))
     expect(name).toHaveFocus()
     expect(bodies(fetchMock, 'PUT')).toEqual([
       { name: 'Filtros', color: '#ff3b30', yellowStockMin: 10, redStockMin: 3, targetMargin: 0.4, taxTypeIds: [1] },
