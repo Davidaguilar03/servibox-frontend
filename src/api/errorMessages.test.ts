@@ -10,6 +10,9 @@ const api = (message: string, status: number) => new ApiError(message, status)
  * de ejemplo en los parametricos. Cada uno debe pasar por el mapa con su texto final.
  */
 const BACKEND: Array<[string, string]> = [
+  // treasury/TreasuryService.editarCuenta
+  ['El tipo de una cuenta no se puede cambiar', 'El tipo de una cuenta no se puede cambiar.'],
+  ['Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial', 'Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial.'],
   // auth/TenantRegistrationService, auth/*Exception
   ['Debe aceptar los terminos y condiciones', 'Acepta los términos de uso y el tratamiento de datos para continuar.'],
   ['El NIT solo admite digitos y un guion con el digito de verificacion, por ejemplo 900123456-7', 'El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'],
@@ -157,6 +160,13 @@ describe('mapa de mensajes del backend', () => {
 })
 
 describe('texto por estado HTTP', () => {
+  it('edicion de cuentas conserva nombre y moneda formateada en userMessage', () => {
+    expect(userMessage(api('El tipo de una cuenta no se puede cambiar', 400))).toBe('El tipo de una cuenta no se puede cambiar.')
+    expect(userMessage(api('Saldo insuficiente en Mi cuenta: faltan $ 10.000 para cambiar el saldo inicial', 409)))
+      .toBe('Saldo insuficiente en Mi cuenta: faltan $ 10.000 para cambiar el saldo inicial.')
+    expect(userMessage(api('Saldo insuficiente en Mi cuenta: faltan 10000.0 para cambiar el saldo inicial', 409)))
+      .toBe('Saldo insuficiente en Mi cuenta: faltan $ 10.000 para cambiar el saldo inicial.')
+  })
   it('400 usa el mensaje corto y legible del backend o el generico', () => {
     expect(userMessage(api('el nombre ya se usa', 400))).toBe('El nombre ya se usa.')
     expect(userMessage(api('Valor 12.5 fuera de rango', 400))).toBe(MESSAGES.invalid)

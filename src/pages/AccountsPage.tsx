@@ -1,9 +1,9 @@
 import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { FileSpreadsheet, Wallet } from 'lucide-react'
+import { FileSpreadsheet, Pencil, Wallet } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
-import { NewAccountModal, TransferModal } from '../accounts/AccountModals'
+import { EditAccountModal, NewAccountModal, TransferModal } from '../accounts/AccountModals'
 import {
   ACCOUNTS_KEY,
   BALANCE_KEY,
@@ -33,6 +33,7 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DataTable, type Column } from '../components/DataTable'
 import { ListHeader } from '../components/ListHeader'
+import { IconButton } from '../components/IconButton'
 import { Pagination } from '../components/Pagination'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { StatusBadge } from '../components/StatusBadge'
@@ -64,6 +65,7 @@ export function AccountsPage() {
   const filters = parseAccountsFilters(searchParams)
   const range = activeRange(filters, today)
   const [modal, setModal] = useState<ModalName>(null)
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const periodRef = useRef<HTMLDivElement>(null)
   const exporting = useRef(false)
 
@@ -185,6 +187,7 @@ export function AccountsPage() {
         allSelected={allSelected}
         onSelect={(cuenta) => update({ cuenta })}
         onNewAccount={() => setModal('account')}
+        onEdit={setEditingAccount}
       />
 
       {accounts.isSuccess && accountList.length > 0 && (
@@ -249,6 +252,7 @@ export function AccountsPage() {
       {modal === 'transfer' && (
         <TransferModal accounts={accountList} defaultOriginId={accountId} onClose={() => setModal(null)} />
       )}
+      {editingAccount && <EditAccountModal account={editingAccount} onClose={() => setEditingAccount(null)} />}
     </div>
   )
 }
@@ -278,10 +282,11 @@ interface AccountCardsProps {
   allSelected: boolean
   onSelect: (cuenta: AccountsFilters['cuenta']) => void
   onNewAccount: () => void
+  onEdit: (account: Account) => void
 }
 
 /** Todas las cuentas y una tarjeta por cuenta; se desplazan en horizontal si no caben. */
-function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, onNewAccount }: AccountCardsProps) {
+function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, onNewAccount, onEdit }: AccountCardsProps) {
   if (accounts.isError) {
     return (
       <div className={card}>
@@ -339,15 +344,20 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
           .map((account) => {
             const active = account.id === selectedId
             return (
-              <li key={account.id}>
+              <li key={account.id} className="flex w-64 shrink-0 flex-col gap-2">
                 <button type="button" aria-pressed={active} onClick={() => onSelect(account.id)} className={tile(active)}>
-                  <span className="flex items-center gap-2 text-small font-semibold text-text">
+                  <span className="flex items-center gap-2 break-all text-small font-semibold text-text">
                     <Wallet {...iconSm} className={active ? 'text-brand-ink' : 'text-text-muted'} aria-hidden />
                     {account.name}
                   </span>
                   <span className="text-figure text-text">{formatCurrency(account.currentBalance)}</span>
                   <span className="text-small text-text-muted">{ACCOUNT_TYPE_LABELS[account.type]} · Saldo actual</span>
                 </button>
+                <div className="flex justify-end">
+                  <IconButton aria-label={`Editar cuenta ${account.name}`} onClick={() => onEdit(account)}>
+                    <Pencil {...iconSm} aria-hidden />
+                  </IconButton>
+                </div>
               </li>
             )
           })}

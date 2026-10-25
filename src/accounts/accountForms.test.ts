@@ -3,8 +3,8 @@ import type { Account } from '../dashboard/dashboardApi'
 import { EMPTY_ACCOUNT_FORM, buildAccountRequest, buildTransferRequest, validateAccount, validateTransfer } from './accountForms'
 
 const accounts: Account[] = [
-  { id: 1, name: 'Caja General', type: 'EFECTIVO', currentBalance: 1946250 },
-  { id: 2, name: 'Bancolombia', type: 'BANCO', currentBalance: 2230650 },
+  { id: 1, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 1946250 },
+  { id: 2, name: 'Bancolombia', type: 'BANCO', initialBalance: 0, currentBalance: 2230650 },
 ]
 
 describe('nueva cuenta', () => {

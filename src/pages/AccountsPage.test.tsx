@@ -101,6 +101,47 @@ async function setup(path = '/cuentas', routes: Routes = fullRoutes()) {
 }
 
 describe('cuentas', () => {
+  it('edita la cuenta indicada, cierra y refresca datos conservando seleccion, periodo y pagina', async () => {
+    let list = accounts.map((account) => ({ ...account }))
+    const many = Array.from({ length: 30 }, (_, index) => movement(index + 1, { accountId: 2 }))
+    const { user, router, fetchMock } = await setup('/cuentas?cuenta=2&periodo=este-ano&pagina=2', {
+      ...fullRoutes(many),
+      'GET /api/treasury/accounts': () => jsonResponse(list),
+      'PUT /api/treasury/accounts/1': (_, body) => {
+        list = list.map((account) => account.id === 1 ? { ...account, ...(body as object) } : account)
+        return jsonResponse(list.find((account) => account.id === 1))
+      },
+    })
+    await user.click(await screen.findByRole('button', { name: 'Editar cuenta Caja General' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Editar cuenta' })
+    expect(within(dialog).getByLabelText('Nombre')).toHaveValue('Caja General')
+    expect(within(dialog).getByLabelText('Saldo inicial')).toHaveValue('0')
+    expect(within(dialog).getByLabelText('Tipo')).toHaveValue('Efectivo')
+    expect(primaryActions().filter((button) => dialog.contains(button))).toHaveLength(1)
+    fireEvent.change(within(dialog).getByLabelText('Nombre'), { target: { value: 'Caja nueva' } })
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(await screen.findByRole('button', { name: /^Caja nueva/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Bancolombia/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(router.state.location.search).toBe('?cuenta=2&periodo=este-ano&pagina=2')
+    expect(screen.getByText('26 a 30 de 30 movimientos')).toBeInTheDocument()
+    expect(calls(fetchMock, '/api/treasury/balance').length).toBeGreaterThan(1)
+    expect(calls(fetchMock, '/api/treasury/movements').length).toBeGreaterThan(1)
+    expect(await screen.findByText('Cuenta actualizada')).toBeInTheDocument()
+  })
+
+  it('401 al editar cierra sesion y muestra el aviso existente en login', async () => {
+    const { user, router } = await setup('/cuentas', {
+      ...fullRoutes(),
+      'PUT /api/treasury/accounts/2': () => jsonResponse({ error: 'No autenticado', status: 401 }, 401),
+    })
+    await user.click(await screen.findByRole('button', { name: 'Editar cuenta Bancolombia' }))
+    await user.type(screen.getByLabelText('Nombre'), ' nuevo')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
+    expect(await screen.findByText('Tu sesión venció. Inicia sesión de nuevo.')).toBeInTheDocument()
+  })
+
   beforeEach(() => {
     // 03:00 UTC del 19 es el 18 de octubre en Bogota.
     vi.useFakeTimers({ toFake: ['Date'] })
@@ -116,7 +157,7 @@ describe('cuentas', () => {
     const { fetchMock } = await setup()
 
     const group = await screen.findByRole('group', { name: 'Cuentas' })
-    expect(await within(group).findByRole('button', { name: /Caja General/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(await within(group).findByRole('button', { name: /^Caja General/ })).toHaveAttribute('aria-pressed', 'true')
     expect(within(group).getByRole('button', { name: /Todas las cuentas/ })).toHaveTextContent('$ 4.176.900')
     expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Cuentas/Movimientos/Caja General')
     expect(screen.getByRole('heading', { name: 'Caja General · Este mes' })).toBeInTheDocument()
@@ -147,7 +188,7 @@ describe('cuentas', () => {
     await waitFor(() => expect(rows()[0]).toEqual(['12/10/2026', 'Bancolombia', 'Egreso', 'Compra', 'COMPRA PROV-1001', '-$ 357.000']))
     expect(rows()[1]).toEqual(['09/10/2026', 'Bancolombia', 'Ingreso', 'Transferencia desde Caja General', 'TRANSFERENCIA desde Caja General', '+$ 300.000'])
 
-    await user.click(screen.getByRole('button', { name: /Bancolombia/ }))
+    await user.click(screen.getByRole('button', { name: /^Bancolombia/ }))
     expect(router.state.location.search).toBe('?cuenta=2')
     expect(screen.getByRole('heading', { name: 'Bancolombia · Este mes' })).toBeInTheDocument()
   })
@@ -217,7 +258,7 @@ describe('cuentas', () => {
     })
 
     expect(await screen.findByText('No pudimos cargar los movimientos.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Caja General/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Caja General/ })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('No hay movimientos en este período.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cambiar el período' }))
@@ -251,7 +292,7 @@ describe('cuentas', () => {
   it('con una cuenta el primario es Nueva cuenta y la transferencia queda secundaria', async () => {
     await setup('/cuentas', { ...fullRoutes(), 'GET /api/treasury/accounts': () => jsonResponse([accounts[1]]) })
 
-    expect(await screen.findByRole('button', { name: /Caja General/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Caja General/ })).toBeInTheDocument()
     const [primary, ...rest] = primaryActions()
     expect(rest).toHaveLength(0)
     expect(primary).toHaveTextContent('Nueva cuenta')
@@ -264,7 +305,7 @@ describe('cuentas', () => {
   it('con dos cuentas el primario es Nueva transferencia', async () => {
     await setup()
 
-    expect(await screen.findByRole('button', { name: /Bancolombia/ })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Bancolombia/ })).toBeInTheDocument()
     const [primary, ...rest] = primaryActions()
     expect(rest).toHaveLength(0)
     expect(primary).toHaveTextContent('Nueva transferencia')

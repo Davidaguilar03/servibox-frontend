@@ -1,6 +1,6 @@
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { parseAmount } from '../inventory/productForm'
-import type { AccountRequest, TransferRequest } from './accountsApi'
+import type { AccountRequest, AccountUpdateRequest, TransferRequest } from './accountsApi'
 
 // Formularios de Nueva cuenta y Nueva transferencia. Reglas en docs/ai-context/03-DECISIONS.md.
 
@@ -26,6 +26,24 @@ export function validateAccount(values: AccountFormValues): AccountErrors {
 
 export function buildAccountRequest(values: AccountFormValues): AccountRequest {
   return { name: values.name.trim(), type: values.type, initialBalance: amountOf(values.initialBalance) }
+}
+
+export type AccountEditValues = Pick<AccountFormValues, 'name' | 'initialBalance'>
+
+export function validateAccountEdit(values: AccountEditValues): Partial<Record<keyof AccountEditValues, string>> {
+  const errors: Partial<Record<keyof AccountEditValues, string>> = {}
+  if (!values.name.trim()) errors.name = 'Escribe el nombre de la cuenta.'
+  else if (values.name.length > 100) errors.name = 'El nombre admite hasta 100 caracteres.'
+  if (!values.initialBalance.trim()) errors.initialBalance = 'Escribe el saldo inicial.'
+  else {
+    const amount = parseAmount(values.initialBalance)
+    if (!Number.isFinite(amount) || amount < 0) errors.initialBalance = 'El saldo inicial debe ser un número finito mayor o igual a cero.'
+  }
+  return errors
+}
+
+export function buildAccountUpdateRequest(values: AccountEditValues): AccountUpdateRequest {
+  return { name: values.name.trim(), initialBalance: parseAmount(values.initialBalance) }
 }
 
 export interface TransferFormValues {

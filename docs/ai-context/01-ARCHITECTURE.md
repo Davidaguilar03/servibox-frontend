@@ -47,7 +47,7 @@ src/
   reports/            logica pura de Reportes (reports.ts)
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
-                      de nueva cuenta y transferencia (AccountModals.tsx)
+                      de nueva cuenta, editar cuenta y transferencia (AccountModals.tsx)
   inventory/          consultas de Inventario (inventoryApi.ts), logica del listado
                       (productList.ts) y de los formularios de producto y categoria
   auth/               sesion, guard de rutas y llamada de login

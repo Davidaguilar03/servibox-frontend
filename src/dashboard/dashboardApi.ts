@@ -25,6 +25,7 @@ export type AccountType = 'EFECTIVO' | 'BANCO' | 'DIGITAL'
 export interface Account {
   id: number
   name: string
+  initialBalance: number
   currentBalance: number
   type: AccountType
 }

@@ -17,7 +17,7 @@ import {
   selectedAccountId,
 } from './accountsView'
 
-const account = (id: number, name: string, type: Account['type'], currentBalance = 0): Account => ({ id, name, type, currentBalance })
+const account = (id: number, name: string, type: Account['type'], currentBalance = 0): Account => ({ id, name, type, initialBalance: 0, currentBalance })
 
 const movement = (id: number, fields: Partial<TreasuryMovement>): TreasuryMovement => ({
   id,
