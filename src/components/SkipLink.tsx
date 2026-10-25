@@ -16,7 +16,7 @@ export function SkipLink() {
     <a
       href="#contenido"
       onClick={handleClick}
-      className="sr-only z-50 rounded-control bg-surface text-small font-medium text-text shadow-raised focus-ring focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:px-4 focus:py-2"
+      className="sr-only z-50 rounded-control bg-surface text-small font-semibold text-text shadow-raised focus-ring focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:px-4 focus:py-2"
     >
       Saltar al contenido
     </a>

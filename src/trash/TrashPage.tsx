@@ -4,9 +4,13 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
+import { CellLink } from '../components/CellLink'
 import { DataTable, type Column } from '../components/DataTable'
+import { FilterBar } from '../components/FilterBar'
+import { ListHeader } from '../components/ListHeader'
 import { Modal } from '../components/Modal'
 import { Pagination } from '../components/Pagination'
+import { PeriodPicker } from '../components/PeriodPicker'
 import { SearchField } from '../components/SearchField'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge } from '../components/StatusBadge'
@@ -16,12 +20,14 @@ import { businessToday } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { periodRange } from '../lib/period'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import {
   DEFAULT_TRASH_FILTERS,
   annulledInvoices,
   filterTrash,
   parseTrashFilters,
+  trashFiltersActive,
   trashFiltersToParams,
   type TrashFilters,
   type TrashInvoice,
@@ -52,7 +58,7 @@ const paymentOptions = [
   { value: 'CREDITO', label: 'Crédito' },
 ]
 
-const periodOptions = [
+const periodOptions: Array<{ value: TrashFilters['periodo']; label: string }> = [
   { value: 'este-mes', label: 'Este mes' },
   { value: 'mes-anterior', label: 'Mes anterior' },
   { value: 'este-ano', label: 'Este año' },
@@ -60,8 +66,6 @@ const periodOptions = [
 ]
 
 const card = 'rounded-surface border border-border bg-surface'
-const linkClass =
-  'hit-area rounded-control codigo text-brand-ink hover:underline focus-ring'
 
 /** Papelera: las facturas anuladas del modulo, con filtros en la URL y Recuperar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {
@@ -91,16 +95,16 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
     {
       header: 'N.º factura',
       render: (invoice) => (
-        <Link to={detailPath(invoice)} className={linkClass}>
+        <CellLink to={detailPath(invoice)} className="codigo">
           {invoice.invoiceNumber}
-        </Link>
+        </CellLink>
       ),
     },
-    { header: config.partyLabel, render: config.partyName },
     { header: 'Fecha', render: (invoice) => formatDate(invoice.invoiceDate) },
+    { header: config.partyLabel, render: config.partyName },
     { header: 'Forma de pago', render: (invoice) => paymentTypeLabels[invoice.paymentType] ?? EMPTY_VALUE },
-    { header: 'Total', align: 'right', render: (invoice) => <span className="monto">{formatCurrency(invoice.total)}</span> },
     { header: 'Estado', render: (invoice) => <StatusBadge status={invoice.status} /> },
+    { header: 'Total', align: 'right', render: (invoice) => <span className="monto">{formatCurrency(invoice.total)}</span> },
     {
       header: '',
       render: (invoice) => (
@@ -138,16 +142,16 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
               <li key={invoice.id} className="flex flex-col gap-3 rounded-surface border border-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex min-w-0 flex-col gap-1">
-                    <Link to={detailPath(invoice)} className={`${linkClass} text-small`}>
+                    <CellLink to={detailPath(invoice)} className="codigo">
                       {invoice.invoiceNumber}
-                    </Link>
+                    </CellLink>
                     <span className="truncate text-body text-text">{config.partyName(invoice)}</span>
                     <span className="text-small text-text-muted">
                       {formatDate(invoice.invoiceDate)} · {paymentTypeLabels[invoice.paymentType]}
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-medium text-text">{formatCurrency(invoice.total)}</span>
+                    <span className="monto text-body font-semibold text-text">{formatCurrency(invoice.total)}</span>
                     <StatusBadge status={invoice.status} />
                   </span>
                 </div>
@@ -166,38 +170,35 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">{config.title}</h1>
-          <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
-        </div>
-        <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
-          Volver a {config.listLabel}
-        </Link>
-      </div>
+      <ListHeader
+        title={config.title}
+        subtitle={config.subtitle}
+        secondary={[
+          <Link key="volver" to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
+            Volver a {config.listLabel}
+          </Link>,
+        ]}
+      />
 
-      <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto] lg:items-end`}>
-        <SearchField
-          label="Buscar"
-          placeholder={`Número de factura o ${config.partyLabel.toLowerCase()}`}
-          {...search}
-        />
-        <SelectField
-          label="Forma de pago"
-          options={paymentOptions}
-          value={filters.pago}
-          onChange={(event) => updateFilters({ pago: event.target.value as TrashFilters['pago'] })}
-        />
-        <SelectField
-          label="Periodo"
-          options={periodOptions}
-          value={filters.periodo}
-          onChange={(event) => updateFilters({ periodo: event.target.value as TrashFilters['periodo'] })}
-        />
-        <Button variant="secondary" onClick={clearFilters}>
-          Limpiar
-        </Button>
-      </div>
+      <FilterBar active={trashFiltersActive(filters)} onClear={clearFilters}>
+        {[
+          <SearchField key="q" label="Buscar" placeholder={`Número de factura o ${config.partyLabel.toLowerCase()}`} {...search} />,
+          <SelectField
+            key="pago"
+            label="Forma de pago"
+            options={paymentOptions}
+            value={filters.pago}
+            onChange={(event) => updateFilters({ pago: event.target.value as TrashFilters['pago'] })}
+          />,
+          <PeriodPicker
+            key="periodo"
+            options={periodOptions}
+            value={filters.periodo}
+            onChange={(periodo) => updateFilters({ periodo })}
+            range={filters.periodo === 'todas' ? null : periodRange(filters.periodo, today)}
+          />,
+        ]}
+      </FilterBar>
 
       <section className={`${card} p-4`} aria-label="Facturas anuladas">
         {content}

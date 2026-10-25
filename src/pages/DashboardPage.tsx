@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useSession } from '../auth/session'
+import { CellLink } from '../components/CellLink'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
 import { IndicatorCard } from '../components/IndicatorCard'
@@ -29,17 +30,12 @@ const accountTypeLabels: Record<AccountType, string> = {
   DIGITAL: 'Digital',
 }
 
-const linkClass =
-  'hit-area rounded-control text-small font-medium text-brand-ink hover:underline focus-ring'
-
 function Section({ title, link, children }: { title: string; link: { to: string; label: string }; children: ReactNode }) {
   return (
     <section className="rounded-surface border border-border bg-surface p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-section text-text">{title}</h2>
-        <Link to={link.to} className={linkClass}>
-          {link.label}
-        </Link>
+        <CellLink to={link.to}>{link.label}</CellLink>
       </div>
       {children}
     </section>
@@ -64,7 +60,7 @@ export function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {/* Periodo fijo: el selector de periodo queda fuera de esta version. */}
-          <span className="text-small font-medium text-text-muted">Este mes</span>
+          <span className="text-small font-semibold text-text-muted">Este mes</span>
           <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
             Registrar venta
           </Link>
@@ -232,7 +228,7 @@ function AccountsBlock() {
           {accounts.data.map((account) => (
             <li key={account.id} className="flex items-center justify-between gap-4 border-b border-border py-3">
               <div>
-                <p className="text-body font-medium text-text">{account.name}</p>
+                <p className="text-body font-semibold text-text">{account.name}</p>
                 <p className="text-small text-text-muted">{accountTypeLabels[account.type] ?? EMPTY_VALUE}</p>
               </div>
               <span className="monto text-body text-text">{formatCurrency(account.currentBalance)}</span>
@@ -280,7 +276,7 @@ function saleCard(s: Sale) {
         </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="monto text-body font-medium text-text">{formatCurrency(s.total)}</span>
+        <span className="monto text-body font-semibold text-text">{formatCurrency(s.total)}</span>
         <StatusBadge status={s.status} />
       </span>
     </div>

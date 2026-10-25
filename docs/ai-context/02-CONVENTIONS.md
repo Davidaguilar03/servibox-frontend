@@ -155,6 +155,10 @@ necesite, no antes.
   botones y campos y 36 en acciones de fila con icono, con 8 px entre objetivos bajo lg. Un
   boton de solo icono es `IconButton` (o `IconLink`) con `aria-label`; un enlace de texto
   pequeno lleva `hit-area`. Ver [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md).
+* Los listados usan `ListHeader` (una sola accion primaria; las secundarias en "Mas" bajo lg
+  desde 2), `FilterBar`, `CellLink` en las celdas y `PeriodPicker` como unico selector de
+  periodo (sus periodos por props y el rango en la zona del negocio). `lists.test.tsx`
+  comprueba que ningun listado muestra dos primarios y que no hay otro selector de periodo.
 * Una sola implementacion de segmentado: `SegmentedControl` (radiogroup) y `TabList`
   (pestanas). Nada de `aria-pressed`, `role="tab"` ni radios propios en las pantallas salvo
   las excepciones documentadas; `controls.test.tsx` lo comprueba.

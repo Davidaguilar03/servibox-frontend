@@ -13,7 +13,7 @@ import flujoInventario from '../assets/landing/flujo-inventario.webp'
 import flujoReportes from '../assets/landing/flujo-reportes.webp'
 
 const focusRing = 'focus-ring'
-const linkClass = `rounded-control font-medium text-brand-ink hover:underline ${focusRing}`
+const linkClass = `rounded-control font-semibold text-brand-ink hover:underline ${focusRing}`
 const container = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
 // Capturas reales del panel con el tenant demo a 1440x900, recortadas al contenido (1200x836).

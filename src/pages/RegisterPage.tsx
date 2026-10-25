@@ -22,7 +22,7 @@ import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-control font-medium text-brand-ink hover:underline focus-ring'
+  'rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
 const legendClass = 'text-label text-text-muted'
 

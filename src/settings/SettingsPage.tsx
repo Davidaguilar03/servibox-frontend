@@ -47,6 +47,7 @@ export function SettingsPage() {
         onChange={select}
         tabId={tabId}
         panelId={panelId}
+        fill
       />
 
       <div role="tabpanel" id={panelId(active)} aria-labelledby={tabId(active)}>

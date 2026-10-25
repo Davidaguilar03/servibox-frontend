@@ -202,7 +202,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
                     <span>
                       {line.quantity} × {formatCurrency(line.price)} · IVA {formatCurrency(line.ivaAmount)}
                     </span>
-                    <span className="font-medium whitespace-nowrap text-text">{formatCurrency(lineTotal(line))}</span>
+                    <span className="font-semibold whitespace-nowrap text-text">{formatCurrency(lineTotal(line))}</span>
                   </p>
                 </li>
               ))}
@@ -231,7 +231,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
               tone={summary.paid ? 'text-success-ink' : undefined}
             />
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
-              <dt className="font-medium text-text">Saldo pendiente</dt>
+              <dt className="font-semibold text-text">Saldo pendiente</dt>
               <dd className="text-figure whitespace-nowrap text-text">
                 {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
               </dd>
@@ -282,7 +282,7 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
   return (
     <div className="flex flex-wrap justify-between gap-x-4">
       <dt className="text-text-muted">{label}</dt>
-      <dd className={`monto font-medium whitespace-nowrap ${tone ?? 'text-text'}`}>{value}</dd>
+      <dd className={`monto font-semibold whitespace-nowrap ${tone ?? 'text-text'}`}>{value}</dd>
     </div>
   )
 }
@@ -342,7 +342,7 @@ function PaymentsBlock({ purchase, movements, accounts }: PaymentsBlockProps) {
               <span className="text-body text-text">{accountName(movement)}</span>
               <span className="text-small text-text-muted">{formatDate(movement.date)}</span>
             </span>
-            <span className="monto text-body font-medium text-text">{formatCurrency(movement.amount)}</span>
+            <span className="monto text-body font-semibold text-text">{formatCurrency(movement.amount)}</span>
           </li>
         ))}
       </ul>

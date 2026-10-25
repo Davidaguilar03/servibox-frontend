@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { FileSpreadsheet, Wallet } from 'lucide-react'
@@ -31,10 +31,10 @@ import {
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DataTable, type Column } from '../components/DataTable'
+import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
-import { SegmentedControl } from '../components/SegmentedControl'
+import { PeriodPicker } from '../components/PeriodPicker'
 import { StatusBadge } from '../components/StatusBadge'
-import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts, fetchBalance, fetchSales, type Account } from '../dashboard/dashboardApi'
@@ -124,45 +124,48 @@ export function AccountsPage() {
       Nueva transferencia
     </Button>
   )
+  const newAccountButton = (
+    <Button variant={canTransfer ? 'secondary' : 'primary'} onClick={() => setModal('account')}>
+      Nueva cuenta
+    </Button>
+  )
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">Cuentas</h1>
-          <p className="mt-1 text-small text-text-muted">Saldos de caja y bancos, y el detalle de cada movimiento.</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={exportExcel}
-              disabled={!range.valid || download.isPending}
-              aria-busy={download.isPending || undefined}
-              aria-describedby={!range.valid ? 'export-help' : undefined}
-            >
-              <FileSpreadsheet {...iconSm} aria-hidden />
-              {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
-            </Button>
-            {/* El primario depende del estado (sin dos cuentas no hay transferencia) y va al final. */}
-            {!canTransfer && transferButton}
-            <Button variant={canTransfer ? 'secondary' : 'primary'} onClick={() => setModal('account')}>
-              Nueva cuenta
-            </Button>
-            {canTransfer && transferButton}
-          </div>
-          {!range.valid && (
-            <p id="export-help" className="text-small text-text-muted">
-              Para exportar, elige un período válido de hasta {REPORT_MAX_DAYS} días.
-            </p>
-          )}
-          {accounts.isSuccess && !canTransfer && (
-            <p id="transfer-help" className="text-small text-text-muted">
-              Necesitas al menos dos cuentas para transferir.
-            </p>
-          )}
-        </div>
-      </div>
+      <ListHeader
+        title="Cuentas"
+        subtitle="Saldos de caja y bancos, y el detalle de cada movimiento."
+        // El primario depende del estado: sin dos cuentas no hay transferencia y el primario es Nueva cuenta.
+        primary={canTransfer ? transferButton : newAccountButton}
+        secondary={[
+          <Button
+            key="exportar"
+            variant="secondary"
+            onClick={exportExcel}
+            disabled={!range.valid || download.isPending}
+            aria-busy={download.isPending || undefined}
+            aria-describedby={!range.valid ? 'export-help' : undefined}
+          >
+            <FileSpreadsheet {...iconSm} aria-hidden />
+            {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
+          </Button>,
+          canTransfer ? <Fragment key="cuenta">{newAccountButton}</Fragment> : <Fragment key="transferencia">{transferButton}</Fragment>,
+        ]}
+        note={
+          <>
+            {!range.valid && (
+              <p id="export-help" className="text-small text-text-muted">
+                Para exportar, elige un período válido de hasta {REPORT_MAX_DAYS} días.
+              </p>
+            )}
+            {accounts.isSuccess && !canTransfer && (
+              <p id="transfer-help" className="text-small text-text-muted">
+                Necesitas al menos dos cuentas para transferir.
+              </p>
+            )}
+          </>
+        }
+      />
 
       {download.isError && (
         <Alert tone="error" title="No pudimos generar el reporte">
@@ -185,27 +188,19 @@ export function AccountsPage() {
             <h2 id="period-title" className="text-section text-text">
               {scopeName} · {periodLabel(filters)}
             </h2>
-            <div ref={periodRef} className="mt-4">
-              <SegmentedControl aria-label="Período" options={PERIOD_OPTIONS} value={filters.periodo} onChange={choosePeriod} />
+            <div ref={periodRef} className="mt-4 lg:max-w-xl">
+              <PeriodPicker
+                options={PERIOD_OPTIONS}
+                value={filters.periodo}
+                onChange={choosePeriod}
+                range={range.valid ? { desde: range.desde, hasta: range.hasta } : null}
+                custom={{
+                  desde: { ...desdeField, max: today },
+                  hasta: { ...hastaField, max: today },
+                  errors: range.errors,
+                }}
+              />
             </div>
-            {filters.periodo === 'personalizado' && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:max-w-xl">
-                <TextField
-                  label="Desde"
-                  type="date"
-                  {...desdeField}
-                  max={today}
-                  error={range.errors.desde}
-                />
-                <TextField
-                  label="Hasta"
-                  type="date"
-                  {...hastaField}
-                  max={today}
-                  error={range.errors.hasta}
-                />
-              </div>
-            )}
             <dl className="mt-6 grid gap-4 sm:grid-cols-2">
               <PeriodTotal label="Ingresos del período" value={totals && formatCurrency(totals.income)} tone="text-success-ink" />
               <PeriodTotal label="Egresos del período" value={totals && formatCurrency(totals.expense)} tone="text-error" />
@@ -232,7 +227,7 @@ export function AccountsPage() {
               if (purchases.isError) void purchases.refetch()
             }}
             onPageChange={(pagina) => setSearchParams(accountsFiltersToParams({ ...filters, pagina }))}
-            onChangePeriod={() => periodRef.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus()}
+            onChangePeriod={() => periodRef.current?.querySelector<HTMLSelectElement>('select')?.focus()}
           />
         </>
       )}
@@ -320,7 +315,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
       <ul className="flex min-w-max gap-4 p-1" role="group" aria-label="Cuentas">
         <li>
           <button type="button" aria-pressed={allSelected} onClick={() => onSelect(ALL_ACCOUNTS)} className={tile(allSelected)}>
-            <span className="flex items-center gap-2 text-small font-medium text-text">
+            <span className="flex items-center gap-2 text-small font-semibold text-text">
               <Wallet {...iconSm} className="text-text-muted" aria-hidden />
               Todas las cuentas
             </span>
@@ -341,7 +336,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
             return (
               <li key={account.id}>
                 <button type="button" aria-pressed={active} onClick={() => onSelect(account.id)} className={tile(active)}>
-                  <span className="flex items-center gap-2 text-small font-medium text-text">
+                  <span className="flex items-center gap-2 text-small font-semibold text-text">
                     <Wallet {...iconSm} className={active ? 'text-brand-ink' : 'text-text-muted'} aria-hidden />
                     {account.name}
                   </span>
@@ -391,7 +386,7 @@ function MovementsBlock(props: MovementsBlockProps) {
     {
       header: 'Monto',
       align: 'right',
-      render: (m) => <span className={`monto font-medium whitespace-nowrap ${amountClass(m)}`}>{formatSignedAmount(m)}</span>,
+      render: (m) => <span className={`monto font-semibold whitespace-nowrap ${amountClass(m)}`}>{formatSignedAmount(m)}</span>,
     },
   ]
 
@@ -438,7 +433,7 @@ function MovementsBlock(props: MovementsBlockProps) {
                 <span className="text-small text-text-muted">{movementOrigin(movement, origin)}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-1">
-                <span className={`monto text-body font-medium ${amountClass(movement)}`}>{formatSignedAmount(movement)}</span>
+                <span className={`monto text-body font-semibold ${amountClass(movement)}`}>{formatSignedAmount(movement)}</span>
                 <StatusBadge status={movement.type} />
               </span>
             </li>

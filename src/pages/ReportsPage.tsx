@@ -6,7 +6,7 @@ import { Button } from '../components/Button'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
-import { TextField } from '../components/TextField'
+import { PeriodPicker } from '../components/PeriodPicker'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts, fetchKpis, type Kpis } from '../dashboard/dashboardApi'
@@ -25,7 +25,7 @@ import {
   type ReportFormat,
   type ReportType,
 } from '../reports/reports'
-import { monthRange } from '../sales/salesList'
+import { periodRange, type DateRange } from '../lib/period'
 import { iconMd, iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface p-6'
@@ -33,6 +33,16 @@ const focusWithin = 'focus-ring-within'
 
 /** Espera antes de pedir la vista previa de un rango nuevo, para no llamar en cada tecla. */
 export const PREVIEW_DEBOUNCE_MS = 400
+
+type ReportPeriod = 'este-mes' | 'mes-anterior' | 'ultimos-30' | 'este-ano' | 'personalizado'
+
+const periodOptions: Array<{ value: ReportPeriod; label: string }> = [
+  { value: 'este-mes', label: 'Este mes' },
+  { value: 'mes-anterior', label: 'Mes anterior' },
+  { value: 'ultimos-30', label: 'Últimos 30 días' },
+  { value: 'este-ano', label: 'Este año' },
+  { value: 'personalizado', label: 'Personalizado' },
+]
 
 const formats: Array<{ value: ReportFormat; label: string }> = [
   { value: 'PDF', label: 'PDF' },
@@ -50,10 +60,12 @@ function useDebounced<T>(value: T, delay: number): T {
 
 /** Reportes: el usuario elige tipo, periodo y formato, y descarga el archivo del backend. */
 export function ReportsPage() {
-  const [initial] = useState(() => monthRange(businessToday()))
+  const [today] = useState(() => businessToday())
   const [type, setType] = useState<ReportType>('ESTADO_RESULTADOS')
-  const [desde, setDesde] = useState(initial.desde)
-  const [hasta, setHasta] = useState(initial.hasta)
+  // Por defecto Este mes: del primero del mes a hoy, como antes. Personalizado parte del rango visto.
+  const [periodo, setPeriodo] = useState<ReportPeriod>('este-mes')
+  const [custom, setCustom] = useState<DateRange>(() => periodRange('este-mes', today))
+  const { desde, hasta } = periodo === 'personalizado' ? custom : periodRange(periodo, today)
   const [format, setFormat] = useState<ReportFormat>('PDF')
   const [accountId, setAccountId] = useState('')
   const submitting = useRef(false)
@@ -88,6 +100,11 @@ export function ReportsPage() {
       if (download.isError) download.reset()
       setter(value)
     }
+  }
+
+  function choosePeriod(next: ReportPeriod) {
+    if (next === 'personalizado') setCustom({ desde, hasta })
+    setPeriodo(next)
   }
 
   // La vista previa sigue al rango con una espera corta, y solo con un rango valido.
@@ -139,7 +156,7 @@ export function ReportsPage() {
                     className="mt-1 size-4 shrink-0 accent-brand"
                   />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-body font-medium text-text">{option.title}</span>
+                    <span className="text-body font-semibold text-text">{option.title}</span>
                     <span id={`report-${option.type}-description`} className="text-small text-text-muted">
                       {option.description}
                     </span>
@@ -149,24 +166,17 @@ export function ReportsPage() {
             })}
           </fieldset>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField
-              label="Desde"
-              type="date"
-              required
-              value={desde}
-              onChange={(event) => change(setDesde)(event.target.value)}
-              error={errors.desde}
-            />
-            <TextField
-              label="Hasta"
-              type="date"
-              required
-              value={hasta}
-              onChange={(event) => change(setHasta)(event.target.value)}
-              error={errors.hasta}
-            />
-          </div>
+          <PeriodPicker
+            options={periodOptions}
+            value={periodo}
+            onChange={change(choosePeriod)}
+            range={valid ? { desde, hasta } : null}
+            custom={{
+              desde: { required: true, value: custom.desde, onChange: (event) => change(setCustom)({ ...custom, desde: event.target.value }) },
+              hasta: { required: true, value: custom.hasta, onChange: (event) => change(setCustom)({ ...custom, hasta: event.target.value }) },
+              errors,
+            }}
+          />
 
           {type === 'MOVIMIENTOS' &&
             (accounts.isError ? (
@@ -307,7 +317,7 @@ function Variation({ value }: { value: number | null }) {
     <span className="flex items-center gap-1 text-text-muted">
       <Icon {...iconSm} className={`shrink-0 ${tone}`} aria-hidden />
       <span className="sr-only">{direction} </span>
-      <span className={`tabular font-medium ${tone}`}>{Math.abs(value)}%</span>
+      <span className={`tabular font-semibold ${tone}`}>{Math.abs(value)}%</span>
       <span>vs. período anterior</span>
     </span>
   )

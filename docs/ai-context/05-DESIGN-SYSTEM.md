@@ -25,7 +25,9 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 | `text-display` | 32/36 bajo md, 40/44 desde md | | 700 | Componente con excepcion unica: solo el titular (`h1`) de la landing. Montserrat |
 
 * El peso va en el token (`--text-*--font-weight`): no hace falta `font-semibold` con estas
-  clases. `font-medium` sigue disponible para destacar dentro de un tamano.
+  clases. Solo hay dos pesos en la app: 400 y 600 (`font-semibold` para rotulos y enfasis).
+  `font-medium`, `font-[500]` y `font-weight: 500` estan prohibidos (regla `weight` de la
+  guarda).
 * body, small y button son los del manual v1.0. title (24/32/600) es el titulo de pantalla; el
   manual tenia H1 32, H2 24, H3 18. Desde el 2026-10-25 title sube de 20 a 24 y los titulos de
   seccion y de modal bajan a `text-section`: title 20 en todo aplanaba la jerarquia. label pasa
@@ -173,6 +175,36 @@ La variante `text` tiene la misma altura y el mismo relleno (`px-button-x`) que 
 sin fondo ni borde; las pantallas no le ponen `px-2` ni `h-auto`. Hover `neutral-100`, foco
 `focus-ring`, deshabilitado igual que las demas.
 
+## Listados
+
+Componentes compartidos de `src/components` que usan todos los listados (Facturas de venta y
+de compra, Papeleras, Gastos e Ingresos, Cuentas, Clientes, Proveedores, Productos y
+Categorias):
+
+* `ListHeader`: `h1`, subtitulo, una sola accion primaria y las secundarias en un grupo.
+  Desde 2 secundarias, bajo lg van en el menu "Mas" (boton secundario con `aria-expanded`,
+  patron disclosure de UserMenu: Esc cierra y devuelve el foco, clic fuera y cambio de ruta
+  cierran); desde lg en linea. Sin `matchMedia` (pruebas) se comporta como escritorio.
+  `note` lleva el texto de ayuda bajo las acciones (Cuentas).
+* `FilterBar`: busqueda, filtros y `PeriodPicker` en una rejilla (una columna, dos desde sm y
+  una fila desde lg); "Limpiar filtros" solo con filtros activos (distintos del estado que
+  deja limpiar).
+* `PeriodPicker`: selector nativo con los periodos que pasa cada pantalla (Hoy, Esta semana,
+  Este mes, Mes anterior, Ultimos 30 dias, Este ano, Todas, Personalizado), el rango como
+  ayuda en `small` ("1 oct. 2026 al 24 oct. 2026") y, con Personalizado, Desde y Hasta con sus
+  errores. El rango se calcula en `lib/period.ts` con `businessToday()` (zona del negocio).
+  Unico selector de periodo de la app.
+* `CellLink` y `CellButton`: un solo estilo de enlace o accion de celda (`text-small`,
+  600, `brand-ink`, subrayado al hover y al foco, `hit-area`).
+* `PendingBalance`: saldo pendiente de una factura (`pendingBalance` del backend) en rol
+  monto: `—` si esta anulada, `$ 0` en `text-muted` si no debe nada y el saldo en `text`.
+* Facturas: columnas en el orden N.o factura, Fecha, Tercero, Vence, Forma de pago, Estado,
+  Total, Saldo pendiente y acciones. Encabezados en rol label (los pone `DataTable`), dinero
+  en rol monto a la derecha y sin partir, estados con `StatusBadge`.
+* `TabList` con `fill` (Configuracion): las pestanas se reparten el ancho y la etiqueta pasa a
+  dos lineas. Sin `fill` (Productos): desplazamiento horizontal, borde derecho difuminado
+  mientras haya mas pestanas y la seleccionada se lleva a la vista (`scrollIntoView`).
+
 ## Guarda
 
 `src/styles/designSystem.test.ts`:
@@ -198,11 +230,10 @@ Pendientes de decidir o validar con el disenador (detalle en
 2. `IndicatorCard` aplica `text-figure` (numeros tabulares) tambien a conteos (productos,
    clientes, movimientos).
 3. Wordmark y la "S" de la barra contraida usan `text-title` con `font-bold` (marca).
-4. Enlaces de accion en celdas: Ventas y Compras heredan 15; Productos, Categorias y el panel
-   conservan `text-small`.
-5. Menu lateral y badges en `small`. **Resuelto el 2026-10-25:** las pestanas de
-   Configuracion y de Productos usan `TabList`, en `body`.
-6. `font-medium` (500) sigue en unos 70 usos para destacar dentro de un tamano.
+4. **Resuelto el 2026-10-25:** los enlaces de celda usan `CellLink` (rol small, 600).
+5. **Resuelto el 2026-10-25:** las pestanas de Configuracion y de Productos usan `TabList` en
+   `small`; menu lateral y badges siguen en `small`.
+6. **Resuelto el 2026-10-25:** sin `font-medium`; los 55 usos pasaron a 600.
 7. **Resuelto el 2026-10-25:** tokens de legado eliminados; landing, login y registro usan la
    escala (excepcion `text-display` en el `h1` de la landing).
 

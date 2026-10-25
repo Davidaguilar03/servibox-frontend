@@ -23,6 +23,11 @@ export interface TrashFilters {
 /** En la papelera el periodo por defecto es Todas: se busca una factura, no un mes. */
 export const DEFAULT_TRASH_FILTERS: TrashFilters = { q: '', pago: '', periodo: 'todas', pagina: 1 }
 
+/** Si algun filtro difiere del estado limpio: solo entonces se ofrece limpiar. */
+export function trashFiltersActive(filters: TrashFilters): boolean {
+  return (['q', 'pago', 'periodo'] as const).some((key) => filters[key] !== DEFAULT_TRASH_FILTERS[key])
+}
+
 const paymentTypes: Array<TrashInvoice['paymentType']> = ['CONTADO', 'CREDITO']
 const periods: Period[] = ['este-mes', 'mes-anterior', 'este-ano', 'todas']
 

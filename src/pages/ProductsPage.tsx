@@ -5,8 +5,11 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { CategoryDot } from '../components/CategoryDot'
+import { CellLink } from '../components/CellLink'
 import { DataTable, type Column } from '../components/DataTable'
+import { FilterBar } from '../components/FilterBar'
 import { IndicatorCard } from '../components/IndicatorCard'
+import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
 import { TabList } from '../components/SegmentedControl'
@@ -62,8 +65,7 @@ const sortOptions = [
   { value: 'precio', label: 'Precio sugerido' },
 ]
 
-const linkClass =
-  'hit-area rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
+const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
 const card = 'rounded-surface border border-border bg-surface'
 
@@ -102,22 +104,20 @@ export function ProductsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">Productos</h1>
-          <p className="mt-1 text-small text-text-muted">
-            Catálogo de productos con alertas de stock. Costos y precios sin IVA.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/inventario/categorias" className={buttonClasses('secondary')} data-variant="secondary">
-            Categorías
-          </Link>
+      <ListHeader
+        title="Productos"
+        subtitle="Catálogo de productos con alertas de stock. Costos y precios sin IVA."
+        primary={
           <Link to="/inventario/nuevo" state={listState} className={buttonClasses('primary')} data-variant="primary">
             Nuevo producto
           </Link>
-        </div>
-      </div>
+        }
+        secondary={[
+          <Link key="categorias" to="/inventario/categorias" className={buttonClasses('secondary')} data-variant="secondary">
+            Categorías
+          </Link>,
+        ]}
+      />
 
       {financialAtZero && (
         <Alert tone="info" title="Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.">
@@ -169,28 +169,28 @@ export function ProductsPage() {
         onSelect={(categoria) => updateFilters({ categoria })}
       />
 
-      <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto] lg:items-end`}>
-        <SearchField
-          label="Buscar"
-          placeholder="Código o descripción"
-          {...search}
-        />
-        <SelectField
-          label="Estado de stock"
-          options={statusOptions}
-          value={filters.estado}
-          onChange={(event) => updateFilters({ estado: event.target.value as ProductFilters['estado'] })}
-        />
-        <SelectField
-          label="Ordenar por"
-          options={sortOptions}
-          value={filters.orden}
-          onChange={(event) => updateFilters({ orden: event.target.value as ProductFilters['orden'] })}
-        />
-        <Button variant="secondary" onClick={clearFilters}>
-          Limpiar
-        </Button>
-      </div>
+      <FilterBar
+        active={(['q', 'categoria', 'estado', 'orden'] as const).some((key) => filters[key] !== DEFAULT_PRODUCT_FILTERS[key])}
+        onClear={clearFilters}
+      >
+        {[
+          <SearchField key="q" label="Buscar" placeholder="Código o descripción" {...search} />,
+          <SelectField
+            key="estado"
+            label="Estado de stock"
+            options={statusOptions}
+            value={filters.estado}
+            onChange={(event) => updateFilters({ estado: event.target.value as ProductFilters['estado'] })}
+          />,
+          <SelectField
+            key="orden"
+            label="Ordenar por"
+            options={sortOptions}
+            value={filters.orden}
+            onChange={(event) => updateFilters({ orden: event.target.value as ProductFilters['orden'] })}
+          />,
+        ]}
+      </FilterBar>
 
       <ProductsTable
         products={products.data}
@@ -272,14 +272,9 @@ interface ProductsTableProps {
 
 function ProductsTable({ products, byId, loading, error, onRetry, filters, listState, onPageChange, onClear }: ProductsTableProps) {
   const editLink = (product: InventoryProduct) => (
-    <Link
-      to={`/inventario/${product.id}/editar`}
-      state={listState}
-      className={linkClass}
-      aria-label={`Editar ${product.code}`}
-    >
+    <CellLink to={`/inventario/${product.id}/editar`} state={listState} aria-label={`Editar ${product.code}`}>
       Editar
-    </Link>
+    </CellLink>
   )
 
   const columns: Column<InventoryProduct>[] = [
@@ -297,7 +292,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
     {
       header: 'Stock',
       align: 'right',
-      render: (p) => <span className={(p.quantity ?? 0) <= 0 ? 'font-medium text-brand-ink' : ''}>{p.quantity ?? 0}</span>,
+      render: (p) => <span className={(p.quantity ?? 0) <= 0 ? 'font-semibold text-brand-ink' : ''}>{p.quantity ?? 0}</span>,
     },
     { header: 'Costo sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.purchaseCost)}</span> },
     { header: 'Precio sugerido sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.suggestedPrice)}</span> },
@@ -352,7 +347,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-medium text-text">{units(product.quantity ?? 0)}</span>
+                    <span className="monto text-body font-semibold text-text">{units(product.quantity ?? 0)}</span>
                     <span className="monto text-small text-text-muted">{formatCurrency(product.suggestedPrice)}</span>
                     <StatusBadge status={badgeFor[productStatus(product, byId)]} />
                   </span>

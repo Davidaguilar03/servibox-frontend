@@ -13,7 +13,7 @@ import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-control font-medium text-brand-ink hover:underline focus-ring'
+  'rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
 export function LoginPage() {
   usePageMeta('Iniciar sesión | ServiBox', 'Entra a ServiBox con el código de tu serviteca, tu usuario y tu contraseña.')

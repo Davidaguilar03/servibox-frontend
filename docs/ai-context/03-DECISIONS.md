@@ -12,6 +12,27 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Listados con componentes compartidos, saldo pendiente y un solo selector de periodo
+
+* Decision:
+  * Columna "Saldo pendiente" en Facturas de venta y de compra (tabla y tarjetas) con el
+    `pendingBalance` que ya trae cada factura del listado; sin calculos en el cliente.
+  * `PeriodPicker` unico (selector nativo con el rango visible) en Ventas, Compras,
+    Papeleras, Gastos e Ingresos, Cuentas y Reportes; cada pantalla conserva sus periodos,
+    su valor por defecto y los parametros que manda. Reportes pasa de Desde y Hasta sueltos
+    a Este mes (por defecto, el mismo rango de antes), Mes anterior, Ultimos 30 dias, Este ano
+    y Personalizado.
+  * `ListHeader`, `FilterBar`, `CellLink` y `PendingBalance` compartidos; pestanas de
+    Configuracion repartidas y de Productos con desplazamiento e indicio; solo pesos 400 y 600.
+  * Resuelve los desvios 4, 5 y 6 del sistema de diseno (enlaces de celda, pestanas en
+    `small`, `font-medium`).
+* Alternativas consideradas: `SegmentedControl` como selector de periodo (con 4 a 6 opciones
+  no cabe en la barra de filtros); calcular el saldo con los movimientos (el backend ya lo
+  manda); duplicar las acciones del encabezado y ocultarlas con CSS (lectores y pruebas veian
+  las dos).
+* Motivo: hallazgos PAT-01 a PAT-03 y BTN-01 de la auditoria; un listado se lee igual en todas
+  las pantallas.
+
 ## 2026-10-25: Areas tactiles, SegmentedControl unico y un solo anillo de foco
 
 * Decision:

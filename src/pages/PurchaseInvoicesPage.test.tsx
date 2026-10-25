@@ -91,7 +91,7 @@ function invoiceNumbers() {
   return within(screen.getByRole('table'))
     .getAllByRole('row')
     .slice(1)
-    .map((row) => /FC-\d+/.exec(row.textContent ?? '')?.[0])
+    .map((row) => /FC-\d+/.exec((row as HTMLTableRowElement).cells[0]?.textContent ?? '')?.[0])
 }
 
 describe('facturas de compra', () => {
@@ -167,7 +167,7 @@ describe('facturas de compra', () => {
     expect(router.state.location.search).toBe('?q=BATERIAS&estado=PENDIENTE&pago=CONTADO&periodo=todas')
     expect(screen.getByText('No hay facturas con esos filtros.')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('?periodo=todas')
     expect(invoiceNumbers()).toEqual(['FC-0002', 'FC-0001', 'FC-0003'])
   })
@@ -186,7 +186,7 @@ describe('facturas de compra', () => {
     expect(router.state.historyAction).toBe('REPLACE')
     expect(invoiceNumbers()).toEqual(['FC-0003'])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('?periodo=todas')
     expect(input).toHaveValue('')
 

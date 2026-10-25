@@ -31,6 +31,8 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'components/SkipLink.tsx': ['shadow-raised'],
   // Barra de acciones fija al pie del formulario de producto.
   'pages/ProductFormPage.tsx': ['shadow-raised'],
+  // Panel del menu Más de los encabezados de listado.
+  'components/ListHeader.tsx': ['shadow-raised'],
   // Panel del menu de usuario de la barra superior.
   'layout/UserMenu.tsx': ['shadow-raised'],
 }
@@ -77,6 +79,8 @@ const RULES = {
   iconPx: /\b(?:size|strokeWidth)=\{\s*[\d.]+\s*\}/g,
   mono: new RegExp(String.raw`(?<![\w-])${VARIANTS}font-mono(?![\w-])`, 'g'),
   motion: new RegExp(String.raw`(?<![\w-])${VARIANTS}(?:duration-\d+|duration-\[[^\]]+\]|ease-(?:linear|in|out|in-out))(?![\w-])`, 'g'),
+  // Solo pesos 400 y 600: nada de font-medium ni 500 arbitrario.
+  weight: new RegExp(String.raw`(?<![\w-])${VARIANTS}font-(?:medium|\[500\])(?![\w-])|font-weight:\s*500(?!\d)`, 'g'),
   role: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:title|section|figure|display)(?![\w-])`, 'g'),
 }
 
@@ -126,6 +130,7 @@ export function violations(source: string, file: string): string[] {
   if (file.endsWith('.tsx')) for (const match of code.matchAll(RULES.iconPx)) add('iconPx', match[0])
   for (const match of code.matchAll(RULES.mono)) add('mono', match[0])
   for (const match of code.matchAll(RULES.motion)) add('motion', match[0])
+  for (const match of code.matchAll(RULES.weight)) add('weight', match[0])
   for (const match of code.matchAll(RULES.role)) {
     if (misplacedRole(match[0], openingTag(code, match.index), file)) add('role', match[0])
   }
@@ -176,6 +181,12 @@ describe('guarda del sistema de diseno', () => {
       'mono: font-mono',
       'motion: duration-300',
     ])
+  })
+
+  it('solo deja pesos 400 y 600', () => {
+    expect(violations('<p className="font-medium md:font-[500]">', 'pages/Fake.tsx')).toEqual(['weight: font-medium', 'weight: md:font-[500]'])
+    expect(violations('.x { font-weight: 500; }', 'index.css')).toEqual(['weight: font-weight: 500'])
+    expect(violations('<p className="font-normal font-semibold font-bold">', 'pages/Fake.tsx')).toEqual([])
   })
 
   it('falla con un rol fuera de su lugar', () => {

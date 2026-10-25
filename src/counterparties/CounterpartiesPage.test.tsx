@@ -183,7 +183,7 @@ describe('Clientes', () => {
     await waitFor(() => expect(router.state.location.search).toBe('?q=TRANSBOYACA.CO'))
     expect(firstCells()).toEqual(['Transportes Boyacá S.A.S.'])
 
-    await user.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     fireEvent.change(screen.getByLabelText('Saldo'), { target: { value: 'pendiente' } })
     expect(router.state.location.search).toBe('?saldo=pendiente')
@@ -231,7 +231,7 @@ describe('Clientes', () => {
     const { router, user } = await openClients('/ventas/clientes?q=zzz')
 
     expect(await screen.findByText('No hay clientes con esos filtros.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(await screen.findAllByText('Óscar Peña')).not.toHaveLength(0)
   })

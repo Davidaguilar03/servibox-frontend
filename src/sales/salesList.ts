@@ -20,6 +20,11 @@ export const DEFAULT_FILTERS: SalesFilters = { q: '', estado: '', pago: '', peri
 /** Lo que deja Limpiar: sin busqueda, todos los estados, todas las formas de pago y periodos. */
 export const CLEARED_FILTERS: SalesFilters = { ...DEFAULT_FILTERS, periodo: 'todas' }
 
+/** Si algun filtro difiere de lo que deja Limpiar: solo entonces se ofrece limpiar. */
+export function filtersActive(filters: SalesFilters): boolean {
+  return (['q', 'estado', 'pago', 'periodo'] as const).some((key) => filters[key] !== CLEARED_FILTERS[key])
+}
+
 const statuses: Array<SalesFilters['estado']> = ['PAGADA', 'PENDIENTE']
 const paymentTypes: Array<Sale['paymentType']> = ['CONTADO', 'CREDITO']
 const periods: Period[] = ['este-mes', 'mes-anterior', 'este-ano', 'todas']

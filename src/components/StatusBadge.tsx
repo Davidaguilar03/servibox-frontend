@@ -30,7 +30,7 @@ const badges: Record<BadgeStatus, { label: string; tone: string }> = {
 export function StatusBadge({ status }: { status: BadgeStatus }) {
   const { label, tone } = badges[status]
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-pill px-3 py-1 text-small font-medium ${tone}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-pill px-3 py-1 text-small font-semibold ${tone}`}>
       {label}
     </span>
   )
