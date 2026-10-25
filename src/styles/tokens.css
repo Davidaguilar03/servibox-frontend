@@ -84,15 +84,18 @@
   --font-sans: var(--font-body);
 
   /*
-   * Escala de la app: tres tamanos de CONTENIDO (title, body, small) y dos de COMPONENTE
-   * (label, button), cada uno con interlineado y peso. Una pantalla usa solo estos cinco.
-   * body, small y button son los del manual v1.0; title (20) es nuevo porque el manual no tiene
-   * un rol de titulo unico; label sube a 12 sin tracking para servir de rotulo de campo.
+   * Escala de la app: tres tamanos de CONTENIDO (title, body, small) y los de COMPONENTE
+   * (label, button y figure), cada uno con interlineado y peso. title es solo el h1 de la
+   * pantalla; section es body con peso 600 para titulos de seccion y de modal. body, small y
+   * button son los del manual v1.0; label sube a 12 sin tracking para servir de rotulo.
    * Ver docs/ai-context/05-DESIGN-SYSTEM.md.
    */
-  --text-title: 20px;
-  --text-title--line-height: 28px;
+  --text-title: 24px;
+  --text-title--line-height: 32px;
   --text-title--font-weight: 600;
+  --text-section: 15px;
+  --text-section--line-height: 1.6;
+  --text-section--font-weight: 600;
   --text-body: 15px;
   --text-body--line-height: 1.6;
   --text-body--font-weight: 400;
@@ -105,6 +108,16 @@
   --text-button: 14px;
   --text-button--line-height: 1;
   --text-button--font-weight: 600;
+
+  /*
+   * figure: valor de indicadores y totales destacados, con numeros tabulares (rol monto).
+   * 24/28 por debajo de md y 28/32 desde md. Lo aplica la utilidad text-figure de index.css.
+   */
+  --figure-size: 24px;
+  --figure-line-height: 28px;
+  --figure-size-md: 28px;
+  --figure-line-height-md: 32px;
+  --figure-font-weight: 600;
 
   /* Legado del manual, solo para la landing, el login y el registro (los redisena la tarea 7). */
   --text-display: 48px;

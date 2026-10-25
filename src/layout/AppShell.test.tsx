@@ -86,7 +86,7 @@ describe('shell', () => {
 
       await user.click(screen.getByRole('button', { name: 'Abrir menú' }))
       const first = within(aside()).getByRole('link', { name: 'Inicio' })
-      const last = within(aside()).getByRole('button', { name: 'Salir' })
+      const last = within(aside()).getByRole('link', { name: 'Configuración' })
       last.focus()
       await user.tab()
       expect(first).toHaveFocus()

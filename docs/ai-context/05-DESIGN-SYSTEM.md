@@ -12,24 +12,32 @@ redisena la tarea 7; usan tokens de legado (`text-display`, `text-h1` a `text-h3
 `shadow-modal`) que la guarda prohibe en el resto. Sus componentes compartidos (Wordmark,
 campos, botones) si usan la escala.
 
-## Tipografia: tres tamanos de contenido y dos de componente
+## Tipografia: tres tamanos de contenido y los de componente
 
 | Clase | Tamano | Interlineado | Peso | Uso |
 |-|-|-|-|-|
-| `text-title` | 20 px | 28 px | 600 | Titulos de pantalla y de seccion, titulo del modal, cifras destacadas (indicadores, totales) |
+| `text-title` | 24 px | 32 px | 600 | Solo el titulo de pantalla (`h1`) y la marca (Wordmark y la "S" de la barra contraida) |
 | `text-body` | 15 px | 1.6 (24 px) | 400 | Cuerpo, celdas de tabla, campos, textos de modal |
+| `text-section` | 15 px | 1.6 (24 px) | 600 | Titulos de seccion y de modal (`h2`, `h3`). Es body con peso 600: no es un tamano nuevo |
 | `text-small` | 13 px | 1.5 | 400 | Ayudas, subtitulos, pies, metadatos, badges, migas, menu lateral |
 | `text-label` | 12 px | 16 px | 600 | Rotulos de campo, leyendas de grupo, encabezados de columna (estos en mayusculas) |
 | `text-button` | 14 px | 1 | 600 | Botones, paginacion, segmentos y chips que actuan como boton |
+| `text-figure` | 24/28 bajo md, 28/32 desde md | | 600 | Componente: valor de indicadores y totales destacados (total de factura, saldo pendiente, saldos y totales de Cuentas, total disponible). Inter con numeros tabulares (rol monto) |
 
 * El peso va en el token (`--text-*--font-weight`): no hace falta `font-semibold` con estas
   clases. `font-medium` sigue disponible para destacar dentro de un tamano.
-* body, small y button son los del manual v1.0. title es nuevo (el manual no tenia un rol de
-  titulo unico: H1 32, H2 24, H3 18). label pasa de 11 px con tracking a 12/16 sin tracking
-  para servir de rotulo de campo (decision del 2026-10-24).
+* body, small y button son los del manual v1.0. title (24/32/600) es el titulo de pantalla; el
+  manual tenia H1 32, H2 24, H3 18. Desde el 2026-10-25 title sube de 20 a 24 y los titulos de
+  seccion y de modal bajan a `text-section`: title 20 en todo aplanaba la jerarquia. label pasa
+  de 11 px con tracking a 12/16 sin tracking para servir de rotulo de campo (2026-10-24).
+* `text-figure` es una utilidad de `index.css` con los tokens `--figure-*` de `tokens.css`;
+  no cuenta como tamano de contenido. Tres tamanos de contenido por pantalla: title 24, body 15
+  (con section) y small 13.
+* La guarda solo deja `text-title` en un `h1` (y en Wordmark y AppShell), `text-section` en un
+  `h2` o `h3` y `text-figure` en la lista `FIGURE_FILES`.
 * **Desvio del manual v1.0:** el manual define label en 11 px con tracking 0,06em; aqui es
   12/16/600 sin tracking. Pendiente de validar con el disenador.
-* Una pantalla usa como maximo title, body y small mas label y button. Prohibidos
+* Una pantalla usa como maximo title, body (y section) y small mas label, button y figure. Prohibidos
   `text-xs`, `text-sm`, `text-base`, `text-lg` y mayores, `text-[...]` y los de legado.
 * Titulos en Montserrat (estilo base de `h1`, `h2`, `h3`); el resto en Inter.
 
@@ -48,7 +56,7 @@ campos, botones) si usan la escala.
 
 | Token | Valor | Uso |
 |-|-|-|
-| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox), toasts, tooltips, barra fija del formulario de producto, enlace "Saltar al contenido" |
+| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox, menu de usuario), toasts, tooltips, barra fija del formulario de producto, enlace "Saltar al contenido" |
 | `--shadow-overlay` | `0 16px 40px rgb(0 0 0 / 16%)` | Modales y menu movil abierto (`lg:shadow-none` en escritorio) |
 
 Tarjetas, tablas, paneles, tarjetas de indicador y estados no llevan sombra: se separan con
@@ -117,9 +125,11 @@ y que modal y toast si.
 Pendientes de decidir o validar con el disenador (detalle en
 [sessions/2026-10-24-design-system-base.md](sessions/2026-10-24-design-system-base.md)):
 
-1. Cifras destacadas (indicadores, total de factura, saldos) en `title` 20; antes iban en 24
-   bold. Si se quieren mas grandes hace falta un rol nuevo.
-2. `IndicatorCard` aplica `monto` tambien a conteos (productos, clientes, movimientos).
+1. **Resuelto el 2026-10-25:** las cifras destacadas usan `text-figure` (24 a 28 px) y la
+   jerarquia de titulos se corrige con title 24 en el `h1` y `text-section` en secciones y
+   modales.
+2. `IndicatorCard` aplica `text-figure` (numeros tabulares) tambien a conteos (productos,
+   clientes, movimientos).
 3. Wordmark y la "S" de la barra contraida usan `text-title` con `font-bold` (marca).
 4. Enlaces de accion en celdas: Ventas y Compras heredan 15; Productos, Categorias y el panel
    conservan `text-small`.

@@ -160,7 +160,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
         <div className="flex min-w-0 flex-col gap-6">
           <section className={card} aria-labelledby="sale-data-title">
-            <h2 id="sale-data-title" className="mb-4 text-title text-text">
+            <h2 id="sale-data-title" className="mb-4 text-section text-text">
               Datos de la factura
             </h2>
             <dl className="grid gap-4 sm:grid-cols-2">
@@ -178,7 +178,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
           </section>
 
           <section className={card} aria-labelledby="sale-lines-title">
-            <h2 id="sale-lines-title" className="mb-4 text-title text-text">
+            <h2 id="sale-lines-title" className="mb-4 text-section text-text">
               Productos
             </h2>
             <div className="hidden md:block">
@@ -209,7 +209,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
           </section>
 
           <section className={card} aria-labelledby="sale-collections-title">
-            <h2 id="sale-collections-title" className="mb-4 text-title text-text">
+            <h2 id="sale-collections-title" className="mb-4 text-section text-text">
               {data.paymentType === 'CREDITO' ? 'Abonos registrados' : 'Pago recibido'}
             </h2>
             <CollectionsBlock sale={data} movements={movements} />
@@ -217,7 +217,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
         </div>
 
         <aside className={card} aria-labelledby="sale-summary-title">
-          <h2 id="sale-summary-title" className="mb-4 text-title text-text">
+          <h2 id="sale-summary-title" className="mb-4 text-section text-text">
             Resumen
           </h2>
           <dl className="flex flex-col gap-3 text-body">
@@ -231,7 +231,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
             />
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Saldo pendiente</dt>
-              <dd className="monto text-title text-text">
+              <dd className="text-figure text-text">
                 {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
               </dd>
             </div>

@@ -18,7 +18,7 @@ export const REPORT_OPTIONS: ReportOption[] = [
   {
     type: 'ESTADO_RESULTADOS',
     title: 'Estado de resultados',
-    description: 'Ventas, compras, gastos y utilidad del período',
+    description: 'Ventas, costo de lo vendido, gastos y utilidad del período.',
   },
   { type: 'MOVIMIENTOS', title: 'Movimientos de cuentas', description: 'Ingresos y egresos por cuenta' },
 ]
@@ -110,11 +110,11 @@ export interface StatementRow {
   total?: boolean
 }
 
-/** Las seis filas del archivo exportado, con compras y gastos en negativo. */
+/** Las seis filas del archivo exportado, con el costo de lo vendido y los gastos en negativo. */
 export function incomeStatementRows(kpis: Kpis): StatementRow[] {
   return [
-    { concept: 'Ventas totales', value: kpis.totalSales },
-    { concept: 'Compras totales', value: -kpis.totalPurchases },
+    { concept: 'Ventas sin IVA', value: kpis.netSales },
+    { concept: 'Costo de lo vendido', value: -kpis.costOfSales },
     { concept: 'Utilidad bruta', value: kpis.grossProfit },
     { concept: 'Otros ingresos', value: kpis.otherIncome },
     { concept: 'Gastos operativos', value: -kpis.operatingExpenses },

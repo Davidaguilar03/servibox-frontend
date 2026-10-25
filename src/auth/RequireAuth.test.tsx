@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { act, screen } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { clearSession, saveToken } from './session'
 import { makeToken, renderRoute, validToken } from '../test/utils'
 
@@ -41,7 +42,8 @@ describe('guard de rutas privadas', () => {
     expect(router.state.location.pathname).toBe('/login')
   })
 
-  it('la barra lateral muestra el nombre completo y sus iniciales', async () => {
+  it('el menu de usuario muestra el nombre completo, sus iniciales y la serviteca', async () => {
+    const user = userEvent.setup()
     saveToken(validToken(), {
       username: 'laura.gomez',
       role: 'ADMIN',
@@ -52,18 +54,24 @@ describe('guard de rutas privadas', () => {
     renderRoute('/configuracion')
 
     await screen.findByRole('heading', { name: 'Configuración' })
-    expect(screen.getByText('Laura María Gómez')).toBeInTheDocument()
-    expect(screen.getByText('LG')).toBeInTheDocument()
-    expect(screen.getByText('Serviteca El Roble')).toBeInTheDocument()
+    const button = screen.getByRole('button', { name: 'Menú de usuario de Laura María Gómez' })
+    expect(within(button).getByText('LG')).toBeInTheDocument()
+    await user.click(button)
+    const panel = document.getElementById(button.getAttribute('aria-controls') ?? '') as HTMLElement
+    expect(within(panel).getByText('Laura María Gómez')).toBeInTheDocument()
+    expect(within(panel).getByText('Serviteca El Roble')).toBeInTheDocument()
   })
 
-  it('sin nombre completo la barra lateral muestra el username', async () => {
+  it('sin nombre completo el menu de usuario muestra el username', async () => {
+    const user = userEvent.setup()
     saveToken(validToken(), { username: 'admin', role: 'ADMIN', tenantName: 'Demo', tenantSlug: 'demo' })
     renderRoute('/configuracion')
 
     await screen.findByRole('heading', { name: 'Configuración' })
+    const button = screen.getByRole('button', { name: 'Menú de usuario de admin' })
+    expect(within(button).getByText('AD')).toBeInTheDocument()
+    await user.click(button)
     expect(screen.getByText('admin')).toBeInTheDocument()
-    expect(screen.getByText('AD')).toBeInTheDocument()
   })
 
   it('al cerrar la sesion vuelve a /login', async () => {

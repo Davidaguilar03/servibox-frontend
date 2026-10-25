@@ -398,14 +398,14 @@ export function NewPurchaseInvoicePage() {
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className={card} aria-labelledby="general-title">
-          <h2 id="general-title" className="mb-4 text-title text-text">
+          <h2 id="general-title" className="mb-4 text-section text-text">
             Datos generales
           </h2>
           {generalContent}
         </section>
 
         <aside className={card} aria-labelledby="summary-title">
-          <h2 id="summary-title" className="mb-4 text-title text-text">
+          <h2 id="summary-title" className="mb-4 text-section text-text">
             Resumen
           </h2>
           <dl className="flex flex-col gap-3 text-body">
@@ -419,7 +419,7 @@ export function NewPurchaseInvoicePage() {
             </div>
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Total</dt>
-              <dd className="monto text-title text-text">{formatCurrency(totals.total)}</dd>
+              <dd className="text-figure text-text">{formatCurrency(totals.total)}</dd>
             </div>
             {account && (
               <>
@@ -458,7 +458,7 @@ export function NewPurchaseInvoicePage() {
 
       <section className={card} aria-labelledby="products-title">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="products-title" className="text-title text-text">
+          <h2 id="products-title" className="text-section text-text">
             Productos
           </h2>
           <p className="text-small text-text-muted">Precio de compra sin IVA</p>

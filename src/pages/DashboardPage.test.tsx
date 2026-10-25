@@ -6,7 +6,17 @@ import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Routes = Record<string, () => Response>
 
-const kpis = { totalSales: 48620000, totalPurchases: 29310000, grossProfit: 19310000, operatingExpenses: 4440000, otherIncome: 500000, netProfit: 15370000 }
+// Cifras de la siembra dev de octubre. totalSales y totalPurchases (con IVA) ya no salen en el panel.
+const kpis = {
+  totalSales: 24730469,
+  totalPurchases: 29310000,
+  netSales: 20781907,
+  costOfSales: 14055000,
+  grossProfit: 6726907,
+  otherIncome: 0,
+  operatingExpenses: 5192200,
+  netProfit: 1534707,
+}
 const categories = [
   { id: 1, name: 'LLANTAS', yellowStockMin: 5, redStockMin: 2 },
   { id: 2, name: 'ACEITES', yellowStockMin: 0, redStockMin: 0 },
@@ -60,6 +70,12 @@ function mockApi(routes: Routes) {
   return fetchMock
 }
 
+/** Rotulo, cifra y lineas de cada indicador, en orden. */
+function indicators() {
+  const grid = screen.getByText('Ventas sin IVA').closest('div')?.parentElement as HTMLElement
+  return [...grid.children].map((card) => [...card.querySelectorAll('p')].map((p) => p.textContent))
+}
+
 function section(title: string) {
   return screen.getByRole('heading', { name: title }).closest('section') as HTMLElement
 }
@@ -84,11 +100,19 @@ describe('panel de control', () => {
     const fetchMock = mockApi(fullRoutes())
     renderRoute('/inicio')
 
-    expect(await screen.findByText('$ 48.620.000')).toBeInTheDocument()
-    expect(screen.getByText('$ 29.310.000')).toBeInTheDocument()
-    expect(screen.getByText('$ 19.310.000')).toBeInTheDocument()
-    // Utilidad neta de kpis: bruta 19.310.000 mas otros ingresos 500.000 menos gastos 4.440.000.
-    expect(screen.getByText('$ 15.370.000')).toBeInTheDocument()
+    expect(await screen.findByText('$ 20.781.907')).toBeInTheDocument()
+    expect(indicators()).toEqual([
+      ['Ventas sin IVA', '$ 20.781.907', 'Sin IVA y sin facturas anuladas.'],
+      ['Costo de lo vendido', '$ 14.055.000', 'Costo de los productos que vendiste.'],
+      ['Utilidad bruta', '$ 6.726.907', '32,4 % de las ventas', 'Ventas menos costo de lo vendido.'],
+      ['Utilidad neta', '$ 1.534.707', 'Utilidad bruta más otros ingresos, menos gastos.'],
+    ])
+    // Compras (y las ventas con IVA) salen del panel: siguen en Facturas de compra.
+    expect(screen.queryByText('Compras totales')).not.toBeInTheDocument()
+    expect(screen.queryByText('$ 29.310.000')).not.toBeInTheDocument()
+    expect(screen.queryByText('$ 24.730.469')).not.toBeInTheDocument()
+    expect(screen.getByText('$ 6.726.907')).toHaveClass('text-figure')
+    expect(screen.getByText('$ 1.534.707')).toHaveClass('text-text')
     expect(fetchMock).toHaveBeenCalledWith('/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-18', expect.anything())
     expect(screen.getByText(/Resumen de demo · octubre de 2026/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('href', '/ventas/nueva')
@@ -122,20 +146,22 @@ describe('panel de control', () => {
     expect(salesRows[1]).toContain('Pendiente')
   })
 
-  it('el shell muestra el usuario abajo en la barra lateral, la miga de pan y el tenant', async () => {
+  it('el shell muestra el menu de usuario en la barra superior, la miga de pan y el tenant', async () => {
     mockApi(fullRoutes())
     saveToken(validToken(), { username: 'laura.gomez', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' })
     renderRoute('/inicio')
 
+    // La barra lateral ya no tiene el bloque de usuario ni Salir.
     const sidebar = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
-    expect(within(sidebar).getByText('laura.gomez')).toBeInTheDocument()
-    expect(within(sidebar).getByText('LG')).toBeInTheDocument()
-    expect(within(sidebar).getByText('Administrador')).toBeInTheDocument()
-    expect(within(sidebar).getByRole('button', { name: 'Salir' })).toBeInTheDocument()
+    expect(within(sidebar).queryByText('laura.gomez')).not.toBeInTheDocument()
+    expect(within(sidebar).queryByText('LG')).not.toBeInTheDocument()
+    expect(within(sidebar).queryByRole('button', { name: 'Salir' })).not.toBeInTheDocument()
 
     const header = screen.getByRole('banner')
     expect(within(header).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inicio')
-    expect(within(header).getByText('Autollantas A&C')).toBeInTheDocument()
+    const userButton = within(header).getByRole('button', { name: 'Menú de usuario de laura.gomez' })
+    expect(within(userButton).getByText('LG')).toBeInTheDocument()
+    expect(within(userButton).getByText('Autollantas A&C')).toBeInTheDocument()
     expect(within(header).queryByRole('searchbox')).not.toBeInTheDocument()
     expect(await screen.findByText(/Resumen de Autollantas A&C · octubre de 2026/)).toBeInTheDocument()
   })
@@ -211,12 +237,31 @@ describe('panel de control', () => {
     const salesSection = section('Últimas ventas')
     const alert = await within(salesSection).findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos cargar esta información.')
-    expect(await screen.findByText('$ 48.620.000')).toBeInTheDocument()
+    expect(await screen.findByText('$ 20.781.907')).toBeInTheDocument()
     expect(await within(section('Saldos de cuentas')).findByText('Caja General')).toBeInTheDocument()
     expect(within(section('Productos con stock bajo')).queryByRole('alert')).not.toBeInTheDocument()
 
     await userEvent.click(within(alert).getByRole('button', { name: 'Reintentar' }))
 
     await waitFor(() => expect(bodyRows(salesSection)).toHaveLength(5))
+  })
+  it('sin ventas sin IVA el margen bruto no se muestra', async () => {
+    mockApi({ ...fullRoutes(), '/api/reporting/kpis': () => jsonResponse({ ...kpis, netSales: 0, costOfSales: 0, grossProfit: 0, netProfit: 0 }) })
+    renderRoute('/inicio')
+
+    await waitFor(() => expect(indicators()[2]).toEqual(['Utilidad bruta', '$ 0', 'Ventas menos costo de lo vendido.']))
+    expect(screen.queryByText(/% de las ventas/)).not.toBeInTheDocument()
+  })
+
+  it('utilidad neta negativa va en el tono de error y el margen negativo con coma', async () => {
+    mockApi({
+      ...fullRoutes(),
+      '/api/reporting/kpis': () =>
+        jsonResponse({ ...kpis, netSales: 1000000, costOfSales: 1123000, grossProfit: -123000, operatingExpenses: 200000, netProfit: -323000 }),
+    })
+    renderRoute('/inicio')
+
+    expect(await screen.findByText('-$ 323.000')).toHaveClass('text-error')
+    expect(screen.getByText('-12,3 % de las ventas')).toBeInTheDocument()
   })
 })

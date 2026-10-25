@@ -74,7 +74,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-surface bg-surface p-6 shadow-overlay outline-none"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-title text-text">
+          <h2 id={titleId} className="text-section text-text">
             {title}
           </h2>
           <button

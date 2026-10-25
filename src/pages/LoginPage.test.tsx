@@ -95,7 +95,8 @@ describe('formulario de login', () => {
 
     await screen.findByRole('heading', { name: 'Configuración' })
     expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toMatchObject({ fullName: 'Laura Gómez' })
-    expect(screen.getByText('Laura Gómez')).toBeInTheDocument()
+    // El menu de usuario de la barra superior se nombra con el nombre completo.
+    expect(screen.getByRole('button', { name: 'Menú de usuario de Laura Gómez' })).toBeInTheDocument()
   })
 
   it('Crea tu cuenta lleva a /registro y el wordmark a la landing', async () => {

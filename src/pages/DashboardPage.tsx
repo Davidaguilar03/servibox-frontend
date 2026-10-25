@@ -36,7 +36,7 @@ function Section({ title, link, children }: { title: string; link: { to: string;
   return (
     <section className="rounded-surface border border-border bg-surface p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-title text-text">{title}</h2>
+        <h2 className="text-section text-text">{title}</h2>
         <Link to={link.to} className={linkClass}>
           {link.label}
         </Link>
@@ -103,12 +103,34 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-      <IndicatorCard label="Ventas totales" value={value((d) => d.totalSales)} />
-      <IndicatorCard label="Compras totales" value={value((d) => d.totalPurchases)} />
-      <IndicatorCard label="Utilidad bruta" value={value((d) => d.grossProfit)} />
-      <IndicatorCard label="Utilidad neta" value={value((d) => d.netProfit)} />
+      <IndicatorCard label="Ventas sin IVA" value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
+      <IndicatorCard
+        label="Costo de lo vendido"
+        value={value((d) => d.costOfSales)}
+        detail="Costo de los productos que vendiste."
+      />
+      <IndicatorCard
+        label="Utilidad bruta"
+        value={value((d) => d.grossProfit)}
+        note={kpis.data ? grossMarginText(kpis.data.grossProfit, kpis.data.netSales) : undefined}
+        detail="Ventas menos costo de lo vendido."
+      />
+      <IndicatorCard
+        label="Utilidad neta"
+        value={value((d) => d.netProfit)}
+        negative={kpis.data ? Math.round(kpis.data.netProfit) < 0 : false}
+        detail="Utilidad bruta más otros ingresos, menos gastos."
+      />
     </div>
   )
+}
+
+const marginFormat = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+/** Margen bruto sobre las ventas sin IVA: "32,4 % de las ventas". Sin ventas no hay margen. */
+function grossMarginText(grossProfit: number, netSales: number): string | undefined {
+  if (netSales === 0) return undefined
+  return `${marginFormat.format((grossProfit / netSales) * 100)} % de las ventas`
 }
 
 const stockBadge: Record<Exclude<StockStatus, 'NORMAL'>, 'BAJO_STOCK' | 'STOCK_CRITICO' | 'SIN_STOCK'> = {
@@ -217,9 +239,9 @@ function AccountsBlock() {
             </li>
           ))}
         </ul>
-        <div className="flex items-center justify-between gap-4 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-4">
           <span className="text-small text-text-muted">Total disponible</span>
-          <span className="monto text-title text-text">{formatCurrency(balance.data.total)}</span>
+          <span className="text-figure text-text">{formatCurrency(balance.data.total)}</span>
         </div>
       </div>
     )

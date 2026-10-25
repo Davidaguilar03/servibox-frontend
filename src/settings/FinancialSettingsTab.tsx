@@ -118,7 +118,7 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
 
   return (
     <section className={card} aria-labelledby="financiera-titulo">
-      <h2 id="financiera-titulo" className="text-title text-text">
+      <h2 id="financiera-titulo" className="text-section text-text">
         Configuración financiera
       </h2>
       <p className="mt-1 text-small text-text-muted">

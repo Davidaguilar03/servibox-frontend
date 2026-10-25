@@ -1,4 +1,4 @@
-import { businessNameError, nitError, normalizeNit, phoneError } from '../auth/registerForm'
+import { NIT, PHONE, businessNameError, normalizeNit } from '../auth/registerForm'
 import type { InventoryCategory } from '../inventory/inventoryApi'
 import type { FinancialSettings, TenantProfile, TenantProfileRequest } from './settingsApi'
 
@@ -30,25 +30,33 @@ export function tenantFormFrom(profile: TenantProfile): TenantFormValues {
   return { name: profile.name, nit: profile.nit ?? '', phone: profile.phone ?? '' }
 }
 
-/** Las reglas del registro, con NIT y telefono opcionales. El NIT se valida ya normalizado. */
+/** Largo maximo de NIT y telefono (`TenantRegistrationService.obligatorio` en el backend). */
+const CONTACT_MAX_LENGTH = 25
+
+const CONTACT_TOO_LONG = 'El NIT y el teléfono no pueden superar 25 caracteres.'
+
+/**
+ * Las reglas del backend (`TenantService.update`): nombre, NIT y telefono obligatorios. El NIT
+ * se valida ya normalizado (sin puntos ni espacios) y el telefono recortado.
+ */
 export function validateTenantForm(values: TenantFormValues): TenantFormErrors {
   const errors: TenantFormErrors = {}
   const name = businessNameError(values.name)
   if (name) errors.name = name
   const nit = normalizeNit(values.nit)
-  const nitMessage = nit ? nitError(nit) : undefined
-  if (nitMessage) errors.nit = nitMessage
+  if (!nit) errors.nit = 'Ingresa el NIT de tu serviteca.'
+  else if (nit.length > CONTACT_MAX_LENGTH) errors.nit = CONTACT_TOO_LONG
+  else if (!NIT.test(nit)) errors.nit = 'El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'
   const phone = values.phone.trim()
-  const phoneMessage = phone ? phoneError(phone) : undefined
-  if (phoneMessage) errors.phone = phoneMessage
+  if (!phone) errors.phone = 'Ingresa el teléfono de contacto.'
+  else if (phone.length > CONTACT_MAX_LENGTH) errors.phone = CONTACT_TOO_LONG
+  else if (!PHONE.test(phone)) errors.phone = 'El teléfono solo admite dígitos, espacios, +, - y paréntesis.'
   return errors
 }
 
-/** Cuerpo del PUT: nombre recortado, NIT normalizado y los opcionales vacios como null. */
+/** Cuerpo del PUT: nombre y telefono recortados y NIT normalizado. */
 export function buildTenantRequest(values: TenantFormValues): TenantProfileRequest {
-  const nit = normalizeNit(values.nit)
-  const phone = values.phone.trim()
-  return { name: values.name.trim(), nit: nit || null, phone: phone || null }
+  return { name: values.name.trim(), nit: normalizeNit(values.nit), phone: values.phone.trim() }
 }
 
 // Configuracion financiera.

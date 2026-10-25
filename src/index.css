@@ -25,9 +25,29 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Rol figure: valor de indicadores y totales destacados. 24/28 bajo md y 28/32 desde md. */
+@utility text-figure {
+  font-family: var(--font-body);
+  font-size: var(--figure-size);
+  line-height: var(--figure-line-height);
+  font-weight: var(--figure-font-weight);
+  font-variant-numeric: tabular-nums;
+  @variant md {
+    font-size: var(--figure-size-md);
+    line-height: var(--figure-line-height-md);
+  }
+}
+
 /* Rol codigo: numero de factura, codigo de producto y NIT. Es el unico uso de IBM Plex Mono. */
 @utility codigo {
   font-family: var(--font-mono);
+}
+
+/* Entrada del panel del menu de usuario: aparece. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* Entrada de los avisos (Toaster): sube y aparece. */

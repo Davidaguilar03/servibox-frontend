@@ -113,7 +113,7 @@ export function ReportsPage() {
             generate()
           }}
         >
-          <h2 id="report-form-title" className="text-title text-text">
+          <h2 id="report-form-title" className="text-section text-text">
             Nuevo reporte
           </h2>
 
@@ -226,7 +226,7 @@ export function ReportsPage() {
           <section className={card} aria-labelledby="movements-info-title">
             <div className="flex items-center gap-3">
               <FileDown {...iconMd} className="shrink-0 text-text-muted" aria-hidden />
-              <h2 id="movements-info-title" className="text-title text-text">
+              <h2 id="movements-info-title" className="text-section text-text">
                 Movimientos de cuentas
               </h2>
             </div>
@@ -260,7 +260,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
   return (
     <section className={`${card} flex min-w-0 flex-col gap-4`} aria-labelledby="preview-title" aria-busy={current.isPending}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="preview-title" className="text-title text-text">
+        <h2 id="preview-title" className="text-section text-text">
           Vista previa · Estado de resultados
         </h2>
         <p className="text-small text-text-muted">{periodTitle(desde, hasta)}</p>
@@ -272,9 +272,9 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
         <>
           <div className="grid gap-4 sm:grid-cols-2">
             <IndicatorCard
-              label="Ventas totales"
-              value={current.data ? formatCurrency(current.data.totalSales) : undefined}
-              trend={trend((kpis) => kpis.totalSales)}
+              label="Ventas sin IVA"
+              value={current.data ? formatCurrency(current.data.netSales) : undefined}
+              trend={trend((kpis) => kpis.netSales)}
             />
             <IndicatorCard
               label="Utilidad neta"

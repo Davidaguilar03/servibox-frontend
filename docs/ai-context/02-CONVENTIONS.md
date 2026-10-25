@@ -137,6 +137,15 @@ necesite, no antes.
 
 ## Accesibilidad del shell
 
+* El menu de usuario vive en la barra superior (`layout/UserMenu.tsx`): boton con las
+  iniciales y, desde md, la serviteca; panel con nombre, rol traducido (`roleLabel`), serviteca
+  y Cerrar sesion. Patron disclosure (`aria-expanded`, `aria-controls`), no `role=menu`: Esc
+  cierra y devuelve el foco, el clic fuera y el cambio de ruta lo cierran. La barra lateral
+  ya no tiene bloque de usuario ni Salir, y no hay pildora de la serviteca.
+* El panel y la vista previa de Reportes leen `netSales` (ventas sin IVA) y `costOfSales` de
+  `GET /api/reporting/kpis`; `totalSales` y `totalPurchases` (con IVA) quedan para los
+  listados de Ventas y Compras. Las seis filas del Estado de resultados son las del archivo
+  exportado (`incomeStatementRows`).
 * El primer enfocable de `AppShell` es "Saltar al contenido" (visible solo con foco, mismo
   estilo que el de la landing); lleva el foco al `main#contenido` (`tabIndex -1`).
 * Menu lateral bajo lg: cerrado es `inert` (ni foco ni lector de pantalla). Abierto, el foco

@@ -34,11 +34,11 @@ describe('superficies', () => {
     expect(screen.getByRole('cell')).toHaveClass('text-body')
   })
 
-  it('la tarjeta de indicador no lleva sombra y su cifra usa el rol monto con text-title', () => {
+  it('la tarjeta de indicador no lleva sombra y su cifra usa el rol text-figure', () => {
     const { container } = render(<IndicatorCard label="Ventas del mes" value="$ 635.000" />)
     expect(withShadow(container)).toEqual([])
     expect(container.firstElementChild).toHaveClass('rounded-surface', 'border')
-    expect(screen.getByText('$ 635.000')).toHaveClass('monto', 'text-title')
+    expect(screen.getByText('$ 635.000')).toHaveClass('text-figure', 'text-text')
   })
 
   it('el estado vacio no lleva sombra', () => {

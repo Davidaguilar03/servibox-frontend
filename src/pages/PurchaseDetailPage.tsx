@@ -163,7 +163,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
         <div className="flex min-w-0 flex-col gap-6">
           <section className={card} aria-labelledby="purchase-data-title">
-            <h2 id="purchase-data-title" className="mb-4 text-title text-text">
+            <h2 id="purchase-data-title" className="mb-4 text-section text-text">
               Datos de la factura
             </h2>
             <dl className="grid gap-4 sm:grid-cols-2">
@@ -179,7 +179,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
           </section>
 
           <section className={card} aria-labelledby="purchase-lines-title">
-            <h2 id="purchase-lines-title" className="mb-4 text-title text-text">
+            <h2 id="purchase-lines-title" className="mb-4 text-section text-text">
               Productos
             </h2>
             <div className="hidden md:block">
@@ -210,7 +210,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
           </section>
 
           <section className={card} aria-labelledby="purchase-payments-title">
-            <h2 id="purchase-payments-title" className="mb-4 text-title text-text">
+            <h2 id="purchase-payments-title" className="mb-4 text-section text-text">
               {data.paymentType === 'CREDITO' ? 'Pagos registrados' : 'Pago realizado'}
             </h2>
             <PaymentsBlock purchase={data} movements={movements} accounts={accounts.data} />
@@ -218,7 +218,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
         </div>
 
         <aside className={card} aria-labelledby="purchase-summary-title">
-          <h2 id="purchase-summary-title" className="mb-4 text-title text-text">
+          <h2 id="purchase-summary-title" className="mb-4 text-section text-text">
             Resumen
           </h2>
           <dl className="flex flex-col gap-3 text-body">
@@ -232,7 +232,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
             />
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Saldo pendiente</dt>
-              <dd className="monto text-title whitespace-nowrap text-text">
+              <dd className="text-figure whitespace-nowrap text-text">
                 {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
               </dd>
             </div>
