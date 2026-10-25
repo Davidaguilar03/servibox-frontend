@@ -39,8 +39,8 @@ export const RESERVED_SLUGS = new Set([
   'auth', 'inventory', 'treasury', 'counterparties', 'sales', 'purchases', 'reporting', 'demo',
 ])
 
-const NIT = /^\d+(-\d)?$/
-const PHONE = /^[0-9 +()-]+$/
+export const NIT = /^\d+(-\d)?$/
+export const PHONE = /^[0-9 +()-]+$/
 const SLUG = /^[a-z0-9-]{3,30}$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME = /^[A-Za-z0-9._-]{3,50}$/

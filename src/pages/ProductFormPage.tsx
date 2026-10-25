@@ -177,7 +177,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       )}
 
       <section className={card} aria-labelledby="product-data-title">
-        <h2 id="product-data-title" className="mb-4 text-title text-text">
+        <h2 id="product-data-title" className="mb-4 text-section text-text">
           Datos del producto
         </h2>
         <div className="flex flex-col gap-4">
@@ -224,7 +224,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       </section>
 
       <section className={card} aria-labelledby="product-price-title">
-        <h2 id="product-price-title" className="mb-4 text-title text-text">
+        <h2 id="product-price-title" className="mb-4 text-section text-text">
           Costo y precio
         </h2>
         <div className="flex flex-col gap-4">
@@ -256,7 +256,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       </section>
 
       <section className={card} aria-labelledby="product-stock-title">
-        <h2 id="product-stock-title" className="mb-4 text-title text-text">
+        <h2 id="product-stock-title" className="mb-4 text-section text-text">
           Inventario
         </h2>
         {!product ? (

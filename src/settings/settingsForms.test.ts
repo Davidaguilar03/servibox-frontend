@@ -42,33 +42,40 @@ describe('pestanas', () => {
 })
 
 describe('datos de la serviteca', () => {
+  const phone = '300 123 4567'
+  const nitFormat = 'El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'
+  const tooLong = 'El NIT y el teléfono no pueden superar 25 caracteres.'
+
   it('el NIT acepta puntos y espacios y se valida normalizado', () => {
-    expect(validateTenantForm({ name: 'Demo', nit: '900.123.456-7', phone: '' })).toEqual({})
-    expect(validateTenantForm({ name: 'Demo', nit: ' 900 123 456 ', phone: '' })).toEqual({})
-    expect(validateTenantForm({ name: 'Demo', nit: '900.123.456-78', phone: '' }).nit).toMatch(/^Usa solo dígitos/)
-    expect(validateTenantForm({ name: 'Demo', nit: '9-'.padEnd(26, '1'), phone: '' }).nit).toBe('Usa máximo 25 caracteres.')
+    expect(validateTenantForm({ name: 'Demo', nit: '900.123.456-7', phone })).toEqual({})
+    expect(validateTenantForm({ name: 'Demo', nit: ' 900 123 456 ', phone })).toEqual({})
+    expect(validateTenantForm({ name: 'Demo', nit: '900.123.456-78', phone }).nit).toBe(nitFormat)
+    expect(validateTenantForm({ name: 'Demo', nit: '9-'.padEnd(26, '1'), phone }).nit).toBe(tooLong)
     // Los puntos no cuentan para el maximo de 25.
-    expect(validateTenantForm({ name: 'Demo', nit: '11.111.111.111.111.111.111.111.111', phone: '' }).nit).toBe(
-      'Usa máximo 25 caracteres.',
-    )
-    expect(validateTenantForm({ name: 'Demo', nit: '1.111.111.111.111.111.111.111.111', phone: '' }).nit).toBeUndefined()
+    expect(validateTenantForm({ name: 'Demo', nit: '11.111.111.111.111.111.111.111.111', phone }).nit).toBe(tooLong)
+    expect(validateTenantForm({ name: 'Demo', nit: '1.111.111.111.111.111.111.111.111', phone }).nit).toBeUndefined()
   })
 
-  it('nombre obligatorio; NIT y telefono opcionales con las reglas del registro', () => {
-    expect(validateTenantForm({ name: ' ', nit: '', phone: '' })).toEqual({ name: 'Escribe el nombre comercial.' })
-    expect(validateTenantForm({ name: 'a'.repeat(151), nit: '', phone: '' }).name).toBe('Usa máximo 150 caracteres.')
-    expect(validateTenantForm({ name: 'Demo', nit: '', phone: '300-abc' }).phone).toBe(
-      'Usa solo dígitos, espacios, +, - y paréntesis.',
+  it('nombre, NIT y telefono obligatorios con las reglas del backend', () => {
+    expect(validateTenantForm({ name: ' ', nit: ' . ', phone: '  ' })).toEqual({
+      name: 'Escribe el nombre comercial.',
+      nit: 'Ingresa el NIT de tu serviteca.',
+      phone: 'Ingresa el teléfono de contacto.',
+    })
+    expect(validateTenantForm({ name: 'a'.repeat(151), nit: '900123456', phone }).name).toBe('Usa máximo 150 caracteres.')
+    expect(validateTenantForm({ name: 'Demo', nit: '900123456', phone: '300-abc' }).phone).toBe(
+      'El teléfono solo admite dígitos, espacios, +, - y paréntesis.',
     )
+    expect(validateTenantForm({ name: 'Demo', nit: '900123456', phone: '+57 (300) 123-4567' })).toEqual({})
+    expect(validateTenantForm({ name: 'Demo', nit: '900123456', phone: '3'.repeat(26) }).phone).toBe(tooLong)
   })
 
-  it('cuerpo del PUT sin slug, NIT normalizado y vacios como null', () => {
+  it('cuerpo del PUT sin slug, con NIT normalizado y telefono recortado', () => {
     expect(buildTenantRequest({ name: '  Serviteca Demo ', nit: '900.123.456-7', phone: ' 300 123 4567 ' })).toEqual({
       name: 'Serviteca Demo',
       nit: '900123456-7',
       phone: '300 123 4567',
     })
-    expect(buildTenantRequest({ name: 'Demo', nit: ' . ', phone: '  ' })).toEqual({ name: 'Demo', nit: null, phone: null })
   })
 })
 

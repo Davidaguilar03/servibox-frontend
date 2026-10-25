@@ -3,7 +3,6 @@ import { Link, NavLink, Outlet, useMatches } from 'react-router'
 import {
   ChartColumn,
   House,
-  LogOut,
   Menu,
   Package,
   PanelLeftClose,
@@ -15,8 +14,8 @@ import {
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
-import { clearSession, displayName, initials, roleLabel, useSession } from '../auth/session'
 import { useBreadcrumbTailValue } from './breadcrumb'
+import { UserMenu } from './UserMenu'
 import { iconMd } from '../components/icons'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
@@ -88,7 +87,6 @@ const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabi
  * se puede contraer; por debajo se abre como menu sobre el contenido.
  */
 export function AppShell() {
-  const session = useSession()
   const breadcrumb = useBreadcrumb()
   const [collapsed, setCollapsed] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -197,31 +195,6 @@ export function AppShell() {
           </div>
         )}
 
-        <div
-          className={`flex shrink-0 items-center gap-3 border-t border-nav-hover px-4 py-4 ${
-            collapsed ? 'lg:flex-col lg:px-0' : ''
-          }`}
-        >
-          <span
-            className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-nav-hover text-small font-semibold text-text-inverse"
-            aria-hidden
-          >
-            {session ? initials(session) : ''}
-          </span>
-          <span className={`flex min-w-0 flex-1 flex-col ${collapsed ? 'lg:sr-only' : ''}`}>
-            <span className="truncate text-small font-medium text-text-inverse">{session && displayName(session)}</span>
-            <span className="truncate text-small text-text-subtle">{roleLabel(session?.role ?? '')}</span>
-          </span>
-          <button
-            type="button"
-            onClick={clearSession}
-            aria-label="Salir"
-            title="Salir"
-            className={`flex size-touch shrink-0 items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
-          >
-            <LogOut {...iconMd} aria-hidden />
-          </button>
-        </div>
       </aside>
 
       <div
@@ -270,11 +243,9 @@ export function AppShell() {
               })}
             </ol>
           </nav>
-          {session?.tenantName && (
-            <span className="ml-auto hidden shrink-0 rounded-pill bg-neutral-200 px-3 py-1 text-small font-medium text-text sm:inline">
-              {session.tenantName}
-            </span>
-          )}
+          <div className="ml-auto shrink-0">
+            <UserMenu />
+          </div>
         </header>
 
         <main id="contenido" ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-6 py-6 outline-none lg:px-8 lg:py-8">

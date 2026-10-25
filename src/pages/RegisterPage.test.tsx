@@ -143,7 +143,8 @@ describe('registro de serviteca', () => {
       tenantSlug: 'el-roble',
       fullName: 'Laura Gómez',
     })
-    expect(screen.getByText('Laura Gómez')).toBeInTheDocument()
+    // El menu de usuario de la barra superior se nombra con el nombre completo.
+    expect(screen.getByRole('button', { name: 'Menú de usuario de Laura Gómez' })).toBeInTheDocument()
     expect(screen.getByText('LG')).toBeInTheDocument()
   })
 

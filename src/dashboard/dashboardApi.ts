@@ -3,8 +3,15 @@ import { apiFetch } from '../lib/api'
 // Solo los campos que usan el panel y Ventas. Nombres iguales a los DTO del backend.
 
 export interface Kpis {
+  /** Con IVA. */
   totalSales: number
+  /** Con IVA. */
   totalPurchases: number
+  /** Ventas sin IVA y sin facturas anuladas. */
+  netSales: number
+  /** Costo de los productos vendidos en el rango. */
+  costOfSales: number
+  /** netSales - costOfSales. */
   grossProfit: number
   operatingExpenses: number
   /** Ingresos ocasionales activos del rango. */

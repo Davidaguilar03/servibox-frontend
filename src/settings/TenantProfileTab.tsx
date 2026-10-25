@@ -102,7 +102,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
 
   return (
     <section className={card} aria-labelledby="datos-titulo">
-      <h2 id="datos-titulo" className="text-title text-text">
+      <h2 id="datos-titulo" className="text-section text-text">
         Datos de la serviteca
       </h2>
       <form
@@ -136,7 +136,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
         />
         <div className="grid gap-4 md:grid-cols-2">
           <TextField
-            label="NIT (opcional)"
+            label="NIT"
             valueRole="codigo"
             inputMode="numeric"
             value={values.nit}
@@ -149,9 +149,10 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
             error={shown('nit')}
             hint="Puedes escribirlo con puntos. Por ejemplo, 900.123.456-7."
             disabled={locked}
+            required
           />
           <TextField
-            label="Teléfono (opcional)"
+            label="Teléfono"
             type="tel"
             autoComplete="tel"
             value={values.phone}
@@ -159,6 +160,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
             onBlur={touch('phone')}
             error={shown('phone')}
             disabled={locked}
+            required
           />
         </div>
         <TextField

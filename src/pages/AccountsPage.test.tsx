@@ -133,7 +133,7 @@ describe('cuentas', () => {
     )
     // Montos con el rol monto en la tabla y en los totales; Origen no es un codigo.
     expect(within(screen.getByRole('table')).getByText('-$ 300.000')).toHaveClass('monto')
-    expect(screen.getByText('Ingresos del período').nextElementSibling).toHaveClass('monto')
+    expect(screen.getByText('Ingresos del período').nextElementSibling).toHaveClass('text-figure')
     expect(within(screen.getByRole('table')).getByText('GASTO OPERATIVO')).not.toHaveClass('codigo')
   })
 

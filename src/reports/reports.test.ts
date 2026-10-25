@@ -116,29 +116,33 @@ describe('exportPath', () => {
 })
 
 describe('incomeStatementRows', () => {
-  it('seis filas como el archivo: compras y gastos en negativo, otros ingresos en positivo', () => {
+  it('seis filas como el archivo: costo de lo vendido y gastos en negativo, otros ingresos en positivo', () => {
     const rows = incomeStatementRows({
-      totalSales: 48_620_000,
+      totalSales: 24_730_469,
       totalPurchases: 29_310_000,
-      grossProfit: 19_310_000,
-      operatingExpenses: 4_440_000,
+      netSales: 20_781_907,
+      costOfSales: 14_055_000,
+      grossProfit: 6_726_907,
+      operatingExpenses: 5_192_200,
       otherIncome: 250_000,
-      netProfit: 15_120_000,
+      netProfit: 1_784_707,
     })
     expect(rows.map((row) => [row.concept, row.value])).toEqual([
-      ['Ventas totales', 48_620_000],
-      ['Compras totales', -29_310_000],
-      ['Utilidad bruta', 19_310_000],
+      ['Ventas sin IVA', 20_781_907],
+      ['Costo de lo vendido', -14_055_000],
+      ['Utilidad bruta', 6_726_907],
       ['Otros ingresos', 250_000],
-      ['Gastos operativos', -4_440_000],
-      ['Utilidad neta', 15_120_000],
+      ['Gastos operativos', -5_192_200],
+      ['Utilidad neta', 1_784_707],
     ])
   })
 
   it('la utilidad neta es la de kpis y otros ingresos en cero tambien es una fila', () => {
     const rows = incomeStatementRows({
-      totalSales: 267_750,
+      totalSales: 318_622,
       totalPurchases: 0,
+      netSales: 267_750,
+      costOfSales: 0,
       grossProfit: 267_750,
       operatingExpenses: 450_000,
       otherIncome: 0,

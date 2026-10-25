@@ -8,7 +8,9 @@ import { jsonResponse, makeToken, renderRoute } from '../test/utils'
 type Handler = (body: unknown) => Response | Promise<Response>
 type Routes = Record<string, Handler>
 
-const profile = { name: 'ServiBox Demo', slug: 'demo', nit: null, phone: null }
+const profile = { name: 'ServiBox Demo', slug: 'demo', nit: '900123456-7', phone: '300 123 4567' }
+// Tenant anterior a la regla: sin NIT ni telefono.
+const legacyProfile = { ...profile, nit: null, phone: null }
 const zeros = { expensesRate: 0, dianRate: 0, icaRate: 0, cardCommissionRate: 0 }
 const categories = [
   { id: 1, name: 'LLANTAS', color: '#e74c3c', yellowStockMin: 10, redStockMin: 3, targetMargin: 0.3, taxTypes: [] },
@@ -104,9 +106,14 @@ describe('sin funciones que no existen', () => {
 })
 
 describe('Datos de la serviteca', () => {
-  it('normaliza el NIT, envia el PUT sin slug y actualiza la sesion y la barra superior', async () => {
+  it('un tenant sin NIT ni telefono los muestra vacios y no guarda hasta completarlos; normaliza el NIT y envia el PUT con ambos', async () => {
     const user = userEvent.setup()
-    const fetchMock = mockApi(routes())
+    const fetchMock = mockApi(
+      routes({
+        'GET /api/tenant': () => jsonResponse(legacyProfile),
+        'PUT /api/tenant': (body) => jsonResponse({ ...legacyProfile, ...(body as object) }),
+      }),
+    )
     renderRoute('/configuracion')
 
     const name = await screen.findByLabelText('Nombre comercial')
@@ -115,11 +122,20 @@ describe('Datos de la serviteca', () => {
     expect(screen.getByText(/Es lo que tu equipo escribe en “Serviteca” para iniciar sesión/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
 
+    expect(screen.getByLabelText('NIT')).toHaveValue('')
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('')
+    expect(screen.getByLabelText('NIT')).toBeRequired()
+    expect(screen.getByLabelText('Teléfono')).toBeRequired()
+
     await user.clear(name)
     await user.type(name, 'Serviteca El Roble ')
-    await user.type(screen.getByLabelText('NIT (opcional)'), '900.123.456-7')
-    await user.type(screen.getByLabelText('Teléfono (opcional)'), '300 123 4567')
-    expect(screen.getByLabelText('NIT (opcional)')).toHaveValue('900123456-7')
+    // Con cambios pero sin NIT ni telefono no se puede guardar.
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    await user.type(screen.getByLabelText('NIT'), '900.123.456-7')
+    await user.tab()
+    expect(screen.getByLabelText('NIT')).toHaveValue('900123456-7')
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Teléfono'), '300 123 4567')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByText('Datos guardados')).toBeInTheDocument()
@@ -140,14 +156,37 @@ describe('Datos de la serviteca', () => {
     renderRoute('/configuracion')
 
     await user.clear(await screen.findByLabelText('Nombre comercial'))
-    await user.type(screen.getByLabelText('Teléfono (opcional)'), '300-abc')
+    await user.clear(screen.getByLabelText('Teléfono'))
+    await user.type(screen.getByLabelText('Teléfono'), '300-abc')
     await user.tab()
-    await user.type(screen.getByLabelText('NIT (opcional)'), '900.123.456-78')
+    await user.clear(screen.getByLabelText('NIT'))
+    await user.type(screen.getByLabelText('NIT'), '900.123.456-78')
     await user.tab()
 
     expect(screen.getByText('Escribe el nombre comercial.')).toBeInTheDocument()
-    expect(screen.getByText('Usa solo dígitos, espacios, +, - y paréntesis.')).toBeInTheDocument()
-    expect(screen.getByText(/^Usa solo dígitos y, si quieres/)).toBeInTheDocument()
+    expect(screen.getByText('El teléfono solo admite dígitos, espacios, +, - y paréntesis.')).toBeInTheDocument()
+    expect(
+      screen.getByText('El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+  })
+
+  it('NIT y telefono son obligatorios y no pasan de 25 caracteres', async () => {
+    const user = userEvent.setup()
+    mockApi(routes())
+    renderRoute('/configuracion')
+
+    await user.clear(await screen.findByLabelText('NIT'))
+    await user.clear(screen.getByLabelText('Teléfono'))
+    await user.tab()
+    expect(screen.getByText('Ingresa el NIT de tu serviteca.')).toBeInTheDocument()
+    expect(screen.getByText('Ingresa el teléfono de contacto.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+
+    await user.type(screen.getByLabelText('NIT'), '1'.repeat(26))
+    await user.type(screen.getByLabelText('Teléfono'), '3'.repeat(26))
+    await user.tab()
+    expect(screen.getAllByText('El NIT y el teléfono no pueden superar 25 caracteres.')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
   })
 
@@ -156,11 +195,11 @@ describe('Datos de la serviteca', () => {
     mockApi(routes({ 'PUT /api/tenant': () => jsonResponse({ error: 'El nombre comercial es obligatorio', status: 400 }, 400) }))
     renderRoute('/configuracion')
 
-    await user.type(await screen.findByLabelText('Teléfono (opcional)'), '300')
+    await user.type(await screen.findByLabelText('Teléfono'), '300')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El nombre comercial es obligatorio')
-    expect(screen.getByLabelText('Teléfono (opcional)')).toHaveValue('300')
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
   })
 
   it('sin rol ADMIN todo queda en solo lectura', async () => {
@@ -188,11 +227,11 @@ describe('Datos de la serviteca', () => {
     )
     renderRoute('/configuracion')
 
-    await user.type(await screen.findByLabelText('Teléfono (opcional)'), '300')
+    await user.type(await screen.findByLabelText('Teléfono'), '300')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Solo un administrador puede editar los datos de la serviteca')
-    expect(screen.getByLabelText('Teléfono (opcional)')).toBeDisabled()
+    expect(screen.getByLabelText('Teléfono')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
   })
 
@@ -200,13 +239,13 @@ describe('Datos de la serviteca', () => {
     const user = userEvent.setup()
     mockApi(routes())
     const router = renderRoute('/configuracion')
-    await user.type(await screen.findByLabelText('Teléfono (opcional)'), '300')
+    await user.type(await screen.findByLabelText('Teléfono'), '300')
 
     await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
     expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
     expect(router.state.location.search).toBe('')
-    expect(screen.getByLabelText('Teléfono (opcional)')).toHaveValue('300')
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
 
     await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
     await user.click(screen.getByRole('button', { name: 'Descartar cambios' }))
@@ -218,7 +257,7 @@ describe('Datos de la serviteca', () => {
     const user = userEvent.setup()
     mockApi(routes())
     const router = renderRoute('/configuracion')
-    await user.type(await screen.findByLabelText('Teléfono (opcional)'), '300')
+    await user.type(await screen.findByLabelText('Teléfono'), '300')
 
     await user.click(screen.getByRole('link', { name: 'Inicio' }))
     expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toHaveTextContent(

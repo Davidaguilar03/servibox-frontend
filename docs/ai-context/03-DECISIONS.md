@@ -12,6 +12,30 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Menu de usuario arriba, panel con costo de lo vendido y jerarquia de titulos
+
+* Decision:
+  * Tipografia: `text-title` pasa a 24/32/600 solo en el `h1`; titulos de seccion y de modal
+    con `text-section` (body con peso 600); `text-figure` (24/28 bajo md, 28/32 desde md,
+    tabular) para el valor de indicadores y totales destacados. Cumple el pendiente de
+    feat/24 de la entrada del 2026-10-24 y **reemplaza** title 20 en secciones, modales y
+    cifras.
+  * Menu de usuario en la barra superior con patron disclosure; se quitan la pildora de la
+    serviteca y el bloque de usuario y Salir del pie de la barra lateral.
+  * Panel: Ventas sin IVA (`netSales`), Costo de lo vendido (`costOfSales`), Utilidad bruta con
+    el margen sobre las ventas sin IVA (un decimal, coma) y Utilidad neta; Compras sale del
+    panel. Reportes: las seis filas del archivo (Ventas sin IVA, Costo de lo vendido, Utilidad
+    bruta, Otros ingresos, Gastos operativos, Utilidad neta) y la tarjeta Ventas sin IVA.
+  * Configuracion: NIT y telefono obligatorios con las reglas del backend
+    (`TenantService.update`); el PUT ya no manda null.
+* Alternativas consideradas: `role=menu` (exige navegacion con flechas y no aporta para dos
+  datos y una accion); dejar Compras en el panel (mezcla un flujo de caja con la utilidad);
+  calcular el margen en el backend (es un cociente de dos campos que ya llegan).
+* Motivo: el backend ya entrega netSales y costOfSales, y el archivo exportado ya usaba esas
+  filas: el panel y la vista previa no cuadraban con el archivo. title 20 en todo aplanaba la
+  jerarquia (desvio 1 del 2026-10-24).
+  Sesion: [sessions/2026-10-25-shell-dashboard-reports.md](sessions/2026-10-25-shell-dashboard-reports.md).
+
 ## 2026-10-24: Sistema de diseno base (escala, sombras, rejilla, radios, iconos, roles y movimiento)
 
 * Decision: reglas y tokens de [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md), con la guarda

@@ -14,11 +14,11 @@ export interface TenantProfile {
   phone: string | null
 }
 
-/** `PUT /api/tenant`: sin slug, que no se puede cambiar. En blanco el backend guarda null. */
+/** `PUT /api/tenant`: sin slug, que no se puede cambiar. NIT y telefono son obligatorios. */
 export interface TenantProfileRequest {
   name: string
-  nit: string | null
-  phone: string | null
+  nit: string
+  phone: string
 }
 
 /**

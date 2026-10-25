@@ -30,7 +30,27 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'layout/AppShell.tsx': ['shadow-overlay', 'shadow-raised'],
   // Barra de acciones fija al pie del formulario de producto.
   'pages/ProductFormPage.tsx': ['shadow-raised'],
+  // Panel del menu de usuario de la barra superior.
+  'layout/UserMenu.tsx': ['shadow-raised'],
 }
+
+/**
+ * Roles con lugar fijo: text-title solo en el h1 de la pantalla (y en la marca), text-section
+ * solo en titulos h2 y h3 (secciones y modales) y text-figure solo en el valor de indicadores y
+ * totales destacados.
+ */
+const TITLE_BRAND_FILES = ['brand/Wordmark.tsx', 'layout/AppShell.tsx']
+const FIGURE_FILES = [
+  // Definicion de la utilidad.
+  'index.css',
+  'components/IndicatorCard.tsx',
+  'pages/DashboardPage.tsx',
+  'pages/AccountsPage.tsx',
+  'pages/NewSaleInvoicePage.tsx',
+  'pages/NewPurchaseInvoicePage.tsx',
+  'pages/SaleDetailPage.tsx',
+  'pages/PurchaseDetailPage.tsx',
+]
 
 /** Desplazamientos de 1 px documentados: solapar el borde de las pestanas y centrar el icono del Alert. */
 const ONE_PX_OFFSETS: Record<string, string[]> = {
@@ -53,6 +73,18 @@ const RULES = {
   iconPx: /\b(?:size|strokeWidth)=\{\s*[\d.]+\s*\}/g,
   mono: new RegExp(String.raw`(?<![\w-])${VARIANTS}font-mono(?![\w-])`, 'g'),
   motion: new RegExp(String.raw`(?<![\w-])${VARIANTS}(?:duration-\d+|duration-\[[^\]]+\]|ease-(?:linear|in|out|in-out))(?![\w-])`, 'g'),
+  role: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:title|section|figure)(?![\w-])`, 'g'),
+}
+
+/** Etiqueta JSX que abre el elemento donde aparece la clase: `h1`, `p`... */
+function openingTag(code: string, index: number) {
+  return /^<([a-z][\w]*)/.exec(code.slice(code.lastIndexOf('<', index)))?.[1]
+}
+
+function misplacedRole(token: string, tag: string | undefined, file: string) {
+  if (token.endsWith('text-title')) return tag !== 'h1' && !TITLE_BRAND_FILES.includes(file)
+  if (token.endsWith('text-section')) return tag !== 'h2' && tag !== 'h3'
+  return !FIGURE_FILES.includes(file)
 }
 
 export type Rule = keyof typeof RULES
@@ -88,6 +120,9 @@ export function violations(source: string, file: string): string[] {
   if (file.endsWith('.tsx')) for (const match of code.matchAll(RULES.iconPx)) add('iconPx', match[0])
   for (const match of code.matchAll(RULES.mono)) add('mono', match[0])
   for (const match of code.matchAll(RULES.motion)) add('motion', match[0])
+  for (const match of code.matchAll(RULES.role)) {
+    if (misplacedRole(match[0], openingTag(code, match.index), file)) add('role', match[0])
+  }
   return found
 }
 
@@ -137,10 +172,21 @@ describe('guarda del sistema de diseno', () => {
     ])
   })
 
+  it('falla con un rol fuera de su lugar', () => {
+    const bad = `
+      <p className="text-title">Titulo en un parrafo</p>
+      <p className="text-section">Seccion en un parrafo</p>
+      <p className="text-figure">$ 1.000</p>`
+    expect(violations(bad, 'pages/Fake.tsx')).toEqual(['role: text-title', 'role: text-section', 'role: text-figure'])
+    expect(violations('<p className="mt-2 text-figure text-text">', 'components/IndicatorCard.tsx')).toEqual([])
+  })
+
   it('acepta lo que el sistema permite', () => {
     const good = `
       // Un comentario con text-sm y shadow-card no cuenta.
-      <p className="text-title text-body text-small text-label text-button p-1 gap-2 w-[112px] rounded-control md:rounded-surface rounded-pill rounded-none border-b-2 monto codigo duration-(--duration-fast) ease-standard">
+      <h1 className="text-title">Titulo</h1>
+      <h2 id="seccion" className="mb-4 text-section text-text">Seccion</h2>
+      <p className="text-body text-small text-label text-button p-1 gap-2 w-[112px] rounded-control md:rounded-surface rounded-pill rounded-none border-b-2 monto codigo duration-(--duration-fast) ease-standard">
         <X {...iconSm} />
       </p>
       const rounded = Math.round(value)`
@@ -161,9 +207,18 @@ const token = (name: string) => new RegExp(String.raw`--${name}:\s*([^;]+);`).ex
 describe('tokens del sistema de diseno', () => {
   it.each([
     // Escala tipografica: tres tamanos de contenido y dos de componente.
-    ['text-title', '20px'],
-    ['text-title--line-height', '28px'],
+    ['text-title', '24px'],
+    ['text-title--line-height', '32px'],
     ['text-title--font-weight', '600'],
+    ['text-section', '15px'],
+    ['text-section--line-height', '1.6'],
+    ['text-section--font-weight', '600'],
+    // figure: 24/28 bajo md y 28/32 desde md.
+    ['figure-size', '24px'],
+    ['figure-line-height', '28px'],
+    ['figure-size-md', '28px'],
+    ['figure-line-height-md', '32px'],
+    ['figure-font-weight', '600'],
     ['text-body', '15px'],
     ['text-body--font-weight', '400'],
     ['text-small', '13px'],

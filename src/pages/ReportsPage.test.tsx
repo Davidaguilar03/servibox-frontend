@@ -6,8 +6,27 @@ import { jsonResponse, renderRoute, validToken } from '../test/utils'
 
 type Handler = (url: URL) => Response | Promise<Response>
 
-const october = { totalSales: 48_620_000, totalPurchases: 29_310_000, grossProfit: 19_310_000, operatingExpenses: 4_440_000, otherIncome: 0, netProfit: 14_870_000 }
-const september = { totalSales: 43_400_000, totalPurchases: 25_000_000, grossProfit: 18_400_000, operatingExpenses: 3_000_000, otherIncome: 0, netProfit: 15_400_000 }
+// Octubre con las cifras de la siembra dev. totalSales y totalPurchases (con IVA) no son filas.
+const october = {
+  totalSales: 24_730_469,
+  totalPurchases: 29_310_000,
+  netSales: 20_781_907,
+  costOfSales: 14_055_000,
+  grossProfit: 6_726_907,
+  operatingExpenses: 5_192_200,
+  otherIncome: 0,
+  netProfit: 1_534_707,
+}
+const september = {
+  totalSales: 21_420_000,
+  totalPurchases: 25_000_000,
+  netSales: 18_000_000,
+  costOfSales: 12_000_000,
+  grossProfit: 6_000_000,
+  operatingExpenses: 4_400_000,
+  otherIncome: 0,
+  netProfit: 1_600_000,
+}
 
 const accounts = [
   { id: 10, name: 'Caja General', type: 'EFECTIVO', currentBalance: 0 },
@@ -58,7 +77,7 @@ const statementValue = (concept: string) =>
 const statementConcepts = () =>
   within(screen.getByRole('table')).getAllByRole('rowheader').map((header) => header.textContent)
 
-const STATEMENT_ORDER = ['Ventas totales', 'Compras totales', 'Utilidad bruta', 'Otros ingresos', 'Gastos operativos', 'Utilidad neta']
+const STATEMENT_ORDER = ['Ventas sin IVA', 'Costo de lo vendido', 'Utilidad bruta', 'Otros ingresos', 'Gastos operativos', 'Utilidad neta']
 
 describe('ReportsPage', () => {
   beforeEach(() => {
@@ -84,28 +103,33 @@ describe('ReportsPage', () => {
     expect(screen.getByLabelText('Desde')).toHaveValue('2026-10-01')
     expect(screen.getByLabelText('Hasta')).toHaveValue('2026-10-19')
     expect(screen.getByRole('radio', { name: /Estado de resultados/ })).toBeChecked()
+    expect(screen.getByText('Ventas, costo de lo vendido, gastos y utilidad del período.')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'PDF' })).toBeChecked()
     expect(screen.queryByLabelText('Cuenta')).not.toBeInTheDocument()
 
     const preview = screen.getByRole('region', { name: 'Vista previa · Estado de resultados' })
     expect(within(preview).getByText('01/10/2026 a 19/10/2026')).toBeInTheDocument()
-    expect(await within(preview).findAllByText('$ 48.620.000')).toHaveLength(2)
-    expect(statementValue('Ventas totales')).toHaveTextContent('$ 48.620.000')
-    expect(statementValue('Compras totales')).toHaveTextContent('-$ 29.310.000')
-    expect(statementValue('Compras totales')).toHaveClass('text-error')
-    expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 19.310.000')
+    expect(await within(preview).findAllByText('$ 20.781.907')).toHaveLength(2)
+    expect(statementValue('Ventas sin IVA')).toHaveTextContent('$ 20.781.907')
+    expect(statementValue('Costo de lo vendido')).toHaveTextContent('-$ 14.055.000')
+    expect(statementValue('Costo de lo vendido')).toHaveClass('text-error')
+    expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 6.726.907')
     expect(statementValue('Otros ingresos')).toHaveTextContent('$ 0')
-    expect(statementValue('Gastos operativos')).toHaveTextContent('-$ 4.440.000')
-    expect(statementValue('Utilidad neta')).toHaveTextContent('$ 14.870.000')
+    expect(statementValue('Gastos operativos')).toHaveTextContent('-$ 5.192.200')
+    expect(statementValue('Gastos operativos')).toHaveClass('text-error')
+    expect(statementValue('Utilidad neta')).toHaveTextContent('$ 1.534.707')
+    // Compras (con IVA) ya no sale en la vista previa.
+    expect(within(preview).queryByText(/Compras/)).not.toBeInTheDocument()
+    expect(within(preview).queryByText('-$ 29.310.000')).not.toBeInTheDocument()
     expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-success-bg', 'text-success-ink')
     expect(statementConcepts()).toEqual(STATEMENT_ORDER)
 
-    // Ventas 48,62 contra 43,4 millones sube 12 %; utilidad 14,87 contra 15,4 baja 3 %.
+    // Ventas sin IVA 20,78 contra 18 millones sube 15 %; utilidad 1,53 contra 1,6 baja 4 %.
     expect(await within(preview).findByText(/Subió/)).toBeInTheDocument()
-    const salesCard = within(preview).getByText('Ventas totales', { selector: 'p' }).parentElement!
-    expect(salesCard).toHaveTextContent('Subió 12%vs. período anterior')
+    const salesCard = within(preview).getByText('Ventas sin IVA', { selector: 'p' }).parentElement!
+    expect(salesCard).toHaveTextContent('Subió 15%vs. período anterior')
     const profitCard = within(preview).getByText('Utilidad neta', { selector: 'p' }).parentElement!
-    expect(profitCard).toHaveTextContent('Bajó 3%vs. período anterior')
+    expect(profitCard).toHaveTextContent('Bajó 4%vs. período anterior')
     expect(kpiCalls(fetchMock)).toEqual([
       '/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-19',
       '/api/reporting/kpis?desde=2026-09-12&hasta=2026-09-30',
@@ -114,7 +138,16 @@ describe('ReportsPage', () => {
 
   it('con otros ingresos: seis filas en orden, Otros ingresos en texto normal y utilidad neta y variacion de kpis', async () => {
     // Cifras de la siembra de demostracion: bruta 267.750 mas 50.000 menos 450.000.
-    const withIncome = { totalSales: 267_750, totalPurchases: 0, grossProfit: 267_750, operatingExpenses: 450_000, otherIncome: 50_000, netProfit: -132_250 }
+    const withIncome = {
+      totalSales: 318_622,
+      totalPurchases: 0,
+      netSales: 267_750,
+      costOfSales: 0,
+      grossProfit: 267_750,
+      operatingExpenses: 450_000,
+      otherIncome: 50_000,
+      netProfit: -132_250,
+    }
     mockApi({
       'GET /api/reporting/kpis': kpisBy({
         '2026-10-01|2026-10-19': withIncome,
@@ -126,7 +159,7 @@ describe('ReportsPage', () => {
     const preview = screen.getByRole('region', { name: 'Vista previa · Estado de resultados' })
     expect(await within(preview).findAllByText('$ 267.750')).toHaveLength(3)
     expect(statementConcepts()).toEqual(STATEMENT_ORDER)
-    expect(statementValue('Compras totales')).toHaveTextContent('$ 0')
+    expect(statementValue('Costo de lo vendido')).toHaveTextContent('$ 0')
     expect(statementValue('Utilidad bruta')).toHaveTextContent('$ 267.750')
     expect(statementValue('Otros ingresos')).toHaveTextContent('$ 50.000')
     expect(statementValue('Otros ingresos')).toHaveClass('text-text')
@@ -149,7 +182,8 @@ describe('ReportsPage', () => {
     mockApi({
       'GET /api/reporting/kpis': kpisBy({
         '2026-09-01|2026-09-30': { ...october, netProfit: -1_000_000 },
-        '2026-08-02|2026-08-31': { ...september, totalSales: 0, netProfit: 0 },
+        // Periodo anterior en cero: la variacion no divide por cero.
+        '2026-08-02|2026-08-31': { ...september, netSales: 0, netProfit: 0 },
       }),
     })
     renderRoute('/reportes')
@@ -171,7 +205,7 @@ describe('ReportsPage', () => {
     renderRoute('/reportes')
 
     expect(await screen.findByText(/No pudimos cargar el período anterior/)).toBeInTheDocument()
-    expect(statementValue('Ventas totales')).toHaveTextContent('$ 48.620.000')
+    expect(statementValue('Ventas sin IVA')).toHaveTextContent('$ 20.781.907')
     expect(screen.queryByText(/vs\. período anterior/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Generar reporte' })).toBeEnabled()
 

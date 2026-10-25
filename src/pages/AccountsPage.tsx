@@ -181,7 +181,7 @@ export function AccountsPage() {
       {accounts.isSuccess && accountList.length > 0 && (
         <>
           <section className={`${card} p-6`} aria-labelledby="period-title">
-            <h2 id="period-title" className="text-title text-text">
+            <h2 id="period-title" className="text-section text-text">
               {scopeName} · {periodLabel(filters)}
             </h2>
             <div ref={periodRef} role="group" aria-label="Período" className="mt-4 flex flex-wrap gap-2">
@@ -271,7 +271,7 @@ function PeriodTotal({ label, value, tone }: { label: string; value: string | un
   return (
     <div className="flex items-baseline justify-between gap-4 rounded-control bg-neutral-100 px-4 py-3">
       <dt className="text-small text-text-muted">{label}</dt>
-      <dd className={`monto text-title ${tone}`}>
+      <dd className={`text-figure ${tone}`}>
         {value ?? <Skeleton className="h-6 w-28" />}
       </dd>
     </div>
@@ -341,7 +341,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
             {balance.isError ? (
               <span className="text-small text-text">Total no disponible</span>
             ) : balance.data ? (
-              <span className="monto text-title text-text">{formatCurrency(balance.data.total)}</span>
+              <span className="text-figure text-text">{formatCurrency(balance.data.total)}</span>
             ) : (
               <Skeleton className="h-8 w-40" />
             )}
@@ -359,7 +359,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
                     <Wallet {...iconSm} className={active ? 'text-brand-ink' : 'text-text-muted'} aria-hidden />
                     {account.name}
                   </span>
-                  <span className="monto text-title text-text">{formatCurrency(account.currentBalance)}</span>
+                  <span className="text-figure text-text">{formatCurrency(account.currentBalance)}</span>
                   <span className="text-small text-text-muted">{ACCOUNT_TYPE_LABELS[account.type]} · Saldo actual</span>
                 </button>
               </li>
@@ -467,7 +467,7 @@ function MovementsBlock(props: MovementsBlockProps) {
 
   return (
     <section className={`${card} p-4`} aria-labelledby="movements-title">
-      <h2 id="movements-title" className="mb-4 px-2 text-title text-text">
+      <h2 id="movements-title" className="mb-4 px-2 text-section text-text">
         Movimientos
       </h2>
       {content}

@@ -8,6 +8,10 @@ interface IndicatorCardProps {
   label: string
   /** Valor ya formateado. Sin valor se muestra el skeleton de carga. */
   value?: string
+  /** Valor negativo: la cifra va en el tono de error. */
+  negative?: boolean
+  /** Dato pegado al valor, como el margen bruto. */
+  note?: string
   /** Texto secundario bajo el valor. */
   detail?: string
   /** Variacion contra el periodo anterior, bajo el valor. */
@@ -18,7 +22,7 @@ interface IndicatorCardProps {
 }
 
 /** Tarjeta de indicador: etiqueta, valor y, si la hay, la variacion contra el periodo anterior. */
-export function IndicatorCard({ label, value, detail, trend, error, onRetry }: IndicatorCardProps) {
+export function IndicatorCard({ label, value, negative, note, detail, trend, error, onRetry }: IndicatorCardProps) {
   return (
     <div className="rounded-surface border border-border bg-surface p-6">
       <p className="text-small text-text-muted">{label}</p>
@@ -36,7 +40,8 @@ export function IndicatorCard({ label, value, detail, trend, error, onRetry }: I
         <Skeleton className="mt-3 h-8 w-3/4" />
       ) : (
         <>
-          <p className="monto mt-2 text-title text-text">{value}</p>
+          <p className={`mt-2 text-figure ${negative ? 'text-error' : 'text-text'}`}>{value}</p>
+          {note && <p className="text-small text-text">{note}</p>}
           {detail && <p className="mt-1 text-small text-text-muted">{detail}</p>}
           {trend && <div className="mt-1 text-small">{trend}</div>}
         </>
