@@ -80,6 +80,7 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
           aria-autocomplete="list"
           aria-activedescendant={open && filtered[active] ? `${id}-option-${filtered[active].value}` : undefined}
           aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           autoComplete="off"
           placeholder={selected ? undefined : placeholder}
           value={open ? query : (selected?.label ?? '')}
@@ -132,7 +133,11 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
           </ul>
         )}
       </div>
-      {error && <p className="text-small text-error">{error}</p>}
+      {error && (
+        <p id={`${id}-error`} aria-live="polite" className="text-small text-error">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

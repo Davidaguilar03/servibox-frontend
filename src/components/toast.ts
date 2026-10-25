@@ -1,11 +1,16 @@
 import { useSyncExternalStore } from 'react'
 
-/** Lo que dura un aviso en pantalla antes de cerrarse solo. */
+/** Lo que dura un aviso de exito en pantalla antes de cerrarse solo. */
 export const TOAST_DURATION_MS = 5000
+/** Avisos a la vez: al llegar uno mas se retira el mas antiguo. */
+export const MAX_TOASTS = 3
+
+export type ToastTone = 'success' | 'error'
 
 export interface ToastMessage {
   id: number
   message: string
+  tone: ToastTone
 }
 
 let toasts: ToastMessage[] = []
@@ -26,14 +31,22 @@ export function dismissToast(id: number) {
   emit()
 }
 
-/** Muestra un aviso de exito que sobrevive a la navegacion y se cierra solo. */
-export function showToast(message: string) {
-  const id = nextId++
-  toasts = [...toasts, { id, message }]
+/**
+ * Muestra un aviso que sobrevive a la navegacion. El de exito se cierra solo a los 5 s
+ * (el temporizador vive en el Toaster y se pausa con el cursor o el foco); el de error queda
+ * hasta que se cierra.
+ */
+export function showToast(message: string, tone: ToastTone = 'success') {
+  toasts = [...toasts, { id: nextId++, message, tone }].slice(-MAX_TOASTS)
   emit()
-  setTimeout(() => dismissToast(id), TOAST_DURATION_MS)
 }
 
 export function useToasts(): ToastMessage[] {
   return useSyncExternalStore(subscribe, () => toasts)
+}
+
+/** Vacia los avisos (entre pruebas: el almacen es del modulo). */
+export function resetToasts() {
+  toasts = []
+  emit()
 }

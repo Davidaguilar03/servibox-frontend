@@ -21,6 +21,8 @@ interface DataTableProps<T> {
   card?: (row: T) => ReactNode
   /** Nombre accesible de la lista de tarjetas. */
   cardsLabel?: string
+  /** Relleno de celda de 8 en vez de 12: para un recuadro angosto (facturas). */
+  dense?: boolean
 }
 
 /**
@@ -38,11 +40,13 @@ export function DataTable<T>({
   skeletonRows = 4,
   card,
   cardsLabel,
+  dense = false,
 }: DataTableProps<T>) {
   if (error) return <ErrorState message="No pudimos cargar esta información." onRetry={onRetry} />
   if (!loading && rows?.length === 0) return <EmptyState message={emptyMessage} />
 
   const alignClass = (column: Column<T>) => (column.align === 'right' ? 'text-right' : 'text-left')
+  const cellX = dense ? 'px-2' : 'px-3'
 
   const table = (
     <div className={`overflow-x-auto ${card ? 'hidden md:block' : ''}`}>
@@ -53,7 +57,7 @@ export function DataTable<T>({
               <th
                 key={column.header}
                 scope="col"
-                className={`sticky top-0 bg-canvas px-3 py-3 text-label whitespace-nowrap text-text-muted uppercase first:rounded-l-control last:rounded-r-control ${alignClass(column)}`}
+                className={`sticky top-0 bg-canvas ${cellX} py-3 text-label whitespace-nowrap text-text-muted uppercase first:rounded-l-control last:rounded-r-control ${alignClass(column)}`}
               >
                 {column.header}
               </th>
@@ -65,7 +69,7 @@ export function DataTable<T>({
             ? Array.from({ length: skeletonRows }, (_, index) => (
                 <tr key={index} className="h-row border-b border-border last:border-b-0">
                   {columns.map((column) => (
-                    <td key={column.header} className="px-3">
+                    <td key={column.header} className={cellX}>
                       <Skeleton className="h-4 w-full" />
                     </td>
                   ))}
@@ -77,7 +81,7 @@ export function DataTable<T>({
                   className="h-row border-b border-border transition-colors duration-(--duration-fast) last:border-b-0 even:bg-row-alt hover:bg-neutral-100"
                 >
                   {columns.map((column) => (
-                    <td key={column.header} className={`px-3 text-body text-text ${alignClass(column)}`}>
+                    <td key={column.header} className={`${cellX} text-body text-text ${alignClass(column)}`}>
                       {column.render(row)}
                     </td>
                   ))}

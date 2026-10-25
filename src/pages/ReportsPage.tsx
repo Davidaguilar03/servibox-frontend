@@ -89,7 +89,12 @@ export function ReportsPage() {
   })
 
   function generate() {
-    if (!valid || submitting.current) return
+    if (submitting.current) return
+    if (!valid) {
+      // Generar no se deshabilita por errores: el foco va al primer campo con error.
+      document.querySelector<HTMLElement>('form [aria-invalid="true"]')?.focus()
+      return
+    }
     submitting.current = true
     download.mutate()
   }
@@ -214,7 +219,7 @@ export function ReportsPage() {
             </Alert>
           )}
 
-          <Button type="submit" disabled={!valid || download.isPending} aria-busy={download.isPending || undefined}>
+          <Button type="submit" disabled={download.isPending} aria-busy={download.isPending || undefined}>
             {download.isPending ? 'Generando…' : 'Generar reporte'}
           </Button>
         </form>

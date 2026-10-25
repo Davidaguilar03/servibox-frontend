@@ -63,7 +63,7 @@ describe('Nueva factura de venta con cliente preseleccionado', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/ventas'))
-    expect(screen.queryByRole('dialog', { name: 'Descartar cambios' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: '¿Descartar los cambios?' })).not.toBeInTheDocument()
   })
 
   it('acepta un tercero AMBOS', async () => {
@@ -97,7 +97,7 @@ describe('Nueva factura de compra con proveedor preseleccionado', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/compras'))
-    expect(screen.queryByRole('dialog', { name: 'Descartar cambios' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: '¿Descartar los cambios?' })).not.toBeInTheDocument()
   })
 
   it.each([

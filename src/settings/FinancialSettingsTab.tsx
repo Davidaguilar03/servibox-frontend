@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert } from '../components/Alert'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { CATEGORIES_KEY, PRODUCTS_KEY, fetchInventoryCategories } from '../inventory/inventoryApi'
+import { revealErrors } from '../lib/formErrors'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings, updateFinancialSettings, type FinancialSettings } from './settingsApi'
@@ -71,6 +73,7 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
   const [initial, setInitial] = useState(() => financialFormFrom(settings))
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<FinancialField>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   const [forbidden, setForbidden] = useState<string | null>(null)
   const sending = useRef(false)
   const allowLeave = useRef(false)
@@ -108,8 +111,14 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
   const touch = (field: FinancialField) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set(Object.keys(values) as FinancialField[]))
-    if (locked || !dirty || !valid || sending.current) return
+    if (locked || !dirty || sending.current) return
+    if (!valid) {
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set(Object.keys(values) as FinancialField[]))
+      }, document.getElementById('configuracion-financiera'))
+      return
+    }
     sending.current = true
     save.mutate()
   }
@@ -125,6 +134,7 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
         Estos valores calculan el precio sugerido de cada producto junto con el margen de su categoría.
       </p>
       <form
+        id="configuracion-financiera"
         noValidate
         className="mt-4 flex flex-col gap-4"
         onSubmit={(event) => {
@@ -168,7 +178,9 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
         <p className="text-small text-text">Al guardar se recalcula el precio sugerido de todos los productos.</p>
         {!locked && (
           <div className="flex justify-end">
-            <Button type="submit" disabled={!dirty || !valid || save.isPending}>
+            <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
+            {/* Edicion: sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
+            <Button type="submit" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar configuración'}
             </Button>
           </div>

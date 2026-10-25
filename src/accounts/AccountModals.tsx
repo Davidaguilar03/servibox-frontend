@@ -3,12 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
+import { revealErrors } from '../lib/formErrors'
 import { formatCurrency } from '../lib/format'
 import {
   EMPTY_ACCOUNT_FORM,
@@ -36,6 +38,7 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
   const queryClient = useQueryClient()
   const [values, setValues] = useState<AccountFormValues>(EMPTY_ACCOUNT_FORM)
   const [touched, setTouched] = useState<Set<keyof AccountFormValues>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   const [nameConflict, setNameConflict] = useState<string | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
 
@@ -65,8 +68,15 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
   const touch = (field: keyof AccountFormValues) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set<keyof AccountFormValues>(['name', 'type', 'initialBalance']))
-    if (Object.keys(errors).length > 0 || save.isPending) return
+    if (save.isPending) return
+    if (Object.keys(errors).length > 0) {
+      // Guardar no se deshabilita por errores: se muestran todos y el foco va al primero.
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set<keyof AccountFormValues>(['name', 'type', 'initialBalance']))
+      }, document.querySelector<HTMLElement>('[role="dialog"]'))
+      return
+    }
     save.mutate()
   }
 
@@ -126,6 +136,7 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
           hint="El dinero con el que abre la cuenta. Queda como saldo actual y no aparece como movimiento."
         />
       </div>
+      <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
     </DiscardableModal>
   )
 }
@@ -148,6 +159,7 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
   }))
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<keyof TransferFormValues>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   const sending = useRef(false)
 
   const errors = validateTransfer(values, accounts)
@@ -177,8 +189,15 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
   const touch = (field: keyof TransferFormValues) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set<keyof TransferFormValues>(['originAccountId', 'destinationAccountId', 'amount', 'concept']))
-    if (Object.keys(errors).length > 0 || sending.current) return
+    if (sending.current) return
+    if (Object.keys(errors).length > 0) {
+      // Guardar no se deshabilita por errores: se muestran todos y el foco va al primero.
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set<keyof TransferFormValues>(['originAccountId', 'destinationAccountId', 'amount', 'concept']))
+      }, document.querySelector<HTMLElement>('[role="dialog"]'))
+      return
+    }
     sending.current = true
     save.mutate()
   }
@@ -250,6 +269,7 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
           hint="Si lo dejas vacío, se usa «Transferencia a» o «desde» la otra cuenta."
         />
       </div>
+      <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
     </DiscardableModal>
   )
 }

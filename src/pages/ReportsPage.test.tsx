@@ -321,12 +321,15 @@ describe('ReportsPage', () => {
     fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-20' } })
     expect(screen.getByText('Hasta no puede ser anterior a Desde.')).toBeInTheDocument()
-    expect(button).toBeDisabled()
+    // Generar no se deshabilita por errores: al enviar, el foco va al campo con error.
+    expect(button).toBeEnabled()
+    fireEvent.click(button)
+    expect(screen.getByLabelText('Hasta')).toHaveFocus()
     expect(screen.queryByRole('region', { name: /Vista previa/ })).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2025-10-18' } })
     expect(screen.getByText('El período no puede pasar de 366 días. Acorta el rango.')).toBeInTheDocument()
-    expect(button).toBeDisabled()
+    expect(button).toBeEnabled()
 
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '' } })
     expect(screen.getByText('Elige la fecha de inicio.')).toBeInTheDocument()

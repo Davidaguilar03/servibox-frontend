@@ -1,7 +1,6 @@
 import { useEffect, type RefObject } from 'react'
 import { useBlocker } from 'react-router'
-import { Button } from './Button'
-import { Modal } from './Modal'
+import { DiscardChangesModal } from './DiscardChangesModal'
 
 interface UnsavedChangesGuardProps {
   dirty: boolean
@@ -33,22 +32,5 @@ export function UnsavedChangesGuard({
   }, [dirty])
 
   if (blocker.state !== 'blocked') return null
-  return (
-    <Modal
-      title="Descartar cambios"
-      onClose={() => blocker.reset()}
-      footer={
-        <>
-          <Button variant="secondary" onClick={() => blocker.reset()}>
-            Seguir editando
-          </Button>
-          <Button variant="danger" onClick={() => blocker.proceed()}>
-            Descartar cambios
-          </Button>
-        </>
-      }
-    >
-      <p className="text-body text-text">{message}</p>
-    </Modal>
-  )
+  return <DiscardChangesModal message={message} onKeepEditing={() => blocker.reset()} onDiscard={() => blocker.proceed()} />
 }

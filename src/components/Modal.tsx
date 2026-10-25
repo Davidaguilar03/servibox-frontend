@@ -65,7 +65,13 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 px-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 px-4"
+      // Clic fuera del dialogo: igual que Esc o la X (con cambios, quien usa el modal pregunta).
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onCloseRef.current()
+      }}
+    >
       <div
         ref={dialogRef}
         role="dialog"

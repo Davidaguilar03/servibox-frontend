@@ -12,6 +12,7 @@ import { jsonResponse, primaryActions, renderRoute, validToken } from '../test/u
 import { Button } from './Button'
 import { CellButton, CellLink, cellLinkClasses } from './CellLink'
 import { FilterBar } from './FilterBar'
+import { invoiceColumns } from './invoiceColumns'
 import { ListHeader } from './ListHeader'
 import { PendingBalance } from './PendingBalance'
 import { PeriodPicker } from './PeriodPicker'
@@ -298,13 +299,11 @@ describe('listados', () => {
   })
 
   it('las facturas ordenan Numero, Fecha, Tercero, ..., Estado, Total, Saldo pendiente y acciones', () => {
-    for (const [file, party] of [
-      ['pages/SalesInvoicesPage.tsx', 'Cliente'],
-      ['pages/PurchaseInvoicesPage.tsx', 'Proveedor'],
-    ] as const) {
-      const headers = [...source(file).matchAll(/header: '([^']*)'/g)].map((match) => match[1])
-      expect(headers).toEqual(['N.º factura', 'Fecha', party, 'Vence', 'Forma de pago', 'Estado', 'Total', 'Saldo pendiente', ''])
-    }
+    for (const file of ['pages/SalesInvoicesPage.tsx', 'pages/PurchaseInvoicesPage.tsx']) expect(source(file)).toContain('invoiceColumns<')
+    const headers = invoiceColumns({ partyLabel: 'Cliente', partyName: () => '', detailPath: () => '', width: Number.POSITIVE_INFINITY }).map(
+      (column) => column.header,
+    )
+    expect(headers).toEqual(['N.º factura', 'Fecha', 'Cliente', 'Vence', 'Forma de pago', 'Estado', 'Total', 'Saldo pendiente', ''])
   })
 })
 

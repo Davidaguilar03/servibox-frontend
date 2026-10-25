@@ -419,6 +419,9 @@ describe('Clientes', () => {
     await screen.findAllByText('Óscar Peña')
     await user.click(within(row('Óscar')).getByRole('button', { name: 'Editar cliente Óscar Peña' }))
     const dialog = screen.getByRole('dialog')
+    // Edicion sin cambios: Guardar deshabilitado (la unica excepcion de la regla).
+    expect(within(dialog).getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    await user.type(within(dialog).getByLabelText('Celular'), '1')
 
     await user.dblClick(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
     expect(within(dialog).getByRole('button', { name: 'Guardando…' })).toBeDisabled()
@@ -443,17 +446,17 @@ describe('Clientes', () => {
     await user.click(screen.getByRole('button', { name: 'Nuevo cliente' }))
     await user.type(screen.getByLabelText('Nombre o razón social'), 'Ana')
     await user.keyboard('{Escape}')
-    expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
     expect(screen.getByLabelText('Nombre o razón social')).toHaveValue('Ana')
     await user.keyboard('{Escape}')
-    await user.click(screen.getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     await user.click(within(row('Óscar')).getByRole('button', { name: 'Editar cliente Óscar Peña' }))
     await user.type(screen.getByLabelText('Celular'), '310')
     await user.keyboard('{Escape}')
-    expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
   })
 })
 

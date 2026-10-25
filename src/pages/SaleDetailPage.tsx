@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileQuestion } from 'lucide-react'
 import { Alert } from '../components/Alert'
+import { DiscardableModal } from '../components/DiscardableModal'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
@@ -17,6 +19,7 @@ import { useBreadcrumbTail } from '../layout/breadcrumb'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
+import { revealErrors } from '../lib/formErrors'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paymentMethodLabels, type PaymentMethod } from '../sales/newSale'
@@ -357,6 +360,8 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
     date: today,
   })
   const submitting = useRef(false)
+  const [touched, setTouched] = useState<Set<string>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   // Sin eleccion del usuario se propone la primera cuenta de efectivo.
   const accountId = draft.accountId === undefined ? (defaultCashAccount(accounts.data)?.id ?? null) : draft.accountId
   const effective: CollectionDraft = { ...draft, accountId }
@@ -373,25 +378,38 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
   })
 
   function submit() {
-    if (!valid || submitting.current) return
+    if (submitting.current) return
+    if (!valid) {
+      // Registrar no se deshabilita por errores: se muestran todos y el foco va al primero.
+      revealErrors(() => setSubmitted(true), document.querySelector<HTMLElement>('[role="dialog"]'))
+      return
+    }
     submitting.current = true
     save.mutate()
   }
 
+  // Validacion al salir de cada campo; al enviar, todos.
+  const shown = (field: 'account' | 'amount' | 'date') => (submitted || touched.has(field) ? errors[field] : undefined)
+  const touch = (field: string) => () => setTouched((current) => new Set(current).add(field))
+  const dirty = draft.accountId !== undefined || draft.amount !== String(sale.pendingBalance) || draft.date !== today
+
   return (
-    <Modal
+    <DiscardableModal
       title="Registrar abono"
+      dirty={dirty}
+      busy={save.isPending}
       onClose={onClose}
-      footer={
+      discardMessage="Si cierras ahora, se pierde lo que digitaste en este abono."
+      footer={(requestClose) => (
         <>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={requestClose}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={!valid || save.isPending}>
+          <Button onClick={submit} disabled={save.isPending} aria-busy={save.isPending || undefined}>
             {save.isPending ? 'Registrando…' : 'Registrar abono'}
           </Button>
         </>
-      }
+      )}
     >
       <div
         className="flex flex-col gap-4"
@@ -427,7 +445,8 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
             ]}
             value={accountId === null ? '' : String(accountId)}
             onChange={(event) => setDraft({ ...draft, accountId: event.target.value ? Number(event.target.value) : null })}
-            hint={errors.account}
+            onBlur={touch('account')}
+            error={shown('account')}
           />
         )}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -439,7 +458,8 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
             step="any"
             value={draft.amount}
             onChange={(event) => setDraft({ ...draft, amount: event.target.value })}
-            error={errors.amount}
+            onBlur={touch('amount')}
+            error={shown('amount')}
           />
           <TextField
             label="Fecha"
@@ -448,11 +468,13 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
             max={range.max}
             value={draft.date}
             onChange={(event) => setDraft({ ...draft, date: event.target.value })}
-            error={errors.date}
+            onBlur={touch('date')}
+            error={shown('date')}
           />
         </div>
       </div>
-    </Modal>
+      <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
+    </DiscardableModal>
   )
 }
 

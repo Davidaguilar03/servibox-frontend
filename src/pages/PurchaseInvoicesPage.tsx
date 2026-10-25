@@ -2,8 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { buttonClasses } from '../components/buttonStyles'
-import { CellLink } from '../components/CellLink'
-import { DataTable, type Column } from '../components/DataTable'
+import { invoiceColumns } from '../components/invoiceColumns'
+import { DataTable } from '../components/DataTable'
 import { FilterBar } from '../components/FilterBar'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { ListHeader } from '../components/ListHeader'
@@ -16,18 +16,14 @@ import { StatusBadge } from '../components/StatusBadge'
 import { EmptyState, ErrorState } from '../components/states'
 import { fetchKpis } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
-import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { periodRange } from '../lib/period'
+import { INVOICE_TABLE_MEDIUM, useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { PURCHASES_KEY, fetchPurchaseInvoices, fetchPurchasePayments, type Purchase } from '../purchases/purchasesApi'
 import { activePurchases, creditPayments, filterPurchases, payable } from '../purchases/purchasesList'
 import { CLEARED_FILTERS, filtersActive, filtersToParams, monthRange, parseFilters, type SalesFilters } from '../sales/salesList'
-
-const paymentTypeLabels: Record<Purchase['paymentType'], string> = {
-  CONTADO: 'Contado',
-  CREDITO: 'Crédito',
-}
 
 const statusOptions = [
   { value: '', label: 'Todos' },
@@ -50,17 +46,6 @@ const periodOptions: Array<{ value: SalesFilters['periodo']; label: string }> = 
 
 const card = 'rounded-surface border border-border bg-surface'
 
-const columns: Column<Purchase>[] = [
-  { header: 'N.º factura', render: (p) => <span className="codigo">{p.invoiceNumber}</span> },
-  { header: 'Fecha', render: (p) => formatDate(p.invoiceDate) },
-  { header: 'Proveedor', render: (p) => p.supplier.name },
-  { header: 'Vence', render: (p) => (p.paymentType === 'CONTADO' ? EMPTY_VALUE : formatDate(p.dueDate)) },
-  { header: 'Forma de pago', render: (p) => paymentTypeLabels[p.paymentType] ?? EMPTY_VALUE },
-  { header: 'Estado', render: (p) => <StatusBadge status={p.status} /> },
-  { header: 'Total', align: 'right', render: (p) => <span className="monto whitespace-nowrap">{formatCurrency(p.total)}</span> },
-  { header: 'Saldo pendiente', align: 'right', render: (p) => <PendingBalance invoice={p} /> },
-  { header: '', render: (p) => <CellLink to={`/compras/${p.id}`}>Ver detalle</CellLink> },
-]
 
 /** Facturas de compra: indicadores, filtros en la URL y listado paginado. */
 export function PurchaseInvoicesPage() {
@@ -187,6 +172,13 @@ interface PurchasesTableProps {
 }
 
 function PurchasesTable({ purchases, loading, error, onRetry, filters, today, onPageChange, onClear }: PurchasesTableProps) {
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  const columns = invoiceColumns<Purchase>({
+    partyLabel: 'Proveedor',
+    partyName: (p) => p.supplier.name,
+    detailPath: (p) => `/compras/${p.id}`,
+    width,
+  })
   let content: ReactNode
   if (error) {
     content = <ErrorState message="No pudimos cargar las facturas." onRetry={onRetry} />
@@ -212,7 +204,7 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} rows={page.rows} rowKey={(p) => p.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" />
+            <DataTable columns={columns} rows={page.rows} rowKey={(p) => p.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" dense={width < INVOICE_TABLE_MEDIUM} />
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label="Facturas">
             {page.rows.map((purchase) => (
@@ -243,5 +235,9 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
       )
   }
 
-  return <section className={`${card} p-4`}>{content}</section>
+  return (
+    <section ref={sectionRef} className={`${card} p-4`}>
+      {content}
+    </section>
+  )
 }

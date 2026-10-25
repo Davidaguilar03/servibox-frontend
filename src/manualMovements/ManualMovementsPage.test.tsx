@@ -276,12 +276,12 @@ describe('Gastos operativos', () => {
     await user.type(screen.getByLabelText('Concepto'), 'Pago')
 
     await user.keyboard('{Escape}')
-    expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
     expect(screen.getByLabelText('Concepto')).toHaveValue('Pago')
 
     await user.keyboard('{Escape}')
-    await user.click(screen.getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
