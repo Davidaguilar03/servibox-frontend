@@ -2,8 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { buttonClasses } from '../components/buttonStyles'
-import { CellLink } from '../components/CellLink'
-import { DataTable, type Column } from '../components/DataTable'
+import { invoiceColumns } from '../components/invoiceColumns'
+import { DataTable } from '../components/DataTable'
 import { FilterBar } from '../components/FilterBar'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { ListHeader } from '../components/ListHeader'
@@ -16,9 +16,10 @@ import { StatusBadge } from '../components/StatusBadge'
 import { EmptyState, ErrorState } from '../components/states'
 import { fetchKpis, fetchSales, type Sale } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
-import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
+import { formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { periodRange } from '../lib/period'
+import { INVOICE_TABLE_MEDIUM, useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { fetchSaleCollections } from '../sales/salesApi'
 import {
@@ -34,11 +35,6 @@ import {
   receivable,
   type SalesFilters,
 } from '../sales/salesList'
-
-const paymentTypeLabels: Record<Sale['paymentType'], string> = {
-  CONTADO: 'Contado',
-  CREDITO: 'Crédito',
-}
 
 const statusOptions = [
   { value: '', label: 'Todos' },
@@ -61,17 +57,6 @@ const periodOptions: Array<{ value: SalesFilters['periodo']; label: string }> = 
 
 const card = 'rounded-surface border border-border bg-surface'
 
-const columns: Column<Sale>[] = [
-  { header: 'N.º factura', render: (s) => <span className="codigo">{s.invoiceNumber}</span> },
-  { header: 'Fecha', render: (s) => formatDate(s.invoiceDate) },
-  { header: 'Cliente', render: (s) => customerName(s) },
-  { header: 'Vence', render: (s) => (s.paymentType === 'CONTADO' ? EMPTY_VALUE : formatDate(s.dueDate)) },
-  { header: 'Forma de pago', render: (s) => paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE },
-  { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
-  { header: 'Total', align: 'right', render: (s) => <span className="monto whitespace-nowrap">{formatCurrency(s.total)}</span> },
-  { header: 'Saldo pendiente', align: 'right', render: (s) => <PendingBalance invoice={s} /> },
-  { header: '', render: (s) => <CellLink to={`/ventas/${s.id}`}>Ver detalle</CellLink> },
-]
 
 /** Facturas de venta: indicadores, filtros en la URL y listado paginado. */
 export function SalesInvoicesPage() {
@@ -198,6 +183,13 @@ interface SalesTableProps {
 }
 
 function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChange, onClear }: SalesTableProps) {
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  const columns = invoiceColumns<Sale>({
+    partyLabel: 'Cliente',
+    partyName: customerName,
+    detailPath: (s) => `/ventas/${s.id}`,
+    width,
+  })
   let content: ReactNode
   if (error) {
     content = <ErrorState message="No pudimos cargar las facturas." onRetry={onRetry} />
@@ -223,7 +215,7 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} rows={page.rows} rowKey={(s) => s.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" />
+            <DataTable columns={columns} rows={page.rows} rowKey={(s) => s.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" dense={width < INVOICE_TABLE_MEDIUM} />
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label="Facturas">
             {page.rows.map((sale) => (
@@ -254,5 +246,9 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
       )
   }
 
-  return <section className={`${card} p-4`}>{content}</section>
+  return (
+    <section ref={sectionRef} className={`${card} p-4`}>
+      {content}
+    </section>
+  )
 }

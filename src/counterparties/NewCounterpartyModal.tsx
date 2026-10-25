@@ -3,11 +3,12 @@ import { useMutation } from '@tanstack/react-query'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
-import { Modal } from '../components/Modal'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
+import { revealErrors } from '../lib/formErrors'
 import { createCounterparty, type Counterparty, type CounterpartyRequest, type DocumentType } from '../sales/salesApi'
 import { updateCounterparty } from './counterpartiesApi'
 import {
@@ -32,8 +33,6 @@ interface NewCounterpartyModalProps {
   role: CounterpartyRequest['role']
   /** El tercero que se edita; sin el, es un alta con el rol pedido. */
   counterparty?: Counterparty
-  /** Con datos digitados, cerrar pide "Descartar cambios". Las facturas no lo usan. */
-  guardUnsaved?: boolean
   onClose: () => void
   /** Recibe el tercero de la respuesta (201 o 200), no lo escrito en el formulario. */
   onCreated: (counterparty: Counterparty) => void
@@ -50,7 +49,7 @@ function isDocumentConflict(error: unknown): error is ApiError {
  * Nuevo cliente o Nuevo proveedor (POST con el rol pedido) y, con `counterparty`, Editar
  * (PUT de los campos editables; el rol no se toca). Los errores del backend quedan en el modal.
  */
-export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false, onClose, onCreated, onUpdated }: NewCounterpartyModalProps) {
+export function NewCounterpartyModal({ role, counterparty, onClose, onCreated, onUpdated }: NewCounterpartyModalProps) {
   const noun = roleNouns[role]
   const editing = counterparty !== undefined
   const [initial] = useState(() => (counterparty ? formFromCounterparty(counterparty) : emptyCounterpartyForm()))
@@ -59,6 +58,8 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
   // Documento que el backend rechazo con 409: el error se ve mientras el campo no cambie.
   const [conflict, setConflict] = useState<{ documentNumber: string; message: string } | null>(null)
   const sending = useRef(false)
+  const [submitted, setSubmitted] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   const errors = validateCounterpartyForm(values)
   const shown = (field: keyof CounterpartyFormValues) => (touched.has(field) ? errors[field] : undefined)
@@ -84,8 +85,14 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
   const touch = (field: keyof CounterpartyFormValues) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set(fields))
-    if (Object.keys(errors).length > 0 || sending.current) return
+    if (sending.current) return
+    if (Object.keys(errors).length > 0) {
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set(fields))
+      }, bodyRef.current)
+      return
+    }
     sending.current = true
     save.mutate()
   }
@@ -97,7 +104,8 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
       <Button variant="secondary" onClick={requestClose}>
         Cancelar
       </Button>
-      <Button onClick={submit} disabled={save.isPending} aria-busy={save.isPending || undefined}>
+      {/* Al editar, sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
+      <Button onClick={submit} disabled={save.isPending || (editing && !dirty)} aria-busy={save.isPending || undefined}>
         {save.isPending ? 'Guardando…' : editing ? 'Guardar cambios' : `Guardar ${noun}`}
       </Button>
     </>
@@ -105,6 +113,7 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
 
   const body: ReactNode = (
     <div
+      ref={bodyRef}
       className="flex flex-col gap-4"
       onKeyDown={(event) => {
         if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
@@ -113,6 +122,7 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
         }
       }}
     >
+      <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
       {editing && <p className="text-small text-text-muted">Los cambios también se verán en las facturas ya emitidas.</p>}
       {save.isError && (
         <Alert tone="error" title={failTitle}>
@@ -166,23 +176,17 @@ export function NewCounterpartyModal({ role, counterparty, guardUnsaved = false,
     </div>
   )
 
-  if (guardUnsaved) {
-    return (
-      <DiscardableModal
-        title={title}
-        dirty={dirty}
-        busy={save.isPending}
-        onClose={onClose}
-        discardMessage={`Si cierras ahora, se pierde lo que digitaste en este ${noun}.`}
-        footer={footer}
-      >
-        {body}
-      </DiscardableModal>
-    )
-  }
+  // Todo modal con formulario usa el guardian de cambios, tambien desde las facturas.
   return (
-    <Modal title={title} onClose={onClose} footer={footer(onClose)}>
+    <DiscardableModal
+      title={title}
+      dirty={dirty}
+      busy={save.isPending}
+      onClose={onClose}
+      discardMessage={`Si cierras ahora, se pierde lo que digitaste en este ${noun}.`}
+      footer={footer}
+    >
       {body}
-    </Modal>
+    </DiscardableModal>
   )
 }

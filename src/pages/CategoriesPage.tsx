@@ -7,6 +7,8 @@ import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { CategoryDot } from '../components/CategoryDot'
 import { CellButton } from '../components/CellLink'
+import { DiscardChangesModal } from '../components/DiscardChangesModal'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { DataTable, type Column } from '../components/DataTable'
 import { ListHeader } from '../components/ListHeader'
 import { Modal } from '../components/Modal'
@@ -40,6 +42,7 @@ import {
 import { productCounts } from '../inventory/productList'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE } from '../lib/format'
+import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import { iconSm } from '../components/icons'
 
@@ -214,6 +217,8 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
   const [touched, setTouched] = useState<Set<CategoryField>>(() => new Set())
   const [nameConflict, setNameConflict] = useState<string | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
 
   const taxTypes = useQuery({ queryKey: TAX_TYPES_KEY, queryFn: fetchTaxTypes })
@@ -262,8 +267,14 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
   }
 
   function submit() {
-    setTouched(new Set<CategoryField>(['name', 'color', 'yellowStockMin', 'redStockMin', 'targetMargin']))
-    if (Object.keys(errors).length > 0 || save.isPending || !canSave) return
+    if (save.isPending || !canSave) return
+    if (Object.keys(errors).length > 0) {
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set<CategoryField>(['name', 'color', 'yellowStockMin', 'redStockMin', 'targetMargin']))
+      }, bodyRef.current)
+      return
+    }
     save.mutate()
   }
 
@@ -280,22 +291,11 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
 
   if (confirmDiscard) {
     return (
-      <Modal
-        title="Descartar cambios"
-        onClose={requestClose}
-        footer={
-          <>
-            <Button variant="secondary" onClick={requestClose}>
-              Seguir editando
-            </Button>
-            <Button variant="danger" onClick={onClose}>
-              Descartar cambios
-            </Button>
-          </>
-        }
-      >
-        <p className="text-body text-text">Si cierras ahora, se pierde lo que digitaste en esta categoría.</p>
-      </Modal>
+      <DiscardChangesModal
+        message="Si cierras ahora, se pierde lo que digitaste en esta categoría."
+        onKeepEditing={requestClose}
+        onDiscard={onClose}
+      />
     )
   }
 
@@ -310,13 +310,15 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
           <Button variant="secondary" onClick={requestClose}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={save.isPending || !canSave}>
+          {/* Al editar, sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
+          <Button onClick={submit} disabled={save.isPending || !canSave || (category !== undefined && !dirty)} aria-busy={save.isPending || undefined}>
             {save.isPending ? 'Guardando…' : 'Guardar categoría'}
           </Button>
         </>
       }
     >
       <div
+        ref={bodyRef}
         className="flex flex-col gap-4"
         onKeyDown={(event) => {
           if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.type !== 'checkbox' && event.target.type !== 'radio') {
@@ -325,6 +327,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
           }
         }}
       >
+        <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
         {generalError && (
           <Alert tone="error" title="No pudimos guardar la categoría">
             {errorMessage(save.error)}

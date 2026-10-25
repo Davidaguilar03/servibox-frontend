@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useSession } from '../auth/session'
-import { Button } from '../components/Button'
-import { Modal } from '../components/Modal'
+import { DiscardChangesModal } from '../components/DiscardChangesModal'
 import { TabList } from '../components/SegmentedControl'
 import { FinancialSettingsTab } from './FinancialSettingsTab'
 import { SETTINGS_TABS, parseSettingsTab, type SettingsTab } from './settingsForms'
@@ -56,22 +55,11 @@ export function SettingsPage() {
       </div>
 
       {pending && (
-        <Modal
-          title="Descartar cambios"
-          onClose={() => setPending(null)}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setPending(null)}>
-                Seguir editando
-              </Button>
-              <Button variant="danger" onClick={() => go(pending)}>
-                Descartar cambios
-              </Button>
-            </>
-          }
-        >
-          <p className="text-body text-text">Si cambias de pestaña, se pierde lo que digitaste y no guardaste.</p>
-        </Modal>
+        <DiscardChangesModal
+          message="Si cambias de pestaña, se pierde lo que digitaste y no guardaste."
+          onKeepEditing={() => setPending(null)}
+          onDiscard={() => go(pending)}
+        />
       )}
     </div>
   )

@@ -300,7 +300,6 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         <NewCounterpartyModal
           role={config.role}
           counterparty={dialog.kind === 'edit' ? dialog.counterparty : undefined}
-          guardUnsaved
           onClose={() => setDialog(null)}
           onCreated={(created) => {
             // Un 201 es un tercero nuevo con este rol; un 200 es uno que ya existia con el otro

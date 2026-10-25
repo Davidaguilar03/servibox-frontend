@@ -15,10 +15,12 @@ import { rememberTenantSlug, useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
+import { revealErrors } from '../lib/formErrors'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
@@ -44,6 +46,8 @@ export function RegisterPage() {
   const session = useSession()
   const [values, setValues] = useState<RegisterValues>(EMPTY_REGISTER_VALUES)
   const [touched, setTouched] = useState<Partial<Record<RegisterField, boolean>>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   const [slugEdited, setSlugEdited] = useState(false)
   const [slugConflict, setSlugConflict] = useState<SlugConflict | null>(null)
   const slugRef = useRef<HTMLInputElement>(null)
@@ -95,7 +99,15 @@ export function RegisterPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!valid || submitting.current) return
+    if (submitting.current) return
+    if (!valid || slugError) {
+      // Guardar no se deshabilita por errores: al enviar se muestran todos y el foco va al primero.
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(Object.fromEntries(Object.keys(values).map((field) => [field, true])))
+      }, formRef.current)
+      return
+    }
     submitting.current = true
     mutation.mutate(toRegisterRequest(values))
   }
@@ -124,7 +136,7 @@ export function RegisterPage() {
           Llena los datos del negocio y de quien lo administra. La información de cada serviteca se guarda por separado.
         </p>
 
-        <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
           {alert && (
             <Alert tone="error" title={alert.title}>
               {alert.body}
@@ -257,7 +269,8 @@ export function RegisterPage() {
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={!valid || Boolean(slugError) || mutation.isPending}>
+          <ErrorSummary count={submitted ? Object.keys(errors).length + (slugError ? 1 : 0) : 0} />
+          <Button type="submit" className="w-full" disabled={mutation.isPending} aria-busy={mutation.isPending || undefined}>
             {mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}
           </Button>
         </form>

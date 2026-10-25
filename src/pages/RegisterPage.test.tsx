@@ -69,6 +69,20 @@ describe('registro de serviteca', () => {
     expect(slug).toHaveValue('el-roble2')
   })
 
+  it('enviar vacio muestra todos los errores y lleva el foco al primero', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
+    const user = userEvent.setup()
+    renderRoute('/registro')
+    await user.click(await screen.findByRole('button', { name: 'Crear serviteca' }))
+
+    const name = screen.getByLabelText('Nombre comercial')
+    expect(name).toHaveFocus()
+    expect(name).toHaveAttribute('aria-invalid', 'true')
+    expect(name).toHaveAccessibleDescription('Escribe el nombre comercial.')
+    expect(screen.getByRole('alert')).toHaveTextContent(/Revisa los \d+ campos marcados\./)
+    expect(registerCalls(fetchMock)).toHaveLength(0)
+  })
+
   it('muestra los errores al salir de cada campo', async () => {
     const user = userEvent.setup()
     renderRoute('/registro')
@@ -88,7 +102,7 @@ describe('registro de serviteca', () => {
     expect(screen.queryByText('Escribe tu correo.')).not.toBeInTheDocument()
   })
 
-  it('sin aceptar los terminos no se puede enviar', async () => {
+  it('sin aceptar los terminos no se envia: Guardar sigue habilitado y el foco va a la casilla', async () => {
     const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
     renderRoute('/registro')
     const user = await fillForm()
@@ -97,8 +111,11 @@ describe('registro de serviteca', () => {
     await user.click(screen.getByRole('checkbox'))
     await user.tab()
 
-    expect(submit()).toBeDisabled()
+    expect(submit()).toBeEnabled()
     expect(screen.getByText('Acepta los términos de uso y el tratamiento de datos para continuar.')).toBeInTheDocument()
+    await user.click(submit())
+    expect(screen.getByRole('checkbox')).toHaveFocus()
+    expect(screen.getByRole('alert')).toHaveTextContent('Revisa el campo marcado.')
     expect(registerCalls(fetchMock)).toHaveLength(0)
   })
 
@@ -187,7 +204,10 @@ describe('registro de serviteca', () => {
     await waitFor(() => expect(slug).toHaveFocus())
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Contraseña')).toHaveValue('secreta123')
-    expect(submit()).toBeDisabled()
+    // Con el 409 vigente, enviar no llama al backend y devuelve el foco al identificador.
+    expect(submit()).toBeEnabled()
+    await user.click(submit())
+    expect(slug).toHaveFocus()
 
     await user.type(slug, '-2')
     expect(screen.queryByText(/Ya existe una serviteca/)).not.toBeInTheDocument()

@@ -47,6 +47,7 @@ const FIGURE_FILES = [
   // Definicion de la utilidad.
   'index.css',
   'components/IndicatorCard.tsx',
+  'inventory/PricePanel.tsx',
   'pages/DashboardPage.tsx',
   'pages/AccountsPage.tsx',
   'pages/NewSaleInvoicePage.tsx',

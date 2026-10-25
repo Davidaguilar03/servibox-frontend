@@ -268,25 +268,28 @@ describe('detalle de factura de compra', () => {
     expect(within(dialog).getByRole('alert')).toHaveTextContent(
       'Saldo insuficiente en Caja General: disponible $ 300.000, necesitas $ 397.938',
     )
-    expect(save).toBeDisabled()
+    // Sin saldo no se envia: Registrar sigue habilitado y lleva el foco a la cuenta.
+    expect(save).toBeEnabled()
+    await user.click(save)
+    expect(account).toHaveFocus()
+    expect(calls(fetchMock, 'POST', '/api/purchases/5/payments')).toHaveLength(0)
 
     await user.clear(amount)
     await user.type(amount, '0')
+    await user.tab()
     expect(within(dialog).getByText('El valor debe ser mayor que cero.')).toBeInTheDocument()
-    expect(save).toBeDisabled()
     await user.clear(amount)
     await user.type(amount, '400000')
     expect(within(dialog).getByText('No puede superar el saldo pendiente de $ 397.938')).toBeInTheDocument()
     await user.clear(amount)
     await user.type(amount, '300001')
     expect(within(dialog).getByText(/Saldo insuficiente en Caja General/)).toBeInTheDocument()
-    expect(save).toBeDisabled()
     await user.clear(amount)
     await user.type(amount, '300000')
     expect(within(dialog).queryByText(/Saldo insuficiente/)).not.toBeInTheDocument()
     fireEvent.change(date, { target: { value: '2026-10-04' } })
+    fireEvent.blur(date)
     expect(within(dialog).getByText('La fecha debe estar entre el 05/10/2026 y el 18/10/2026.')).toBeInTheDocument()
-    expect(save).toBeDisabled()
     fireEvent.change(date, { target: { value: '2026-10-18' } })
     expect(save).toBeEnabled()
 
@@ -354,7 +357,9 @@ describe('detalle de factura de compra', () => {
 
     expect(await within(dialog).findByText('Solo se puede pagar una compra PENDIENTE, y esta esta PAGADA')).toBeInTheDocument()
     expect(await screen.findByText('Pagada')).toBeInTheDocument()
+    // Se eligio otra cuenta: cerrar pide confirmar.
     await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Registrar pago' })).not.toBeInTheDocument()
   })
@@ -451,5 +456,30 @@ describe('detalle de factura de compra', () => {
     await router.navigate(-1)
     await waitFor(() => expect(router.state.location.search).toBe('?estado=PENDIENTE&periodo=todas'))
     expect(await screen.findByLabelText('Estado')).toHaveValue('PENDIENTE')
+  })
+
+  it('registrar pago: sin cambios cierra; con cambios pide descartar con el foco en Seguir editando', async () => {
+    saveToken(validToken())
+    mockApi(routes({ 'GET /api/purchases/5': () => jsonResponse(purchase(5)) }))
+    renderRoute('/compras/5')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: 'Registrar pago' }))
+    await screen.findByRole('dialog', { name: 'Registrar pago' })
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Registrar pago' }))
+    const amount = within(screen.getByRole('dialog')).getByLabelText('Valor del pago')
+    await user.clear(amount)
+    await user.type(amount, '1000')
+    await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Seguir editando' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
+    expect(within(screen.getByRole('dialog')).getByLabelText('Valor del pago')).toHaveValue(1000)
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

@@ -12,6 +12,26 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Regla unica de Guardar, guardian de cambios, panel de margen y toasts con cierre
+
+* Decision:
+  * Guardar nunca se deshabilita por errores; solo al enviar y, en edicion, sin cambios.
+    Validacion al salir del campo, foco al primer error y resumen para lectores de pantalla.
+    Reemplaza "deshabilitado hasta ser valido" (registro, facturas, abono, pago,
+    Configuracion, Reportes) y cumple PAT-05 de la auditoria.
+  * Una confirmacion de descartar para todos los modales con campos (abono y pago incluidos,
+    y el tercero desde las facturas) y para las paginas con formulario, con `useBlocker`
+    (el router es de datos: `createBrowserRouter`), sin reestructurar rutas.
+  * Panel de margen en el formulario de producto con una copia exacta de la formula del
+    backend (aritmetica racional y un solo redondeo HALF_UP); probada contra el backend.
+  * Costo de producto en pesos enteros.
+  * Toasts con cierre, pausa, error persistente y maximo 3.
+  * Tabla de facturas por ancho del recuadro (ResizeObserver) sin desplazamiento.
+* Alternativas consideradas: container queries de Tailwind (no se pueden simular en las
+  pruebas con jsdom); pedir el precio al backend en cada tecla (no hay endpoint de vista
+  previa y el backend no se toca); un framework de formularios (fuera de alcance).
+* Motivo: un solo comportamiento para todos los formularios y ningun dato perdido sin aviso.
+
 ## 2026-10-25: Listados con componentes compartidos, saldo pendiente y un solo selector de periodo
 
 * Decision:

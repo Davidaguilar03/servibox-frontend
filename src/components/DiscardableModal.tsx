@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Button } from './Button'
+import { DiscardChangesModal } from './DiscardChangesModal'
 import { Modal } from './Modal'
 
 interface DiscardableModalProps {
@@ -14,9 +14,9 @@ interface DiscardableModalProps {
 }
 
 /**
- * Modal que, con datos digitados, cambia su contenido a "Descartar cambios" en vez de
- * cerrarse con Esc, la X o Cancelar. Mismo patron que el modal de categoria; lo usan
- * Cuentas y los movimientos manuales.
+ * Guardian de cambios de todo modal con formulario: con datos digitados, cerrar (Esc, la X,
+ * Cancelar o clic fuera) muestra "¿Descartar los cambios?" en vez de cerrarse; sin cambios
+ * cierra de inmediato. Tras guardar, quien lo usa cierra con `onClose` y no pregunta.
  */
 export function DiscardableModal({ title, dirty, busy, onClose, discardMessage, footer, children }: DiscardableModalProps) {
   const [confirmDiscard, setConfirmDiscard] = useState(false)
@@ -28,24 +28,7 @@ export function DiscardableModal({ title, dirty, busy, onClose, discardMessage, 
   }
 
   if (confirmDiscard) {
-    return (
-      <Modal
-        title="Descartar cambios"
-        onClose={requestClose}
-        footer={
-          <>
-            <Button variant="secondary" onClick={requestClose}>
-              Seguir editando
-            </Button>
-            <Button variant="danger" onClick={onClose}>
-              Descartar cambios
-            </Button>
-          </>
-        }
-      >
-        <p className="text-body text-text">{discardMessage}</p>
-      </Modal>
-    )
+    return <DiscardChangesModal message={discardMessage} onKeepEditing={requestClose} onDiscard={onClose} />
   }
 
   return (

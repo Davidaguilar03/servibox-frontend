@@ -349,8 +349,8 @@ describe('cuentas', () => {
     await user.click(screen.getByRole('button', { name: 'Nueva cuenta' }))
     await user.type(within(await screen.findByRole('dialog')).getByLabelText('Nombre'), 'Nequi')
     await user.keyboard('{Escape}')
-    const confirm = await screen.findByRole('dialog', { name: 'Descartar cambios' })
-    await user.click(within(confirm).getByRole('button', { name: 'Descartar cambios' }))
+    const confirm = await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })
+    await user.click(within(confirm).getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 

@@ -6,6 +6,7 @@ import { ACCOUNTS_KEY } from '../accounts/accountsApi'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { IconButton } from '../components/IconButton'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
@@ -23,6 +24,7 @@ import {
   type InventoryCategory,
   type InventoryProduct,
 } from '../inventory/inventoryApi'
+import { revealErrors } from '../lib/formErrors'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { CREDIT_DAY_OPTIONS, addDays, businessToday, defaultDueDate } from '../lib/businessDate'
 import { errorMessage } from '../lib/errorMessage'
@@ -47,6 +49,9 @@ import type { Counterparty } from '../sales/salesApi'
 import { iconMd } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface p-6'
+/** Boton Agregar producto: recibe el foco al enviar una factura sin lineas. */
+const ADD_LINE_ID = 'agregar-producto'
+
 const PAYMENT_TYPE_OPTIONS = [
   { value: 'CONTADO' as const, label: 'Contado' },
   { value: 'CREDITO' as const, label: 'Crédito' },
@@ -85,6 +90,8 @@ export function NewPurchaseInvoicePage() {
   const numberRef = useRef<HTMLInputElement>(null)
   const nextKey = useRef(1)
   const allowLeave = useRef(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   const suppliers = useQuery({ queryKey: SUPPLIERS_KEY, queryFn: fetchSuppliers })
 
@@ -197,7 +204,11 @@ export function NewPurchaseInvoicePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!validation.valid || shortBalance || save.isPending) return
+    if (save.isPending) return
+    if (!validation.valid || shortBalance) {
+      revealErrors(() => setSubmitted(true), formRef.current, document.getElementById(ADD_LINE_ID))
+      return
+    }
     save.mutate(buildPurchaseRequest(effectiveForm))
   }
 
@@ -210,6 +221,9 @@ export function NewPurchaseInvoicePage() {
     setSupplierModalOpen(false)
   }
 
+  // Tras enviar con errores, cada mensaje del formulario va tambien bajo su campo.
+  const formError = (pattern: RegExp) => (submitted ? validation.form.find((message) => pattern.test(message)) : undefined)
+  const errorCount = validation.form.length + Object.keys(validation.lines).length + (shortBalance ? 1 : 0)
   const missing = [...validation.form]
   if (form.lines.some((line) => validation.lines[line.key]?.product)) missing.push('Elige el producto de cada línea.')
 
@@ -249,6 +263,7 @@ export function NewPurchaseInvoicePage() {
             value={form.supplierId}
             onChange={(value) => update({ supplierId: value })}
             placeholder="Busca por nombre o documento"
+            error={formError(/proveedor\.$/)}
           />
           <button
             type="button"
@@ -265,7 +280,7 @@ export function NewPurchaseInvoicePage() {
           maxLength={INVOICE_NUMBER_MAX}
           value={form.invoiceNumber}
           onChange={(event) => changeInvoiceNumber(event.target.value)}
-          error={numberError}
+          error={numberError ?? formError(/número de factura/)}
         />
         <TextField
           label="Documento"
@@ -279,6 +294,7 @@ export function NewPurchaseInvoicePage() {
           required
           value={form.invoiceDate}
           onChange={(event) => changeInvoiceDate(event.target.value)}
+          error={formError(/^Indica la fecha/)}
         />
         <div className="flex flex-col gap-2">
           <span id="tipo-pago" className="text-label text-text">
@@ -313,7 +329,11 @@ export function NewPurchaseInvoicePage() {
                   value={accountId === null ? '' : String(accountId)}
                   onChange={(event) => changeAccount(event.target.value)}
                   hint={account && !shortBalance ? `Saldo disponible: ${formatCurrency(account.currentBalance)}` : undefined}
-                  error={account && shortBalance ? `Saldo disponible: ${formatCurrency(account.currentBalance)}` : undefined}
+                  error={
+                    account && shortBalance
+                      ? `Saldo disponible: ${formatCurrency(account.currentBalance)}`
+                      : formError(/cuenta/)
+                  }
                 />
                 <SelectField
                   label="Método de pago"
@@ -326,6 +346,7 @@ export function NewPurchaseInvoicePage() {
                   disabled={methods.locked}
                   onChange={(event) => update({ paymentMethod: event.target.value as PurchasePaymentMethod })}
                   hint={methods.locked && account ? `Se asigna automáticamente con ${account.name}` : undefined}
+                  error={formError(/método de pago/)}
                 />
               </>
             )}
@@ -371,7 +392,7 @@ export function NewPurchaseInvoicePage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       <div>
         <h1 className="text-title text-text">Nueva factura de compra</h1>
         <p className="mt-1 text-small text-text-muted">
@@ -435,13 +456,14 @@ export function NewPurchaseInvoicePage() {
             )}
           </dl>
           <div className="mt-4 flex flex-col gap-3">
-            <Button type="submit" disabled={!validation.valid || shortBalance || save.isPending}>
+            <Button type="submit" disabled={save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar compra'}
             </Button>
             <Button variant="secondary" onClick={() => void navigate('/compras')}>
               Cancelar
             </Button>
           </div>
+          <ErrorSummary count={submitted ? errorCount : 0} />
           {missing.length > 0 && (
             <ul aria-live="polite" className="mt-3 flex flex-col gap-1 text-small text-text-muted">
               {missing.map((message) => (
@@ -466,6 +488,8 @@ export function NewPurchaseInvoicePage() {
           productsById={productsById}
           rateOf={rateOf}
           errors={validation.lines}
+          showAllErrors={submitted}
+          linesError={formError(/^Agrega al menos/)}
           onChange={updateLine}
           onRemove={(key) => setForm((current) => ({ ...current, lines: current.lines.filter((line) => line.key !== key) }))}
           onAdd={addLine}
@@ -488,12 +512,28 @@ interface LinesBlockProps {
   productsById: Map<number, InventoryProduct>
   rateOf: (product: InventoryProduct | undefined) => number
   errors: Record<number, { product?: string; quantity?: string; price?: string }>
+  /** Tras enviar: tambien los errores de las lineas sin producto. */
+  showAllErrors: boolean
+  /** "Agrega al menos un producto." tras enviar sin lineas. */
+  linesError?: string
   onChange: (key: number, change: Partial<PurchaseLine>) => void
   onRemove: (key: number) => void
   onAdd: () => void
 }
 
-function LinesBlock({ lines, products, categories, productsById, rateOf, errors, onChange, onRemove, onAdd }: LinesBlockProps) {
+function LinesBlock({
+  lines,
+  products,
+  categories,
+  productsById,
+  rateOf,
+  errors,
+  showAllErrors,
+  linesError,
+  onChange,
+  onRemove,
+  onAdd,
+}: LinesBlockProps) {
   if (products.isError || categories.isError) {
     return (
       <ErrorState
@@ -540,7 +580,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
       <ul className="flex flex-col gap-3 xl:gap-0">
         {lines.map((line) => {
           const product = line.productId === null ? undefined : productsById.get(line.productId)
-          const lineErrors = product ? errors[line.key] : undefined
+          const lineErrors = product || showAllErrors ? errors[line.key] : undefined
           const amounts = lineAmounts({
             quantity: Number(line.quantity) || 0,
             price: Number(line.price) || 0,
@@ -570,6 +610,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                   onChange(line.key, { productId, price: chosen?.purchaseCost ? String(chosen.purchaseCost) : '' })
                 }}
                 placeholder="Busca por código o descripción"
+                error={lineErrors?.product}
               />
               <LineNumberInput
                 label="Cantidad"
@@ -606,9 +647,10 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
           )
         })}
       </ul>
-      <Button variant="secondary" className="mt-4" onClick={onAdd} disabled={lines.length >= all.length}>
+      <Button id={ADD_LINE_ID} variant="secondary" className="mt-4" onClick={onAdd} disabled={lines.length >= all.length}>
         Agregar producto
       </Button>
+      {linesError && <p className="mt-2 text-small text-error">{linesError}</p>}
       <p className="mt-3 text-small text-text-muted">
         Al guardar, el costo de cada producto pasa a ser el precio de esta compra y se recalcula su precio sugerido.
       </p>

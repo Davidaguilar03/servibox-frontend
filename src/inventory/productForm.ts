@@ -1,8 +1,9 @@
 import { ApiError } from '../lib/api'
 import type { InventoryProduct, ProductRequest, ProductUpdateRequest } from './inventoryApi'
 
-// Formulario de producto: valores como texto, validacion y cuerpos del POST y del PUT. Las
-// formulas de IVA y precio sugerido no se replican: las calcula el backend al guardar.
+// Formulario de producto: valores como texto, validacion y cuerpos del POST y del PUT. El IVA y
+// el precio sugerido los guarda el backend; el panel del formulario los anticipa con
+// `pricing.ts`, una copia de su formula.
 
 export interface ProductFormValues {
   code: string
@@ -47,13 +48,26 @@ export function parseAmount(text: string): number {
   return Number(clean)
 }
 
-export function validateProduct(values: ProductFormValues, creating: boolean): ProductErrors {
+/** Pesos enteros: digitos, con o sin punto de miles en grupos de tres (`180.000`, `180000`). */
+export function isWholePesos(text: string): boolean {
+  const clean = text.replace(/[\s$]/g, '')
+  return /^\d+$/.test(clean) || /^\d{1,3}(\.\d{3})+$/.test(clean)
+}
+
+/**
+ * `initialCost` es el costo con el que se cargo el formulario: un costo guardado con
+ * decimales que no se toca se acepta tal cual; solo se rechazan los decimales escritos.
+ */
+export function validateProduct(values: ProductFormValues, creating: boolean, initialCost = ''): ProductErrors {
   const errors: ProductErrors = {}
   if (!values.code.trim()) errors.code = 'Escribe el código del producto.'
   if (!values.description.trim()) errors.description = 'Escribe la descripción del producto.'
   if (!values.categoryId) errors.categoryId = 'Elige una categoría.'
   const cost = parseAmount(values.purchaseCost)
+  const edited = values.purchaseCost !== initialCost
   if (!values.purchaseCost.trim()) errors.purchaseCost = 'Escribe el costo de compra.'
+  else if (edited && /[.,]/.test(values.purchaseCost) && !isWholePesos(values.purchaseCost))
+    errors.purchaseCost = 'Escribe el costo en pesos, sin centavos.'
   else if (!(cost > 0)) errors.purchaseCost = 'El costo debe ser un valor mayor que cero.'
   if (creating && !/^\d+$/.test(values.quantity.trim()))
     errors.quantity = 'El stock inicial debe ser un número entero mayor o igual a cero.'

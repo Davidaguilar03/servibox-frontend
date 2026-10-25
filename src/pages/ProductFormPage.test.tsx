@@ -9,7 +9,15 @@ type Handler = (body: unknown) => Response
 type Routes = Record<string, Handler>
 
 const categories = [
-  { id: 4, name: 'REPUESTOS DEMO', color: '#ff3b30', yellowStockMin: 10, redStockMin: 3, targetMargin: 0.3, taxTypes: [] },
+  {
+    id: 4,
+    name: 'REPUESTOS DEMO',
+    color: '#ff3b30',
+    yellowStockMin: 10,
+    redStockMin: 3,
+    targetMargin: 0.3,
+    taxTypes: [{ id: 1, name: 'IVA', rate: 0.19, isVat: true }],
+  },
   { id: 1, name: 'LLANTAS', color: '#d32f2f', yellowStockMin: 5, redStockMin: 2, targetMargin: 0.25, taxTypes: [] },
 ]
 
@@ -28,6 +36,7 @@ const demo = {
 function fullRoutes(): Routes {
   return {
     'GET /api/inventory/categories': () => jsonResponse(categories),
+    'GET /api/inventory/financial-settings': () => jsonResponse({ expensesRate: 0, dianRate: 0, icaRate: 0, cardCommissionRate: 0 }),
     'GET /api/inventory/products': () => jsonResponse([demo]),
     'GET /api/inventory/products/1': () => jsonResponse(demo),
     'POST /api/inventory/products': (body) => jsonResponse({ ...demo, ...(body as object), id: 9 }, 201),
@@ -71,8 +80,12 @@ describe('formulario de producto', () => {
     renderRoute('/inventario/nuevo')
 
     expect(await screen.findByRole('heading', { name: 'Nuevo producto' })).toBeInTheDocument()
-    expect(screen.getByLabelText('IVA del costo')).toHaveValue('Se calcula al guardar')
-    expect(screen.getByLabelText('Precio sugerido sin IVA')).toHaveValue('Se calcula al guardar')
+    // El panel reemplaza los campos deshabilitados: sin costo ni categoria muestra "—".
+    expect(screen.queryByLabelText('IVA del costo')).not.toBeInTheDocument()
+    const panel = screen.getByRole('complementary', { name: 'Cómo se calcula el precio' })
+    expect(within(panel).getAllByText('—')).toHaveLength(4)
+    expect(within(panel).getByText('Elige una categoría y escribe el costo para ver el precio sugerido.')).toBeInTheDocument()
+    expect(within(panel).getByText('El precio se recalcula al guardar con tu configuración actual.')).toBeInTheDocument()
 
     await user.click(screen.getByLabelText('Código'))
     await user.tab()
@@ -81,6 +94,11 @@ describe('formulario de producto', () => {
 
     await user.type(screen.getByLabelText('Costo de compra sin IVA'), '0')
     await user.click(screen.getByRole('button', { name: 'Guardar producto' }))
+    // Foco al primer campo con error, errores asociados y resumen para lectores de pantalla.
+    expect(screen.getByLabelText('Código')).toHaveFocus()
+    expect(screen.getByLabelText('Código')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Código')).toHaveAccessibleDescription('Escribe el código del producto.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Revisa los 4 campos marcados.')
     expect(screen.getByText('Escribe la descripción del producto.')).toBeInTheDocument()
     expect(screen.getByText('Elige una categoría.')).toBeInTheDocument()
     expect(screen.getByText('El costo debe ser un valor mayor que cero.')).toBeInTheDocument()
@@ -106,7 +124,7 @@ describe('formulario de producto', () => {
     expect(await screen.findByText('Producto guardado')).toBeInTheDocument()
   })
 
-  it('edita sin enviar quantity y muestra stock, IVA y precio de solo lectura', async () => {
+  it('edita sin enviar quantity; el panel muestra IVA y precio y sigue al costo', async () => {
     const fetchMock = mockApi(fullRoutes())
     const user = userEvent.setup()
     const router = renderRoute('/inventario/1/editar')
@@ -115,12 +133,18 @@ describe('formulario de producto', () => {
     expect(screen.getByLabelText('Stock')).toHaveValue('50')
     expect(screen.getByLabelText('Stock')).toHaveAttribute('readonly')
     expect(screen.getByText('El stock cambia con las ventas y las compras; no se edita aquí.')).toBeInTheDocument()
-    expect(screen.getByLabelText('IVA del costo')).toHaveValue('$ 5.700')
-    expect(screen.getByLabelText('Precio sugerido sin IVA')).toHaveValue('$ 42.857')
     expect(await screen.findByLabelText('Categoría')).toHaveValue('4')
+    const panel = screen.getByRole('complementary', { name: 'Cómo se calcula el precio' })
+    expect(await within(panel).findByText('$ 42.857')).toBeInTheDocument()
+    expect(within(panel).getByText('$ 5.700')).toBeInTheDocument()
+    expect(within(panel).getByText('30 %')).toBeInTheDocument()
+    // Edicion sin cambios: Guardar deshabilitado (la unica excepcion de la regla).
+    expect(screen.getByRole('button', { name: 'Guardar producto' })).toBeDisabled()
 
     await user.clear(screen.getByLabelText('Costo de compra sin IVA'))
     await user.type(screen.getByLabelText('Costo de compra sin IVA'), '32000')
+    expect(within(panel).getByText('$ 45.714')).toBeInTheDocument()
+    expect(within(panel).getByText('$ 6.080')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Guardar producto' }))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/inventario'))
@@ -186,13 +210,13 @@ describe('formulario de producto', () => {
     await user.type(screen.getByLabelText('Descripción'), 'Algo')
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
-    const dialog = await screen.findByRole('dialog', { name: 'Descartar cambios' })
+    const dialog = await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })
     await user.click(within(dialog).getByRole('button', { name: 'Seguir editando' }))
     expect(router.state.location.pathname).toBe('/inventario/nuevo')
     expect(screen.getByLabelText('Descripción')).toHaveValue('Algo')
 
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/inventario'))
   })
 
@@ -213,5 +237,46 @@ describe('formulario de producto', () => {
 
     await router.navigate('/inventario/77/editar')
     expect(await screen.findByRole('heading', { name: 'Producto no encontrado' })).toBeInTheDocument()
+  })
+
+  it('el costo va en pesos enteros: decimales escritos dan error', async () => {
+    const fetchMock = mockApi(fullRoutes())
+    const user = userEvent.setup()
+    renderRoute('/inventario/nuevo')
+    await screen.findByRole('heading', { name: 'Nuevo producto' })
+
+    await fillNew(user)
+    await user.clear(screen.getByLabelText('Costo de compra sin IVA'))
+    await user.type(screen.getByLabelText('Costo de compra sin IVA'), '98500,50')
+    await user.tab()
+    expect(screen.getByText('Escribe el costo en pesos, sin centavos.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Guardar producto' }))
+    expect(screen.getByLabelText('Costo de compra sin IVA')).toHaveFocus()
+    expect(bodies(fetchMock, 'POST')).toHaveLength(0)
+
+    await user.clear(screen.getByLabelText('Costo de compra sin IVA'))
+    await user.type(screen.getByLabelText('Costo de compra sin IVA'), '98.5')
+    expect(screen.getByText('Escribe el costo en pesos, sin centavos.')).toBeInTheDocument()
+    await user.clear(screen.getByLabelText('Costo de compra sin IVA'))
+    await user.type(screen.getByLabelText('Costo de compra sin IVA'), '98.500')
+    expect(screen.queryByText('Escribe el costo en pesos, sin centavos.')).not.toBeInTheDocument()
+  })
+
+  it('un producto con costo guardado con decimales se carga y se guarda sin bloqueo', async () => {
+    const withCents = { ...demo, purchaseCost: 30000.5 }
+    const fetchMock = mockApi({
+      ...fullRoutes(),
+      'GET /api/inventory/products/1': () => jsonResponse(withCents),
+    })
+    const user = userEvent.setup()
+    const router = renderRoute('/inventario/1/editar')
+    expect(await screen.findByLabelText('Costo de compra sin IVA')).toHaveValue('30000,5')
+
+    await user.clear(screen.getByLabelText('Descripción'))
+    await user.type(screen.getByLabelText('Descripción'), 'Aceite 20W50 galon nuevo')
+    await user.click(screen.getByRole('button', { name: 'Guardar producto' }))
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/inventario'))
+    expect(bodies(fetchMock, 'PUT')[0]).toMatchObject({ purchaseCost: 30000.5 })
   })
 })

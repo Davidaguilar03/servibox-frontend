@@ -4,11 +4,13 @@ import type { TreasuryMovement } from '../accounts/accountsApi'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import type { Account } from '../dashboard/dashboardApi'
 import { errorMessage } from '../lib/errorMessage'
+import { revealErrors } from '../lib/formErrors'
 import { formatCurrency } from '../lib/format'
 import {
   buildManualRequest,
@@ -42,6 +44,7 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
   )
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<keyof ManualFormValues>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   const sending = useRef(false)
 
   const errors = validateManualForm(values, today)
@@ -65,8 +68,15 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
   const touch = (field: keyof ManualFormValues) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set(fields))
-    if (Object.keys(errors).length > 0 || sending.current) return
+    if (sending.current) return
+    if (Object.keys(errors).length > 0) {
+      // Guardar no se deshabilita por errores: se muestran todos y el foco va al primero.
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set(fields))
+      }, document.querySelector<HTMLElement>('[role="dialog"]'))
+      return
+    }
     sending.current = true
     save.mutate()
   }
@@ -93,7 +103,8 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
           <Button variant="secondary" onClick={requestClose}>
             Cancelar
           </Button>
-          <Button onClick={submit} disabled={save.isPending} aria-busy={save.isPending || undefined}>
+          {/* Al editar, sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
+          <Button onClick={submit} disabled={save.isPending || (movement !== undefined && !dirty)} aria-busy={save.isPending || undefined}>
             {save.isPending ? 'Guardando…' : movement ? 'Guardar cambios' : `Guardar ${noun}`}
           </Button>
         </>
@@ -166,6 +177,7 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
           error={shown('notes')}
         />
       </div>
+      <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
     </DiscardableModal>
   )
 }

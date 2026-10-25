@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { IconButton } from '../components/IconButton'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
@@ -20,6 +21,7 @@ import {
   type Category,
   type Product,
 } from '../dashboard/dashboardApi'
+import { revealErrors } from '../lib/formErrors'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
 import { CREDIT_DAY_OPTIONS, addDays, businessToday, defaultDueDate } from '../lib/businessDate'
@@ -48,6 +50,9 @@ const CONSUMIDOR_FINAL_DOCUMENT = '222222222222'
 const CUSTOMERS_KEY = ['counterparties', 'CLIENTE']
 
 const card = 'rounded-surface border border-border bg-surface p-6'
+/** Boton Agregar producto: recibe el foco al enviar una factura sin lineas. */
+const ADD_LINE_ID = 'agregar-producto'
+
 const PAYMENT_TYPE_OPTIONS = [
   { value: 'CONTADO' as const, label: 'Contado' },
   { value: 'CREDITO' as const, label: 'Crédito' },
@@ -86,6 +91,8 @@ export function NewSaleInvoicePage() {
   const [accountTouched, setAccountTouched] = useState(false)
   const nextKey = useRef(1)
   const allowLeave = useRef(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const [submitted, setSubmitted] = useState(false)
 
   const nextNumber = useQuery({ queryKey: ['sales', 'next-invoice-number'], queryFn: fetchNextInvoiceNumber })
   const customers = useQuery({ queryKey: CUSTOMERS_KEY, queryFn: fetchCustomers })
@@ -200,7 +207,11 @@ export function NewSaleInvoicePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!validation.valid || save.isPending) return
+    if (save.isPending) return
+    if (!validation.valid) {
+      revealErrors(() => setSubmitted(true), formRef.current, document.getElementById(ADD_LINE_ID))
+      return
+    }
     save.mutate(buildSaleRequest(effectiveForm))
   }
 
@@ -213,6 +224,9 @@ export function NewSaleInvoicePage() {
     setCustomerModalOpen(false)
   }
 
+  // Tras enviar con errores, cada mensaje del formulario va tambien bajo su campo.
+  const formError = (pattern: RegExp) => (submitted ? validation.form.find((message) => pattern.test(message)) : undefined)
+  const errorCount = validation.form.length + Object.keys(validation.lines).length
   const missing = [...validation.form]
   if (form.lines.some((line) => validation.lines[line.key]?.product)) missing.push('Elige el producto de cada línea.')
 
@@ -279,6 +293,7 @@ export function NewSaleInvoicePage() {
           required
           value={form.invoiceDate}
           onChange={(event) => changeInvoiceDate(event.target.value)}
+          error={formError(/^Indica la fecha/)}
         />
         <div className="flex flex-col gap-2">
           <span id="tipo-pago" className="text-label text-text">
@@ -309,6 +324,7 @@ export function NewSaleInvoicePage() {
                   ]}
                   value={accountId === null ? '' : String(accountId)}
                   onChange={(event) => changeAccount(event.target.value)}
+                  error={formError(/cuenta/)}
                 />
                 <SelectField
                   label="Método de pago"
@@ -321,6 +337,7 @@ export function NewSaleInvoicePage() {
                   disabled={methods.locked}
                   onChange={(event) => update({ paymentMethod: event.target.value as PaymentMethod })}
                   hint={methods.locked && account ? `Se asigna automáticamente con ${account.name}` : undefined}
+                  error={formError(/medio de pago/)}
                 />
               </>
             )}
@@ -366,7 +383,7 @@ export function NewSaleInvoicePage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+    <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       <div>
         <h1 className="text-title text-text">Nueva factura de venta</h1>
         <p className="mt-1 text-small text-text-muted">
@@ -417,13 +434,14 @@ export function NewSaleInvoicePage() {
             </p>
           )}
           <div className="mt-4 flex flex-col gap-3">
-            <Button type="submit" disabled={!validation.valid || save.isPending}>
+            <Button type="submit" disabled={save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar factura'}
             </Button>
             <Button variant="secondary" onClick={() => void navigate('/ventas')}>
               Cancelar
             </Button>
           </div>
+          <ErrorSummary count={submitted ? errorCount : 0} />
           {missing.length > 0 && (
             <ul aria-live="polite" className="mt-3 flex flex-col gap-1 text-small text-text-muted">
               {missing.map((message) => (
@@ -448,6 +466,8 @@ export function NewSaleInvoicePage() {
           productsById={productsById}
           rateOf={rateOf}
           errors={validation.lines}
+          showAllErrors={submitted}
+          linesError={formError(/^Agrega al menos/)}
           onChange={updateLine}
           onRemove={(key) => setForm((current) => ({ ...current, lines: current.lines.filter((line) => line.key !== key) }))}
           onAdd={addLine}
@@ -479,12 +499,28 @@ interface LinesBlockProps {
   productsById: Map<number, Product>
   rateOf: (product: Product | undefined) => number
   errors: Record<number, { product?: string; quantity?: string; price?: string }>
+  /** Tras enviar: tambien los errores de las lineas sin producto. */
+  showAllErrors: boolean
+  /** "Agrega al menos un producto." tras enviar sin lineas. */
+  linesError?: string
   onChange: (key: number, change: Partial<SaleLine>) => void
   onRemove: (key: number) => void
   onAdd: () => void
 }
 
-function LinesBlock({ lines, products, categories, productsById, rateOf, errors, onChange, onRemove, onAdd }: LinesBlockProps) {
+function LinesBlock({
+  lines,
+  products,
+  categories,
+  productsById,
+  rateOf,
+  errors,
+  showAllErrors,
+  linesError,
+  onChange,
+  onRemove,
+  onAdd,
+}: LinesBlockProps) {
   if (products.isError || categories.isError) {
     return (
       <ErrorState
@@ -531,7 +567,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
       <ul className="flex flex-col gap-3 xl:gap-0">
         {lines.map((line) => {
           const product = line.productId === null ? undefined : productsById.get(line.productId)
-          const lineErrors = product ? errors[line.key] : undefined
+          const lineErrors = product || showAllErrors ? errors[line.key] : undefined
           const amounts = lineAmounts({
             quantity: Number(line.quantity) || 0,
             price: Number(line.price) || 0,
@@ -566,6 +602,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                   onChange(line.key, { productId, price: chosen?.suggestedPrice ? String(chosen.suggestedPrice) : '' })
                 }}
                 placeholder="Busca por código o descripción"
+                error={lineErrors?.product}
               />
               <LineNumberInput
                 label="Cantidad"
@@ -605,6 +642,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
         })}
       </ul>
       <Button
+        id={ADD_LINE_ID}
         variant="secondary"
         className="mt-4"
         onClick={onAdd}
@@ -612,6 +650,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
       >
         Agregar producto
       </Button>
+      {linesError && <p className="mt-2 text-small text-error">{linesError}</p>}
       {available.length === 0 && (
         <p className="mt-2 text-small text-text-muted">No hay productos con stock para facturar.</p>
       )}

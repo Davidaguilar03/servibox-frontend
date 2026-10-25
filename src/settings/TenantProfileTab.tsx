@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { normalizeNit } from '../auth/registerForm'
 import { updateTenantName } from '../auth/session'
 import { Alert } from '../components/Alert'
+import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
+import { revealErrors } from '../lib/formErrors'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
 import { TENANT_KEY, fetchTenantProfile, updateTenantProfile, type TenantProfile } from './settingsApi'
@@ -55,6 +57,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
   const [initial, setInitial] = useState(() => tenantFormFrom(profile))
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<keyof TenantFormValues>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
   const [forbidden, setForbidden] = useState<string | null>(null)
   const sending = useRef(false)
   const allowLeave = useRef(false)
@@ -92,8 +95,14 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
   const touch = (field: keyof TenantFormValues) => () => setTouched((current) => new Set(current).add(field))
 
   function submit() {
-    setTouched(new Set<keyof TenantFormValues>(['name', 'nit', 'phone']))
-    if (locked || !dirty || Object.keys(errors).length > 0 || sending.current) return
+    if (locked || !dirty || sending.current) return
+    if (Object.keys(errors).length > 0) {
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set<keyof TenantFormValues>(['name', 'nit', 'phone']))
+      }, document.getElementById('perfil-serviteca'))
+      return
+    }
     sending.current = true
     save.mutate()
   }
@@ -106,6 +115,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
         Datos de la serviteca
       </h2>
       <form
+        id="perfil-serviteca"
         noValidate
         className="mt-4 flex flex-col gap-4"
         onSubmit={(event) => {
@@ -171,7 +181,9 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
         />
         {!locked && (
           <div className="flex justify-end">
-            <Button type="submit" disabled={!dirty || Object.keys(errors).length > 0 || save.isPending}>
+            <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
+            {/* Edicion: sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
+            <Button type="submit" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>

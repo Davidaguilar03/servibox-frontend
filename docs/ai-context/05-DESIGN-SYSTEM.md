@@ -205,6 +205,27 @@ Categorias):
   dos lineas. Sin `fill` (Productos): desplazamiento horizontal, borde derecho difuminado
   mientras haya mas pestanas y la seleccionada se lleva a la vista (`scrollIntoView`).
 
+## Formularios, modales y avisos
+
+* Tabla de facturas por ancho del recuadro (`useElementWidth`, ResizeObserver; no por el
+  ancho de la ventana): desde 1120 px de recuadro todas las columnas; desde 820 Vence y Forma
+  de pago pasan a una segunda linea en `small` bajo el tercero; por debajo tambien la Fecha y
+  las celdas pasan a relleno de 8 (`DataTable dense`). Numero, tercero, estado, total, saldo
+  pendiente y acciones siempre se ven. Columnas en `components/invoiceColumns.tsx`.
+* Panel de margen del producto (`inventory/PricePanel.tsx`): "Como se calcula el precio" con
+  Costo de compra, IVA del costo, Margen de la categoria y Precio sugerido sin IVA en
+  `text-figure`; borde sin sombra; a la derecha y `sticky` desde lg, debajo por debajo. Sin
+  datos muestra "—" y la nota para completarlos.
+* Confirmacion de descartar (`DiscardChangesModal`): titulo "¿Descartar los cambios?",
+  "Seguir editando" primario y con el foco (Esc tambien sigue editando) y "Descartar"
+  secundario. La usan `DiscardableModal`, `UnsavedChangesGuard`, Categorias y Configuracion.
+  El modal se cierra tambien con clic fuera.
+* Toast: abajo a la derecha, maximo 3 (se retira el mas antiguo), boton "Cerrar aviso"
+  (`IconButton`). Exito: `role="status"`, se cierra a los 5 s; error: `role="alert"`, queda.
+  El temporizador se pausa con el cursor encima o el foco dentro y retoma lo que le quedaba.
+* Errores de formulario: bajo cada campo con `aria-invalid` y `aria-describedby`; tras enviar,
+  `ErrorSummary` (oculto, `role="alert"`) dice cuantos campos revisar.
+
 ## Guarda
 
 `src/styles/designSystem.test.ts`:

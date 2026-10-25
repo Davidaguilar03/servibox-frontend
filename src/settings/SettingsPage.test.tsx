@@ -129,12 +129,14 @@ describe('Datos de la serviteca', () => {
 
     await user.clear(name)
     await user.type(name, 'Serviteca El Roble ')
-    // Con cambios pero sin NIT ni telefono no se puede guardar.
-    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    // Con cambios pero sin NIT ni telefono no se envia: Guardar habilitado y foco al primer error.
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(screen.getByLabelText('NIT')).toHaveFocus()
+    expect(screen.getByLabelText('NIT')).toHaveAttribute('aria-invalid', 'true')
     await user.type(screen.getByLabelText('NIT'), '900.123.456-7')
     await user.tab()
     expect(screen.getByLabelText('NIT')).toHaveValue('900123456-7')
-    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
     await user.type(screen.getByLabelText('Teléfono'), '300 123 4567')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
@@ -168,7 +170,9 @@ describe('Datos de la serviteca', () => {
     expect(
       screen.getByText('El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(screen.getByLabelText('Nombre comercial')).toHaveFocus()
   })
 
   it('NIT y telefono son obligatorios y no pasan de 25 caracteres', async () => {
@@ -181,13 +185,14 @@ describe('Datos de la serviteca', () => {
     await user.tab()
     expect(screen.getByText('Ingresa el NIT de tu serviteca.')).toBeInTheDocument()
     expect(screen.getByText('Ingresa el teléfono de contacto.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled()
 
     await user.type(screen.getByLabelText('NIT'), '1'.repeat(26))
     await user.type(screen.getByLabelText('Teléfono'), '3'.repeat(26))
     await user.tab()
     expect(screen.getAllByText('El NIT y el teléfono no pueden superar 25 caracteres.')).toHaveLength(2)
-    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(screen.getByLabelText('NIT')).toHaveFocus()
   })
 
   it('un 400 queda en el Alert sin perder lo digitado', async () => {
@@ -242,13 +247,13 @@ describe('Datos de la serviteca', () => {
     await user.type(await screen.findByLabelText('Teléfono'), '300')
 
     await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
-    expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
     expect(router.state.location.search).toBe('')
     expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
 
     await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
-    await user.click(screen.getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(router.state.location.search).toBe('?tab=financiera')
     expect(await screen.findByLabelText('Gastos (%)')).toBeInTheDocument()
   })
@@ -260,7 +265,7 @@ describe('Datos de la serviteca', () => {
     await user.type(await screen.findByLabelText('Teléfono'), '300')
 
     await user.click(screen.getByRole('link', { name: 'Inicio' }))
-    expect(screen.getByRole('dialog', { name: 'Descartar cambios' })).toHaveTextContent(
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toHaveTextContent(
       'Si sales ahora, se pierden los cambios que no guardaste en los datos de la serviteca.',
     )
     expect(router.state.location.pathname).toBe('/configuracion')
@@ -359,7 +364,10 @@ describe('Configuración financiera', () => {
     await user.tab()
 
     expect(screen.getByText('Usa un valor entre 0 y 100.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Guardar configuración' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Guardar configuración' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar configuración' }))
+    expect(dian).toHaveFocus()
+    expect(dian).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('un 400 queda en el Alert', async () => {

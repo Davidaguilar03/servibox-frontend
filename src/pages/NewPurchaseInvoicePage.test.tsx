@@ -146,7 +146,8 @@ describe('nueva factura de compra', () => {
     expect(screen.getByText('Saldo disponible: $ 10.000.000')).toBeInTheDocument()
     expect(screen.getByLabelText('Método de pago')).toHaveValue('EFECTIVO')
     expect(screen.getByLabelText('Método de pago')).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeDisabled()
+    // Regla de Guardar: habilitado aunque falten datos.
+    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeEnabled()
     expect(screen.getByText('Elige el proveedor.')).toBeInTheDocument()
     expect(screen.getByText('Escribe el número de factura del proveedor.')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/Nueva factura')
@@ -242,7 +243,10 @@ describe('nueva factura de compra', () => {
     expect(screen.getByLabelText('Fecha de vencimiento')).toHaveValue('2026-12-21')
     fireEvent.change(screen.getByLabelText('Fecha de vencimiento'), { target: { value: '2026-10-01' } })
     expect(screen.getByText('El vencimiento no puede ser anterior a la fecha de la factura.', { selector: 'p[aria-live]' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
+    expect(screen.getByLabelText('Fecha de vencimiento')).toHaveFocus()
+    expect(posts(fetchMock, '/api/purchases')).toHaveLength(0)
     await user.click(screen.getByRole('button', { name: '60 días' }))
 
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
@@ -259,8 +263,8 @@ describe('nueva factura de compra', () => {
     ])
   })
 
-  it('con saldo igual al total deja guardar y con un peso menos avisa y bloquea', async () => {
-    const { user } = await setup({
+  it('con saldo igual al total deja guardar y con un peso menos avisa y no envia', async () => {
+    const { user, fetchMock } = await setup({
       ...fullRoutes(),
       'GET /api/treasury/accounts': () =>
         jsonResponse([
@@ -280,7 +284,11 @@ describe('nueva factura de compra', () => {
     expect(alert).toHaveTextContent('Saldo insuficiente en Caja Menor')
     expect(alert).toHaveTextContent('Disponible $ 594.999, necesitas $ 595.000.')
     expect(screen.getByLabelText('Cuenta')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeDisabled()
+    // Sin saldo no se envia: Guardar sigue habilitado y lleva el foco a la cuenta.
+    expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
+    expect(screen.getByLabelText('Cuenta')).toHaveFocus()
+    expect(posts(fetchMock, '/api/purchases')).toHaveLength(0)
     expect(summaryValue('Saldo después de la compra')).toHaveTextContent('-$ 1')
 
     await user.click(screen.getByRole('radio', { name: 'Crédito' }))
@@ -430,13 +438,13 @@ describe('nueva factura de compra', () => {
     await user.type(await screen.findByLabelText('N.º factura del proveedor'), 'X-1')
     expect(unload()).toBe(true)
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Descartar cambios' })
+    const dialog = await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })
     await user.click(within(dialog).getByRole('button', { name: 'Seguir editando' }))
     expect(router.state.location.pathname).toBe('/compras/nueva')
     expect(screen.getByLabelText('N.º factura del proveedor')).toHaveValue('X-1')
 
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/compras'))
   })
 

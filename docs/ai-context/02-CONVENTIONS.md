@@ -159,6 +159,23 @@ necesite, no antes.
   desde 2), `FilterBar`, `CellLink` en las celdas y `PeriodPicker` como unico selector de
   periodo (sus periodos por props y el rango en la zona del negocio). `lists.test.tsx`
   comprueba que ningun listado muestra dos primarios y que no hay otro selector de periodo.
+* Regla unica de Guardar (paginas y modales): el boton nunca se deshabilita por errores; solo
+  mientras se envia (con `aria-busy`) y, en la edicion de un registro existente, mientras no
+  haya cambios (unica excepcion). Cada campo valida al salir (`onBlur`) y todos al enviar; al
+  enviar con errores `revealErrors` (`lib/formErrors.ts`) los muestra y lleva el foco al
+  primer `aria-invalid` (en una factura sin lineas, a Agregar producto), y `ErrorSummary` lo
+  anuncia.
+* Guardian de cambios: todo modal con campos usa `DiscardableModal` (cerrar con cambios por
+  Esc, la X, Cancelar o clic fuera pide confirmar; sin cambios cierra; tras guardar no
+  pregunta). Las paginas con formulario (nueva venta, nueva compra, producto, Configuracion)
+  usan `UnsavedChangesGuard`: `useBlocker` para la navegacion interna y `beforeunload` para
+  cerrar o recargar la pestana.
+* Costo de producto en pesos enteros: digitos con o sin punto de miles; con decimales escritos,
+  "Escribe el costo en pesos, sin centavos." Un costo guardado con decimales que no se toca se
+  envia tal cual.
+* La formula del precio sugerido vive en el backend (`InventoryService.aplicarPrecios`).
+  `inventory/pricing.ts` la copia solo para el panel del formulario; `pricing.test.ts` la liga
+  a los casos verificados del backend. Si cambia la formula alla, cambia aqui.
 * Una sola implementacion de segmentado: `SegmentedControl` (radiogroup) y `TabList`
   (pestanas). Nada de `aria-pressed`, `role="tab"` ni radios propios en las pantallas salvo
   las excepciones documentadas; `controls.test.tsx` lo comprueba.

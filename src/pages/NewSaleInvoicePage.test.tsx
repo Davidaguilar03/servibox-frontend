@@ -117,7 +117,8 @@ describe('nueva factura de venta', () => {
     expect(screen.getByRole('combobox', { name: 'Cliente' })).toHaveValue('Consumidor final')
     expect(screen.getByLabelText('Documento')).toHaveValue('NIT 222222222222')
     expect(screen.getByLabelText('Fecha de factura')).toHaveValue('2026-10-18')
-    expect(screen.getByRole('button', { name: 'Guardar factura' })).toBeDisabled()
+    // Regla de Guardar: habilitado aunque falten datos; al enviar se muestran los errores.
+    expect(screen.getByRole('button', { name: 'Guardar factura' })).toBeEnabled()
     expect(screen.getByText('Agrega al menos un producto.')).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Nueva factura')
   })
@@ -249,13 +250,28 @@ describe('nueva factura de venta', () => {
     })
   })
 
-  it('valida cantidad contra el stock, precio y cuenta antes de habilitar Guardar', async () => {
-    const { user } = await setup()
+  it('sin lineas, Guardar muestra el error y lleva el foco a Agregar producto', async () => {
+    const { user, fetchMock } = await setup()
+    await user.click(await screen.findByRole('button', { name: 'Guardar factura' }))
+
+    expect(screen.getByRole('button', { name: 'Agregar producto' })).toHaveFocus()
+    expect(screen.getAllByText('Agrega al menos un producto.').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole('alert')).toHaveTextContent('Revisa el campo marcado.')
+    expect(posts(fetchMock, '/api/sales')).toHaveLength(0)
+  })
+
+  it('valida cantidad contra el stock, precio y cuenta y Guardar sigue habilitado', async () => {
+    const { user, fetchMock } = await setup()
     const save = screen.getByRole('button', { name: 'Guardar factura' })
 
     await addProduct(user, 'willard', '5')
     expect(screen.getByText('Solo hay 4 unidades disponibles.')).toBeInTheDocument()
-    expect(save).toBeDisabled()
+    expect(save).toBeEnabled()
+    await user.click(save)
+    expect(screen.getByLabelText('Cantidad')).toHaveFocus()
+    expect(screen.getByLabelText('Cantidad')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Cantidad')).toHaveAccessibleDescription('Solo hay 4 unidades disponibles.')
+    expect(posts(fetchMock, '/api/sales')).toHaveLength(0)
 
     const quantity = screen.getByLabelText('Cantidad')
     await user.clear(quantity)
@@ -264,18 +280,19 @@ describe('nueva factura de venta', () => {
     await user.clear(price)
     await user.type(price, '0')
     expect(screen.getByText('El precio debe ser mayor que cero.')).toBeInTheDocument()
-    expect(save).toBeDisabled()
+    expect(save).toBeEnabled()
 
     await user.clear(price)
     await user.type(price, '400000')
-    expect(save).toBeEnabled()
-
     await user.selectOptions(screen.getByLabelText('Cuenta'), 'Elige una cuenta')
-    expect(screen.getByText('Elige la cuenta donde entra el dinero.')).toBeInTheDocument()
-    expect(save).toBeDisabled()
+    expect(screen.getAllByText('Elige la cuenta donde entra el dinero.').length).toBeGreaterThan(0)
+    await user.click(save)
+    expect(screen.getByLabelText('Cuenta')).toHaveFocus()
+    expect(screen.getByLabelText('Cuenta')).toHaveAttribute('aria-invalid', 'true')
+    expect(posts(fetchMock, '/api/sales')).toHaveLength(0)
 
     await user.selectOptions(screen.getByLabelText('Cuenta'), 'Caja General')
-    expect(save).toBeEnabled()
+    expect(screen.getByLabelText('Cuenta')).not.toHaveAttribute('aria-invalid')
   })
 
   it('no ofrece dos veces el mismo producto', async () => {
@@ -398,7 +415,11 @@ describe('nueva factura de venta', () => {
     expect(await within(dialog).findByText('Ya existe un tercero con el documento 900123456 como CLIENTE')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Cliente' })).toHaveValue('Consumidor final')
 
+    // Con datos digitados, cerrar pide confirmar; Descartar cierra.
     await user.keyboard('{Escape}')
+    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Seguir editando' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
@@ -411,14 +432,14 @@ describe('nueva factura de venta', () => {
     await router.navigate('/ventas/nueva')
     await addProduct(user, 'michelin')
     await user.click(screen.getByRole('button', { name: 'Cancelar' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Descartar cambios' })
+    const dialog = await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })
     expect(within(dialog).getByRole('button', { name: 'Seguir editando' })).toHaveFocus()
     await user.click(within(dialog).getByRole('button', { name: 'Seguir editando' }))
     expect(router.state.location.pathname).toBe('/ventas/nueva')
     expect(screen.getByRole('listitem', { name: 'Línea LL-001' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Inicio' }))
-    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/inicio'))
   })
 

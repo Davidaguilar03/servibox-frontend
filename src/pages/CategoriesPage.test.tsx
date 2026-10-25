@@ -193,12 +193,12 @@ describe('categorias', () => {
     await user.click(screen.getByRole('button', { name: 'Nueva categoría' }))
     await user.type(within(await screen.findByRole('dialog')).getByLabelText('Nombre'), 'Plumillas')
     await user.keyboard('{Escape}')
-    const confirm = await screen.findByRole('dialog', { name: 'Descartar cambios' })
+    const confirm = await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })
     await user.click(within(confirm).getByRole('button', { name: 'Seguir editando' }))
     expect(within(await screen.findByRole('dialog', { name: 'Nueva categoría' })).getByLabelText('Nombre')).toHaveValue('Plumillas')
 
     await user.keyboard('{Escape}')
-    await user.click(within(await screen.findByRole('dialog', { name: 'Descartar cambios' })).getByRole('button', { name: 'Descartar cambios' }))
+    await user.click(within(await screen.findByRole('dialog', { name: '¿Descartar los cambios?' })).getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
