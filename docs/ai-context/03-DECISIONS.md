@@ -12,6 +12,16 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Reglas de trabajo compartidas entre agentes y repos
+
+* Decision: `AGENTS.md` en la raiz es la fuente unica de las reglas de trabajo de
+  cualquier agente en ServiBox. `CLAUDE.md` lo importa mediante `@AGENTS.md`.
+  El mismo archivo vive en servibox-frontend y servibox-backend; si cambia en uno,
+  debe cambiarse igual en el otro. Reemplaza las reglas de trabajo de `00-RULES.md`
+  que lo contradigan; los demas documentos conservan el detalle del proyecto.
+* Alternativas consideradas: mantener reglas separadas por agente o repositorio.
+* Motivo: evitar divergencias y aplicar las mismas reglas a cualquier agente.
+
 ## 2026-10-25: Glosario, mapa de mensajes del backend y regla unica de donde mostrar errores
 
 * Decision:
