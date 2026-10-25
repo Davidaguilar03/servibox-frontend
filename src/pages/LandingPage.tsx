@@ -1,377 +1,258 @@
-import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import {
-  CalendarClock,
-  ChartColumn,
-  FileSpreadsheet,
-  Lock,
-  Menu,
-  Package,
-  ShoppingCart,
-  Truck,
-  Unlink,
-  Wallet,
-  X,
-  type LucideIcon,
-} from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { buttonClasses } from '../components/buttonStyles'
-import { DataTable, type Column } from '../components/DataTable'
-import { IndicatorCard } from '../components/IndicatorCard'
-import { StatusBadge, type BadgeStatus } from '../components/StatusBadge'
-import { formatCurrency } from '../lib/format'
+import { iconSm } from '../components/icons'
+import { SUPPORT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
 import { usePageMeta } from '../lib/usePageMeta'
+import heroInicio from '../assets/landing/hero-inicio.webp'
+import flujoVenta from '../assets/landing/flujo-venta.webp'
+import flujoInventario from '../assets/landing/flujo-inventario.webp'
+import flujoReportes from '../assets/landing/flujo-reportes.webp'
 
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+const linkClass = `rounded-control font-medium text-brand-ink hover:underline ${focusRing}`
+const container = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
-const anchors = [
-  { href: '#producto', label: 'Producto' },
-  { href: '#modulos', label: 'Módulos' },
-  { href: '#como-funciona', label: 'Cómo funciona' },
-  // La captura no trae datos de contacto: la ancla lleva al pie. Ver 03-DECISIONS.md.
-  { href: '#contacto', label: 'Contacto' },
-]
+// Capturas reales del panel con el tenant demo a 1440x900, recortadas al contenido (1200x836).
+const SHOT = { width: 1200, height: 836 }
 
-const problems: { icon: LucideIcon; title: string; text: string }[] = [
+const LANDING_TITLE = 'ServiBox | Ventas, inventario y caja para servitecas'
+const LANDING_DESCRIPTION =
+  'Registra una venta y ServiBox actualiza el inventario y la caja al instante. Para servitecas y talleres.'
+
+const flows = [
   {
-    icon: FileSpreadsheet,
-    title: 'Tres archivos separados',
-    text: 'Hoy cada venta se anota a mano en tres archivos de Excel: ventas, inventario y cuentas.',
+    title: 'Registra una venta y todo se actualiza',
+    text: 'Eliges los productos y ServiBox descuenta el inventario y suma el pago a tu caja o cuenta. Si la venta es a crédito, queda pendiente de cobro y vas registrando los abonos.',
+    src: flujoVenta,
+    alt: 'Pantalla Nueva factura de ServiBox con dos productos cargados, el total de la venta y el aviso de cuántas unidades se descuentan del inventario.',
   },
   {
-    icon: Unlink,
-    title: 'Nada se actualiza solo',
-    text: 'Los archivos no se hablan entre sí. Las inconsistencias pasan desapercibidas.',
+    title: 'Sabe qué se te acaba',
+    text: 'Cada producto avisa cuando su stock está bajo, crítico o en cero, según los umbrales de su categoría. El precio sugerido se calcula con tus costos y tus márgenes.',
+    src: flujoInventario,
+    alt: 'Pantalla de productos de ServiBox con el total de productos, las alertas de stock y la lista con costo, precio sugerido y estado de cada producto.',
   },
   {
-    icon: CalendarClock,
-    title: 'Conciliar a fin de mes',
-    text: 'Al cierre toca revisar archivo por archivo para que las cifras cuadren.',
-  },
-]
-
-const modules: { icon: LucideIcon; title: string; text: string }[] = [
-  { icon: Package, title: 'Inventario', text: 'Productos, categorías, existencias y alertas de stock bajo.' },
-  { icon: ShoppingCart, title: 'Ventas', text: 'Facturas de contado y a crédito, abonos y papelera.' },
-  { icon: Truck, title: 'Compras', text: 'Facturas de proveedores, pagos y papelera.' },
-  { icon: Wallet, title: 'Cuentas', text: 'Caja y bancos, movimientos y transferencias.' },
-  { icon: ChartColumn, title: 'Panel de control', text: 'Indicadores del mes, stock bajo y reportes para descargar.' },
-]
-
-const steps = [
-  {
-    title: 'Registra tu serviteca',
-    text: 'Crea tu cuenta con los datos del negocio y del administrador. Dejamos lista la Caja General, las categorías base y el IVA.',
-  },
-  { title: 'Carga tu catálogo', text: 'Agrega tus productos con su costo y su precio de venta.' },
-  {
-    title: 'Vende y controla',
-    text: 'Cada venta y cada compra actualizan el inventario y las cuentas. Revisa tus cifras cuando quieras.',
+    title: 'Mira cuánto ganas de verdad',
+    text: 'La utilidad bruta sale de lo que vendiste menos lo que costaba. Le sumas tus otros ingresos, le restas los gastos y descargas el estado de resultados en PDF o Excel para tu contador.',
+    src: flujoReportes,
+    alt: 'Pantalla de reportes de ServiBox con la vista previa del estado de resultados del mes: ventas, costo de lo vendido, utilidad bruta, gastos y utilidad neta.',
   },
 ]
 
-const values = [
-  { title: 'Eficiencia', text: 'Optimiza tu tiempo y tus procesos.' },
-  { title: 'Confiabilidad', text: 'Tu negocio en buenas manos.' },
-  { title: 'Control', text: 'Decisiones basadas en datos reales.' },
-  { title: 'Enfoque', text: 'Nosotros cuidamos lo administrativo.' },
+const extras = [
+  'Compras a proveedores con sus pagos.',
+  'Cuentas de efectivo, bancos y billeteras digitales.',
+  'Clientes y proveedores.',
+  'Gastos operativos e ingresos ocasionales.',
+  'Transferencias entre cuentas.',
 ]
 
-interface SampleSale {
-  number: string
-  customer: string
-  total: number
-  status: BadgeStatus
-}
-
-// Datos ficticios de la vista de ejemplo: no son clientes ni cifras reales.
-const sampleSales: SampleSale[] = [
-  { number: 'FV-0001', customer: 'Cliente de ejemplo 1', total: 350000, status: 'PAGADA' },
-  { number: 'FV-0002', customer: 'Cliente de ejemplo 2', total: 1200000, status: 'PENDIENTE' },
-  { number: 'FV-0003', customer: 'Consumidor final', total: 180000, status: 'PAGADA' },
+const faqs = [
+  { question: '¿Tengo que instalar algo?', answer: 'No. ServiBox funciona desde el navegador del computador o del celular.' },
+  {
+    question: '¿Mis datos se mezclan con los de otras servitecas?',
+    answer: 'No. La información de cada serviteca se guarda por separado y solo la ve quien tiene acceso a esa cuenta.',
+  },
+  {
+    question: '¿Reemplaza la facturación electrónica de la DIAN?',
+    answer:
+      'No. ServiBox sirve para llevar el control interno de tu negocio: ventas, compras, inventario y caja. No emite facturas electrónicas ante la DIAN.',
+  },
+  {
+    question: '¿Puedo sacar reportes para mi contador?',
+    answer: 'Sí. Descargas el estado de resultados y los movimientos de tus cuentas en PDF o Excel.',
+  },
+  { question: '¿Cuánto cuesta?', answer: 'Escríbenos por WhatsApp o al correo y te contamos.' },
 ]
 
-const sampleColumns: Column<SampleSale>[] = [
-  { header: 'Factura', render: (row) => <span className="font-mono">{row.number}</span> },
-  { header: 'Cliente', render: (row) => row.customer },
-  { header: 'Total', align: 'right', render: (row) => formatCurrency(row.total) },
-  { header: 'Estado', render: (row) => <StatusBadge status={row.status} /> },
-]
-
-/** Vista de ejemplo del panel con los componentes reales. Solo decorativa. */
-function DashboardPreview() {
+/** WhatsApp y correo de src/config/contact.ts. */
+function Contacts({ className = '' }: { className?: string }) {
   return (
-    <div aria-hidden inert className="overflow-hidden rounded-card bg-canvas p-4 shadow-modal sm:p-6">
-      <p className="font-display text-h3 text-text">Inicio</p>
-      <p className="text-small text-text-muted">Vista de ejemplo con datos ficticios</p>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <IndicatorCard label="Ventas del mes" value={formatCurrency(1730000)} />
-        <IndicatorCard label="Utilidad" value={formatCurrency(420000)} />
-      </div>
-      <div className="mt-3 rounded-card border border-border bg-surface p-4 shadow-card">
-        <p className="mb-2 text-small font-medium text-text">Últimas ventas</p>
-        <DataTable
-          columns={sampleColumns}
-          rows={sampleSales}
-          rowKey={(row) => row.number}
-          loading={false}
-          error={false}
-          onRetry={() => {}}
-          emptyMessage=""
-        />
-      </div>
-    </div>
+    <ul className={`flex flex-wrap gap-x-6 gap-y-2 text-small text-text-muted ${className}`}>
+      <li>
+        WhatsApp{' '}
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener" className={linkClass}>
+          {WHATSAPP_DISPLAY}
+        </a>
+      </li>
+      <li>
+        Correo{' '}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>
+          {SUPPORT_EMAIL}
+        </a>
+      </li>
+    </ul>
   )
 }
 
-/** Pagina publica de presentacion. Ver 03-DECISIONS.md para el origen de los textos. */
+/** Pagina publica de presentacion. Solo promete lo que existe: ver 02-CONVENTIONS.md. */
 export function LandingPage() {
-  usePageMeta(
-    'ServiBox · Ventas, inventario y cuentas de tu serviteca',
-    'Registra una venta y el inventario y la cuenta se actualizan solos. ServiBox, para servitecas y talleres.',
-  )
+  usePageMeta(LANDING_TITLE, LANDING_DESCRIPTION)
   const session = useSession()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const menuButton = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    if (!menuOpen) return
-    function handleKey(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return
-      setMenuOpen(false)
-      menuButton.current?.focus()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [menuOpen])
-
-  const primaryCta = session
-    ? { to: '/inicio', label: 'Ir al panel' }
-    : { to: '/registro', label: 'Crea tu cuenta' }
-  const navLinkClass = `rounded-tag text-small font-medium text-text-muted transition-colors duration-(--duration-fast) hover:text-text ${focusRing}`
+  const cta = session ? { to: '/inicio', label: 'Ir al panel' } : { to: '/registro', label: 'Crear mi serviteca' }
 
   return (
-    <div id="landing" className="min-h-screen overflow-x-hidden bg-surface">
+    <div id="landing" className="min-h-screen bg-surface">
       <a
         href="#contenido"
-        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-menu focus:not-sr-only focus:fixed focus:top-2 focus:left-2 ${focusRing}`}
+        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-raised focus:not-sr-only focus:fixed focus:px-4 focus:py-2 focus:top-2 focus:left-2 ${focusRing}`}
       >
         Saltar al contenido
       </a>
 
-      <header className="sticky top-0 z-40 border-b border-border bg-surface">
-        <div className="mx-auto flex h-topbar max-w-content items-center gap-4 px-4 sm:px-6 lg:px-8">
+      <header className="border-b border-border bg-surface">
+        <div className={`${container} flex min-h-topbar flex-wrap items-center justify-between gap-x-2 gap-y-2 py-2`}>
           <WordmarkLink />
-
-          <nav aria-label="Secciones" className="ml-auto hidden lg:block">
-            <ul className="flex items-center gap-8">
-              {anchors.map(({ href, label }) => (
-                <li key={href}>
-                  <a href={href} className={navLinkClass}>
-                    {label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="ml-auto flex items-center gap-2 lg:ml-8">
+          <div className="flex items-center gap-1 sm:gap-2">
             {session ? (
-              <Link to="/inicio" className={buttonClasses('secondary')}>
+              <Link to="/inicio" className={buttonClasses('primary')} data-variant="primary">
                 Ir al panel
               </Link>
             ) : (
               <>
-                <Link to="/login" className={`max-sm:hidden ${buttonClasses('secondary')}`}>
+                <Link to="/login" className={`max-sm:px-2 ${buttonClasses('text')}`} data-variant="text">
                   Iniciar sesión
                 </Link>
-                <Link to="/registro" className={`max-sm:hidden ${buttonClasses('secondary')}`}>
+                <Link to="/registro" className={`max-sm:px-3 ${buttonClasses('primary')}`} data-variant="primary">
                   Crear cuenta
                 </Link>
               </>
             )}
-            <button
-              ref={menuButton}
-              type="button"
-              aria-expanded={menuOpen}
-              aria-controls="menu-secciones"
-              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-              onClick={() => setMenuOpen((open) => !open)}
-              className={`flex size-touch items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
-            >
-              {menuOpen ? <X size={20} strokeWidth={1.5} aria-hidden /> : <Menu size={20} strokeWidth={1.5} aria-hidden />}
-            </button>
           </div>
         </div>
-
-        {menuOpen && (
-          <nav id="menu-secciones" aria-label="Secciones" className="border-t border-border bg-surface shadow-menu lg:hidden">
-            <ul className="flex flex-col px-4 py-2 sm:px-6">
-              {anchors.map(({ href, label }) => (
-                <li key={href}>
-                  <a
-                    href={href}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex min-h-touch items-center text-body text-text ${focusRing}`}
-                  >
-                    {label}
-                  </a>
-                </li>
-              ))}
-              {!session && (
-                <>
-                  <li className="sm:hidden">
-                    <Link to="/login" className={`flex min-h-touch items-center text-body text-text ${focusRing}`}>
-                      Iniciar sesión
-                    </Link>
-                  </li>
-                  <li className="sm:hidden">
-                    <Link to="/registro" className={`flex min-h-touch items-center text-body text-text ${focusRing}`}>
-                      Crear cuenta
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </nav>
-        )}
       </header>
 
       <main id="contenido" tabIndex={-1} className="outline-none">
-        <section id="producto" aria-labelledby="titulo-portada" className="relative scroll-mt-16 overflow-hidden bg-nav">
-          <div
-            className="absolute inset-0 bg-brand/20 [clip-path:polygon(62%_0,80%_0,56%_100%,38%_100%)]"
-            aria-hidden
-          />
-          <div className="relative mx-auto grid max-w-content items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
-            <div className="max-w-xl">
-              <p className="font-mono text-label uppercase text-text-subtle">Para servitecas y talleres</p>
-              <h1 id="titulo-portada" className="mt-4 text-h1 text-text-inverse sm:text-display">
-                Una venta. Inventario y caja al día.
-              </h1>
-              <p className="mt-6 text-body text-neutral-300">
-                Registra una venta y el inventario y la cuenta se actualizan solos. Para propietarios, administradoras
-                y vendedores de servitecas y talleres, sin perfil técnico.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link to={primaryCta.to} className={buttonClasses('primary')}>
-                  {primaryCta.label}
-                </Link>
-                {!session && (
-                  <Link to="/login" className={`rounded-tag text-button text-text-inverse hover:underline ${focusRing}`}>
-                    Iniciar sesión
-                  </Link>
-                )}
-              </div>
-              <p className="mt-6 flex items-start gap-2 text-small text-text-subtle">
-                <Lock size={16} strokeWidth={1.5} className="mt-0.5 shrink-0" aria-hidden />
-                Sin instalación. Cada serviteca administra su información de forma aislada y segura, desde cualquier
-                dispositivo con internet.
-              </p>
-            </div>
-            <DashboardPreview />
-          </div>
-        </section>
-
-        <section aria-labelledby="titulo-problema" className="mx-auto max-w-content px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-          <p className="font-mono text-label uppercase text-text-muted">El problema</p>
-          <h2 id="titulo-problema" className="mt-2 text-h2 text-text sm:text-h1">
-            Deja atrás los tres archivos de Excel
-          </h2>
-          <p className="mt-3 max-w-2xl text-body text-text-muted">
-            Hoy una venta se anota en tres archivos que no se actualizan entre sí. Las diferencias aparecen a fin de
-            mes, cuando ya es tarde.
-          </p>
-          <ul className="mt-10 grid gap-6 md:grid-cols-3">
-            {problems.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="rounded-card border border-border bg-surface p-6 shadow-card">
-                <span className="flex size-10 items-center justify-center rounded-control bg-warning-bg text-warning">
-                  <Icon size={20} strokeWidth={1.5} aria-hidden />
-                </span>
-                <h3 className="mt-4 text-h3 text-text">{title}</h3>
-                <p className="mt-2 text-small text-text-muted">{text}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section id="modulos" aria-labelledby="titulo-modulos" className="scroll-mt-16 bg-canvas">
-          <div className="mx-auto max-w-content px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-            <p className="font-mono text-label uppercase text-text-muted">Módulos</p>
-            <h2 id="titulo-modulos" className="mt-2 text-h2 text-text sm:text-h1">
-              Todo lo administrativo, en un solo lugar
-            </h2>
-            <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-              {modules.map(({ icon: Icon, title, text }) => (
-                <li key={title} className="rounded-card border border-border bg-surface p-6 shadow-card">
-                  <span className="flex size-10 items-center justify-center rounded-control bg-error-bg text-brand-ink">
-                    <Icon size={20} strokeWidth={1.5} aria-hidden />
-                  </span>
-                  <h3 className="mt-4 text-h3 text-text">{title}</h3>
-                  <p className="mt-2 text-small text-text-muted">{text}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section
-          id="como-funciona"
-          aria-labelledby="titulo-como-funciona"
-          className="mx-auto max-w-content scroll-mt-16 px-4 py-16 sm:px-6 lg:px-8 lg:py-24"
-        >
-          <p className="font-mono text-label uppercase text-text-muted">Cómo funciona</p>
-          <h2 id="titulo-como-funciona" className="mt-2 text-h2 text-text sm:text-h1">
-            Empieza a usarlo el mismo día
-          </h2>
-          <ol className="mt-10 grid gap-8 md:grid-cols-3">
-            {steps.map(({ title, text }, index) => (
-              <li key={title}>
-                <span className="font-display text-h1 text-brand-ink" aria-hidden>
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <h3 className="mt-2 text-h3 text-text">{title}</h3>
-                <p className="mt-2 text-small text-text-muted">{text}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section aria-labelledby="titulo-llamado" className="mx-auto max-w-content px-4 pb-16 sm:px-6 lg:px-8 lg:pb-24">
-          <div className="flex flex-col gap-6 rounded-container bg-nav p-8 md:flex-row md:items-center md:justify-between md:p-12">
-            <div>
-              <h2 id="titulo-llamado" className="text-h2 text-text-inverse">
-                Tu negocio en buenas manos
-              </h2>
-              <p className="mt-2 text-body text-neutral-300">
-                Registra tu serviteca y deja que ServiBox cuide lo administrativo.
-              </p>
-            </div>
-            <Link to={primaryCta.to} className={`shrink-0 ${buttonClasses('primary')}`}>
-              {primaryCta.label}
+        <section aria-labelledby="titulo-portada" className={`${container} grid items-center gap-10 py-12 lg:grid-cols-12 lg:py-20`}>
+          <div className="lg:col-span-5">
+            <h1 id="titulo-portada" className="text-display text-text">
+              Una venta. Inventario y caja al día.
+            </h1>
+            <p className="mt-4 max-w-md text-body text-text-muted">{LANDING_DESCRIPTION}</p>
+            <Link to={cta.to} className={`mt-8 ${buttonClasses('primary')}`} data-variant="primary">
+              {cta.label}
             </Link>
           </div>
+          <figure className="lg:col-span-7">
+            <img
+              src={heroInicio}
+              width={SHOT.width}
+              height={SHOT.height}
+              fetchPriority="high"
+              alt="Pantalla de inicio de ServiBox con las ventas, el costo y la utilidad del mes, los productos con stock bajo y los saldos de las cuentas."
+              className="h-auto w-full rounded-surface border border-border"
+            />
+            <figcaption className="mt-2 text-small text-text-muted">
+              Pantalla real de ServiBox con datos de demostración.
+            </figcaption>
+          </figure>
+        </section>
+
+        <section aria-labelledby="titulo-flujos" className="border-t border-border bg-canvas">
+          <div className={`${container} py-12 lg:py-20`}>
+            <h2 id="titulo-flujos" className="text-title text-text">
+              Lo que haces con ServiBox
+            </h2>
+            <div className="mt-10 flex flex-col gap-12 lg:gap-20">
+              {flows.map(({ title, text, src, alt }, index) => (
+                <article key={title} className="grid items-center gap-6 lg:grid-cols-12 lg:gap-10">
+                  <div className={`lg:col-span-4 ${index % 2 === 1 ? 'lg:order-2' : ''}`}>
+                    <h3 className="text-section text-text">{title}</h3>
+                    <p className="mt-2 text-body text-text-muted">{text}</p>
+                  </div>
+                  <img
+                    src={src}
+                    width={SHOT.width}
+                    height={SHOT.height}
+                    loading="lazy"
+                    decoding="async"
+                    alt={alt}
+                    className={`h-auto w-full rounded-surface border border-border lg:col-span-8 ${index % 2 === 1 ? 'lg:order-1' : ''}`}
+                  />
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="titulo-tambien" className={`${container} py-12 lg:py-20`}>
+          <h2 id="titulo-tambien" className="text-title text-text">
+            Y también
+          </h2>
+          <ul className="mt-6 grid list-disc gap-x-10 gap-y-2 pl-5 text-body text-text sm:grid-cols-2">
+            {extras.map((extra) => (
+              <li key={extra}>{extra}</li>
+            ))}
+          </ul>
+          <p className="mt-10 border-t border-border pt-6 text-body text-text-muted">
+            ServiBox se probó en Autollantas A&amp;C S.A.S., un negocio de llantas, lubricantes y servicios automotrices.
+          </p>
+        </section>
+
+        <section aria-labelledby="titulo-preguntas" className="border-t border-border bg-canvas">
+          <div className={`${container} py-12 lg:py-20`}>
+            <h2 id="titulo-preguntas" className="text-title text-text">
+              Preguntas frecuentes
+            </h2>
+            <div className="mt-6 max-w-3xl divide-y divide-border border-y border-border">
+              {faqs.map(({ question, answer }) => (
+                <details key={question} className="group">
+                  <summary
+                    className={`flex min-h-touch cursor-pointer list-none items-center justify-between gap-4 rounded-control py-3 [&::-webkit-details-marker]:hidden ${focusRing}`}
+                  >
+                    <h3 className="text-section text-text">{question}</h3>
+                    <ChevronDown
+                      {...iconSm}
+                      aria-hidden
+                      className="shrink-0 text-text-muted transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <p className="pb-4 text-body text-text-muted">{answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="titulo-cierre" className={`${container} py-12 lg:py-20`}>
+          <h2 id="titulo-cierre" className="max-w-2xl text-title text-text">
+            Registra tu serviteca y empieza a llevar ventas e inventario hoy mismo.
+          </h2>
+          <Link to={cta.to} className={`mt-6 ${buttonClasses('primary')}`} data-variant="primary">
+            {cta.label}
+          </Link>
+          <Contacts className="mt-6" />
         </section>
       </main>
 
-      <footer id="contacto" className="scroll-mt-16 border-t border-border bg-surface">
-        <div className="mx-auto max-w-content px-4 py-12 sm:px-6 lg:px-8">
+      <footer className="border-t border-border bg-surface">
+        <div className={`${container} flex flex-col gap-6 py-10 md:flex-row md:items-start md:justify-between`}>
           <WordmarkLink />
-          <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map(({ title, text }) => (
-              <div key={title}>
-                <dt className="font-display text-h3 text-text">{title}</dt>
-                <dd className="mt-1 text-small text-text-muted">{text}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 text-small text-text-muted sm:flex-row sm:items-center sm:justify-between">
-            <Link to="/terminos" className={`rounded-tag font-medium text-brand-ink hover:underline ${focusRing}`}>
-              Términos y condiciones
-            </Link>
-            <p>ServiBox · v1.0 · 2026</p>
-          </div>
+          <nav aria-label="Pie de página">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-small">
+              <li>
+                <Link to="/terminos" className={linkClass}>
+                  Términos y tratamiento de datos
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" className={linkClass}>
+                  Iniciar sesión
+                </Link>
+              </li>
+              <li>
+                <Link to="/registro" className={linkClass}>
+                  Crear cuenta
+                </Link>
+              </li>
+            </ul>
+          </nav>
+          <Contacts />
         </div>
       </footer>
     </div>

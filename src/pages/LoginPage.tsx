@@ -7,15 +7,16 @@ import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
+import { WHATSAPP_URL } from '../config/contact'
 import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-tag font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 export function LoginPage() {
-  usePageMeta('Inicia sesión · ServiBox', 'Ingresa a ServiBox con los datos de tu serviteca.')
+  usePageMeta('Iniciar sesión | ServiBox', 'Entra a ServiBox con el código de tu serviteca, tu usuario y tu contraseña.')
   const session = useSession()
   const location = useLocation()
   const from = (location.state as { from?: string } | null)?.from ?? '/inicio'
@@ -43,82 +44,69 @@ export function LoginPage() {
   const invalidCredentials = mutation.error instanceof ApiError && mutation.error.status === 401
 
   return (
-    <div className="flex min-h-screen bg-canvas">
-      <section className="relative hidden flex-col overflow-hidden bg-nav p-16 lg:flex lg:w-1/2 xl:w-5/12">
-        <div
-          className="absolute inset-0 bg-brand/20 [clip-path:polygon(72%_0,100%_0,100%_100%,34%_100%)]"
-          aria-hidden
-        />
-        <div className="relative">
-          <WordmarkLink onDark />
-        </div>
-        <div className="relative my-auto max-w-md">
-          <p className="font-mono text-label uppercase text-text-subtle">Servitecas y talleres</p>
-          <p className="mt-4 font-display text-display text-text-inverse">Tu negocio en buenas manos.</p>
-          <p className="mt-6 text-body text-text-subtle">
-            Registra una venta y el inventario y la caja se actualizan solos. Sin archivos separados ni
-            conciliación a fin de mes.
-          </p>
-        </div>
-        <p className="relative text-small text-text-subtle">ServiBox · Plataforma web para servitecas · 2026</p>
-      </section>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12 sm:px-6">
+      <div className="mb-8">
+        <WordmarkLink />
+      </div>
+      <div className="w-full max-w-sm rounded-surface border border-border bg-surface p-6 sm:p-8">
+        <h1 className="text-title text-text">Iniciar sesión</h1>
+        <p className="mt-1 text-small text-text-muted">Ventas, inventario y caja en un solo lugar.</p>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-8">
-        <div className="mb-8 lg:hidden">
-          <WordmarkLink />
-        </div>
-        <div className="w-full max-w-sm rounded-card border border-border bg-surface p-8 shadow-card">
-          <h1 className="text-h2 text-text">Inicia sesión</h1>
-          <p className="mt-1 text-small text-text-muted">Ingresa con los datos de tu serviteca.</p>
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          {mutation.isError && (
+            <Alert
+              tone="error"
+              title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
+            >
+              {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage(mutation.error)}
+            </Alert>
+          )}
+          <TextField
+            label="Código de tu serviteca"
+            name="tenantSlug"
+            hint="El nombre corto que elegiste al registrarte."
+            autoComplete="organization"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            value={tenantSlug}
+            onChange={(event) => setTenantSlug(event.target.value)}
+          />
+          <TextField
+            label="Usuario"
+            name="username"
+            autoComplete="username"
+            required
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+          <TextField
+            label="Contraseña"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <Button type="submit" className="w-full" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}
+          </Button>
+        </form>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-            {mutation.isError && (
-              <Alert
-                tone="error"
-                title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
-              >
-                {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage(mutation.error)}
-              </Alert>
-            )}
-            <TextField
-              label="Serviteca"
-              name="tenantSlug"
-              hint="Identificador con el que registraste tu serviteca"
-              autoComplete="organization"
-              required
-              value={tenantSlug}
-              onChange={(event) => setTenantSlug(event.target.value)}
-            />
-            <TextField
-              label="Usuario"
-              name="username"
-              autoComplete="username"
-              required
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
-            <TextField
-              label="Contraseña"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            <Button type="submit" className="w-full" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Ingresando…' : 'Ingresar'}
-            </Button>
-          </form>
-
-          <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
-            ¿Tu serviteca aún no usa ServiBox?{' '}
-            <Link to="/registro" className={linkClass}>
-              Crea tu cuenta
-            </Link>
-          </p>
-        </div>
-      </main>
-    </div>
+        <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
+          ¿Tu serviteca aún no usa ServiBox?{' '}
+          <Link to="/registro" className={linkClass}>
+            Crear cuenta
+          </Link>
+        </p>
+      </div>
+      <p className="mt-6 text-center text-small text-text-muted">
+        ¿No puedes entrar?{' '}
+        <a href={WHATSAPP_URL} target="_blank" rel="noopener" className={linkClass}>
+          Escríbenos por WhatsApp.
+        </a>
+      </p>
+    </main>
   )
 }

@@ -119,19 +119,15 @@
   --figure-line-height-md: 32px;
   --figure-font-weight: 600;
 
-  /* Legado del manual, solo para la landing, el login y el registro (los redisena la tarea 7). */
-  --text-display: 48px;
-  --text-display--line-height: 1.1;
-  --text-display--font-weight: 700;
-  --text-h1: 32px;
-  --text-h1--line-height: 1.2;
-  --text-h1--font-weight: 700;
-  --text-h2: 24px;
-  --text-h2--line-height: 1.3;
-  --text-h2--font-weight: 600;
-  --text-h3: 18px;
-  --text-h3--line-height: 1.4;
-  --text-h3--font-weight: 600;
+  /*
+   * display: solo el titular (h1) de la landing. 32/36 por debajo de md y 40/44 desde md.
+   * Lo aplica la utilidad text-display de index.css. Ver docs/ai-context/05-DESIGN-SYSTEM.md.
+   */
+  --display-size: 32px;
+  --display-line-height: 36px;
+  --display-size-md: 40px;
+  --display-line-height-md: 44px;
+  --display-font-weight: 700;
 
   /* Espaciado: base de 4 px (p-1 = 4, p-2 = 8, p-3 = 12, p-4 = 16, p-6 = 24...). */
   --spacing: 4px;
@@ -140,10 +136,6 @@
   --radius-control: 8px;
   --radius-surface: 12px;
   --radius-pill: 999px;
-  /* Legado, solo landing, login y registro (tarea 7). La guarda impide usarlos en la app. */
-  --radius-tag: 4px;
-  --radius-card: var(--radius-surface);
-  --radius-container: 20px;
 
   /*
    * Sombras: solo lo que flota. raised para menus desplegables, toasts, tooltips y la barra fija;
@@ -151,10 +143,6 @@
    */
   --shadow-raised: 0 4px 12px rgb(0 0 0 / 10%);
   --shadow-overlay: 0 16px 40px rgb(0 0 0 / 16%);
-  /* Legado, solo landing, login y registro (tarea 7). La guarda impide usarlos en la app. */
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 6%);
-  --shadow-menu: var(--shadow-raised);
-  --shadow-modal: var(--shadow-overlay);
 
   /* Iconos Lucide: ver src/components/icons.ts, que usa estos valores. */
   --icon-sm: 16px;

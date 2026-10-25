@@ -131,7 +131,7 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
     errors.password = 'Usa máximo 72 caracteres.'
   }
 
-  if (!values.acceptTerms) errors.acceptTerms = 'Acepta los términos y condiciones para continuar.'
+  if (!values.acceptTerms) errors.acceptTerms = 'Acepta los términos de uso y el tratamiento de datos para continuar.'
 
   for (const field of Object.keys(errors) as RegisterField[]) {
     if (!errors[field]) delete errors[field]

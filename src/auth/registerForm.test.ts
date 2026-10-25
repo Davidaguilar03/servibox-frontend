@@ -132,7 +132,7 @@ describe('validacion del registro', () => {
   })
 
   it('aceptar los terminos es obligatorio', () => {
-    expect(errorOf({ acceptTerms: false }).acceptTerms).toBe('Acepta los términos y condiciones para continuar.')
+    expect(errorOf({ acceptTerms: false }).acceptTerms).toBe('Acepta los términos de uso y el tratamiento de datos para continuar.')
   })
 })
 

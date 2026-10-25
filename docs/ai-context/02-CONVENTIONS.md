@@ -103,8 +103,9 @@ necesite, no antes.
 * `Button` expone su variante en `data-variant`; los enlaces con `buttonClasses` la ponen a
   mano. Las pruebas cuentan `[data-variant="primary"]` con `primaryActions()` de
   `src/test/utils.tsx`.
-* Excepcion temporal: la landing (`/`) tiene dos primarios (portada y llamado final) hasta la
-  fase de rediseno. Ver [03-DECISIONS.md](03-DECISIONS.md).
+* Landing (`/`): un primario por tramo visible. La barra superior lleva `Crear cuenta`
+  (primario) e `Iniciar sesion` (variante `text`); la portada y el cierre llevan
+  `Crear mi serviteca`. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * `StatusBadge` siempre lleva texto; el color solo acompana. `STOCK_CRITICO` ("Stock
   critico", tono de error) no esta en el manual: pendiente de validar con el disenador.
   `INGRESO` y `EGRESO` (tonos de exito y de error) marcan el tipo de un movimiento.
@@ -125,15 +126,17 @@ necesite, no antes.
   pagina redirige a `/inicio` con `<Navigate replace>` al leer `useSession()`.
 * Cada pagina publica llama a `usePageMeta(titulo, descripcion)` (`src/lib/usePageMeta.ts`):
   fija `document.title` y la meta description y los restaura al salir. Titulo con el
-  formato `Pagina · ServiBox`; descripcion de una o dos frases con la voz del manual.
-  `index.html` trae la descripcion por defecto. Las privadas no lo usan: su titulo lo pone
+  formato `Pagina | ServiBox` (`Iniciar sesion | ServiBox`, `Crear cuenta | ServiBox`,
+  `Terminos | ServiBox`); la landing usa `ServiBox | Ventas, inventario y caja para
+  servitecas`. Descripcion de una o dos frases con la voz del manual. `index.html` trae el
+  titulo y la descripcion de la landing. Las privadas no lo usan: su titulo lo pone
   `AppShell`.
 * Rutas privadas: `AppShell` fija `document.title` como `<ultimo tramo de la miga> · ServiBox`
   (`Facturas de venta · ServiBox`; en un detalle, el numero de la factura cuando cargo y
   `Detalle de factura` mientras tanto) y lo restaura al salir del shell.
 * El wordmark de las paginas publicas enlaza a `/` con `WordmarkLink`.
-* Toda pagina tiene un unico `h1` en todos los anchos y un unico landmark `main`. Un lema
-  decorativo (la columna oscura del login y del registro) va en `p` con `font-display`.
+* Toda pagina tiene un unico `h1` en todos los anchos y un unico landmark `main`. Login y
+  registro no llevan lema ni columna decorativa.
 
 ## Accesibilidad del shell
 
@@ -199,14 +202,28 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Espanol correcto, con tildes y signos de apertura en las preguntas y exclamaciones. Solo
   los archivos de docs van sin tildes, por eso los ejemplos de esta seccion no las llevan.
 * Voz del manual: tuteo, frases cortas, verbo primero, sin jerga tecnica.
-* Botones en infinitivo (`Ingresar`, `Guardar cambios`).
-* Titulos con mayuscula solo en la inicial (`Inicia sesion`, no `Inicia Sesion`).
+* Botones en infinitivo (`Iniciar sesion`, `Guardar cambios`).
+* Titulos con mayuscula solo en la inicial (`Iniciar sesion`, no `Iniciar Sesion`).
+* Voz de mostrador: directa, verbos en imperativo o infinitivo, hechos concretos. Prohibido en
+  toda la app: "Tu negocio en buenas manos" (no aparece en ningun lado), "plataforma
+  integral", "solucion", "optimiza", "potencia", "revoluciona" y "todo en uno". Sin lemas en
+  login ni registro. `LandingPage.test.tsx` busca estas frases (y "Proximamente", "Vista de
+  ejemplo" y "Cliente 1") en `/`, `/login`, `/registro` y `/terminos`.
+* La landing solo promete lo que existe hoy y lo muestra con capturas reales del panel
+  (`src/assets/landing/`, tenant demo). Nada de mockups dibujados, testimonios, cifras ni logos
+  inventados. Lo que no existe (facturacion electronica DIAN, recuperar contrasena, roles,
+  precio publicado) no se menciona como funcion.
+* Contactos: `src/config/contact.ts` (`WHATSAPP_DISPLAY`, `WHATSAPP_URL`, `SUPPORT_EMAIL`) es
+  la unica fuente; la interfaz los importa de ahi y ningun archivo repite el numero ni el
+  correo (lo comprueba `LandingPage.test.tsx`). Hoy son demostrativos: reemplazar antes de
+  publicar.
+* Identificador del tenant: en login y registro se rotula `Codigo de tu serviteca`.
 * Etiquetas de tabla en mayusculas sostenidas (`text-label uppercase`).
 * Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`).
   Excepcion pendiente en Manejo de errores.
 * La interfaz no ofrece funciones que no existen: nada de enlaces, pestanas, opciones ni
   textos "Proximamente" para algo que hoy no funciona. Si una funcion no esta, no se muestra;
-  se agrega cuando exista. Excepcion: `/terminos`, que el registro necesita enlazar.
+  se agrega cuando exista. `/terminos` ya tiene su texto (pendiente de revision legal).
 * Un solo verbo de mostrador por accion, igual en el boton primario, el estado vacio, los
   menus y los iconos que llevan a ella: `Registrar venta` (`/ventas/nueva`) y `Registrar
   compra` (`/compras/nueva`). Los titulos de las pantallas (`Nueva factura de venta`, `Nueva

@@ -12,6 +12,34 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Landing, login, registro y terminos con capturas reales y voz de mostrador
+
+* Decision:
+  * Landing nueva: barra con `Crear cuenta` (primario) e `Iniciar sesion` (texto); portada con
+    el titular en `text-display`, un solo primario `Crear mi serviteca` y la captura real de
+    Inicio; tres bloques de texto y captura (venta, inventario, reportes); "Y tambien" en
+    lista; empresa piloto en una linea; preguntas frecuentes con `details`/`summary`; cierre
+    con contactos; pie con terminos. Sin mockup, sin anclas de secciones ni menu movil, sin
+    tarjetas con icono.
+  * Capturas reales del panel con el tenant demo (1440x900, escala 1, recorte al contenido de
+    1200x836) en `src/assets/landing/*.webp`, con Edge headless por CDP y Pillow, sin
+    dependencias nuevas en el proyecto.
+  * `text-display` (32/36, 40/44 desde md, 700) como excepcion unica en el `h1` de la landing;
+    tokens de legado eliminados y la guarda sin exclusiones.
+  * `src/config/contact.ts` como unica fuente de WhatsApp y correo (demostrativos).
+  * Login y registro sin columna oscura ni lema; el identificador se rotula `Codigo de tu
+    serviteca`. El toast de exito del registro lista solo lo que crea
+    `TenantRegistrationService` (Caja General, categorias base, IVA 19 %); el aviso previo
+    nombra ademas las categorias y el Consumidor final.
+  * `/terminos` con texto real (Ley 1581 de 2012); responsable "ServiBox" hasta tener los
+    datos legales.
+* Alternativas consideradas: mockup interactivo con componentes reales (parecia plantilla y
+  mostraba datos ficticios); Playwright para las capturas (agregaba dependencia y
+  navegadores); pantalla de bienvenida tras el registro (cambiaba el flujo de autenticacion).
+* Motivo: el brief pide una captura real y una promesa especifica en el primer pantallazo y
+  prohibe prometer lo que no existe; la escala unica cierra el pendiente 7 del sistema de
+  diseno.
+
 ## 2026-10-25: Menu de usuario arriba, panel con costo de lo vendido y jerarquia de titulos
 
 * Decision:
