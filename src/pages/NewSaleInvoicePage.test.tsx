@@ -478,7 +478,7 @@ describe('nueva factura de venta', () => {
   it('los botones del panel y del listado llevan a la nueva factura', async () => {
     mockApi(fullRoutes())
     renderRoute('/ventas')
-    const [link] = await screen.findAllByRole('link', { name: 'Nueva factura' })
+    const [link] = await screen.findAllByRole('link', { name: 'Registrar venta' })
     expect(link).toHaveAttribute('href', '/ventas/nueva')
   })
 })

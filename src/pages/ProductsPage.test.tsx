@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
@@ -82,8 +82,9 @@ describe('productos', () => {
 
     expect(await within(indicator('Total de productos')).findByText('4')).toBeInTheDocument()
     expect(within(indicator('En stock')).getByText('3')).toBeInTheDocument()
-    // BAT-004 critico (rojo por defecto 2) y LL-003 bajo (amarillo 10); LL-004 sin stock no cuenta.
-    expect(await within(indicator('Por debajo del mínimo')).findByText('2')).toBeInTheDocument()
+    // LL-004 sin stock, BAT-004 critico (rojo por defecto 2) y LL-003 bajo (amarillo 10).
+    expect(await within(indicator('Con alerta de stock')).findByText('3')).toBeInTheDocument()
+    expect(within(indicator('Con alerta de stock')).getByText('1 sin stock')).toBeInTheDocument()
     expect(within(indicator('Valor en inventario')).getByText('$ 3.777.000')).toBeInTheDocument()
 
     const tabs = screen.getByRole('group', { name: 'Categorías' })
@@ -230,13 +231,47 @@ describe('productos', () => {
     renderRoute('/inventario')
 
     expect(await within(indicator('Total de productos')).findByText('4')).toBeInTheDocument()
-    expect(within(indicator('Por debajo del mínimo')).getByText('No pudimos cargar este dato.')).toBeInTheDocument()
+    expect(within(indicator('Con alerta de stock')).getByText('No pudimos cargar este dato.')).toBeInTheDocument()
     expect(screen.getByText('No pudimos cargar las categorías.')).toBeInTheDocument()
     expect(screen.getByText('No pudimos cargar los productos.')).toBeInTheDocument()
 
     await user.click(within(screen.getByRole('region', { name: 'Listado de productos' })).getByRole('button', { name: 'Reintentar' }))
     await waitFor(() => expect(screen.queryByText('No pudimos cargar los productos.')).not.toBeInTheDocument())
     expect(codes()).toHaveLength(4)
-    expect(within(indicator('Por debajo del mínimo')).getByText('2')).toBeInTheDocument()
+    expect(within(indicator('Con alerta de stock')).getByText('3')).toBeInTheDocument()
+  })
+})
+
+describe('aviso de configuracion financiera', () => {
+  beforeEach(() => {
+    saveToken(validToken())
+  })
+
+  it('aparece con gastos, renta e ICA en 0 y lleva a la pestana financiera', async () => {
+    mockApi({
+      ...fullRoutes(),
+      '/api/inventory/financial-settings': () => jsonResponse({ expensesRate: 0, dianRate: 0, icaRate: 0, cardCommissionRate: 0 }),
+    })
+    renderRoute('/inventario')
+
+    const notice = (await screen.findByText(/Tu configuración financiera está en 0 %/)).closest('[role="status"]') as HTMLElement
+    expect(notice).toHaveTextContent('por eso el precio sugerido es igual al costo.')
+    expect(within(notice).getByRole('link', { name: 'Configuración' })).toHaveAttribute('href', '/configuracion?tab=financiera')
+    expect(primaryActions()).toHaveLength(1)
+  })
+
+  it('no aparece si alguno es distinto de 0', async () => {
+    for (const settings of [
+      { expensesRate: 0.343, dianRate: 0, icaRate: 0 },
+      { expensesRate: 0, dianRate: 0.35, icaRate: 0 },
+      { expensesRate: 0, dianRate: 0, icaRate: 0.0082 },
+    ]) {
+      const fetchMock = mockApi({ ...fullRoutes(), '/api/inventory/financial-settings': () => jsonResponse({ ...settings, cardCommissionRate: 0 }) })
+      renderRoute('/inventario')
+      await loaded()
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/inventory/financial-settings', expect.anything()))
+      expect(screen.queryByText(/Tu configuración financiera está en 0 %/)).not.toBeInTheDocument()
+      cleanup()
+    }
   })
 })

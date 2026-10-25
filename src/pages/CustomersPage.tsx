@@ -16,6 +16,7 @@ const config: CounterpartiesConfig = {
   fetchInvoices: fetchSaleBalances,
   balanceLabel: 'Por cobrar',
   newInvoicePath: (id) => `/ventas/nueva?cliente=${id}`,
+  newInvoiceLabel: 'Registrar venta',
   createdToast: 'Cliente creado',
   promotedToast:
     'Ya existía como proveedor: ahora también es cliente. Se conservan el nombre y los datos que ya tenía registrados.',

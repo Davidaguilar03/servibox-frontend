@@ -3,7 +3,6 @@ import { RequireAuth } from './auth/RequireAuth'
 import { AppShell, type RouteHandle } from './layout/AppShell'
 import { AccountsPage } from './pages/AccountsPage'
 import { CategoriesPage } from './pages/CategoriesPage'
-import { ComingSoonPage } from './pages/ComingSoonPage'
 import { CustomersPage } from './pages/CustomersPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
@@ -48,7 +47,6 @@ export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   { path: '/registro', element: <RegisterPage /> },
   { path: '/terminos', element: <TermsPage /> },
-  { path: '/recuperar-contrasena', element: <ComingSoonPage title="Recuperar tu contraseña" /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   {
     // Ruta de layout sin path: las privadas siguen colgando de la raiz.

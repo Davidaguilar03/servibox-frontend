@@ -483,7 +483,7 @@ describe('nueva factura de compra', () => {
     const router = renderRoute('/compras')
     const user = userEvent.setup()
 
-    const [link] = await screen.findAllByRole('link', { name: 'Nueva factura' })
+    const [link] = await screen.findAllByRole('link', { name: 'Registrar compra' })
     await user.click(link as HTMLElement)
     expect(await screen.findByRole('heading', { name: 'Nueva factura de compra' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/compras/nueva')

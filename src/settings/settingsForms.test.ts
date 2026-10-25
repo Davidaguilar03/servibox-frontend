@@ -35,7 +35,7 @@ const financial = (fields: Partial<FinancialFormValues> = {}): FinancialFormValu
 describe('pestanas', () => {
   it('lee la pestana de la URL y cae en datos con un valor desconocido', () => {
     expect(parseSettingsTab('financiera')).toBe('financiera')
-    expect(parseSettingsTab('usuarios')).toBe('usuarios')
+    expect(parseSettingsTab('usuarios')).toBe('datos')
     expect(parseSettingsTab('otra')).toBe('datos')
     expect(parseSettingsTab(null)).toBe('datos')
   })
@@ -144,7 +144,7 @@ describe('advertencia del divisor', () => {
     expect(categoriesAtCost(settings, categories).map((c) => c.name)).toEqual(['BATERIAS'])
   })
 
-  it('gastos 60 y DIAN 60 dejan el divisor negativo en las categorias con margen', () => {
+  it('gastos 60 y renta 60 dejan el divisor negativo en las categorias con margen', () => {
     // k = 0,4 * 0,4 = 0,16.
     const settings = buildFinancialRequest(financial({ expensesRate: '60', dianRate: '60', icaRate: '0' }))
     expect(categoriesAtCost(settings, categories).map((c) => c.name)).toEqual(['LLANTAS', 'BATERIAS'])

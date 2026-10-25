@@ -1,9 +1,10 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { buttonClasses } from '../components/buttonStyles'
 import { CategoryDot } from '../components/CategoryDot'
 import { DataTable, type Column } from '../components/DataTable'
 import { Modal } from '../components/Modal'
@@ -37,6 +38,7 @@ import {
 import { productCounts } from '../inventory/productList'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE } from '../lib/format'
+import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 
 const card = 'rounded-card border border-border bg-surface shadow-card'
 const linkClass =
@@ -55,6 +57,10 @@ export function CategoriesPage() {
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   const products = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts })
   const counts = products.data ? productCounts(products.data) : undefined
+  // Misma clave que la pestana de configuracion financiera: una sola peticion en cache.
+  const financial = useQuery({ queryKey: FINANCIAL_SETTINGS_KEY, queryFn: fetchFinancialSettings })
+  const financialAtZero =
+    financial.data && !financial.data.expensesRate && !financial.data.dianRate && !financial.data.icaRate
 
   const columns: Column<InventoryCategory>[] = [
     {
@@ -163,12 +169,23 @@ export function CategoriesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/inventario" className={linkClass}>
+          <Link to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
+            <ArrowLeft size={18} strokeWidth={1.5} aria-hidden />
             Volver a Productos
           </Link>
           <Button onClick={() => setTarget('new')}>Nueva categoría</Button>
         </div>
       </div>
+
+      {financialAtZero && (
+        <Alert tone="info" title="Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.">
+          Configúrala en{' '}
+          <Link to="/configuracion?tab=financiera" className={linkClass}>
+            Configuración
+          </Link>{' '}
+          para calcular precios con tus márgenes.
+        </Alert>
+      )}
 
       <section className={`${card} p-4`} aria-label="Listado de categorías">
         {content}

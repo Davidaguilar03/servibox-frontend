@@ -196,6 +196,15 @@ describe('formulario de producto', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/inventario'))
   })
 
+  it('la ayuda del costo dice pesos colombianos y no menciona centavos', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/inventario/nuevo')
+
+    const cost = await screen.findByLabelText(/Costo de compra sin IVA/)
+    expect(cost).toHaveAccessibleDescription('Costo de compra antes de IVA, en pesos colombianos.')
+    expect(document.body.textContent).not.toMatch(/centavo/i)
+  })
+
   it('un id inexistente o no numerico muestra Producto no encontrado', async () => {
     mockApi(fullRoutes())
     const router = renderRoute('/inventario/abc/editar')

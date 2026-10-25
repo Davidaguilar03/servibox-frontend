@@ -48,7 +48,7 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-h1 text-text">Configuración</h1>
-        <p className="mt-1 text-small text-text-muted">Datos de la serviteca, usuarios y parámetros financieros.</p>
+        <p className="mt-1 text-small text-text-muted">Datos de la serviteca y parámetros financieros.</p>
       </div>
 
       <div role="tablist" aria-label="Secciones de configuración" className="flex gap-6 overflow-x-auto overflow-y-hidden border-b border-border" onKeyDown={handleKeyDown}>
@@ -80,14 +80,6 @@ export function SettingsPage() {
       <div role="tabpanel" id={panelId(active)} aria-labelledby={tabId(active)}>
         {active === 'datos' && <TenantProfileTab readOnly={readOnly} onDirtyChange={setDirty} />}
         {active === 'financiera' && <FinancialSettingsTab readOnly={readOnly} onDirtyChange={setDirty} />}
-        {active === 'usuarios' && (
-          <section className="rounded-card border border-border bg-surface p-6 shadow-card">
-            <h2 className="text-h3 text-text">Próximamente</h2>
-            <p className="mt-2 text-body text-text-muted">
-              La gestión de usuarios y roles llegará más adelante. Por ahora cada serviteca tiene su usuario administrador.
-            </p>
-          </section>
-        )}
       </div>
 
       {pending && (

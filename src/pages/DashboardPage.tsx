@@ -19,7 +19,7 @@ import {
   type Sale,
 } from '../dashboard/dashboardApi'
 import { EMPTY_VALUE, formatCurrency, formatDate, formatMonth, monthToDate } from '../lib/format'
-import { lowStockProducts, type StockStatus } from '../lib/stock'
+import { lowStockProducts, stockAlertCounts, type StockStatus } from '../lib/stock'
 
 const ROW_LIMIT = 5
 
@@ -154,9 +154,16 @@ function LowStockBlock() {
   const categories = useQuery({ queryKey: ['inventory', 'categories'], queryFn: fetchCategories })
   const rows =
     products.data && categories.data ? lowStockProducts(products.data, categories.data, ROW_LIMIT) : undefined
+  const alerts = products.data && categories.data ? stockAlertCounts(products.data, categories.data) : undefined
 
   return (
     <Section title="Productos con stock bajo" link={{ to: '/inventario', label: 'Ver inventario' }}>
+      {alerts && alerts.withAlert > 0 && (
+        <p className="mb-4 text-small text-text-muted">
+          Con alerta de stock: {alerts.withAlert}
+          {alerts.outOfStock > 0 && ` · ${alerts.outOfStock} sin stock`}
+        </p>
+      )}
       <DataTable
         columns={lowStockColumns}
         rows={rows}

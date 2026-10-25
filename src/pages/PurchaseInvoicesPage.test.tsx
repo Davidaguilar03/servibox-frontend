@@ -114,7 +114,7 @@ describe('facturas de compra', () => {
     expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
       'Compras/Facturas de compra',
     )
-    expect(screen.getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('href', '/compras/nueva')
+    expect(screen.getByRole('link', { name: 'Registrar compra' })).toHaveAttribute('href', '/compras/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/compras/papelera')
 
     expect(await within(indicator('Compras del mes')).findByText('$ 6.592.600')).toBeInTheDocument()
@@ -218,8 +218,8 @@ describe('facturas de compra', () => {
     mockApi({ ...fullRoutes(), '/api/purchases': () => jsonResponse([purchases[3]]), '/api/treasury/movements': () => jsonResponse([]) })
     renderRoute('/compras')
 
-    expect(await screen.findByText('Aún no registras compras. Crea tu primera factura de compra.')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Nueva factura' })).toHaveLength(2)
+    expect(await screen.findByText('Aún no registras compras. Registra tu primera compra.')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Registrar compra' })).toHaveLength(2)
     expect(within(indicator('Por pagar')).getByText('0 facturas pendientes de pago')).toBeInTheDocument()
   })
 
@@ -227,12 +227,12 @@ describe('facturas de compra', () => {
     mockApi({ ...fullRoutes(), '/api/purchases': () => jsonResponse([purchases[3]]), '/api/treasury/movements': () => jsonResponse([]) })
     renderRoute('/compras')
 
-    expect(await screen.findByText('Aún no registras compras. Crea tu primera factura de compra.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no registras compras. Registra tu primera compra.')).toBeInTheDocument()
     const [primary, ...rest] = primaryActions()
     expect(rest).toHaveLength(0)
-    expect(primary).toHaveTextContent('Nueva factura')
-    expect(emptyStateOf('Aún no registras compras. Crea tu primera factura de compra.')).not.toContainElement(primary ?? null)
-    expect(within(emptyStateOf('Aún no registras compras. Crea tu primera factura de compra.')).getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('data-variant', 'secondary')
+    expect(primary).toHaveTextContent('Registrar compra')
+    expect(emptyStateOf('Aún no registras compras. Registra tu primera compra.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras compras. Registra tu primera compra.')).getByRole('link', { name: 'Registrar compra' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('mientras cargan muestra skeleton en cada bloque', async () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
@@ -59,6 +59,18 @@ describe('formulario de login', () => {
     expect(getToken()).toBeNull()
   })
 
+  it('no ofrece recuperar la contrasena: la funcion no existe', async () => {
+    const router = renderRoute('/login')
+
+    expect(await screen.findByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
+    expect(screen.queryByText(/Olvidaste/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/recuperar/i)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/recuperar-contrasena')).toBe(false)
+
+    await router.navigate('/recuperar-contrasena')
+    await waitFor(() => expect(router.state.location.pathname).not.toBe('/recuperar-contrasena'))
+  })
+
   it('recuerda la serviteca de la ultima vez', async () => {
     localStorage.setItem('servibox.tenantSlug', 'autollantas')
     renderRoute('/login')
@@ -90,7 +102,6 @@ describe('formulario de login', () => {
     renderRoute('/login')
 
     expect(await screen.findByRole('link', { name: 'Crea tu cuenta' })).toHaveAttribute('href', '/registro')
-    expect(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' })).toHaveAttribute('href', '/recuperar-contrasena')
     for (const link of screen.getAllByRole('link', { name: 'ServiBox, ir a la página principal' })) {
       expect(link).toHaveAttribute('href', '/')
     }

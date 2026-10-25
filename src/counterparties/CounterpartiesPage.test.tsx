@@ -154,11 +154,11 @@ describe('Clientes', () => {
 
     expect(within(row('Consumidor')).queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument()
     expect(within(row('Transportes')).getByRole('button', { name: 'Editar cliente Transportes Boyacá S.A.S.' })).toBeInTheDocument()
-    expect(within(row('Transportes')).getByRole('link', { name: 'Nueva factura para Transportes Boyacá S.A.S.' })).toHaveAttribute(
+    expect(within(row('Transportes')).getByRole('link', { name: 'Registrar venta para Transportes Boyacá S.A.S.' })).toHaveAttribute(
       'href',
       '/ventas/nueva?cliente=2',
     )
-    expect(within(row('Consumidor')).getByRole('link', { name: 'Nueva factura para Consumidor final' })).toHaveAttribute(
+    expect(within(row('Consumidor')).getByRole('link', { name: 'Registrar venta para Consumidor final' })).toHaveAttribute(
       'href',
       '/ventas/nueva?cliente=1',
     )
@@ -477,7 +477,7 @@ describe('Proveedores', () => {
     expect(row('Distrillantas')).toHaveTextContent('$ 595.0001 factura pendiente')
     expect(row('María')).toHaveTextContent('$ 100.0001 factura pendiente')
     expect(within(row('Distrillantas')).getByRole('button', { name: 'Editar proveedor Distrillantas Boyacá S.A.S.' })).toBeInTheDocument()
-    expect(within(row('Distrillantas')).getByRole('link', { name: 'Nueva factura para Distrillantas Boyacá S.A.S.' })).toHaveAttribute(
+    expect(within(row('Distrillantas')).getByRole('link', { name: 'Registrar compra para Distrillantas Boyacá S.A.S.' })).toHaveAttribute(
       'href',
       '/compras/nueva?proveedor=5',
     )

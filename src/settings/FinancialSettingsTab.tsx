@@ -26,7 +26,10 @@ const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
 // Rotulos y ejemplos de la seccion Deducibles de Autollantas.
 const fieldTexts: Record<FinancialField, { label: string; hint: string }> = {
   expensesRate: { label: 'Gastos (%)', hint: 'Gastos del negocio sobre la venta. Por ejemplo, 34,3.' },
-  dianRate: { label: 'DIAN (%)', hint: 'Impuesto de renta. Por ejemplo, 35.' },
+  dianRate: {
+    label: 'Impuesto de renta deducible (%)',
+    hint: 'Se usa en el cálculo del precio sugerido; no es facturación electrónica.',
+  },
   icaRate: { label: 'ICA (por mil)', hint: 'Industria y comercio, en por mil. Por ejemplo, 8,2.' },
   cardCommissionRate: {
     label: 'Comisión de tarjeta (%)',
@@ -158,7 +161,7 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
         </div>
         {atCost.length > 0 && (
           <Alert tone="warning" title="Con estos valores el precio sugerido de algunas categorías queda igual al costo">
-            Gastos, DIAN, ICA y el margen de la categoría no dejan espacio para un precio mayor:{' '}
+            Gastos, impuesto de renta deducible, ICA y el margen de la categoría no dejan espacio para un precio mayor:{' '}
             {atCost.map((category) => category.name).join(', ')}.
           </Alert>
         )}

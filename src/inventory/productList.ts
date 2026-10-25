@@ -130,11 +130,3 @@ export function productIndicators(products: InventoryProduct[]) {
     ),
   }
 }
-
-/** Por debajo del minimo: bajo stock o stock critico, con unidades. Sin stock va aparte. */
-export function belowMinimum(products: InventoryProduct[], byId: CategoriesById): number {
-  return products.filter((product) => {
-    const status = productStatus(product, byId)
-    return status === 'BAJO' || status === 'CRITICO'
-  }).length
-}

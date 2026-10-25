@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { CategoryDot } from '../components/CategoryDot'
@@ -21,7 +22,6 @@ import {
 } from '../inventory/inventoryApi'
 import {
   DEFAULT_PRODUCT_FILTERS,
-  belowMinimum,
   categoriesById,
   categoryTabs,
   filterProducts,
@@ -35,7 +35,8 @@ import {
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
-import type { StockStatus } from '../lib/stock'
+import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
+import { stockAlertCounts, type StockStatus } from '../lib/stock'
 
 const badgeFor: Record<StockStatus, BadgeStatus> = {
   NORMAL: 'DISPONIBLE',
@@ -84,6 +85,11 @@ export function ProductsPage() {
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   const byId = categories.data ? categoriesById(categories.data) : undefined
   const indicators = products.data ? productIndicators(products.data) : undefined
+  const alerts = products.data && categories.data ? stockAlertCounts(products.data, categories.data) : undefined
+  // Misma clave que la pestana de configuracion financiera: una sola peticion en cache.
+  const financial = useQuery({ queryKey: FINANCIAL_SETTINGS_KEY, queryFn: fetchFinancialSettings })
+  const financialAtZero =
+    financial.data && !financial.data.expensesRate && !financial.data.dianRate && !financial.data.icaRate
 
   // Cambiar un filtro vuelve a la primera pagina. Escribir en el buscador reemplaza la
   // entrada del historial para no dejar una por letra.
@@ -112,6 +118,16 @@ export function ProductsPage() {
         </div>
       </div>
 
+      {financialAtZero && (
+        <Alert tone="info" title="Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.">
+          Configúrala en{' '}
+          <Link to="/configuracion?tab=financiera" className={linkClass}>
+            Configuración
+          </Link>{' '}
+          para calcular precios con tus márgenes.
+        </Alert>
+      )}
+
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <IndicatorCard
           label="Total de productos"
@@ -127,9 +143,9 @@ export function ProductsPage() {
           onRetry={() => void products.refetch()}
         />
         <IndicatorCard
-          label="Por debajo del mínimo"
-          value={products.data && byId ? String(belowMinimum(products.data, byId)) : undefined}
-          detail="Bajo stock o stock crítico"
+          label="Con alerta de stock"
+          value={alerts && String(alerts.withAlert)}
+          detail={alerts?.outOfStock ? `${alerts.outOfStock} sin stock` : undefined}
           error={products.isError || categories.isError}
           onRetry={() => {
             if (products.isError) void products.refetch()

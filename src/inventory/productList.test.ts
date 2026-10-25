@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { InventoryCategory, InventoryProduct } from './inventoryApi'
 import {
   DEFAULT_PRODUCT_FILTERS,
-  belowMinimum,
   categoriesById,
   categoryTabs,
   filterProducts,
@@ -127,14 +126,12 @@ describe('query string', () => {
 })
 
 describe('indicadores y pestanas', () => {
-  it('cuenta total, en stock y por debajo del minimo, y valoriza al costo', () => {
+  it('cuenta total y en stock, y valoriza al costo', () => {
     expect(productIndicators(products)).toEqual({
       total: 5,
       inStock: 4,
       inventoryValue: 24 * 118000 + 2 * 210000 + 3 * 105000 + 5 * 265000,
     })
-    // BAT-004 y LL-003 criticos, BAT-007 bajo; LL-002 sin stock no cuenta.
-    expect(belowMinimum(products, byId)).toBe(3)
   })
 
   it('una cantidad negativa o nula no suma al valor', () => {
