@@ -24,7 +24,7 @@ export function Alert({ tone, title, children }: AlertProps) {
   const urgent = tone === 'error' || tone === 'warning'
 
   return (
-    <div role={urgent ? 'alert' : 'status'} className={`flex gap-3 rounded-surface p-4 ${box}`}>
+    <div role={urgent ? 'alert' : 'status'} className={`flex gap-3 rounded-surface p-4 [--focus-ring:var(--focus-ring-on-tint)] ${box}`}>
       <Icon {...iconSm} className={`mt-px shrink-0 ${iconColor}`} aria-hidden />
       <div className="text-small">
         <p className={`font-medium ${titleClass}`}>{title}</p>

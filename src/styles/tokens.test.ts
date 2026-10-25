@@ -70,7 +70,25 @@ const CONTROL_BORDERS: Array<[string, string]> = [
   ['error', 'surface'],
 ]
 
+// Anillo de foco (--focus-ring, brand) sobre los fondos donde se usa, y --focus-ring-on-tint
+// (brand-ink) dentro de los Alert: 3 a 1.
+const FOCUS_RING: Array<[string, string]> = [
+  ['brand', 'surface'],
+  ['brand', 'canvas'],
+  ['brand', 'nav'],
+  ['brand', 'row-alt'],
+  ['brand', 'neutral-100'],
+  ['brand-ink', 'info-bg'],
+  ['brand-ink', 'error-bg'],
+  ['brand-ink', 'warning-bg'],
+  ['brand-ink', 'success-bg'],
+]
+
 describe('contraste de los tokens', () => {
+  it.each(FOCUS_RING)('anillo de foco %s sobre %s llega a 3 a 1', (foreground, background) => {
+    expect(contrast(foreground, background)).toBeGreaterThanOrEqual(3)
+  })
+
   it.each(TEXT_PAIRS)('%s sobre %s llega a 4.5 a 1', (foreground, background) => {
     expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5)
   })

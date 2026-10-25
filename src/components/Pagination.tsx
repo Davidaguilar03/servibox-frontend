@@ -10,7 +10,7 @@ interface PaginationProps {
 }
 
 const pageButton =
-  'flex size-9 items-center justify-center rounded-control text-button transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:text-text-subtle'
+  'flex size-touch items-center justify-center rounded-control text-button lg:size-control transition-colors duration-(--duration-fast) focus-ring disabled:pointer-events-none disabled:text-text-subtle'
 
 /** Texto del rango y botones anterior, numeros y siguiente. */
 export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
@@ -21,7 +21,7 @@ export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
       </p>
       {page.totalPages > 1 && (
         <nav aria-label="Paginación">
-          <ul className="flex items-center gap-1">
+          <ul className="flex flex-wrap items-center gap-2 lg:gap-1">
             <li>
               <button
                 type="button"

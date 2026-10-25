@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { IconButton } from './IconButton'
 import { iconMd } from './icons'
 
 interface ModalProps {
@@ -77,14 +78,9 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
           <h2 id={titleId} className="text-section text-text">
             {title}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="-mt-1 -mr-2 flex size-9 items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
+          <IconButton onClick={onClose} aria-label="Cerrar">
             <X {...iconMd} aria-hidden />
-          </button>
+          </IconButton>
         </div>
         <div ref={bodyRef} className="mt-4">
           {children}

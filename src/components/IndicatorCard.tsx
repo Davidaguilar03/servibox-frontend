@@ -31,7 +31,7 @@ export function IndicatorCard({ label, value, negative, note, detail, trend, err
           <TriangleAlert {...iconSm} className="text-error" aria-hidden />
           <span className="text-small text-text">No pudimos cargar este dato.</span>
           {onRetry && (
-            <Button variant="text" className="px-2" onClick={onRetry}>
+            <Button variant="text" onClick={onRetry}>
               Reintentar
             </Button>
           )}

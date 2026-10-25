@@ -32,6 +32,7 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DataTable, type Column } from '../components/DataTable'
 import { Pagination } from '../components/Pagination'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { StatusBadge } from '../components/StatusBadge'
 import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -48,7 +49,7 @@ import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
 import { iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface'
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+const focusRing = 'focus-ring'
 
 type ModalName = 'account' | 'transfer' | null
 
@@ -184,23 +185,8 @@ export function AccountsPage() {
             <h2 id="period-title" className="text-section text-text">
               {scopeName} · {periodLabel(filters)}
             </h2>
-            <div ref={periodRef} role="group" aria-label="Período" className="mt-4 flex flex-wrap gap-2">
-              {PERIOD_OPTIONS.map((option) => {
-                const active = option.value === filters.periodo
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => choosePeriod(option.value)}
-                    className={`min-h-touch rounded-pill border px-4 text-button transition-colors duration-(--duration-fast) ${focusRing} ${
-                      active ? 'border-nav bg-nav text-text-inverse' : 'border-border-control bg-surface text-text hover:bg-neutral-100'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
+            <div ref={periodRef} className="mt-4">
+              <SegmentedControl aria-label="Período" options={PERIOD_OPTIONS} value={filters.periodo} onChange={choosePeriod} />
             </div>
             {filters.periodo === 'personalizado' && (
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:max-w-xl">
@@ -246,7 +232,7 @@ export function AccountsPage() {
               if (purchases.isError) void purchases.refetch()
             }}
             onPageChange={(pagina) => setSearchParams(accountsFiltersToParams({ ...filters, pagina }))}
-            onChangePeriod={() => periodRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()}
+            onChangePeriod={() => periodRef.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus()}
           />
         </>
       )}
@@ -370,7 +356,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
       {balance.isError && (
         <div role="alert" className="flex flex-wrap items-center gap-2">
           <span className="text-small text-text">No pudimos cargar el total disponible.</span>
-          <Button variant="text" className="px-2" onClick={() => void balance.refetch()}>
+          <Button variant="text" onClick={() => void balance.refetch()}>
             Reintentar
           </Button>
         </div>
@@ -432,7 +418,7 @@ function MovementsBlock(props: MovementsBlockProps) {
         {numbersFailed && (
           <div role="status" className="mb-3 flex flex-wrap items-center gap-2 text-small text-text-muted">
             No pudimos cargar los números de factura; Origen muestra solo VENTA o COMPRA.
-            <Button variant="text" className="px-2" onClick={onRetryNumbers}>
+            <Button variant="text" onClick={onRetryNumbers}>
               Reintentar
             </Button>
           </div>

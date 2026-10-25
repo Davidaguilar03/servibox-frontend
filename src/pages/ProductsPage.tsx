@@ -9,6 +9,7 @@ import { DataTable, type Column } from '../components/DataTable'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
+import { TabList } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge, type BadgeStatus } from '../components/StatusBadge'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -62,7 +63,7 @@ const sortOptions = [
 ]
 
 const linkClass =
-  'rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'hit-area rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
 
 const card = 'rounded-surface border border-border bg-surface'
 
@@ -222,7 +223,7 @@ function CategoryTabs({ categories, products, selected, onSelect }: CategoryTabs
     return (
       <div role="alert" className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
         <span className="text-small text-text">No pudimos cargar las categorías.</span>
-        <Button variant="text" className="px-2" onClick={() => void categories.refetch()}>
+        <Button variant="text" onClick={() => void categories.refetch()}>
           Reintentar
         </Button>
       </div>
@@ -240,28 +241,20 @@ function CategoryTabs({ categories, products, selected, onSelect }: CategoryTabs
   const current = categories.data.some((category) => category.id === selected) ? selected : null
 
   return (
-    <div className="overflow-x-auto overflow-y-hidden border-b border-border [scrollbar-width:thin]" role="group" aria-label="Categorías">
-      <ul className="flex min-w-max gap-6">
-        {categoryTabs(categories.data, products).map((tab) => {
-          const active = tab.id === current
-          return (
-            <li key={tab.id ?? 'todas'}>
-              <button
-                type="button"
-                aria-pressed={active}
-                onClick={() => onSelect(tab.id)}
-                className={`flex min-h-touch items-center gap-2 border-b-2 rounded-control text-body whitespace-nowrap transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-                  active ? 'border-brand font-medium text-text' : 'border-transparent text-text-muted hover:text-text'
-                }`}
-              >
-                {tab.name}
-                <span className="tabular text-small text-text-muted">{tab.count}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+    <TabList
+      aria-label="Categorías"
+      options={categoryTabs(categories.data, products).map((tab) => ({
+        value: tab.id,
+        label: (
+          <>
+            {tab.name}
+            <span className="tabular text-small text-text-muted">{tab.count}</span>
+          </>
+        ),
+      }))}
+      value={current}
+      onChange={onSelect}
+    />
   )
 }
 
@@ -348,7 +341,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
                   to={`/inventario/${product.id}/editar`}
                   state={listState}
                   aria-label={`Editar ${product.code}, ${product.description}`}
-                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-ring"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="codigo text-small text-text">{product.code}</span>

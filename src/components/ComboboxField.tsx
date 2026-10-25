@@ -95,8 +95,8 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
             setQuery('')
           }}
           onKeyDown={handleKeyDown}
-          className={`h-control w-full rounded-control border bg-surface pr-9 pl-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-muted focus:ring-3 ${
-            error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'
+          className={`h-control-touch lg:h-control w-full rounded-control border bg-surface pr-9 pl-3 text-body text-text transition-colors duration-(--duration-fast) placeholder:text-text-muted focus-ring-field ${
+            error ? 'border-error' : 'border-border-control'
           }`}
         />
         <ChevronDown

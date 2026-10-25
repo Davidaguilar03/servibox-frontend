@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, FileDown, Minus } from 'lucide-react'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { IndicatorCard } from '../components/IndicatorCard'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { ErrorState, Skeleton } from '../components/states'
@@ -28,7 +29,7 @@ import { monthRange } from '../sales/salesList'
 import { iconMd, iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface p-6'
-const focusWithin = 'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand'
+const focusWithin = 'focus-ring-within'
 
 /** Espera antes de pedir la vista previa de un rango nuevo, para no llamar en cada tecla. */
 export const PREVIEW_DEBOUNCE_MS = 400
@@ -184,29 +185,18 @@ export function ReportsPage() {
               />
             ))}
 
-          <fieldset>
-            <legend className="mb-2 text-label text-text">Formato</legend>
-            <div className="grid grid-cols-2 gap-1 rounded-pill border border-border-control bg-surface p-1">
-              {formats.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex min-h-touch cursor-pointer items-center justify-center rounded-pill text-button transition-colors duration-(--duration-fast) ${focusWithin} ${
-                    format === option.value ? 'bg-dark text-text-inverse' : 'text-text hover:bg-neutral-100'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="report-format"
-                    value={option.value}
-                    checked={format === option.value}
-                    onChange={() => change(setFormat)(option.value)}
-                    className="sr-only"
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <div className="flex flex-col gap-2">
+            <span id="formato-reporte" className="text-label text-text">
+              Formato
+            </span>
+            <SegmentedControl
+              aria-labelledby="formato-reporte"
+              options={formats}
+              value={format}
+              onChange={change(setFormat)}
+              className="grid grid-cols-2"
+            />
+          </div>
 
           {download.isError && (
             <Alert tone="error" title="No pudimos generar el reporte">
@@ -286,7 +276,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
           {before.isError && current.data && (
             <p role="status" className="flex flex-wrap items-center gap-2 text-small text-text-muted">
               No pudimos cargar el período anterior: la vista previa se muestra sin variación.
-              <Button variant="text" className="h-auto px-2 py-1" onClick={() => void before.refetch()}>
+              <Button variant="text" onClick={() => void before.refetch()}>
                 Reintentar
               </Button>
             </p>

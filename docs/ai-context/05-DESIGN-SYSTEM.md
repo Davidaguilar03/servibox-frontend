@@ -51,7 +51,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 | Clase | Definicion | Uso |
 |-|-|-|
 | `monto` | Inter con `font-variant-numeric: tabular-nums` | Todo valor en dinero: celdas (a la derecha, `align: 'right'`), tarjetas moviles, resumenes, cifras de indicadores, campos de solo lectura (`TextField valueRole="monto"`) y campos de precio |
-| `codigo` | IBM Plex Mono | Numero de factura (tambien en el titulo del detalle), codigo de producto y NIT o documento (`TextField valueRole="codigo"`) |
+| `codigo` | IBM Plex Mono con `white-space: nowrap` | Numero de factura (tambien en el titulo del detalle), codigo de producto y NIT o documento (`TextField valueRole="codigo"`). No se parte en dos lineas: la columna toma el ancho del codigo y el texto vecino es el que envuelve |
 
 * IBM Plex Mono solo con `codigo`; `font-mono` esta prohibido. Origen en Cuentas
   (`VENTA FV-0003`) no es un codigo: va en Inter.
@@ -73,7 +73,7 @@ sombra (`FLOATING_SHADOWS`). Los anillos de seleccion (`ring-*`) no son sombra.
 * `--spacing: 4px`: `p-1` 4, `p-2` 8, `p-3` 12, `p-4` 16, `p-5` 20, `p-6` 24...
 * Prohibidos los medios pasos (`*-0.5`, `*-1.5`, `*-2.5`, `*-3.5`) y los px arbitrarios que no
   sean multiplo de 4 (`w-[110px]`). Excepciones: bordes de 1 px, anillos y desplazamientos de
-  foco (`outline-offset-2`), `-mb-px` de las pestanas de Configuracion (solapa el borde) y
+  foco (`outline-offset-2`), `-mb-px` de las pestanas de `TabList` (solapa el borde) y
   `mt-px` del icono de `Alert` (lo centra con la primera linea). Estan en `ONE_PX_OFFSETS`.
 
 ## Radios
@@ -111,6 +111,68 @@ ease-standard, asi que `transition-*` ya los usa. Prohibidos `duration-<n>`, `du
 `ease-in`/`ease-out`/`ease-in-out`/`ease-linear`. `index.css` anula animaciones y
 transiciones con `prefers-reduced-motion`. Sin rebotes ni parallax.
 
+## Alturas de control y areas tactiles
+
+| Token | Valor | Uso |
+|-|-|-|
+| `--control-height` (`h-control`) | 40 px | Botones y campos desde lg |
+| `--control-height-touch` (`h-control-touch`) | 44 px | Botones y campos bajo lg |
+| `--hit-min` (`size-touch`, `min-h-touch`) | 44 px | Area tactil minima de todo control bajo lg |
+| `--hit-row` (`size-hit-row`) | 36 px | Acciones de fila con icono (y `IconButton`) desde lg |
+
+* Bajo 1024 px (lg) todo control interactivo mide al menos 44 x 44 de area tactil; desde lg
+  botones y campos miden 40 y las acciones de fila con icono 36. Separacion minima de 8 px
+  entre objetivos adyacentes bajo lg (`gap-2 lg:gap-1` en acciones de fila, menu lateral y
+  paginacion).
+* `buttonClasses` y los campos (`TextField`, `SelectField`, `SearchField`, `ComboboxField` y
+  los campos de linea de factura) usan `h-control-touch lg:h-control`.
+* `IconButton` (`components/IconButton.tsx`, y `IconLink` para enlaces): boton de solo icono
+  con `aria-label` obligatorio en el tipo, `size-touch lg:size-hit-row`, icono de 16 o 20.
+  Lo usan cerrar del modal, editar y eliminar de fila, nueva factura del tercero y quitar
+  linea. Paginacion: `size-touch lg:size-control`.
+* Cuando el aspecto debe ser menor que el area (enlaces de texto: Ver detalle, Editar, Ver
+  todas, Nuevo cliente), la utilidad `hit-area` agrega un `::after` centrado de al menos 44
+  (36 desde lg) sin cambiar el aspecto. No sirve dentro de `overflow: hidden` (migas: llevan
+  `leading-11` y `px-1` bajo lg).
+* Casillas y radios: el rotulo es parte del area de clic y mide 44 (`min-h-touch`).
+
+## SegmentedControl y TabList
+
+`components/SegmentedControl.tsx`, unica implementacion de elegir una opcion entre pocas:
+
+* `SegmentedControl`: `role="radiogroup"` con botones `role="radio"` y `aria-checked`;
+  opciones en pildora (`rounded-pill`), seleccionada en `dark`, 44 bajo lg y 40 desde lg;
+  envuelve (`flex-wrap`) o recibe la disposicion por `className` (`grid grid-cols-2`).
+* `TabList`: `role="tablist"` con `role="tab"`, `aria-selected` y `aria-controls` opcional;
+  subrayado `brand`; desplazamiento horizontal si no cabe.
+* Los dos: flechas (con vuelta), Inicio y Fin mueven el foco y eligen (activacion
+  automatica); un solo elemento en el orden de tabulacion (roving tabindex).
+* Excepciones con comportamiento propio (no son segmentados de texto): tarjetas de cuenta con
+  su saldo (`aria-pressed`), muestras de color de categoria y tarjetas de tipo de reporte con
+  descripcion (radios nativos). Las lista `controls.test.tsx`.
+
+## Foco
+
+* Un solo anillo: `--focus-ring` (2 px solido `brand`) con `--focus-ring-offset` 2 px.
+  Utilidades en `index.css`: `focus-ring` (`:focus-visible`, botones, enlaces, segmentados,
+  items de menu, summary), `focus-ring-field` (`:focus`, campos) y `focus-ring-within`
+  (rotulo que envuelve un control oculto). Prohibido quitar el outline sin reemplazo.
+* Campos: al enfocarse muestran el anillo y conservan el borde `border-control` (o `error`);
+  ya no hay `ring-brand/20`.
+* Contraste del anillo (3 a 1, `tokens.test.ts`): brand sobre surface 3,55, canvas 3,19, nav
+  4,14, row-alt 3,42 y neutral-100 3,39. Sobre los fondos -bg de `Alert` brand no llega (info
+  2,91, error 2,90): ahi `--focus-ring-on-tint` usa brand-ink (4,27 a 4,75). Sin cambio de
+  colores.
+* "Saltar al contenido" es `components/SkipLink.tsx`, el mismo en la landing y en el shell:
+  relleno 8/16 al enfocarse, `rounded-control`, `shadow-raised`, y foco real en
+  `main#contenido`.
+
+## Boton de texto
+
+La variante `text` tiene la misma altura y el mismo relleno (`px-button-x`) que las demas,
+sin fondo ni borde; las pantallas no le ponen `px-2` ni `h-auto`. Hover `neutral-100`, foco
+`focus-ring`, deshabilitado igual que las demas.
+
 ## Guarda
 
 `src/styles/designSystem.test.ts`:
@@ -138,8 +200,8 @@ Pendientes de decidir o validar con el disenador (detalle en
 3. Wordmark y la "S" de la barra contraida usan `text-title` con `font-bold` (marca).
 4. Enlaces de accion en celdas: Ventas y Compras heredan 15; Productos, Categorias y el panel
    conservan `text-small`.
-5. Menu lateral, pestanas de Configuracion y badges en `small`; pestanas de Productos en
-   `body`.
+5. Menu lateral y badges en `small`. **Resuelto el 2026-10-25:** las pestanas de
+   Configuracion y de Productos usan `TabList`, en `body`.
 6. `font-medium` (500) sigue en unos 70 usos para destacar dentro de un tamano.
 7. **Resuelto el 2026-10-25:** tokens de legado eliminados; landing, login y registro usan la
    escala (excepcion `text-display` en el `h1` de la landing).

@@ -12,6 +12,25 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Areas tactiles, SegmentedControl unico y un solo anillo de foco
+
+* Decision:
+  * Tokens `--control-height` 40, `--control-height-touch` 44, `--hit-min` 44 y `--hit-row`
+    36: bajo lg todo control mide 44 de area; desde lg botones y campos 40 y acciones de fila
+    con icono 36. `IconButton`/`IconLink` para botones de solo icono y la utilidad `hit-area`
+    para enlaces de texto pequenos.
+  * `SegmentedControl` (radiogroup) y `TabList` (tablist) con roving tabindex reemplazan el
+    periodo de Cuentas, el tipo de pago de las nuevas facturas, el formato de Reportes y las
+    pestanas de Configuracion y Productos.
+  * Un solo anillo `--focus-ring` (2 px brand, separacion 2) para botones, enlaces y campos;
+    `--focus-ring-on-tint` (brand-ink) dentro de los Alert, donde brand no llega a 3 a 1.
+  * Variante `text` sin relleno propio; `codigo` con `nowrap`; `SkipLink` compartido.
+* Alternativas consideradas: area tactil ampliada solo con `pointer: coarse` (la auditoria
+  lo proponia; no cubre teclado y raton en pantallas angostas); un segmentado por pantalla;
+  cambiar el color del anillo dentro de los Alert (prohibido cambiar colores).
+* Motivo: A11Y-04, A11Y-07, ESP-03 y ESP-04 de la auditoria visual; una sola implementacion
+  evita que cada pantalla resuelva teclado y tamano a su manera.
+
 ## 2026-10-25: Landing, login, registro y terminos con capturas reales y voz de mostrador
 
 * Decision:

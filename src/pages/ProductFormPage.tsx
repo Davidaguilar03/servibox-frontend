@@ -203,7 +203,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           {categories.isError ? (
             <div role="alert" className="flex flex-wrap items-center gap-2">
               <span className="text-small text-text">No pudimos cargar las categorías.</span>
-              <Button variant="text" className="px-2" onClick={() => void categories.refetch()}>
+              <Button variant="text" onClick={() => void categories.refetch()}>
                 Reintentar
               </Button>
             </div>

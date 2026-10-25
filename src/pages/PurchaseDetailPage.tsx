@@ -230,7 +230,7 @@ function PurchaseDetailContent({ purchaseId }: { purchaseId: number }) {
               value={summary.paid === null ? EMPTY_VALUE : formatCurrency(summary.paid)}
               tone={summary.paid ? 'text-success-ink' : undefined}
             />
-            <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Saldo pendiente</dt>
               <dd className="text-figure whitespace-nowrap text-text">
                 {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
@@ -280,7 +280,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 function SummaryRow({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
-    <div className="flex justify-between gap-4">
+    <div className="flex flex-wrap justify-between gap-x-4">
       <dt className="text-text-muted">{label}</dt>
       <dd className={`monto font-medium whitespace-nowrap ${tone ?? 'text-text'}`}>{value}</dd>
     </div>

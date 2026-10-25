@@ -7,6 +7,7 @@ import { formatSignedAmount } from '../accounts/accountsView'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
+import { IconButton } from '../components/IconButton'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
@@ -53,8 +54,6 @@ export interface ManualMovementsConfig {
 }
 
 const card = 'rounded-surface border border-border bg-surface'
-const iconButton =
-  'flex size-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; movement: TreasuryMovement } | { kind: 'delete'; movement: TreasuryMovement }
 
@@ -91,25 +90,21 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
   const amountClass = config.category === 'GASTO_OPERATIVO' ? 'text-error' : 'text-success-ink'
 
   const actions = (movement: TreasuryMovement) => (
-    <div className="flex justify-end gap-1">
-      <button
-        type="button"
-        className={iconButton}
+    <div className="flex justify-end gap-2 lg:gap-1">
+      <IconButton
         aria-label={`Editar ${config.singular} ${movement.concept}`}
         title="Editar"
         onClick={() => setDialog({ kind: 'edit', movement })}
       >
         <Pencil {...iconMd} aria-hidden />
-      </button>
-      <button
-        type="button"
-        className={iconButton}
+      </IconButton>
+      <IconButton
         aria-label={`Eliminar ${config.singular} ${movement.concept}`}
         title="Eliminar"
         onClick={() => setDialog({ kind: 'delete', movement })}
       >
         <Trash2 {...iconMd} aria-hidden />
-      </button>
+      </IconButton>
     </div>
   )
 
@@ -231,7 +226,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
             <span className="text-label text-text">Cuenta</span>
             <span className="flex items-center gap-2 text-small text-text">
               No pudimos cargar las cuentas.
-              <Button variant="text" className="px-2" onClick={() => void accounts.refetch()}>
+              <Button variant="text" onClick={() => void accounts.refetch()}>
                 Reintentar
               </Button>
             </span>

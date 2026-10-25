@@ -4,6 +4,7 @@ import { useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { buttonClasses } from '../components/buttonStyles'
 import { iconSm } from '../components/icons'
+import { SkipLink } from '../components/SkipLink'
 import { SUPPORT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
 import { usePageMeta } from '../lib/usePageMeta'
 import heroInicio from '../assets/landing/hero-inicio.webp'
@@ -11,7 +12,7 @@ import flujoVenta from '../assets/landing/flujo-venta.webp'
 import flujoInventario from '../assets/landing/flujo-inventario.webp'
 import flujoReportes from '../assets/landing/flujo-reportes.webp'
 
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+const focusRing = 'focus-ring'
 const linkClass = `rounded-control font-medium text-brand-ink hover:underline ${focusRing}`
 const container = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
@@ -98,12 +99,7 @@ export function LandingPage() {
 
   return (
     <div id="landing" className="min-h-screen bg-surface">
-      <a
-        href="#contenido"
-        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-raised focus:not-sr-only focus:fixed focus:px-4 focus:py-2 focus:top-2 focus:left-2 ${focusRing}`}
-      >
-        Saltar al contenido
-      </a>
+      <SkipLink />
 
       <header className="border-b border-border bg-surface">
         <div className={`${container} flex min-h-topbar flex-wrap items-center justify-between gap-x-2 gap-y-2 py-2`}>
@@ -115,7 +111,7 @@ export function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link to="/login" className={`max-sm:px-2 ${buttonClasses('text')}`} data-variant="text">
+                <Link to="/login" className={buttonClasses('text')} data-variant="text">
                   Iniciar sesión
                 </Link>
                 <Link to="/registro" className={`max-sm:px-3 ${buttonClasses('primary')}`} data-variant="primary">

@@ -24,8 +24,8 @@ export function SelectField({ label, options, hint, error, ...props }: SelectFie
           id={id}
           aria-describedby={hintId}
           aria-invalid={error ? true : undefined}
-          className={`h-control w-full appearance-none rounded-control border bg-surface pr-9 pl-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) focus:ring-3 disabled:bg-neutral-200 disabled:text-text-muted ${
-            error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'
+          className={`h-control-touch lg:h-control w-full appearance-none rounded-control border bg-surface pr-9 pl-3 text-body text-text transition-colors duration-(--duration-fast) focus-ring-field disabled:bg-neutral-200 disabled:text-text-muted ${
+            error ? 'border-error' : 'border-border-control'
           }`}
           {...props}
         >

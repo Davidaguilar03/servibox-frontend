@@ -25,10 +25,10 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'components/Toaster.tsx': ['shadow-raised'],
   // Lista desplegable del combobox.
   'components/ComboboxField.tsx': ['shadow-raised'],
-  // Menu movil (overlay) y enlace "Saltar al contenido" cuando recibe foco (raised).
-  'layout/AppShell.tsx': ['shadow-overlay', 'shadow-raised'],
-  // Enlace "Saltar al contenido" de la landing cuando recibe foco.
-  'pages/LandingPage.tsx': ['shadow-raised'],
+  // Menu movil (overlay).
+  'layout/AppShell.tsx': ['shadow-overlay'],
+  // Enlace "Saltar al contenido" (landing y shell) cuando recibe foco.
+  'components/SkipLink.tsx': ['shadow-raised'],
   // Barra de acciones fija al pie del formulario de producto.
   'pages/ProductFormPage.tsx': ['shadow-raised'],
   // Panel del menu de usuario de la barra superior.
@@ -58,7 +58,7 @@ const TITLE_H2_FILES = ['pages/LandingPage.tsx']
 
 /** Desplazamientos de 1 px documentados: solapar el borde de las pestanas y centrar el icono del Alert. */
 const ONE_PX_OFFSETS: Record<string, string[]> = {
-  'settings/SettingsPage.tsx': ['-mb-px'],
+  'components/SegmentedControl.tsx': ['-mb-px'],
   'components/Alert.tsx': ['mt-px'],
 }
 
@@ -262,6 +262,14 @@ describe('tokens del sistema de diseno', () => {
     ['text-label--font-weight', '600'],
     ['text-button', '14px'],
     ['text-button--font-weight', '600'],
+    // Alturas de control, areas tactiles y foco.
+    ['control-height', '40px'],
+    ['control-height-touch', '44px'],
+    ['hit-min', '44px'],
+    ['hit-row', '36px'],
+    ['focus-ring', '2px solid var(--color-brand)'],
+    ['focus-ring-offset', '2px'],
+    ['focus-ring-on-tint', '2px solid var(--color-brand-ink)'],
     // Sombras: solo lo que flota.
     ['shadow-raised', '0 4px 12px rgb(0 0 0 / 10%)'],
     ['shadow-overlay', '0 16px 40px rgb(0 0 0 / 16%)'],
@@ -291,6 +299,15 @@ describe('tokens del sistema de diseno', () => {
       token('icon-lg'),
     ])
     expect(new Set([iconSm, iconMd, iconLg].map((icon) => icon.strokeWidth))).toEqual(new Set([ICON_STROKE]))
+  })
+
+  it('define las utilidades de foco y de zona de clic con los tokens', () => {
+    expect(index).toMatch(/@utility focus-ring \{\s*&:focus-visible \{\s*outline: var\(--focus-ring\);\s*outline-offset: var\(--focus-ring-offset\);/)
+    expect(index).toMatch(/@utility focus-ring-field \{\s*&:focus \{\s*outline: var\(--focus-ring\);/)
+    expect(index).toMatch(/@utility hit-area \{[\s\S]*var\(--hit-min\)[\s\S]*var\(--hit-row\)/)
+    expect(token('spacing-touch')).toBe('var(--hit-min)')
+    expect(token('spacing-control')).toBe('var(--control-height)')
+    expect(token('spacing-control-touch')).toBe('var(--control-height-touch)')
   })
 
   it('define los roles monto (cuerpo con numeros tabulares) y codigo (mono)', () => {
