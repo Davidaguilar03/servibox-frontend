@@ -149,6 +149,9 @@ const RULES: Rule[] = [
   [/^Una factura de compra necesita al menos una linea$/, 'Agrega al menos un producto.'],
 
   // Cuentas y movimientos.
+  [/^El tipo de una cuenta no se puede cambiar$/, 'El tipo de una cuenta no se puede cambiar.'],
+  [/^Saldo insuficiente en (.+): faltan (.+) para cambiar el saldo inicial$/, (account, amount) =>
+    `Saldo insuficiente en ${account}: faltan ${pesos(amount)} para cambiar el saldo inicial.`],
   [/^Ya existe una cuenta con el nombre (.+)$/, (name) => `Ya existe una cuenta con el nombre ${name}.`],
   [/^El concepto admite hasta (\d+) caracteres$/, (n) => `El concepto admite hasta ${n} caracteres.`],
   [/^El monto del movimiento debe ser mayor a cero$/, 'El monto debe ser mayor que cero.'],

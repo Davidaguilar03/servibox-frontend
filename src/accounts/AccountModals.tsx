@@ -1,7 +1,7 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userMessage } from '../api/errorMessages'
-import { useReportedError } from '../api/reportError'
+import { isInlineError, reportError, useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
@@ -16,13 +16,16 @@ import { formatCurrency } from '../lib/format'
 import {
   EMPTY_ACCOUNT_FORM,
   buildAccountRequest,
+  buildAccountUpdateRequest,
   buildTransferRequest,
   validateAccount,
+  validateAccountEdit,
   validateTransfer,
   type AccountFormValues,
+  type AccountEditValues,
   type TransferFormValues,
 } from './accountForms'
-import { createAccount, createTransfer } from './accountsApi'
+import { createAccount, createTransfer, updateAccount } from './accountsApi'
 import { ACCOUNT_TYPE_LABELS } from './accountsView'
 
 const typeOptions = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]).map((value) => ({
@@ -139,6 +142,107 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
         />
       </div>
       <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
+    </DiscardableModal>
+  )
+}
+
+export function EditAccountModal({ account, onClose }: { account: Account; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  const [initial] = useState<AccountEditValues>(() => ({
+    name: account.name,
+    initialBalance: String(account.initialBalance).replace('.', ','),
+  }))
+  const [values, setValues] = useState(initial)
+  const [touched, setTouched] = useState<Set<keyof AccountEditValues>>(() => new Set())
+  const [submitted, setSubmitted] = useState(false)
+  const [serverError, setServerError] = useState<{ field?: keyof AccountEditValues; message: string } | null>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const alertRef = useRef<HTMLDivElement>(null)
+  const sending = useRef(false)
+  const errors = validateAccountEdit(values)
+  const dirty = values.name !== initial.name || values.initialBalance !== initial.initialBalance
+  const shown = (field: keyof AccountEditValues) =>
+    (serverError?.field === field ? serverError.message : undefined) ?? (touched.has(field) ? errors[field] : undefined)
+
+  const save = useMutation({
+    mutationFn: () => updateAccount(account.id, buildAccountUpdateRequest(values)),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['treasury'] })
+      showToast('Cuenta actualizada')
+      onClose()
+    },
+    onError: (error) => {
+      const message = reportError(error)
+      if (!message || !isInlineError(error)) return
+      const field = error instanceof ApiError && /^Ya existe una cuenta con el nombre /.test(error.message)
+        ? 'name'
+        : error instanceof ApiError && /^Saldo insuficiente en .+: faltan .+ para cambiar el saldo inicial$/.test(error.message)
+          ? 'initialBalance'
+          : undefined
+      revealErrors(() => {
+        setSubmitted(true)
+        setServerError({ field, message })
+      }, bodyRef.current, alertRef.current)
+    },
+    onSettled: () => { sending.current = false },
+  })
+
+  function change(field: keyof AccountEditValues, value: string) {
+    if (!serverError?.field || serverError.field === field) setServerError(null)
+    setValues((current) => ({ ...current, [field]: value }))
+  }
+
+  function submit() {
+    if (sending.current || !dirty) return
+    if (Object.keys(errors).length > 0) {
+      revealErrors(() => {
+        setSubmitted(true)
+        setTouched(new Set<keyof AccountEditValues>(['name', 'initialBalance']))
+      }, bodyRef.current)
+      return
+    }
+    sending.current = true
+    setServerError(null)
+    save.mutate()
+  }
+
+  return (
+    <DiscardableModal
+      title="Editar cuenta"
+      dirty={dirty}
+      busy={save.isPending}
+      onClose={onClose}
+      discardMessage="Si cierras ahora, se pierde lo que digitaste en esta cuenta."
+      footer={(requestClose) => (
+        <>
+          <Button variant="secondary" onClick={requestClose}>Cancelar</Button>
+          <Button onClick={submit} disabled={save.isPending || !dirty} aria-busy={save.isPending || undefined}>
+            {save.isPending ? 'Guardando…' : 'Guardar cambios'}
+          </Button>
+        </>
+      )}
+    >
+      <div ref={bodyRef} className="flex flex-col gap-4" onKeyDown={(event) => {
+        if (isEnterInInput(event)) {
+          event.preventDefault()
+          submit()
+        }
+      }}>
+        <ErrorSummary count={submitted ? Object.keys(errors).length + (serverError?.field ? 1 : 0) : 0} />
+        <div ref={alertRef} tabIndex={-1}>
+          {serverError && !serverError.field && (
+            <Alert tone="error" title="No pudimos guardar los cambios">{serverError.message}</Alert>
+          )}
+        </div>
+        <TextField label="Nombre" value={values.name} maxLength={100} required
+          onChange={(event) => change('name', event.target.value)}
+          onBlur={() => setTouched((current) => new Set(current).add('name'))} error={shown('name')} />
+        <TextField label="Tipo" value={ACCOUNT_TYPE_LABELS[account.type]} readOnly />
+        <TextField label="Saldo inicial" inputMode="decimal" valueRole="monto" value={values.initialBalance} required
+          onChange={(event) => change('initialBalance', event.target.value)}
+          onBlur={() => setTouched((current) => new Set(current).add('initialBalance'))} error={shown('initialBalance')}
+          hint="Cambiar el saldo inicial ajusta el saldo actual y no registra un ingreso. Usa coma para los decimales." />
+      </div>
     </DiscardableModal>
   )
 }

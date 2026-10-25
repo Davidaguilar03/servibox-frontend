@@ -12,6 +12,31 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Editar cuenta con tipo inmutable y saldo inicial decimal
+
+* Decision: accion secundaria con IconButton hermano del selector de cada tarjeta, incluida
+  Caja General. EditAccountModal usa DiscardableModal, validacion al salir y enviar,
+  ErrorSummary y foco al primer error; Guardar solo se deshabilita sin cambios o al enviar.
+* Contrato: PUT /api/treasury/accounts/{id} con name e initialBalance, sin type ni
+  currentBalance. Nombre obligatorio hasta 100; inicial obligatorio, finito y no negativo.
+  Se precarga sin formato de pesos enteros, con coma decimal, y se envia sin redondear.
+  El tipo muestra su rotulo actual en solo lectura. Alta y transferencia conservan sus reglas.
+* Errores: nombre duplicado bajo Nombre; faltante del PUT bajo Saldo inicial, con moneda
+  ya formateada conservada. Otros 400/409 en alerta con foco; red, 5xx, 403 y 404 en toast
+  persistente; 401 conserva el flujo de sesion. Todo usa reportError y userMessage.
+* Cache: invalidar el prefijo treasury actualiza cuentas, saldo global y movimientos de
+  cualquier periodo o factura, incluidos nombres y selector de Reportes. Las exportaciones
+  se generan de nuevo por API; no tienen cache de consultas. No se invalidan KPIs porque
+  no dependen del inicial ni del nombre, ni se crean movimientos. Seleccion y filtros por
+  id y URL intactos.
+* Motivo: el backend decide bajo bloqueo si cambiar el inicial deja saldo insuficiente;
+  renombrar con saldo actual negativo se permite si el inicial no cambia. No se calcula
+  suficiencia local con datos antiguos. Reemplaza la exclusion de editar cuentas de la
+  entrada "Lo que queda fuera de Cuentas"; los demas alcances se conservan.
+* Limites: inicial heredado negativo se muestra intacto y no cumple el contrato del PUT.
+  No hay historial del inicial ni validacion historica: reportes previos usan el vigente.
+  Los gastos siguen pudiendo dejar negativos; redondeo pendiente de la tarea de pulido.
+
 ## 2026-10-25: Reglas de trabajo compartidas entre agentes y repos
 
 * Decision: `AGENTS.md` en la raiz es la fuente unica de las reglas de trabajo de

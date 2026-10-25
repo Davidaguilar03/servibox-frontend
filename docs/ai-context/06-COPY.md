@@ -91,6 +91,13 @@ texto que se muestra sale de `userMessage`.
 
 ### Donde: `reportError(error)`
 
+Mensajes de edicion de cuentas agregados al mapa (TreasuryService.editarCuenta):
+
+* `El tipo de una cuenta no se puede cambiar`: 400, alerta del formulario.
+* `Saldo insuficiente en {cuenta}: faltan {monto} para cambiar el saldo inicial`: 409,
+  bajo Saldo inicial. Conserva nombre y monto ya formateado (por ejemplo `$ 10.000`).
+  El nombre duplicado se distingue por su mensaje exacto y va bajo Nombre.
+
 `src/api/reportError.ts`, regla unica:
 
 * 400 y 409: en linea, en el formulario o modal donde paso (bajo el campo si corresponde a uno,

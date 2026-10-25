@@ -56,5 +56,10 @@ export const fetchPurchases = () => apiFetch<PurchaseSummary[]>('/purchases')
 export const createAccount = (body: AccountRequest) =>
   apiFetch<Account>('/treasury/accounts', { method: 'POST', body })
 
+export type AccountUpdateRequest = Pick<AccountRequest, 'name' | 'initialBalance'>
+
+export const updateAccount = (id: number, body: AccountUpdateRequest) =>
+  apiFetch<Account>(`/treasury/accounts/${id}`, { method: 'PUT', body })
+
 export const createTransfer = (body: TransferRequest) =>
   apiFetch<unknown>('/treasury/transfers', { method: 'POST', body })

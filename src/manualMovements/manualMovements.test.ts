@@ -22,9 +22,9 @@ import {
 const today = '2026-10-19'
 
 const accounts: Account[] = [
-  { id: 2, name: 'Bancolombia', type: 'BANCO', currentBalance: 500000 },
-  { id: 3, name: 'Caja Menor', type: 'EFECTIVO', currentBalance: 0 },
-  { id: 1, name: 'Caja General', type: 'EFECTIVO', currentBalance: 100000 },
+  { id: 2, name: 'Bancolombia', type: 'BANCO', initialBalance: 0, currentBalance: 500000 },
+  { id: 3, name: 'Caja Menor', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0 },
+  { id: 1, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 100000 },
 ]
 
 const expense = (id: number, fields: Partial<TreasuryMovement> = {}): TreasuryMovement => ({
