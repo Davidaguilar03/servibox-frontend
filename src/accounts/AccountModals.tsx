@@ -1,5 +1,7 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { userMessage } from '../api/errorMessages'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
@@ -9,7 +11,6 @@ import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { revealErrors } from '../lib/formErrors'
 import { formatCurrency } from '../lib/format'
 import {
@@ -55,11 +56,12 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
-        setNameConflict(error.message)
+        setNameConflict(userMessage(error))
         nameRef.current?.focus()
       }
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: keyof AccountFormValues) => (value: string) => {
     if (field === 'name') setNameConflict(null)
@@ -106,9 +108,9 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
             submit()
           }
         }}>
-        {generalError && (
+        {saveError && generalError && (
           <Alert tone="error" title="No pudimos crear la cuenta">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <TextField
@@ -178,6 +180,7 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
       sending.current = false
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: keyof TransferFormValues) => (value: string) =>
     setValues((current) => {
@@ -227,9 +230,9 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
           }
         }}>
         <p className="text-small text-text-muted">Se registra con la fecha de hoy.</p>
-        {save.isError && (
+        {saveError && save.isError && (
           <Alert tone="error" title="No pudimos registrar la transferencia">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <SelectField

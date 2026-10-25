@@ -1,3 +1,4 @@
+import { GLOSSARY } from './copy/glossary'
 import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell, type RouteHandle } from './layout/AppShell'
@@ -58,7 +59,7 @@ export const routes: RouteObject[] = [
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
           { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
           { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },
-          { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle(['Ventas', 'Ingresos ocasionales']) },
+          { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle(['Ventas', GLOSSARY.otherIncome]) },
           { path: 'ventas/clientes', element: <CustomersPage />, handle: handle(['Ventas', 'Clientes']) },
           {
             path: 'ventas/nueva',

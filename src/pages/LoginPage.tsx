@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
+import { MESSAGES, userMessage } from '../api/errorMessages'
 import { login, startSession } from '../auth/authApi'
-import { getRememberedTenantSlug, rememberTenantSlug, useSession } from '../auth/session'
+import { getRememberedTenantSlug, rememberTenantSlug, takeSessionExpired, useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { WHATSAPP_URL } from '../config/contact'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
@@ -19,7 +19,10 @@ export function LoginPage() {
   usePageMeta('Iniciar sesión | ServiBox', 'Entra a ServiBox con el código de tu serviteca, tu usuario y tu contraseña.')
   const session = useSession()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/inicio'
+  const state = location.state as { from?: string; expired?: boolean } | null
+  const from = state?.from ?? '/inicio'
+  // Se lee una vez: tras un 401 o con el token perdido, el login avisa que la sesion vencio.
+  const [expired] = useState(() => takeSessionExpired() || Boolean(state?.expired))
 
   const [tenantSlug, setTenantSlug] = useState(getRememberedTenantSlug)
   const [username, setUsername] = useState('')
@@ -53,12 +56,13 @@ export function LoginPage() {
         <p className="mt-1 text-small text-text-muted">Ventas, inventario y caja en un solo lugar.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+          {expired && !mutation.isError && <Alert tone="info" title={MESSAGES.session} />}
           {mutation.isError && (
             <Alert
               tone="error"
               title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
             >
-              {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage(mutation.error)}
+              {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : userMessage(mutation.error)}
             </Alert>
           )}
           <TextField

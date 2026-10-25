@@ -21,6 +21,7 @@ import { fetchAccounts } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { DeleteManualMovementModal, ManualMovementFormModal } from './ManualMovementModals'
 import {
@@ -36,7 +37,7 @@ import {
 import { fetchManualMovements, type ManualCategory } from './manualMovementsApi'
 import { iconMd } from '../components/icons'
 
-/** Lo que distingue Gastos operativos de Ingresos ocasionales. */
+/** Lo que distingue Gastos operativos de Otros ingresos. */
 export interface ManualMovementsConfig {
   category: ManualCategory
   title: string
@@ -55,11 +56,14 @@ export interface ManualMovementsConfig {
   accountHint: string
 }
 
+/** Ancho del recuadro desde el que caben todas las columnas de gastos y otros ingresos. */
+const MANUAL_TABLE_FULL = 760
+
 const card = 'rounded-surface border border-border bg-surface'
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; movement: TreasuryMovement } | { kind: 'delete'; movement: TreasuryMovement }
 
-/** Gastos operativos o Ingresos ocasionales: indicadores, filtros en la URL, tabla y modales. */
+/** Gastos operativos u Otros ingresos: indicadores, filtros en la URL, tabla y modales. */
 export function ManualMovementsPage({ config }: { config: ManualMovementsConfig }) {
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
@@ -67,6 +71,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
   const filters = parseManualFilters(searchParams)
   const range = manualRange(filters, today)
   const [dialog, setDialog] = useState<Dialog | null>(null)
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
 
   const movements = useQuery({
     queryKey: ['treasury', 'movements', config.category, range.desde, range.hasta],
@@ -114,12 +119,25 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
     <span className={`monto font-semibold whitespace-nowrap ${amountClass}`}>{formatSignedAmount(movement)}</span>
   )
 
+  // En un recuadro angosto las observaciones pasan a una segunda linea bajo el concepto.
+  const compact = width < MANUAL_TABLE_FULL
   const columns: Column<TreasuryMovement>[] = [
     { header: 'Fecha', render: (movement) => formatDate(movement.date) },
-    { header: 'Concepto', render: (movement) => movement.concept },
+    {
+      header: 'Concepto',
+      render: (movement) =>
+        compact && movement.notes ? (
+          <span className="flex flex-col">
+            <span>{movement.concept}</span>
+            <span className="text-small text-text-muted">{movement.notes}</span>
+          </span>
+        ) : (
+          movement.concept
+        ),
+    },
     { header: 'Cuenta', render: (movement) => movement.accountName ?? EMPTY_VALUE },
     { header: 'Monto', align: 'right', render: signed },
-    { header: 'Observaciones', render: (movement) => movement.notes || EMPTY_VALUE },
+    ...(compact ? [] : [{ header: 'Observaciones', render: (movement: TreasuryMovement) => movement.notes || EMPTY_VALUE }]),
     { header: 'Acciones', align: 'right', render: actions },
   ]
 
@@ -154,7 +172,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
     content = (
       <>
         <div className="hidden md:block">
-          <DataTable columns={columns} rows={page.rows} rowKey={(m) => m.id} loading={false} error={false} onRetry={retry} emptyMessage="" />
+          <DataTable columns={columns} rows={page.rows} rowKey={(m) => m.id} loading={false} error={false} onRetry={retry} emptyMessage="" dense={compact} />
         </div>
         <ul className="flex flex-col gap-3 md:hidden" aria-label={config.title}>
           {page.rows.map((movement) => (
@@ -257,7 +275,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         ]}
       </FilterBar>
 
-      <section className={`${card} p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className={`${card} p-4`} aria-label={config.title}>
         {content}
       </section>
 

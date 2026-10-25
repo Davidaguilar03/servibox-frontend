@@ -99,7 +99,7 @@ describe('productos', () => {
     expect(within(row).getByText('$ 307.440')).toBeInTheDocument()
     expect(within(row).getByRole('link', { name: 'Editar LL-004' })).toHaveAttribute('href', '/inventario/1/editar')
     expect(within(within(table).getByText('BAT-004').closest('tr') as HTMLElement).getByText('Stock crítico')).toBeInTheDocument()
-    expect(within(within(table).getByText('LL-003').closest('tr') as HTMLElement).getByText('Bajo stock')).toBeInTheDocument()
+    expect(within(within(table).getByText('LL-003').closest('tr') as HTMLElement).getByText('Stock bajo')).toBeInTheDocument()
     expect(within(within(table).getByText('LL-001').closest('tr') as HTMLElement).getByText('Disponible')).toBeInTheDocument()
   })
 

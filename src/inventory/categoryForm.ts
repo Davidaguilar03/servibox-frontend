@@ -90,7 +90,7 @@ export function validateCategory(
   if (!yellowOk) errors.yellowStockMin = 'Escribe un número entero mayor o igual a cero.'
   if (!isWholeNumber(values.redStockMin)) errors.redStockMin = 'Escribe un número entero mayor o igual a cero.'
   else if (yellowOk && Number(values.redStockMin) > Number(values.yellowStockMin))
-    errors.redStockMin = 'El umbral rojo no puede ser mayor que el amarillo.'
+    errors.redStockMin = 'El aviso de stock crítico no puede ser mayor que el de stock bajo.'
   const margin = percentToFraction(values.targetMargin)
   if (!values.targetMargin.trim()) errors.targetMargin = 'Escribe el margen objetivo.'
   else if (Number.isNaN(margin) || margin > 1) errors.targetMargin = 'El margen debe estar entre 0 y 100.'

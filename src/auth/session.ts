@@ -65,10 +65,26 @@ export function updateTenantName(name: string) {
   notify()
 }
 
-export function clearSession() {
+const EXPIRED_KEY = 'servibox.sessionExpired'
+
+/** Cierra la sesion. Con `expired` el login muestra "Tu sesión venció" (401 o token vencido). */
+export function clearSession(expired = false) {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem(IDENTITY_KEY)
+  if (expired) sessionStorage.setItem(EXPIRED_KEY, '1')
   notify()
+}
+
+/** Si la sesion anterior vencio; lo lee una vez (el login muestra el aviso y lo borra). */
+export function takeSessionExpired(): boolean {
+  const expired = sessionStorage.getItem(EXPIRED_KEY) === '1'
+  sessionStorage.removeItem(EXPIRED_KEY)
+  return expired
+}
+
+/** Queda la identidad de una sesion sin token: el token se perdio o se borro. */
+export function hasStoredIdentity(): boolean {
+  return getStoredIdentity() !== null
 }
 
 export function getRememberedTenantSlug(): string {

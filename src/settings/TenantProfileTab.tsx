@@ -1,6 +1,8 @@
+import { GLOSSARY } from '../copy/glossary'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizeNit } from '../auth/registerForm'
+import { useReportedError } from '../api/reportError'
+import { normalizeNit } from '../lib/validation/contact'
 import { updateTenantName } from '../auth/session'
 import { Alert } from '../components/Alert'
 import { ErrorSummary } from '../components/ErrorSummary'
@@ -11,7 +13,6 @@ import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { revealErrors } from '../lib/formErrors'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { TENANT_KEY, fetchTenantProfile, updateTenantProfile, type TenantProfile } from './settingsApi'
 import {
   buildTenantRequest,
@@ -58,11 +59,11 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<keyof TenantFormValues>>(() => new Set())
   const [submitted, setSubmitted] = useState(false)
-  const [forbidden, setForbidden] = useState<string | null>(null)
+  const [forbidden, setForbidden] = useState(false)
   const sending = useRef(false)
   const allowLeave = useRef(false)
 
-  const locked = readOnly || forbidden !== null
+  const locked = readOnly || forbidden
   const errors = validateTenantForm(values)
   const shown = (field: keyof TenantFormValues) => (touched.has(field) ? errors[field] : undefined)
   const dirty = !locked && JSON.stringify(values) !== JSON.stringify(initial)
@@ -83,12 +84,14 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
       showToast('Datos guardados')
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 403) setForbidden(error.message)
+      // El 403 sale en el toast (reportError); aqui solo se bloquea el formulario.
+      if (error instanceof ApiError && error.status === 403) setForbidden(true)
     },
     onSettled: () => {
       sending.current = false
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: keyof TenantFormValues) => (value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
@@ -107,8 +110,6 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
     save.mutate()
   }
 
-  const showGeneralError = save.isError && !forbidden
-
   return (
     <section className={card} aria-labelledby="datos-titulo">
       <h2 id="datos-titulo" className="text-section text-text">
@@ -123,15 +124,10 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
           submit()
         }}
       >
-        {forbidden && (
+        {locked && <Alert tone="info" title={READ_ONLY_NOTICE} />}
+        {saveError && (
           <Alert tone="error" title="No pudimos guardar los datos">
-            {forbidden}
-          </Alert>
-        )}
-        {readOnly && !forbidden && <Alert tone="info" title={READ_ONLY_NOTICE} />}
-        {showGeneralError && (
-          <Alert tone="error" title="No pudimos guardar los datos">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <TextField
@@ -174,7 +170,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
           />
         </div>
         <TextField
-          label="Identificador de la serviteca"
+          label={GLOSSARY.tenantCode}
           value={profile.slug}
           readOnly
           hint="Es lo que tu equipo escribe en “Serviteca” para iniciar sesión. No se puede cambiar."

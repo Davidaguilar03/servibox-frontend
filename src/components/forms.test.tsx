@@ -153,3 +153,67 @@ describe('guardian de cambios de los modales', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
+
+const product = {
+  id: 1,
+  code: 'LL-001',
+  description: 'Llanta Michelin 175/70 R13',
+  purchaseCost: 252000,
+  quantity: 6,
+  taxAmount: 47880,
+  suggestedPrice: 323077,
+  categoryId: 1,
+  categoryName: 'LLANTAS',
+}
+const category = { id: 1, name: 'LLANTAS', color: '#e74c3c', yellowStockMin: 10, redStockMin: 3, targetMargin: 0.22, taxTypes: [] }
+const customer = { id: 7, role: 'CLIENTE', name: 'Transportes Boyacá', documentType: 'NIT', documentNumber: '900123456', email: 'compras@tb.co', phone: '3001234567' }
+
+async function headersAt(path: string, width: number, rowText: string) {
+  saveToken(validToken())
+  stubContainerWidth(width)
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string) =>
+      Promise.resolve(
+        jsonResponse(
+          url.startsWith('/api/inventory/products')
+            ? [product]
+            : url.startsWith('/api/inventory/categories')
+              ? [category]
+              : url.startsWith('/api/counterparties')
+                ? [customer]
+                : url.includes('financial-settings')
+                  ? { expensesRate: 0.1, dianRate: 0, icaRate: 0, cardCommissionRate: 0 }
+                  : [],
+        ),
+      ),
+    ),
+  )
+  renderRoute(path)
+  await waitFor(() => expect(screen.getAllByText(rowText).length).toBeGreaterThan(0), { timeout: 4000 })
+  const table = screen.getByRole('table')
+  return { table, headers: within(table).getAllByRole('columnheader').map((cell) => cell.textContent) }
+}
+
+describe('tablas por prioridad segun el ancho del recuadro', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('productos: con espacio todas; en un recuadro angosto categoria y costo van en la segunda linea', async () => {
+    const wide = await headersAt('/inventario', 940, 'LL-001')
+    expect(wide.headers).toEqual(['Código', 'Descripción', 'Categoría', 'Stock', 'Costo sin IVA', 'Precio sugerido sin IVA', 'Estado', ''])
+  })
+
+  it('productos angosto', async () => {
+    const narrow = await headersAt('/inventario', 939, 'LL-001')
+    expect(narrow.headers).toEqual(['Código', 'Descripción', 'Stock', 'Precio sugerido sin IVA', 'Estado', ''])
+    expect(within(narrow.table).getByText(/· Costo/)).toHaveClass('text-small')
+    expect(within(narrow.table).getByText('$ 252.000')).toBeInTheDocument()
+  })
+
+  it('clientes angosto: correo y celular bajo el nombre', async () => {
+    const narrow = await headersAt('/ventas/clientes', 700, 'Transportes Boyacá')
+    expect(narrow.headers).not.toContain('Correo')
+    expect(narrow.headers).not.toContain('Celular')
+    expect(within(narrow.table).getByText('compras@tb.co · 3001234567')).toHaveClass('text-small')
+  })
+})

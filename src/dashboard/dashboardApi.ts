@@ -14,7 +14,7 @@ export interface Kpis {
   /** netSales - costOfSales. */
   grossProfit: number
   operatingExpenses: number
-  /** Ingresos ocasionales activos del rango. */
+  /** Otros ingresos (movimientos INGRESO_OCASIONAL) activos del rango. */
   otherIncome: number
   /** grossProfit + otherIncome - operatingExpenses. */
   netProfit: number

@@ -1,3 +1,4 @@
+import { GLOSSARY } from '../copy/glossary'
 export type BadgeStatus =
   | 'DISPONIBLE'
   | 'BAJO_STOCK'
@@ -13,7 +14,7 @@ export type BadgeStatus =
 
 const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   DISPONIBLE: { label: 'Disponible', tone: 'bg-success-bg text-success-ink' },
-  BAJO_STOCK: { label: 'Bajo stock', tone: 'bg-warning-bg text-warning-ink' },
+  BAJO_STOCK: { label: GLOSSARY.lowStock, tone: 'bg-warning-bg text-warning-ink' },
   // Variante que el manual no define: pendiente de validar con el disenador.
   STOCK_CRITICO: { label: 'Stock crítico', tone: 'bg-error-bg text-error-ink' },
   SIN_STOCK: { label: 'Sin stock', tone: 'bg-error-bg text-error-ink' },

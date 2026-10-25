@@ -47,6 +47,29 @@ const focusRing = 'focus-ring'
 /** Desde lg la barra lateral es fija; por debajo es un menu que se abre sobre el contenido. */
 const useIsDesktop = () => useMediaQuery(DESKTOP_QUERY, false)
 
+/** Desde xl (1280 px) la barra lateral arranca expandida; entre lg y xl, contraida. */
+const WIDE_QUERY = '(min-width: 1280px)'
+const SIDEBAR_KEY = 'servibox.sidebar'
+type SidebarChoice = 'collapsed' | 'expanded'
+
+/** La eleccion del usuario, si la hay. localStorage puede fallar (modo privado): sin eleccion manda el ancho. */
+function readSidebarChoice(): SidebarChoice | null {
+  try {
+    const value = localStorage.getItem(SIDEBAR_KEY)
+    return value === 'collapsed' || value === 'expanded' ? value : null
+  } catch {
+    return null
+  }
+}
+
+function saveSidebarChoice(choice: SidebarChoice) {
+  try {
+    localStorage.setItem(SIDEBAR_KEY, choice)
+  } catch {
+    // Sin almacenamiento la eleccion dura lo que dure la pagina.
+  }
+}
+
 function useBreadcrumb(): Crumb[] {
   const matches = useMatches()
   const tail = useBreadcrumbTailValue()
@@ -80,7 +103,9 @@ const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabi
  */
 export function AppShell() {
   const breadcrumb = useBreadcrumb()
-  const [collapsed, setCollapsed] = useState(false)
+  const isWide = useMediaQuery(WIDE_QUERY, true)
+  const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
+  const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide
   const [menuOpen, setMenuOpen] = useState(false)
   const isDesktop = useIsDesktop()
   const asideRef = useRef<HTMLElement>(null)
@@ -169,7 +194,11 @@ export function AppShell() {
           <div className="hidden px-3 pb-2 lg:block">
             <button
               type="button"
-              onClick={() => setCollapsed((value) => !value)}
+              onClick={() => {
+                const next: SidebarChoice = collapsed ? 'expanded' : 'collapsed'
+                setSidebarChoice(next)
+                saveSidebarChoice(next)
+              }}
               aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
               className={`flex min-h-touch w-full items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
             >

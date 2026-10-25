@@ -91,7 +91,7 @@ describe('papelera de ventas', () => {
 
     expect(await screen.findByRole('heading', { name: 'Papelera de ventas' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Papelera')
-    expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o recuperarlas.')).toBeInTheDocument()
+    expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o restaurarlas.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
     expect(screen.getByLabelText('Período')).toHaveValue('todas')
 
@@ -108,13 +108,13 @@ describe('papelera de ventas', () => {
     ])
     expect(rows[1]).toHaveTextContent('FV-000112/10/2026José PérezContadoAnulada$ 540.000')
     expect(within(rows[1] as HTMLElement).getByRole('link', { name: 'FV-0001' })).toHaveAttribute('href', '/ventas/1')
-    expect(within(rows[1] as HTMLElement).getByRole('button', { name: 'Recuperar factura FV-0001' })).toHaveClass('bg-surface')
+    expect(within(rows[1] as HTMLElement).getByRole('button', { name: 'Restaurar factura FV-0001' })).toHaveClass('bg-surface')
     expect(rows[2]).toHaveTextContent('CréditoAnulada$ 2.380.000')
     expect(screen.queryByText('Pagada')).not.toBeInTheDocument()
 
     const cards = screen.getByRole('list', { name: 'Facturas anuladas' })
     expect(within(cards).getAllByRole('listitem')).toHaveLength(2)
-    expect(within(cards).getAllByRole('button', { name: /Recuperar factura/ })).toHaveLength(2)
+    expect(within(cards).getAllByRole('button', { name: /Restaurar factura/ })).toHaveLength(2)
     expect(screen.getByText('1 a 2 de 2 facturas')).toBeInTheDocument()
   })
 
@@ -217,21 +217,21 @@ describe('papelera de ventas', () => {
     const router = renderRoute('/ventas/papelera')
     const user = userEvent.setup()
 
-    await user.click(await waitFor(() => table().getByRole('button', { name: 'Recuperar factura FV-0001' })))
-    let dialog = screen.getByRole('dialog', { name: 'Recuperar factura FV-0001' })
+    await user.click(await waitFor(() => table().getByRole('button', { name: 'Restaurar factura FV-0001' })))
+    let dialog = screen.getByRole('dialog', { name: 'Restaurar factura FV-0001' })
     expect(dialog).toHaveTextContent(
       'La factura vuelve al listado como Pagada o Pendiente, según lo que tenga abonado. Se descuentan otra vez del inventario las unidades vendidas y se restablecen en las cuentas el pago y los abonos que tenía.',
     )
     expect(dialog).not.toHaveTextContent(/costo/i)
     expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
-    expect(within(dialog).getByRole('button', { name: 'Recuperar factura' })).toHaveClass('bg-action')
+    expect(within(dialog).getByRole('button', { name: 'Restaurar factura' })).toHaveClass('bg-action')
     await user.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
-    await user.click(table().getByRole('button', { name: 'Recuperar factura FV-0001' }))
+    await user.click(table().getByRole('button', { name: 'Restaurar factura FV-0001' }))
     dialog = screen.getByRole('dialog')
     const listCalls = calls(fetchMock, 'GET', '/api/sales').length
-    await user.dblClick(within(dialog).getByRole('button', { name: 'Recuperar factura' }))
+    await user.dblClick(within(dialog).getByRole('button', { name: 'Restaurar factura' }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(calls(fetchMock, 'POST', '/api/sales/1/restore')).toHaveLength(1)
@@ -253,16 +253,16 @@ describe('papelera de ventas', () => {
     renderRoute('/ventas/papelera')
     const user = userEvent.setup()
 
-    await user.click(await waitFor(() => table().getByRole('button', { name: 'Recuperar factura FV-0001' })))
+    await user.click(await waitFor(() => table().getByRole('button', { name: 'Restaurar factura FV-0001' })))
     const dialog = screen.getByRole('dialog')
     const listCalls = calls(fetchMock, 'GET', '/api/sales').length
-    await user.click(within(dialog).getByRole('button', { name: 'Recuperar factura' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Restaurar factura' }))
 
-    expect(await within(dialog).findByText('Stock insuficiente para Bateria 12V: hay 0 y se piden 2')).toBeInTheDocument()
-    expect(within(dialog).getByText('No pudimos recuperar la factura')).toBeInTheDocument()
+    expect(await within(dialog).findByText('No hay stock suficiente de Bateria 12V: hay 0 unidades y se piden 2 unidades.')).toBeInTheDocument()
+    expect(within(dialog).getByText('No pudimos restaurar la factura')).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     await waitFor(() => expect(calls(fetchMock, 'GET', '/api/sales').length).toBeGreaterThan(listCalls))
-    expect(within(dialog).getByRole('button', { name: 'Recuperar factura' })).toBeEnabled()
+    expect(within(dialog).getByRole('button', { name: 'Restaurar factura' })).toBeEnabled()
   })
 
   it('el detalle se abre desde la papelera y atras conserva los filtros', async () => {
@@ -310,7 +310,7 @@ describe('papelera de compras', () => {
     expect(table().getByRole('link', { name: 'FC-7' })).toHaveAttribute('href', '/compras/7')
     expect(screen.getByLabelText('Buscar')).toHaveAttribute('placeholder', 'Número de factura o proveedor')
 
-    await userEvent.click(table().getByRole('button', { name: 'Recuperar factura FC-7' }))
+    await userEvent.click(table().getByRole('button', { name: 'Restaurar factura FC-7' }))
     expect(screen.getByRole('dialog')).toHaveTextContent(
       'Se suman otra vez al inventario las unidades compradas y se descuentan de nuevo de las cuentas los pagos que tenía. El costo de cada producto pasa al de esta compra si es la más reciente de ese producto.',
     )
@@ -326,11 +326,11 @@ describe('papelera de compras', () => {
     renderRoute('/compras/papelera')
     const user = userEvent.setup()
 
-    await user.click(await waitFor(() => table().getByRole('button', { name: 'Recuperar factura FC-7' })))
+    await user.click(await waitFor(() => table().getByRole('button', { name: 'Restaurar factura FC-7' })))
     const dialog = screen.getByRole('dialog')
-    await user.click(within(dialog).getByRole('button', { name: 'Recuperar factura' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Restaurar factura' }))
 
-    expect(await within(dialog).findByText('Saldo insuficiente en Caja General: hay 1000.0 y se requieren 119000.0')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Saldo insuficiente en Caja General: hay $ 1.000 y se necesitan $ 119.000.')).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 

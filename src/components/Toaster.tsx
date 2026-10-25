@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CircleCheck, TriangleAlert, X } from 'lucide-react'
+import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
 import { IconButton } from './IconButton'
 import { TOAST_DURATION_MS, dismissToast, useToasts, type ToastMessage } from './toast'
 import { iconSm } from './icons'
@@ -16,6 +17,21 @@ export function Toaster() {
         <Toast key={toast.id} toast={toast} />
       ))}
     </div>
+  )
+}
+
+/** El WhatsApp de soporte dentro del texto (mensaje de red) va como enlace. */
+function MessageWithContact({ text }: { text: string }) {
+  const [before, after] = text.split(WHATSAPP_DISPLAY)
+  if (after === undefined) return text
+  return (
+    <>
+      {before}
+      <a href={WHATSAPP_URL} target="_blank" rel="noopener" className="rounded-control font-semibold text-brand-ink hover:underline focus-ring">
+        {WHATSAPP_DISPLAY}
+      </a>
+      {after}
+    </>
   )
 }
 
@@ -50,7 +66,9 @@ function Toast({ toast }: { toast: ToastMessage }) {
       className="pointer-events-auto flex animate-[toast-in_var(--duration-base)_var(--ease-standard)] items-center gap-3 rounded-surface border border-border bg-surface py-2 pr-2 pl-4 shadow-raised"
     >
       <Icon {...iconSm} className={`shrink-0 ${error ? 'text-error' : 'text-success'}`} aria-hidden />
-      <p className="flex-1 text-small text-text">{toast.message}</p>
+      <p className="flex-1 text-small text-text">
+        <MessageWithContact text={toast.message} />
+      </p>
       <IconButton aria-label="Cerrar aviso" onClick={() => dismissToast(toast.id)}>
         <X {...iconSm} aria-hidden />
       </IconButton>

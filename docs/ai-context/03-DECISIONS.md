@@ -12,6 +12,30 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Glosario, mapa de mensajes del backend y regla unica de donde mostrar errores
+
+* Decision:
+  * Un rotulo por concepto en `src/copy/glossary.ts` (Forma de pago, Medio de pago, Otros
+    ingresos, Codigo de tu serviteca, avisos de stock bajo y critico, Stock bajo, Restaurar).
+    Las rutas no cambian.
+  * Guarda `src/copy/copy.test.ts` con la API de TypeScript (texto visible, no regex sobre el
+    archivo): tildes, jerga y terminos reemplazados.
+  * El frontend traduce los mensajes del backend con un mapa (`src/api/errorMessages.ts`):
+    tildes, cifras en pesos y unidades, estados y roles en palabras; lo desconocido o ilegible
+    cae en un texto por estado HTTP.
+  * Regla unica de lugar (`src/api/reportError.ts`): 400 y 409 en linea; red, 5xx, 403 y 404
+    en toast persistente; 401 cierra la sesion con aviso en el login.
+  * NIT y telefono en un solo modulo (`src/lib/validation/contact.ts`) para registro y
+    Configuracion.
+  * Barra lateral contraida de 1024 a 1279 y expandida desde 1280, con la eleccion recordada;
+    siete tablas mas por prioridad de columnas.
+* Alternativas consideradas: corregir los mensajes en el backend (no se toca en esta tarea);
+  codigos de error en la respuesta (el backend solo manda `error` y `status`); mostrar todo
+  en el formulario (un 5xx o un 404 no es culpa de un campo y se perdia en modales cerrados);
+  dejar la barra expandida y desplazar las tablas (no cumplia 0 px a 1024).
+* Motivo: el usuario ve siempre un texto en espanol correcto que dice que paso y que hacer, en
+  el mismo lugar para el mismo tipo de error.
+
 ## 2026-10-25: Regla unica de Guardar, guardian de cambios, panel de margen y toasts con cierre
 
 * Decision:

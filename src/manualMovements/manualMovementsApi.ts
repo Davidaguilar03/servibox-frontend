@@ -1,7 +1,7 @@
 import type { MovementCategory, TreasuryMovement } from '../accounts/accountsApi'
 import { apiFetch } from '../lib/api'
 
-// Gastos operativos e ingresos ocasionales: los movimientos manuales de tesoreria.
+// Gastos operativos y otros ingresos: los movimientos manuales de tesoreria.
 
 export type ManualCategory = Extract<MovementCategory, 'GASTO_OPERATIVO' | 'INGRESO_OCASIONAL'>
 

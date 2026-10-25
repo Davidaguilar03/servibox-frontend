@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { userMessage } from '../api/errorMessages'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
@@ -10,7 +12,6 @@ import { showToast } from '../components/toast'
 import { CATEGORIES_KEY, PRODUCTS_KEY, fetchInventoryCategories } from '../inventory/inventoryApi'
 import { revealErrors } from '../lib/formErrors'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings, updateFinancialSettings, type FinancialSettings } from './settingsApi'
 import {
   buildFinancialRequest,
@@ -100,12 +101,13 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
       showToast('Configuración guardada. Se recalcularon los precios sugeridos.')
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 403) setForbidden(error.message)
+      if (error instanceof ApiError && error.status === 403) setForbidden(userMessage(error))
     },
     onSettled: () => {
       sending.current = false
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: FinancialField) => (value: string) => setValues((current) => ({ ...current, [field]: value }))
   const touch = (field: FinancialField) => () => setTouched((current) => new Set(current).add(field))
@@ -149,9 +151,9 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
         )}
         {readOnly && !forbidden && <Alert tone="info" title={READ_ONLY_NOTICE} />}
         {isUnconfigured(settings) && <Alert tone="info" title="Aún no has configurado estos valores" />}
-        {save.isError && !forbidden && (
+        {saveError && save.isError && !forbidden && (
           <Alert tone="error" title="No pudimos guardar la configuración">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <div className="grid gap-4 md:grid-cols-2">

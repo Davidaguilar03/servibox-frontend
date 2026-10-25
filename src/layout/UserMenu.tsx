@@ -90,7 +90,7 @@ export function UserMenu() {
           <div className="border-t border-border pt-1">
             <button
               type="button"
-              onClick={clearSession}
+              onClick={() => clearSession()}
               className={`flex min-h-touch w-full items-center gap-2 rounded-control px-3 text-button text-text transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing}`}
             >
               <LogOut {...iconSm} aria-hidden />

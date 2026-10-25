@@ -1,3 +1,4 @@
+import { GLOSSARY } from '../copy/glossary'
 import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -38,6 +39,7 @@ import {
 } from '../inventory/productList'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import { stockAlertCounts, type StockStatus } from '../lib/stock'
@@ -52,7 +54,7 @@ const badgeFor: Record<StockStatus, BadgeStatus> = {
 const statusOptions = [
   { value: '', label: 'Todos' },
   { value: 'NORMAL', label: 'Disponible' },
-  { value: 'BAJO', label: 'Bajo stock' },
+  { value: 'BAJO', label: GLOSSARY.lowStock },
   { value: 'CRITICO', label: 'Stock crítico' },
   { value: 'SIN_STOCK', label: 'Sin stock' },
 ]
@@ -64,6 +66,9 @@ const sortOptions = [
   { value: 'stock-desc', label: 'Stock de mayor a menor' },
   { value: 'precio', label: 'Precio sugerido' },
 ]
+
+/** Ancho del recuadro desde el que caben todas las columnas de productos. */
+const PRODUCTS_TABLE_FULL = 940
 
 const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
@@ -271,30 +276,47 @@ interface ProductsTableProps {
 }
 
 function ProductsTable({ products, byId, loading, error, onRetry, filters, listState, onPageChange, onClear }: ProductsTableProps) {
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
   const editLink = (product: InventoryProduct) => (
     <CellLink to={`/inventario/${product.id}/editar`} state={listState} aria-label={`Editar ${product.code}`}>
       Editar
     </CellLink>
   )
 
+  // Columnas por prioridad segun el ancho real del recuadro: en uno angosto la categoria y el
+  // costo pasan a una segunda linea bajo la descripcion.
+  const compact = width < PRODUCTS_TABLE_FULL
+  const category = (p: InventoryProduct) => (
+    <span className="flex items-center gap-2 whitespace-nowrap">
+      <CategoryDot color={p.categoryId === null ? undefined : byId?.get(p.categoryId)?.color} />
+      {p.categoryName ?? EMPTY_VALUE}
+    </span>
+  )
   const columns: Column<InventoryProduct>[] = [
     { header: 'Código', render: (p) => <span className="codigo">{p.code}</span> },
-    { header: 'Descripción', render: (p) => p.description },
     {
-      header: 'Categoría',
-      render: (p) => (
-        <span className="flex items-center gap-2 whitespace-nowrap">
-          <CategoryDot color={p.categoryId === null ? undefined : byId?.get(p.categoryId)?.color} />
-          {p.categoryName ?? EMPTY_VALUE}
-        </span>
-      ),
+      header: 'Descripción',
+      render: (p) =>
+        compact ? (
+          <span className="flex flex-col">
+            <span>{p.description}</span>
+            <span className="flex flex-wrap items-center gap-x-2 text-small text-text-muted">
+              {category(p)} · Costo <span className="monto">{formatCurrency(p.purchaseCost)}</span>
+            </span>
+          </span>
+        ) : (
+          p.description
+        ),
     },
+    ...(compact ? [] : [{ header: 'Categoría', render: category }]),
     {
       header: 'Stock',
       align: 'right',
       render: (p) => <span className={(p.quantity ?? 0) <= 0 ? 'font-semibold text-brand-ink' : ''}>{p.quantity ?? 0}</span>,
     },
-    { header: 'Costo sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.purchaseCost)}</span> },
+    ...(compact
+      ? []
+      : [{ header: 'Costo sin IVA', align: 'right' as const, render: (p: InventoryProduct) => <span className="monto">{formatCurrency(p.purchaseCost)}</span> }]),
     { header: 'Precio sugerido sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.suggestedPrice)}</span> },
     { header: 'Estado', render: (p) => byId && <StatusBadge status={badgeFor[productStatus(p, byId)]} /> },
     { header: '', render: editLink },
@@ -327,7 +349,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} rows={page.rows} rowKey={(p) => p.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" />
+            <DataTable columns={columns} rows={page.rows} rowKey={(p) => p.id} loading={false} error={false} onRetry={onRetry} emptyMessage="" dense={compact} />
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label="Productos">
             {page.rows.map((product) => (
@@ -363,7 +385,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
   }
 
   return (
-    <section className={`${card} p-4`} aria-label="Listado de productos">
+    <section ref={sectionRef} className={`${card} p-4`} aria-label="Listado de productos">
       {content}
     </section>
   )

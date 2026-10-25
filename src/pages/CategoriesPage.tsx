@@ -1,7 +1,10 @@
+import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Check } from 'lucide-react'
+import { userMessage } from '../api/errorMessages'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
@@ -40,14 +43,17 @@ import {
   type CategoryFormValues,
 } from '../inventory/categoryForm'
 import { productCounts } from '../inventory/productList'
-import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE } from '../lib/format'
+import { useElementWidth } from '../lib/useElementWidth'
 import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import { iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface'
 const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
+
+/** Ancho del recuadro desde el que caben todas las columnas de categorias. */
+const CATEGORIES_TABLE_FULL = 840
 
 /** null cerrado, 'new' para crear, o la categoria a editar. */
 type ModalTarget = null | 'new' | InventoryCategory
@@ -67,18 +73,28 @@ export function CategoriesPage() {
   const financialAtZero =
     financial.data && !financial.data.expensesRate && !financial.data.dianRate && !financial.data.icaRate
 
-  const columns: Column<InventoryCategory>[] = [
+  const [sectionRef, width] = useElementWidth<HTMLElement>()
+  // En un recuadro angosto los impuestos pasan a una segunda linea bajo el nombre.
+  const compact = width < CATEGORIES_TABLE_FULL
+  const taxes = (c: InventoryCategory) => (c.taxTypes.length ? c.taxTypes.map((tax) => tax.name).sort().join(', ') : EMPTY_VALUE)
+  const name = (c: InventoryCategory) => (
+    <span className="flex items-center gap-2 whitespace-nowrap">
+      <CategoryDot color={c.color} />
+      {c.name}
+    </span>
+  )
+  const allColumns: Column<InventoryCategory>[] = [
     {
       header: 'Nombre',
       render: (c) => (
-        <span className="flex items-center gap-2 whitespace-nowrap">
-          <CategoryDot color={c.color} />
-          {c.name}
+        <span className="flex flex-col">
+          {name(c)}
+          {compact && <span className="text-small text-text-muted">Impuestos: {taxes(c)}</span>}
         </span>
       ),
     },
-    { header: 'Umbral amarillo', align: 'right', render: (c) => c.yellowStockMin ?? EMPTY_VALUE },
-    { header: 'Umbral rojo', align: 'right', render: (c) => c.redStockMin ?? EMPTY_VALUE },
+    { header: GLOSSARY.lowStock, align: 'right', render: (c) => c.yellowStockMin ?? EMPTY_VALUE },
+    { header: GLOSSARY.criticalStock, align: 'right', render: (c) => c.redStockMin ?? EMPTY_VALUE },
     {
       header: 'Margen objetivo',
       align: 'right',
@@ -86,7 +102,7 @@ export function CategoriesPage() {
     },
     {
       header: 'Impuestos',
-      render: (c) => (c.taxTypes.length ? c.taxTypes.map((tax) => tax.name).sort().join(', ') : EMPTY_VALUE),
+      render: taxes,
     },
     {
       header: 'Productos',
@@ -105,15 +121,17 @@ export function CategoriesPage() {
   ]
 
   // La misma fila en tarjeta, bajo md: cada dato sale del render de su columna.
-  const cell = (c: InventoryCategory, header: string) => columns.find((column) => column.header === header)?.render(c)
+  const columns = compact ? allColumns.filter((column) => column.header !== 'Impuestos') : allColumns
+  // Las tarjetas (bajo md) llevan todos los datos, sin la segunda linea del nombre.
+  const cell = (c: InventoryCategory, header: string) => allColumns.find((column) => column.header === header)?.render(c)
   const categoryCard = (c: InventoryCategory) => (
     <>
       <div className="flex items-center justify-between gap-4">
-        <span className="min-w-0 text-body font-semibold text-text">{cell(c, 'Nombre')}</span>
+        <span className="min-w-0 text-body font-semibold text-text">{name(c)}</span>
         {cell(c, '')}
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-small">
-        {['Umbral amarillo', 'Umbral rojo', 'Margen objetivo', 'Impuestos', 'Productos'].map((header) => (
+        {[GLOSSARY.lowStock, GLOSSARY.criticalStock, 'Margen objetivo', 'Impuestos', 'Productos'].map((header) => (
           <div key={header} className="contents">
             <dt className="text-text-muted">{header}</dt>
             <dd className="tabular text-right text-text">{cell(c, header)}</dd>
@@ -188,7 +206,7 @@ export function CategoriesPage() {
         </Alert>
       )}
 
-      <section className={`${card} p-4`} aria-label="Listado de categorías">
+      <section ref={sectionRef} className={`${card} p-4`} aria-label="Listado de categorías">
         {content}
       </section>
 
@@ -249,11 +267,12 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
     },
     onError: (error) => {
       if (isNameConflict(error)) {
-        setNameConflict(error.message)
+        setNameConflict(userMessage(error))
         nameRef.current?.focus()
       }
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: CategoryField) => (value: string) => {
     if (field === 'name') setNameConflict(null)
@@ -328,9 +347,9 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
         }}
       >
         <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
-        {generalError && (
+        {saveError && generalError && (
           <Alert tone="error" title="No pudimos guardar la categoría">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
         <TextField
@@ -379,17 +398,17 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
-            label="Umbral amarillo"
+            label={GLOSSARY.lowStockThreshold}
             inputMode="numeric"
             value={values.yellowStockMin}
             onChange={(event) => change('yellowStockMin')(event.target.value)}
             onBlur={touch('yellowStockMin')}
             error={shown('yellowStockMin')}
-            hint="Bajo stock con estas unidades o menos."
+            hint="Con estas unidades o menos el producto pasa a Stock bajo."
             required
           />
           <TextField
-            label="Umbral rojo"
+            label={GLOSSARY.criticalStockThreshold}
             inputMode="numeric"
             value={values.redStockMin}
             onChange={(event) => change('redStockMin')(event.target.value)}

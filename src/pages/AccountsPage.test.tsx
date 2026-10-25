@@ -291,7 +291,7 @@ describe('cuentas', () => {
     ])
   })
 
-  it('un error al exportar usa el mensaje generico', async () => {
+  it('un error al exportar va en un toast con el mensaje generico', async () => {
     await setup('/cuentas', {
       ...fullRoutes(),
       'GET /api/reporting/export': () => new Response('<html>Bad gateway</html>', { status: 502 }),
@@ -299,7 +299,7 @@ describe('cuentas', () => {
     const user = userEvent.setup()
     await screen.findByRole('table')
     await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Algo salió mal de nuestro lado. Intenta de nuevo en unos minutos.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo')
   })
 
   it('nueva cuenta: valida, muestra el 409 bajo Nombre y envia el cuerpo exacto', async () => {
@@ -324,7 +324,7 @@ describe('cuentas', () => {
     await user.type(within(dialog).getByLabelText('Nombre'), 'Bancolombia')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cuenta' }))
     const name = within(dialog).getByLabelText('Nombre')
-    await waitFor(() => expect(name).toHaveAccessibleDescription('Ya existe una cuenta con el nombre Bancolombia'))
+    await waitFor(() => expect(name).toHaveAccessibleDescription('Ya existe una cuenta con el nombre Bancolombia.'))
 
     await user.clear(name)
     await user.type(name, 'Nequi')

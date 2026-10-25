@@ -2,6 +2,8 @@ import { useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PackageSearch } from 'lucide-react'
+import { userMessage } from '../api/errorMessages'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
@@ -34,7 +36,6 @@ import {
   type ProductFormValues,
 } from '../inventory/productForm'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import type { ListState } from './ProductsPage'
@@ -135,11 +136,12 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
     },
     onError: (error) => {
       if (isCodeConflict(error)) {
-        setCodeConflict(error.message)
+        setCodeConflict(userMessage(error))
         codeRef.current?.focus()
       }
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: ProductField) => (value: string) => {
     if (field === 'code') setCodeConflict(null)
@@ -181,9 +183,9 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           </p>
         </div>
 
-        {generalError && (
+        {saveError && generalError && (
           <Alert tone="error" title="No pudimos guardar el producto">
-            {errorMessage(save.error)}
+            {saveError}
           </Alert>
         )}
 

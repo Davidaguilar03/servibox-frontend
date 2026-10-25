@@ -8,7 +8,7 @@ import { normalizeText } from '../lib/text'
 import { validateRange, type RangeErrors } from '../reports/reports'
 import type { ManualCategory, ManualMovementRequest } from './manualMovementsApi'
 
-// Logica de Gastos operativos e Ingresos ocasionales. Reglas en docs/ai-context/03-DECISIONS.md.
+// Logica de Gastos operativos y Otros ingresos. Reglas en docs/ai-context/03-DECISIONS.md.
 
 export type ManualPeriod = 'este-mes' | 'mes-anterior' | 'este-ano' | 'todas' | 'personalizado'
 

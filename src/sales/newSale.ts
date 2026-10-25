@@ -189,5 +189,5 @@ export function stockWarnings(
 
 /** 409 porque otra factura tomo el mismo consecutivo al tiempo: se puede reintentar. */
 export function isDuplicateNumberError(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 409 && error.message.startsWith('Ya existe una factura con el numero')
+  return error instanceof ApiError && error.status === 409 && /^Ya existe una factura con el numero /.test(error.message)
 }

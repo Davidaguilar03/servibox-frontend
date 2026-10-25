@@ -117,8 +117,8 @@ describe('Datos de la serviteca', () => {
     renderRoute('/configuracion')
 
     const name = await screen.findByLabelText('Nombre comercial')
-    expect(screen.getByLabelText('Identificador de la serviteca')).toHaveValue('demo')
-    expect(screen.getByLabelText('Identificador de la serviteca')).toHaveAttribute('readonly')
+    expect(screen.getByLabelText('Código de tu serviteca')).toHaveValue('demo')
+    expect(screen.getByLabelText('Código de tu serviteca')).toHaveAttribute('readonly')
     expect(screen.getByText(/Es lo que tu equipo escribe en “Serviteca” para iniciar sesión/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
 
@@ -203,7 +203,7 @@ describe('Datos de la serviteca', () => {
     await user.type(await screen.findByLabelText('Teléfono'), '300')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('El nombre comercial es obligatorio')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Escribe el nombre comercial.')
     expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
   })
 
@@ -222,7 +222,7 @@ describe('Datos de la serviteca', () => {
     expect(screen.queryByRole('button', { name: 'Guardar configuración' })).not.toBeInTheDocument()
   })
 
-  it('un 403 del backend muestra su mensaje y deja el formulario en solo lectura', async () => {
+  it('un 403 del backend va en un toast y deja el formulario en solo lectura', async () => {
     const user = userEvent.setup()
     mockApi(
       routes({
@@ -235,7 +235,8 @@ describe('Datos de la serviteca', () => {
     await user.type(await screen.findByLabelText('Teléfono'), '300')
     await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Solo un administrador puede editar los datos de la serviteca')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Solo un administrador puede editar los datos de la serviteca.')
+    expect(screen.getByText('Solo un administrador puede editar estos datos.')).toBeInTheDocument()
     expect(screen.getByLabelText('Teléfono')).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
   })
@@ -380,7 +381,7 @@ describe('Configuración financiera', () => {
     await user.type(gastos, '10')
     await user.click(screen.getByRole('button', { name: 'Guardar configuración' }))
 
-    expect(await screen.findByText('Peticion invalida')).toBeInTheDocument()
+    expect(await screen.findByText('Revisa los datos e inténtalo de nuevo.')).toBeInTheDocument()
     expect(gastos).toHaveValue('10')
   })
 })

@@ -1,4 +1,5 @@
-import { NIT, PHONE, businessNameError, normalizeNit } from '../auth/registerForm'
+import { businessNameError } from '../auth/registerForm'
+import { nitError, normalizeNit, phoneError } from '../lib/validation/contact'
 import type { InventoryCategory } from '../inventory/inventoryApi'
 import type { FinancialSettings, TenantProfile, TenantProfileRequest } from './settingsApi'
 
@@ -30,11 +31,6 @@ export function tenantFormFrom(profile: TenantProfile): TenantFormValues {
   return { name: profile.name, nit: profile.nit ?? '', phone: profile.phone ?? '' }
 }
 
-/** Largo maximo de NIT y telefono (`TenantRegistrationService.obligatorio` en el backend). */
-const CONTACT_MAX_LENGTH = 25
-
-const CONTACT_TOO_LONG = 'El NIT y el teléfono no pueden superar 25 caracteres.'
-
 /**
  * Las reglas del backend (`TenantService.update`): nombre, NIT y telefono obligatorios. El NIT
  * se valida ya normalizado (sin puntos ni espacios) y el telefono recortado.
@@ -43,14 +39,11 @@ export function validateTenantForm(values: TenantFormValues): TenantFormErrors {
   const errors: TenantFormErrors = {}
   const name = businessNameError(values.name)
   if (name) errors.name = name
-  const nit = normalizeNit(values.nit)
-  if (!nit) errors.nit = 'Ingresa el NIT de tu serviteca.'
-  else if (nit.length > CONTACT_MAX_LENGTH) errors.nit = CONTACT_TOO_LONG
-  else if (!NIT.test(nit)) errors.nit = 'El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'
-  const phone = values.phone.trim()
-  if (!phone) errors.phone = 'Ingresa el teléfono de contacto.'
-  else if (phone.length > CONTACT_MAX_LENGTH) errors.phone = CONTACT_TOO_LONG
-  else if (!PHONE.test(phone)) errors.phone = 'El teléfono solo admite dígitos, espacios, +, - y paréntesis.'
+  // NIT y telefono: el modulo comun con el registro (lib/validation/contact.ts).
+  const nit = nitError(values.nit)
+  if (nit) errors.nit = nit
+  const phone = phoneError(values.phone)
+  if (phone) errors.phone = phone
   return errors
 }
 

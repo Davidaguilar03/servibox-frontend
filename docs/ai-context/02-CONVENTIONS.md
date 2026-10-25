@@ -145,6 +145,9 @@ necesite, no antes.
   y Cerrar sesion. Patron disclosure (`aria-expanded`, `aria-controls`), no `role=menu`: Esc
   cierra y devuelve el foco, el clic fuera y el cambio de ruta lo cierran. La barra lateral
   ya no tiene bloque de usuario ni Salir, y no hay pildora de la serviteca.
+* Barra lateral desde lg: contraida (72 px, solo iconos con `aria-label` y `title`) de 1024 a
+  1279 px y expandida (240) desde 1280. El boton Expandir o Contraer menu guarda la eleccion en
+  `localStorage` (`servibox.sidebar`, con try/catch) y la eleccion manda sobre el ancho.
 * El panel y la vista previa de Reportes leen `netSales` (ventas sin IVA) y `costOfSales` de
   `GET /api/reporting/kpis`; `totalSales` y `totalPurchases` (con IVA) quedan para los
   listados de Ventas y Compras. Las seis filas del Estado de resultados son las del archivo
@@ -245,10 +248,11 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   la unica fuente; la interfaz los importa de ahi y ningun archivo repite el numero ni el
   correo (lo comprueba `LandingPage.test.tsx`). Hoy son demostrativos: reemplazar antes de
   publicar.
-* Identificador del tenant: en login y registro se rotula `Codigo de tu serviteca`.
+* Un concepto, un rotulo: los de `src/copy/glossary.ts` (Forma de pago, Medio de pago, Otros
+  ingresos, Codigo de tu serviteca, Stock bajo, Restaurar...). Tabla, guarda de tildes y jerga
+  (`src/copy/copy.test.ts`) y mensajes de error en [06-COPY.md](06-COPY.md).
 * Etiquetas de tabla en mayusculas sostenidas (`text-label uppercase`).
-* Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`).
-  Excepcion pendiente en Manejo de errores.
+* Un error le dice al usuario que paso y que hacer (`Revisa los datos e intentalo de nuevo.`).
 * La interfaz no ofrece funciones que no existen: nada de enlaces, pestanas, opciones ni
   textos "Proximamente" para algo que hoy no funciona. Si una funcion no esta, no se muestra;
   se agrega cuando exista. `/terminos` ya tiene su texto (pendiente de revision legal).
@@ -259,27 +263,19 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 
 ## Manejo de errores
 
-Toda peticion pasa por `apiFetch`, que lanza `ApiError` con el `status` del backend. La
-pantalla decide el texto segun el codigo; el criterio de codigos (400, 401, 404, 409) es el
-del backend, ver Manejo de errores en `servibox-backend/docs/ai-context/02-CONVENTIONS.md`.
+Toda peticion pasa por `apiFetch`, que lanza `ApiError` con el `status` del backend; el
+criterio de codigos es el del backend (Manejo de errores en
+`servibox-backend/docs/ai-context/02-CONVENTIONS.md`).
 
-El texto que ve el usuario sale siempre de `errorMessage(error)` (`src/lib/errorMessage.ts`),
-nunca de `error.message` directamente:
-
-* `ApiError` con estado 400 o 409: el mensaje del backend, tal cual. Son validaciones y
-  conflictos de negocio escritos para el usuario.
-* Cualquier otro estado HTTP (404, 5xx y los demas): `GENERIC_ERROR_MESSAGE`, "Algo salio mal
-  de nuestro lado. Intenta de nuevo en unos minutos." (con tilde en la interfaz).
-* Error de red (no es `ApiError`, no hubo respuesta): `NETWORK_ERROR_MESSAGE`, "Revisa tu
-  conexion e intenta de nuevo.".
-* 401: lo maneja la sesion (`apiFetch` la cierra y el guard manda a `/login`); el login
-  muestra su propio texto de credenciales.
-* `apiDownload` con un error que no es JSON lanza `ApiError` con el mensaje generico; el
-  codigo HTTP queda en `status`, no en el texto.
-* Un 404 de la ruta (factura o producto inexistente) no es un Alert: la pantalla muestra su
-  estado "no encontrado". Un 409 que corresponde a un campo (codigo de producto, nombre de
-  categoria) se muestra bajo ese campo, con el mensaje del backend.
-
-Pendiente:
-
-* Los mensajes del backend no llevan tildes ("Ya existe un producto con el codigo ...").
+* Texto: siempre `userMessage(error)` (`src/api/errorMessages.ts`; `errorMessage` de
+  `lib/errorMessage.ts` es un alias), nunca `error.message`. Mapa de los mensajes del backend
+  y textos por estado en [06-COPY.md](06-COPY.md).
+* Lugar: regla unica de `reportError` / `useReportedError` (`src/api/reportError.ts`): 400 y
+  409 en linea en el formulario o modal (bajo el campo si es de uno); red, 5xx, 403 y 404 en un
+  toast de error persistente; 401 cierra la sesion y el login avisa que vencio.
+* `apiDownload` con un error que no es JSON lanza `ApiError` con un mensaje generico; el
+  codigo HTTP queda en `status` y el texto final lo pone `userMessage`.
+* Un 404 de la ruta (factura o producto inexistente) es el estado "no encontrado" de la
+  pantalla, no un toast.
+* Si una pantalla compara el mensaje del backend (numero de factura o documento repetido), la
+  comparacion va contra el texto del backend y lo que se muestra sale de `userMessage`.

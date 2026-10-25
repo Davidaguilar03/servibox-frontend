@@ -1,13 +1,14 @@
+import { GLOSSARY } from '../copy/glossary'
 import { ManualMovementsPage, type ManualMovementsConfig } from '../manualMovements/ManualMovementsPage'
 
 const config: ManualMovementsConfig = {
   category: 'INGRESO_OCASIONAL',
-  title: 'Ingresos ocasionales',
+  title: GLOSSARY.otherIncome,
   subtitle: 'Ingresos que no vienen de una venta: reintegros, venta de chatarra, aportes.',
   listPath: '/ventas',
   listLabel: 'Facturas de venta',
   singular: 'ingreso',
-  newLabel: 'Nuevo ingreso',
+  newLabel: GLOSSARY.newOtherIncome,
   createdToast: 'Ingreso registrado',
   emptyMessage: 'No hay ingresos registrados',
   filteredEmptyMessage: 'No hay ingresos con esos filtros.',
@@ -15,7 +16,7 @@ const config: ManualMovementsConfig = {
   accountHint: 'La cuenta a la que entra el dinero.',
 }
 
-/** Ingresos ocasionales: los ingresos manuales de tesoreria. */
+/** Otros ingresos: los ingresos manuales de tesoreria. */
 export function OccasionalIncomePage() {
   return <ManualMovementsPage config={config} />
 }

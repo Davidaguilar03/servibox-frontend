@@ -1,5 +1,7 @@
 import { useRef, useState, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { userMessage } from '../api/errorMessages'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
@@ -7,7 +9,6 @@ import { ErrorSummary } from '../components/ErrorSummary'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { ApiError } from '../lib/api'
-import { errorMessage } from '../lib/errorMessage'
 import { revealErrors } from '../lib/formErrors'
 import { createCounterparty, type Counterparty, type CounterpartyRequest, type DocumentType } from '../sales/salesApi'
 import { updateCounterparty } from './counterpartiesApi'
@@ -73,12 +74,13 @@ export function NewCounterpartyModal({ role, counterparty, onClose, onCreated, o
         : createCounterparty(buildCreateRequest(values, role)),
     onSuccess: (saved) => (editing ? onUpdated?.(saved) : onCreated(saved)),
     onError: (error) => {
-      if (isDocumentConflict(error)) setConflict({ documentNumber: values.documentNumber.trim(), message: error.message })
+      if (isDocumentConflict(error)) setConflict({ documentNumber: values.documentNumber.trim(), message: userMessage(error) })
     },
     onSettled: () => {
       sending.current = false
     },
   })
+  const saveError = useReportedError(save.error)
 
   const change = (field: keyof CounterpartyFormValues) => (value: string) =>
     setValues((current) => ({ ...current, [field]: value }))
@@ -124,9 +126,9 @@ export function NewCounterpartyModal({ role, counterparty, onClose, onCreated, o
     >
       <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
       {editing && <p className="text-small text-text-muted">Los cambios también se verán en las facturas ya emitidas.</p>}
-      {save.isError && (
+      {saveError && save.isError && (
         <Alert tone="error" title={failTitle}>
-          {isDocumentConflict(save.error) ? 'Revisa el número de documento.' : errorMessage(save.error)}
+          {isDocumentConflict(save.error) ? 'Revisa el número de documento.' : saveError}
         </Alert>
       )}
       <TextField

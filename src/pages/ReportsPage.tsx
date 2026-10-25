@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, FileDown, Minus } from 'lucide-react'
+import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { IndicatorCard } from '../components/IndicatorCard'
@@ -12,7 +13,6 @@ import { showToast } from '../components/toast'
 import { fetchAccounts, fetchKpis, type Kpis } from '../dashboard/dashboardApi'
 import { apiDownload } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
-import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency } from '../lib/format'
 import {
   REPORT_OPTIONS,
@@ -87,6 +87,7 @@ export function ReportsPage() {
       submitting.current = false
     },
   })
+  const downloadError = useReportedError(download.error)
 
   function generate() {
     if (submitting.current) return
@@ -213,9 +214,9 @@ export function ReportsPage() {
             />
           </div>
 
-          {download.isError && (
+          {downloadError && download.isError && (
             <Alert tone="error" title="No pudimos generar el reporte">
-              {errorMessage(download.error)}
+              {downloadError}
             </Alert>
           )}
 

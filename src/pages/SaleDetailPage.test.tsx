@@ -138,7 +138,7 @@ describe('detalle de factura de venta', () => {
     expect(within(data).getByText('3001234567')).toBeInTheDocument()
     expect(within(data).getByText('05/10/2026')).toBeInTheDocument()
     expect(within(data).getByText('04/11/2026')).toBeInTheDocument()
-    expect(within(data).queryByText('Método de pago')).not.toBeInTheDocument()
+    expect(within(data).queryByText('Medio de pago')).not.toBeInTheDocument()
 
     const products = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
     const productRows = within(products).getAllByRole('row').slice(1)
@@ -325,7 +325,7 @@ describe('detalle de factura de venta', () => {
     await user.type(amount, '700000')
     await user.click(within(dialog).getByRole('button', { name: 'Registrar abono' }))
 
-    expect(await within(dialog).findByText('Solo se puede abonar a una factura PENDIENTE, y esta esta PAGADA')).toBeInTheDocument()
+    expect(await within(dialog).findByText('Esta factura ya está pagada: no se le pueden registrar abonos.')).toBeInTheDocument()
     expect(amount).toHaveValue(700000)
     await waitFor(() => expect(saleCalls).toBeGreaterThan(1))
   })
@@ -363,7 +363,7 @@ describe('detalle de factura de venta', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Anular' }))
     let dialog = screen.getByRole('dialog', { name: 'Anular factura FV-0230' })
-    expect(within(dialog).getByText(/pasa a la papelera/)).toHaveTextContent('Puedes recuperarla desde la Papelera')
+    expect(within(dialog).getByText(/pasa a la papelera/)).toHaveTextContent('Puedes restaurarla desde la Papelera')
     expect(dialog).not.toHaveTextContent(/costo/i)
     expect(within(dialog).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
     await user.click(within(dialog).getByRole('button', { name: 'Cancelar' }))
@@ -406,7 +406,7 @@ describe('detalle de factura de venta', () => {
     const dialog = screen.getByRole('dialog')
     await user.click(within(dialog).getByRole('button', { name: 'Anular factura' }))
 
-    expect(await within(dialog).findByText('La factura FV-0230 ya esta anulada')).toBeInTheDocument()
+    expect(await within(dialog).findByText('La factura FV-0230 ya está anulada.')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/ventas/5')
   })
 

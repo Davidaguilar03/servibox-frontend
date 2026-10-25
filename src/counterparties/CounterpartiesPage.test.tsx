@@ -348,6 +348,7 @@ describe('Clientes', () => {
 
   it('un 409 de documento va bajo el campo y se limpia al cambiarlo', async () => {
     const message = 'Ya existe un tercero con el documento 900123456 como CLIENTE'
+    const shown = 'Ya existe un cliente con el documento 900123456.'
     const { user } = await openClients(
       '/ventas/clientes',
       customerRoutes(customers, { 'POST /api/counterparties': () => jsonResponse({ error: message, status: 409 }, 409) }),
@@ -360,12 +361,12 @@ describe('Clientes', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cliente' }))
 
     const field = within(dialog).getByLabelText('Número de documento')
-    await waitFor(() => expect(field).toHaveAccessibleDescription(message))
+    await waitFor(() => expect(field).toHaveAccessibleDescription(shown))
     expect(field).toHaveAttribute('aria-invalid', 'true')
-    expect(within(dialog).getByText(message)).toHaveAttribute('aria-live', 'polite')
+    expect(within(dialog).getByText(shown)).toHaveAttribute('aria-live', 'polite')
     expect(within(dialog).getByText('No pudimos crear el cliente')).toBeInTheDocument()
     await user.type(field, '7')
-    expect(within(dialog).queryByText(message)).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(shown)).not.toBeInTheDocument()
   })
 
   it('editar: precarga, avisa que afecta facturas emitidas, envia el PUT exacto y refresca', async () => {
@@ -427,13 +428,13 @@ describe('Clientes', () => {
     expect(within(dialog).getByRole('button', { name: 'Guardando…' })).toBeDisabled()
     expect(requests(fetchMock, 'PUT', '/api/counterparties')).toHaveLength(1)
     answer(jsonResponse({ error: 'El correo admite hasta 150 caracteres', status: 400 }, 400))
-    expect(await within(dialog).findByText('El correo admite hasta 150 caracteres')).toBeInTheDocument()
+    expect(await within(dialog).findByText('El correo admite hasta 150 caracteres.')).toBeInTheDocument()
     expect(within(dialog).getByText('No pudimos guardar los cambios')).toBeInTheDocument()
 
     await user.clear(within(dialog).getByLabelText('Número de documento'))
     await user.type(within(dialog).getByLabelText('Número de documento'), '52123456')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
-    await waitFor(() => expect(within(dialog).getByLabelText('Número de documento')).toHaveAccessibleDescription(conflict))
+    await waitFor(() => expect(within(dialog).getByLabelText('Número de documento')).toHaveAccessibleDescription(`${conflict}.`))
   })
 
   it('con datos digitados, Esc pide descartar en crear y en editar', async () => {
