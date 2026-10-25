@@ -28,6 +28,7 @@ import {
   type CounterpartyFilters,
 } from './counterpartyList'
 import { NewCounterpartyModal } from './NewCounterpartyModal'
+import { iconMd, iconSm } from '../components/icons'
 
 /** Lo que distingue Clientes de Proveedores. */
 export interface CounterpartiesConfig {
@@ -54,10 +55,10 @@ export interface CounterpartiesConfig {
   promotedToast: string
 }
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 const iconButton =
   'flex size-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
-const tag = 'inline-flex items-center whitespace-nowrap rounded-tag bg-neutral-200 px-2 py-0.5 text-small font-medium text-text-muted'
+const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-medium text-text-muted'
 
 const balanceOptions = [
   { value: '', label: 'Todos' },
@@ -119,16 +120,16 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
 
   const documentCell = (counterparty: Counterparty) => (
     <span className="whitespace-nowrap">
-      {counterparty.documentType} <span className="font-mono">{counterparty.documentNumber}</span>
+      {counterparty.documentType} <span className="codigo">{counterparty.documentNumber}</span>
     </span>
   )
 
   const balanceCell = (counterparty: Counterparty) => {
-    if (!balances) return <span className="tabular">{EMPTY_VALUE}</span>
+    if (!balances) return <span className="monto">{EMPTY_VALUE}</span>
     const balance = balances.get(counterparty.id) ?? ZERO_BALANCE
     return (
       <span className="flex flex-col items-end">
-        <span className="tabular font-medium whitespace-nowrap text-text">{formatCurrency(balance.amount)}</span>
+        <span className="monto font-medium whitespace-nowrap text-text">{formatCurrency(balance.amount)}</span>
         {balance.count > 0 && <span className="text-small whitespace-nowrap text-text-muted">{invoicesText(balance.count)}</span>}
       </span>
     )
@@ -144,7 +145,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           title="Editar"
           onClick={() => setDialog({ kind: 'edit', counterparty })}
         >
-          <Pencil size={18} strokeWidth={1.5} aria-hidden />
+          <Pencil {...iconMd} aria-hidden />
         </button>
       )}
       <Link
@@ -153,7 +154,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         aria-label={`${config.newInvoiceLabel} para ${counterparty.name}`}
         title={config.newInvoiceLabel}
       >
-        <FilePlus size={18} strokeWidth={1.5} aria-hidden />
+        <FilePlus {...iconMd} aria-hidden />
       </Link>
     </div>
   )
@@ -196,7 +197,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label={config.title}>
             {page.rows.map((counterparty) => (
-              <li key={counterparty.id} className="flex flex-col gap-2 rounded-control border border-border p-4">
+              <li key={counterparty.id} className="flex flex-col gap-2 rounded-surface border border-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex min-w-0 flex-col gap-1">
                     {nameCell(counterparty)}
@@ -225,7 +226,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">{config.title}</h1>
+          <h1 className="text-title text-text">{config.title}</h1>
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -285,7 +286,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
       <section className={`${card} flex flex-col gap-4 p-4`} aria-label={config.title}>
         {invoices.isError && counterparties.data && (
           <div role="alert" className="flex flex-wrap items-center gap-2 text-small text-text">
-            <TriangleAlert size={16} strokeWidth={1.5} className="text-error" aria-hidden />
+            <TriangleAlert {...iconSm} className="text-error" aria-hidden />
             No pudimos cargar los saldos.
             <Button variant="text" className="px-2" onClick={retryInvoices}>
               Reintentar

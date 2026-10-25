@@ -30,13 +30,13 @@ const accountTypeLabels: Record<AccountType, string> = {
 }
 
 const linkClass =
-  'rounded-tag text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 function Section({ title, link, children }: { title: string; link: { to: string; label: string }; children: ReactNode }) {
   return (
-    <section className="rounded-card border border-border bg-surface p-6 shadow-card">
+    <section className="rounded-surface border border-border bg-surface p-6">
       <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-h3 text-text">{title}</h2>
+        <h2 className="text-title text-text">{title}</h2>
         <Link to={link.to} className={linkClass}>
           {link.label}
         </Link>
@@ -56,7 +56,7 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Inicio</h1>
+          <h1 className="text-title text-text">Inicio</h1>
           <p className="mt-1 text-small text-text-muted">
             Resumen {tenantName ? `de ${tenantName} · ` : 'de '}
             {formatMonth(today)}
@@ -92,7 +92,7 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
 
   if (kpis.isError) {
     return (
-      <div className="rounded-card border border-border bg-surface shadow-card">
+      <div className="rounded-surface border border-border bg-surface">
         <ErrorState message="No pudimos cargar los indicadores del mes." onRetry={() => void kpis.refetch()} />
       </div>
     )
@@ -120,7 +120,7 @@ const stockBadge: Record<Exclude<StockStatus, 'NORMAL'>, 'BAJO_STOCK' | 'STOCK_C
 type LowStockRow = Product & { status: StockStatus }
 
 const lowStockColumns: Column<LowStockRow>[] = [
-  { header: 'Código', render: (p) => <span className="font-mono">{p.code}</span> },
+  { header: 'Código', render: (p) => <span className="codigo">{p.code}</span> },
   { header: 'Producto', render: (p) => p.description },
   {
     header: 'Stock',
@@ -135,7 +135,7 @@ function lowStockCard(p: LowStockRow) {
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="flex min-w-0 flex-col gap-1">
-        <span className="font-mono text-small text-text">{p.code}</span>
+        <span className="codigo text-small text-text">{p.code}</span>
         <span className="text-body text-text">{p.description}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
@@ -213,13 +213,13 @@ function AccountsBlock() {
                 <p className="text-body font-medium text-text">{account.name}</p>
                 <p className="text-small text-text-muted">{accountTypeLabels[account.type] ?? EMPTY_VALUE}</p>
               </div>
-              <span className="tabular text-body text-text">{formatCurrency(account.currentBalance)}</span>
+              <span className="monto text-body text-text">{formatCurrency(account.currentBalance)}</span>
             </li>
           ))}
         </ul>
         <div className="flex items-center justify-between gap-4 pt-4">
           <span className="text-small text-text-muted">Total disponible</span>
-          <span className="tabular font-display text-h3 font-bold text-text">{formatCurrency(balance.data.total)}</span>
+          <span className="monto text-title text-text">{formatCurrency(balance.data.total)}</span>
         </div>
       </div>
     )
@@ -238,11 +238,11 @@ const paymentTypeLabels: Record<Sale['paymentType'], string> = {
 }
 
 const salesColumns: Column<Sale>[] = [
-  { header: 'N.º factura', render: (s) => <span className="font-mono">{s.invoiceNumber}</span> },
+  { header: 'N.º factura', render: (s) => <span className="codigo">{s.invoiceNumber}</span> },
   { header: 'Cliente', render: (s) => s.customer?.name ?? EMPTY_VALUE },
   { header: 'Fecha', render: (s) => formatDate(s.invoiceDate) },
   { header: 'Forma de pago', render: (s) => paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE },
-  { header: 'Total', align: 'right', render: (s) => formatCurrency(s.total) },
+  { header: 'Total', align: 'right', render: (s) => <span className="monto">{formatCurrency(s.total)}</span> },
   { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
 ]
 
@@ -251,14 +251,14 @@ function saleCard(s: Sale) {
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="flex min-w-0 flex-col gap-1">
-        <span className="font-mono text-small text-text">{s.invoiceNumber}</span>
+        <span className="codigo text-small text-text">{s.invoiceNumber}</span>
         <span className="text-body text-text">{s.customer?.name ?? EMPTY_VALUE}</span>
         <span className="text-small text-text-muted">
           {formatDate(s.invoiceDate)} · {paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE}
         </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="tabular text-body font-medium text-text">{formatCurrency(s.total)}</span>
+        <span className="monto text-body font-medium text-text">{formatCurrency(s.total)}</span>
         <StatusBadge status={s.status} />
       </span>
     </div>

@@ -59,9 +59,9 @@ const periodOptions = [
   { value: 'todas', label: 'Todas' },
 ]
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 const linkClass =
-  'rounded-tag font-mono text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control codigo text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 /** Papelera: las facturas anuladas del modulo, con filtros en la URL y Recuperar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {
@@ -99,7 +99,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
     { header: config.partyLabel, render: config.partyName },
     { header: 'Fecha', render: (invoice) => formatDate(invoice.invoiceDate) },
     { header: 'Forma de pago', render: (invoice) => paymentTypeLabels[invoice.paymentType] ?? EMPTY_VALUE },
-    { header: 'Total', align: 'right', render: (invoice) => formatCurrency(invoice.total) },
+    { header: 'Total', align: 'right', render: (invoice) => <span className="monto">{formatCurrency(invoice.total)}</span> },
     { header: 'Estado', render: (invoice) => <StatusBadge status={invoice.status} /> },
     {
       header: '',
@@ -135,7 +135,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
           </div>
           <ul className="flex flex-col gap-3 md:hidden" aria-label="Facturas anuladas">
             {page.rows.map((invoice) => (
-              <li key={invoice.id} className="flex flex-col gap-3 rounded-control border border-border p-4">
+              <li key={invoice.id} className="flex flex-col gap-3 rounded-surface border border-border p-4">
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex min-w-0 flex-col gap-1">
                     <Link to={detailPath(invoice)} className={`${linkClass} text-small`}>
@@ -147,7 +147,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="tabular text-body font-medium text-text">{formatCurrency(invoice.total)}</span>
+                    <span className="monto text-body font-medium text-text">{formatCurrency(invoice.total)}</span>
                     <StatusBadge status={invoice.status} />
                   </span>
                 </div>
@@ -168,7 +168,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">{config.title}</h1>
+          <h1 className="text-title text-text">{config.title}</h1>
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
         <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">

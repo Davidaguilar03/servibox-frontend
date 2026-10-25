@@ -19,7 +19,7 @@ ServiBox v1.0 en el bloque `@theme` de Tailwind y vacia las escalas por defecto 
 radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no existe.
 
 * Los componentes consumen tokens por medio de las utilidades (`bg-brand`, `text-text-muted`,
-  `rounded-control`, `shadow-card`, `h-control`). **Nunca un hexadecimal literal** ni un valor
+  `rounded-control`, `shadow-raised`, `h-control`). **Nunca un hexadecimal literal** ni un valor
   arbitrario de color en un componente.
 * Unica excepcion: la paleta de colores de categoria (`CATEGORY_COLORS` en
   `src/inventory/categoryForm.ts`), 8 hexadecimales definidos en ese solo lugar. No es un
@@ -44,19 +44,25 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
 | Grupo | Tokens | Utilidad de ejemplo |
 |-|-|-|
 | Color | `brand`, `brand-hover`, `brand-ink`, `action`, `surface`, `canvas`, `nav`, `nav-hover`, `text`, `text-muted`, `text-subtle`, `text-inverse`, `border`, `border-control`, `row-alt`, `overlay`, `neutral-50` a `neutral-900`, `success`, `warning`, `error`, `info` con su `-bg` y su `-ink` | `bg-canvas`, `text-success-ink` |
-| Tipografia | `font-display` (Montserrat), `font-body` (Inter), `font-mono` (IBM Plex Mono); tamanos `display`, `h1`, `h2`, `h3`, `body`, `button`, `small`, `label` con su interlineado y peso | `text-h2`, `font-mono` |
+| Tipografia | `font-display` (Montserrat), `font-body` (Inter); tamanos de contenido `title`, `body`, `small` y de componente `label`, `button`, con su interlineado y peso; roles `monto` y `codigo` (IBM Plex Mono) | `text-title`, `monto`, `codigo` |
 | Espaciado | base de 4 px: `p-1` 4, `p-2` 8, `p-3` 12, `p-4` 16, `p-6` 24, `p-8` 32, `p-12` 48, `p-16` 64 | `gap-4` |
-| Radios | `tag` 4, `control` 8, `card` 12, `container` 20, `pill` 999 | `rounded-card` |
-| Sombras | `card`, `menu`, `modal` | `shadow-card` |
+| Radios | `control` 8, `surface` 12, `pill` 999 | `rounded-surface` |
+| Sombras | `raised` (menus, toasts, barra fija), `overlay` (modales, menu movil); solo lo que flota | `shadow-raised` |
 | Layout | `sidebar` 240, `sidebar-collapsed` 72, `topbar` 64, `control` 40, `row` 48, `touch` 44, `button-x` 22, `content` 1440 | `w-sidebar`, `max-w-content` |
 | Puntos de corte | `sm` 640, `md` 768, `lg` 1024, `xl` 1280, `2xl` 1536 | `lg:flex` |
-| Movimiento | `duration-fast` 120 ms (hover y foco), `duration-base` 200 ms (menus y toasts), `duration-slow` 280 ms (modales) | `duration-(<token>)` |
+| Movimiento | `duration-fast` 120 ms (hover y foco), `duration-base` 200 ms (menus y toasts), `duration-slow` 320 ms (modales), `ease-standard` | `duration-(<token>)` |
 
 Otras reglas del manual:
 
 * Titulos en Montserrat (lo aplica el estilo base a `h1`, `h2`, `h3`); cuerpo y formularios
-  en Inter; codigos, SKU y valores tecnicos en IBM Plex Mono. Numeros tabulares en tablas y
-  montos (`table` o la clase `tabular`).
+  en Inter. IBM Plex Mono solo para codigos (clase `codigo`: numero de factura, codigo de
+  producto, NIT). Todo monto en dinero usa la clase `monto` (Inter con numeros tabulares);
+  otros numeros pueden usar `tabular`.
+* Sistema de diseno base: tokens, valores, usos y reglas en
+  [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md). `src/styles/designSystem.test.ts` es la guarda:
+  falla si una pantalla de la app usa un tamano de texto fuera de la escala, una sombra fuera
+  de lo que flota, medios pasos o px fuera de la rejilla de 4, otro radio, iconos con px
+  sueltos (usar `iconSm`, `iconMd`, `iconLg` de `components/icons.ts`) o `font-mono`.
 * Bordes de 1 px `border`. Foco visible con anillo de 2 px `brand` y desplazamiento de 2 px.
 * Movimiento sin rebotes ni parallax. `index.css` anula transiciones y animaciones con
   `prefers-reduced-motion`.
@@ -74,7 +80,7 @@ reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
 `SelectField` (selector nativo, con ayuda o error opcional), `CategoryDot` (punto con el
 color de una categoria), `ComboboxField` (selector con
 busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
-`overlay`, sombra `modal`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
+`overlay`, sombra `overlay`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
 los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
 "1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional, secundaria por defecto) y
 `ErrorState` (`states.tsx`) y `UnsavedChangesGuard` (modal "Descartar cambios" con

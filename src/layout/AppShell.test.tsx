@@ -67,10 +67,13 @@ describe('shell', () => {
       expect(aside()).not.toHaveAttribute('inert')
       expect(content()).toHaveAttribute('inert')
       expect(within(aside()).getByRole('link', { name: 'Inicio' })).toHaveFocus()
+      // Abierto flota sobre el contenido: lleva la sombra overlay, que se quita en escritorio.
+      expect(aside()).toHaveClass('shadow-overlay', 'lg:shadow-none')
 
       await user.keyboard('{Escape}')
       expect(button).toHaveAttribute('aria-expanded', 'false')
       expect(aside()).toHaveAttribute('inert')
+      expect(aside()).not.toHaveClass('shadow-overlay')
       expect(content()).not.toHaveAttribute('inert')
       await waitFor(() => expect(button).toHaveFocus())
     })

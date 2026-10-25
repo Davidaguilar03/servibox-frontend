@@ -44,17 +44,17 @@ const periodOptions = [
 ]
 
 const linkClass =
-  'rounded-tag text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 
 const columns: Column<Purchase>[] = [
-  { header: 'N.º factura', render: (p) => <span className="font-mono">{p.invoiceNumber}</span> },
+  { header: 'N.º factura', render: (p) => <span className="codigo">{p.invoiceNumber}</span> },
   { header: 'Proveedor', render: (p) => p.supplier.name },
   { header: 'Fecha', render: (p) => formatDate(p.invoiceDate) },
   { header: 'Vence', render: (p) => (p.paymentType === 'CONTADO' ? EMPTY_VALUE : formatDate(p.dueDate)) },
   { header: 'Forma de pago', render: (p) => paymentTypeLabels[p.paymentType] ?? EMPTY_VALUE },
-  { header: 'Total', align: 'right', render: (p) => formatCurrency(p.total) },
+  { header: 'Total', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.total)}</span> },
   { header: 'Estado', render: (p) => <StatusBadge status={p.status} /> },
   {
     header: '',
@@ -94,7 +94,7 @@ export function PurchaseInvoicesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Facturas de compra</h1>
+          <h1 className="text-title text-text">Facturas de compra</h1>
           <p className="mt-1 text-small text-text-muted">
             Compras de contado y a crédito. Las facturas anuladas están en la papelera.
           </p>
@@ -227,14 +227,14 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
               <li key={purchase.id}>
                 <Link
                   to={`/compras/${purchase.id}`}
-                  className="flex items-start justify-between gap-4 rounded-control border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="font-mono text-small text-text">{purchase.invoiceNumber}</span>
+                    <span className="codigo text-small text-text">{purchase.invoiceNumber}</span>
                     <span className="truncate text-body text-text">{purchase.supplier.name}</span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="tabular text-body font-medium text-text">{formatCurrency(purchase.total)}</span>
+                    <span className="monto text-body font-medium text-text">{formatCurrency(purchase.total)}</span>
                     <StatusBadge status={purchase.status} />
                   </span>
                 </Link>

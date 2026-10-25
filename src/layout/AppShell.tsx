@@ -17,6 +17,7 @@ import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
 import { clearSession, displayName, initials, roleLabel, useSession } from '../auth/session'
 import { useBreadcrumbTailValue } from './breadcrumb'
+import { iconMd } from '../components/icons'
 
 // Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
 const navItems = [
@@ -138,7 +139,7 @@ export function AppShell() {
           event.preventDefault()
           mainRef.current?.focus()
         }}
-        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-menu focus:not-sr-only focus:fixed focus:top-2 focus:left-2 ${focusRing}`}
+        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-raised focus:not-sr-only focus:fixed focus:top-2 focus:left-2 ${focusRing}`}
       >
         Saltar al contenido
       </a>
@@ -153,14 +154,14 @@ export function AppShell() {
         inert={!isDesktop && !menuOpen}
         onKeyDown={onMenuKeyDown}
         className={`fixed inset-y-0 left-0 z-40 flex w-sidebar flex-col bg-nav transition-[width,translate] duration-(--duration-base) lg:translate-x-0 ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
+          menuOpen ? 'translate-x-0 shadow-overlay lg:shadow-none' : '-translate-x-full'
         } ${collapsed ? 'lg:w-sidebar-collapsed' : ''}`}
       >
         <div className={`flex h-topbar shrink-0 items-center px-6 ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}>
           <span className={collapsed ? 'lg:hidden' : ''}>
             <Wordmark onDark />
           </span>
-          {collapsed && <span className="hidden font-display text-h3 font-bold text-brand lg:inline">S</span>}
+          {collapsed && <span className="hidden font-display text-title font-bold text-brand lg:inline">S</span>}
         </div>
 
         <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
@@ -176,7 +177,7 @@ export function AppShell() {
                 } ${isActive ? 'bg-action text-text-inverse ring-1 ring-brand ring-inset' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
               }
             >
-              <Icon size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
+              <Icon {...iconMd} aria-hidden className="shrink-0" />
               <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
             </NavLink>
           ))}
@@ -191,7 +192,7 @@ export function AppShell() {
               aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
               className={`flex min-h-touch w-full items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
             >
-              {collapsed ? <PanelLeftOpen size={18} strokeWidth={1.5} /> : <PanelLeftClose size={18} strokeWidth={1.5} />}
+              {collapsed ? <PanelLeftOpen {...iconMd} /> : <PanelLeftClose {...iconMd} />}
             </button>
           </div>
         )}
@@ -218,7 +219,7 @@ export function AppShell() {
             title="Salir"
             className={`flex size-touch shrink-0 items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
           >
-            <LogOut size={18} strokeWidth={1.5} aria-hidden />
+            <LogOut {...iconMd} aria-hidden />
           </button>
         </div>
       </aside>
@@ -239,7 +240,7 @@ export function AppShell() {
             aria-controls="menu-lateral"
             className={`-ml-3 flex size-touch items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
           >
-            <Menu size={20} strokeWidth={1.5} />
+            <Menu {...iconMd} />
           </button>
           <nav aria-label="Ruta de navegación" className="min-w-0">
             <ol className="flex items-center gap-2 text-small">
@@ -260,7 +261,7 @@ export function AppShell() {
                         {crumb.label}
                       </span>
                     ) : (
-                      <Link to={crumb.to} className={`truncate rounded-tag text-text-muted hover:text-text hover:underline ${focusRing}`}>
+                      <Link to={crumb.to} className={`truncate rounded-control text-text-muted hover:text-text hover:underline ${focusRing}`}>
                         {crumb.label}
                       </Link>
                     )}

@@ -20,7 +20,7 @@ import {
 
 export const READ_ONLY_NOTICE = 'Solo un administrador puede editar estos datos.'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 
 interface TabProps {
   readOnly: boolean
@@ -102,7 +102,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
 
   return (
     <section className={card} aria-labelledby="datos-titulo">
-      <h2 id="datos-titulo" className="text-h3 text-text">
+      <h2 id="datos-titulo" className="text-title text-text">
         Datos de la serviteca
       </h2>
       <form
@@ -137,6 +137,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
         <div className="grid gap-4 md:grid-cols-2">
           <TextField
             label="NIT (opcional)"
+            valueRole="codigo"
             inputMode="numeric"
             value={values.nit}
             onChange={(event) => change('nit')(event.target.value)}

@@ -1,5 +1,6 @@
 import { useId, type InputHTMLAttributes } from 'react'
 import { Search } from 'lucide-react'
+import { iconSm } from './icons'
 
 interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> {
   label: string
@@ -9,14 +10,13 @@ interface SearchFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
 export function SearchField({ label, ...props }: SearchFieldProps) {
   const id = useId()
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-small font-medium text-text">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-label text-text">
         {label}
       </label>
       <div className="relative">
         <Search
-          size={16}
-          strokeWidth={1.5}
+          {...iconSm}
           aria-hidden
           className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-text-subtle"
         />

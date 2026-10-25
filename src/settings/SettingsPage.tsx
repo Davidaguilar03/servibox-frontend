@@ -47,7 +47,7 @@ export function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-h1 text-text">Configuración</h1>
+        <h1 className="text-title text-text">Configuración</h1>
         <p className="mt-1 text-small text-text-muted">Datos de la serviteca y parámetros financieros.</p>
       </div>
 

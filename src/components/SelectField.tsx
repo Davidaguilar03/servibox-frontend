@@ -1,5 +1,6 @@
 import { useId, type SelectHTMLAttributes } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { iconSm } from './icons'
 
 interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'id'> {
   label: string
@@ -14,8 +15,8 @@ export function SelectField({ label, options, hint, error, ...props }: SelectFie
   const message = error ?? hint
   const hintId = message ? `${id}-hint` : undefined
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-small font-medium text-text">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-label text-text">
         {label}
       </label>
       <div className="relative">
@@ -35,8 +36,7 @@ export function SelectField({ label, options, hint, error, ...props }: SelectFie
           ))}
         </select>
         <ChevronDown
-          size={16}
-          strokeWidth={1.5}
+          {...iconSm}
           aria-hidden
           className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-muted"
         />

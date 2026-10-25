@@ -54,17 +54,17 @@ const periodOptions = [
 ]
 
 const linkClass =
-  'rounded-tag text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 
 const columns: Column<Sale>[] = [
-  { header: 'N.º factura', render: (s) => <span className="font-mono">{s.invoiceNumber}</span> },
+  { header: 'N.º factura', render: (s) => <span className="codigo">{s.invoiceNumber}</span> },
   { header: 'Cliente', render: (s) => customerName(s) },
   { header: 'Fecha', render: (s) => formatDate(s.invoiceDate) },
   { header: 'Vence', render: (s) => (s.paymentType === 'CONTADO' ? EMPTY_VALUE : formatDate(s.dueDate)) },
   { header: 'Forma de pago', render: (s) => paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE },
-  { header: 'Total', align: 'right', render: (s) => formatCurrency(s.total) },
+  { header: 'Total', align: 'right', render: (s) => <span className="monto">{formatCurrency(s.total)}</span> },
   { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
   {
     header: '',
@@ -104,7 +104,7 @@ export function SalesInvoicesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Facturas de venta</h1>
+          <h1 className="text-title text-text">Facturas de venta</h1>
           <p className="mt-1 text-small text-text-muted">
             Ventas de contado y a crédito. Las facturas anuladas están en la papelera.
           </p>
@@ -237,14 +237,14 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
               <li key={sale.id}>
                 <Link
                   to={`/ventas/${sale.id}`}
-                  className="flex items-start justify-between gap-4 rounded-control border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="font-mono text-small text-text">{sale.invoiceNumber}</span>
+                    <span className="codigo text-small text-text">{sale.invoiceNumber}</span>
                     <span className="truncate text-body text-text">{customerName(sale)}</span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="tabular text-body font-medium text-text">{formatCurrency(sale.total)}</span>
+                    <span className="monto text-body font-medium text-text">{formatCurrency(sale.total)}</span>
                     <StatusBadge status={sale.status} />
                   </span>
                 </Link>

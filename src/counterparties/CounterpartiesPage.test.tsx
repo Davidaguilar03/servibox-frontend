@@ -146,7 +146,7 @@ describe('Clientes', () => {
     expect(row('María')).toHaveTextContent('$ 300.0001 factura pendiente')
     expect(row('Óscar')).toHaveTextContent('$ 0')
     expect(row('Óscar')).not.toHaveTextContent('pendiente')
-    expect(within(row('Transportes')).getByText('900123456')).toHaveClass('font-mono')
+    expect(within(row('Transportes')).getByText('900123456')).toHaveClass('codigo')
     expect(row('Transportes')).toHaveTextContent('NIT 900123456')
     expect(row('Transportes')).toHaveTextContent('compras@transboyaca.co')
     expect(within(row('Óscar')).getAllByText(EMPTY_VALUE)).toHaveLength(2)

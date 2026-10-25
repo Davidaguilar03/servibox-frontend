@@ -12,6 +12,41 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Sistema de diseno base (escala, sombras, rejilla, radios, iconos, roles y movimiento)
+
+* Decision: reglas y tokens de [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md), con la guarda
+  `src/styles/designSystem.test.ts`.
+  * Tipografia: tres tamanos de contenido (`title` 20/28/600, `body` 15/1.6/400, `small`
+    13/1.5/400) y dos de componente (`label` 12/16/600 sin tracking, `button` 14/1/600). Se
+    conservan body, small y button del manual; title es nuevo y label sube de 11 a 12.
+    **Reemplaza** el uso de `h1`, `h2`, `h3` y `display` en la app (quedan como legado solo
+    para landing, login y registro).
+  * Sombras: solo `raised` (menus, toasts, barra fija) y `overlay` (modales, menu movil).
+    **Reemplaza** `shadow-card`, `shadow-menu` y `shadow-modal`: las tarjetas no llevan
+    sombra.
+  * Radios `control` 8, `surface` 12, `pill` 999 (reemplazan `tag`, `card` y `container`);
+    rejilla de 4 sin medios pasos; iconos `iconSm` 16, `iconMd` 20, `iconLg` 24 con trazo
+    1.5; montos con `monto` (Inter tabular) y codigos con `codigo` (unico uso de IBM Plex
+    Mono); movimiento 120/200/320 ms con `ease-standard`.
+* Alternativas consideradas: los valores propuestos en la tarea (body 14, small 12, label 12,
+  que cambiaban tambien la landing); el manual tal cual (label de 11 con tracking, demasiado
+  pequeno como rotulo de campo); sombra minima en las tarjetas; Montserrat en las cifras.
+* Motivo: la auditoria visual (TIP-01, TIP-02, TIP-04, ESP-01, ESP-05, TOK-05) encontro de 5
+  a 8 tamanos por pantalla, sombras en todo, montos en dos familias y la mono en textos que
+  no son codigos. Una escala corta con guarda automatica evita que vuelva a pasar.
+  Sesion: [sessions/2026-10-24-design-system-base.md](sessions/2026-10-24-design-system-base.md).
+* Desvios pendientes (ver 05-DESIGN-SYSTEM.md):
+  * label 12/16/600 sin tracking es un desvio del manual v1.0, que dice 11 px con tracking
+    0,06em. Pendiente de validar con el disenador.
+  * Los 7 desvios de la sesion siguen pendientes: cifras destacadas en title 20; `monto` en
+    conteos de `IndicatorCard`; Wordmark con `font-bold`; enlaces de celda en 15 o en small
+    segun el listado; menu lateral, pestanas de Configuracion y badges en small y pestanas de
+    Productos en body; `font-medium` en unos 70 usos; tokens de legado para landing, login y
+    registro.
+* Pendiente para feat/24: titulo de pantalla pasa a 24/32/600 y los titulos de seccion y modal
+  a body con peso 600, porque title 20 aplana la jerarquia; rol de componente figure de 24 a
+  28 px solo para el valor de los indicadores.
+
 ## 2026-10-24: Sin promesas muertas, verbos de mostrador y alertas de stock unificadas
 
 * Decision:
@@ -1510,7 +1545,8 @@ Formato de cada entrada:
 
 ## 2026-10-18: Tokens como unica fuente visual
 
-* Decision: `src/styles/tokens.css` define los tokens del manual de estilos ServiBox v1.0
+* Decision: (escalas de tipografia, radio y sombra reemplazadas por 2026-10-24: Sistema de
+  diseno base) `src/styles/tokens.css` define los tokens del manual de estilos ServiBox v1.0
   en el bloque `@theme` de Tailwind y vacia las escalas por defecto de color, radio, sombra
   y puntos de corte. Los componentes nunca usan hexadecimales literales.
 * Alternativas consideradas: la paleta por defecto de Tailwind con colores de marca

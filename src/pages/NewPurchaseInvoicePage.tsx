@@ -42,12 +42,13 @@ import {
 import { PURCHASES_KEY, SUPPLIERS_KEY, createPurchase, fetchSuppliers } from '../purchases/purchasesApi'
 import { lineAmounts, vatRate } from '../sales/newSale'
 import type { Counterparty } from '../sales/salesApi'
+import { iconMd } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 const lineInput =
-  'h-control w-full rounded-control border bg-surface px-3 text-right text-body text-text tabular outline-none transition-[border-color,box-shadow] duration-(--duration-fast) focus:ring-3'
+  'h-control w-full rounded-control border bg-surface px-3 text-right text-body text-text monto outline-none transition-[border-color,box-shadow] duration-(--duration-fast) focus:ring-3'
 // La rejilla de la linea suma 666 px fijos: solo cabe desde xl con la barra lateral abierta.
-const lineGrid = 'xl:grid xl:grid-cols-[110px_minmax(0,1fr)_96px_128px_104px_112px_44px] xl:items-start xl:gap-3'
+const lineGrid = 'xl:grid xl:grid-cols-[112px_minmax(0,1fr)_96px_128px_104px_112px_44px] xl:items-start xl:gap-3'
 
 function initialForm(today: string): PurchaseForm {
   return {
@@ -234,7 +235,7 @@ export function NewPurchaseInvoicePage() {
   } else {
     generalContent = (
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2">
           <ComboboxField
             label="Proveedor"
             options={supplierOptions}
@@ -245,7 +246,7 @@ export function NewPurchaseInvoicePage() {
           <button
             type="button"
             onClick={() => setSupplierModalOpen(true)}
-            className="self-start rounded-tag text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="self-start rounded-control text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Nuevo proveedor
           </button>
@@ -272,13 +273,13 @@ export function NewPurchaseInvoicePage() {
           value={form.invoiceDate}
           onChange={(event) => changeInvoiceDate(event.target.value)}
         />
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-small font-medium text-text">Tipo de pago</legend>
-          <div className="grid h-control grid-cols-2 gap-1 rounded-control border border-border-control bg-surface p-1">
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-label text-text">Tipo de pago</legend>
+          <div className="grid h-control grid-cols-2 gap-1 rounded-pill border border-border-control bg-surface p-1">
             {(['CONTADO', 'CREDITO'] as const).map((type) => (
               <label
                 key={type}
-                className={`flex cursor-pointer items-center justify-center rounded-tag text-small font-medium transition-colors duration-(--duration-fast) has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand ${
+                className={`flex cursor-pointer items-center justify-center rounded-pill text-button transition-colors duration-(--duration-fast) has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand ${
                   form.paymentType === type ? 'bg-dark text-text-inverse' : 'text-text hover:bg-neutral-100'
                 }`}
               >
@@ -376,7 +377,7 @@ export function NewPurchaseInvoicePage() {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       <div>
-        <h1 className="text-h1 text-text">Nueva factura de compra</h1>
+        <h1 className="text-title text-text">Nueva factura de compra</h1>
         <p className="mt-1 text-small text-text-muted">
           Al guardar se suma al inventario y, si es de contado, se descuenta de la cuenta.
         </p>
@@ -397,40 +398,40 @@ export function NewPurchaseInvoicePage() {
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className={card} aria-labelledby="general-title">
-          <h2 id="general-title" className="mb-4 text-h3 text-text">
+          <h2 id="general-title" className="mb-4 text-title text-text">
             Datos generales
           </h2>
           {generalContent}
         </section>
 
         <aside className={card} aria-labelledby="summary-title">
-          <h2 id="summary-title" className="mb-4 text-h3 text-text">
+          <h2 id="summary-title" className="mb-4 text-title text-text">
             Resumen
           </h2>
           <dl className="flex flex-col gap-3 text-body">
             <div className="flex justify-between gap-4">
               <dt className="text-text-muted">Subtotal</dt>
-              <dd className="tabular font-medium text-text">{formatCurrency(totals.subtotal)}</dd>
+              <dd className="monto font-medium text-text">{formatCurrency(totals.subtotal)}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-text-muted">IVA descontable</dt>
-              <dd className="tabular font-medium text-text">{formatCurrency(totals.iva)}</dd>
+              <dd className="monto font-medium text-text">{formatCurrency(totals.iva)}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Total</dt>
-              <dd className="tabular font-display text-h2 font-bold text-text">{formatCurrency(totals.total)}</dd>
+              <dd className="monto text-title text-text">{formatCurrency(totals.total)}</dd>
             </div>
             {account && (
               <>
                 <div className="flex justify-between gap-4">
                   <dt className="text-text-muted">Saldo de {account.name}</dt>
-                  <dd className={`tabular font-medium whitespace-nowrap ${shortBalance ? 'text-error' : 'text-text'}`}>
+                  <dd className={`monto font-medium whitespace-nowrap ${shortBalance ? 'text-error' : 'text-text'}`}>
                     {formatCurrency(account.currentBalance)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-text-muted">Saldo después de la compra</dt>
-                  <dd className={`tabular font-medium whitespace-nowrap ${shortBalance ? 'text-error' : 'text-text'}`}>
+                  <dd className={`monto font-medium whitespace-nowrap ${shortBalance ? 'text-error' : 'text-text'}`}>
                     {formatCurrency(account.currentBalance - totals.total)}
                   </dd>
                 </div>
@@ -457,7 +458,7 @@ export function NewPurchaseInvoicePage() {
 
       <section className={card} aria-labelledby="products-title">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h2 id="products-title" className="text-h3 text-text">
+          <h2 id="products-title" className="text-title text-text">
             Productos
           </h2>
           <p className="text-small text-text-muted">Precio de compra sin IVA</p>
@@ -557,9 +558,9 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
             <li
               key={line.key}
               aria-label={product ? `Línea ${product.code}` : 'Línea nueva'}
-              className={`flex flex-col gap-3 rounded-control border border-border p-4 xl:rounded-none xl:border-0 xl:border-b xl:px-3 xl:py-3 ${lineGrid}`}
+              className={`flex flex-col gap-3 rounded-surface border border-border p-4 xl:rounded-none xl:border-0 xl:border-b xl:px-3 xl:py-3 ${lineGrid}`}
             >
-              <span className="font-mono text-small text-text xl:pt-2.5">
+              <span className="codigo text-small text-text xl:pt-2 xl:text-body">
                 <span className="text-text-muted xl:sr-only">Código: </span>
                 {product?.code ?? EMPTY_VALUE}
               </span>
@@ -590,11 +591,11 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                 onChange={(price) => onChange(line.key, { price })}
                 error={lineErrors?.price}
               />
-              <span className="tabular flex justify-between text-small text-text xl:block xl:pt-2.5 xl:text-right">
+              <span className="monto flex justify-between text-small text-text xl:block xl:pt-2 xl:text-right xl:text-body">
                 <span className="text-text-muted xl:sr-only">IVA </span>
                 {formatCurrency(amounts.iva)}
               </span>
-              <span className="tabular flex justify-between text-small font-medium text-text xl:block xl:pt-2.5 xl:text-right">
+              <span className="monto flex justify-between text-small font-medium text-text xl:block xl:pt-2 xl:text-right xl:text-body">
                 <span className="font-normal text-text-muted xl:sr-only">Total </span>
                 {formatCurrency(amounts.base)}
               </span>
@@ -604,7 +605,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                 aria-label={`Quitar ${name}`}
                 className="flex size-touch items-center justify-center self-end rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand xl:self-start"
               >
-                <Trash2 size={18} strokeWidth={1.5} aria-hidden />
+                <Trash2 {...iconMd} aria-hidden />
               </button>
             </li>
           )
@@ -634,7 +635,7 @@ function LineNumberInput({ label, value, min, step, onChange, error }: LineNumbe
   const id = useId()
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-small font-medium text-text xl:sr-only">
+      <label htmlFor={id} className="text-label text-text xl:sr-only">
         {label}
       </label>
       <input
