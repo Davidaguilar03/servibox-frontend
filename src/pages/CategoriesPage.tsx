@@ -43,7 +43,7 @@ import { iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface'
 const linkClass =
-  'rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'hit-area rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
 
 /** null cerrado, 'new' para crear, o la categoria a editar. */
 type ModalTarget = null | 'new' | InventoryCategory
@@ -140,7 +140,7 @@ export function CategoriesPage() {
         {products.isError && (
           <div role="alert" className="mb-3 flex flex-wrap items-center gap-2">
             <span className="text-small text-text">No pudimos cargar el número de productos.</span>
-            <Button variant="text" className="px-2" onClick={() => void products.refetch()}>
+            <Button variant="text" onClick={() => void products.refetch()}>
               Reintentar
             </Button>
           </div>
@@ -352,7 +352,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
               return (
                 <label
                   key={color.value}
-                  className="relative flex size-touch cursor-pointer items-center justify-center rounded-control border border-border-control has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand"
+                  className="relative flex size-touch cursor-pointer items-center justify-center rounded-control border border-border-control focus-ring-within"
                   title={color.label}
                 >
                   <input
@@ -416,7 +416,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
           {taxTypes.isError ? (
             <div role="alert" className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-small text-text">No pudimos cargar los impuestos.</span>
-              <Button variant="text" className="px-2" onClick={() => void taxTypes.refetch()}>
+              <Button variant="text" onClick={() => void taxTypes.refetch()}>
                 Reintentar
               </Button>
             </div>

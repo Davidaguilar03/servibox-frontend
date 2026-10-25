@@ -61,7 +61,7 @@ const periodOptions = [
 
 const card = 'rounded-surface border border-border bg-surface'
 const linkClass =
-  'rounded-control codigo text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'hit-area rounded-control codigo text-brand-ink hover:underline focus-ring'
 
 /** Papelera: las facturas anuladas del modulo, con filtros en la URL y Recuperar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {

@@ -5,6 +5,8 @@ import { Trash2 } from 'lucide-react'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
+import { IconButton } from '../components/IconButton'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
@@ -46,8 +48,13 @@ const CONSUMIDOR_FINAL_DOCUMENT = '222222222222'
 const CUSTOMERS_KEY = ['counterparties', 'CLIENTE']
 
 const card = 'rounded-surface border border-border bg-surface p-6'
+const PAYMENT_TYPE_OPTIONS = [
+  { value: 'CONTADO' as const, label: 'Contado' },
+  { value: 'CREDITO' as const, label: 'Crédito' },
+]
+
 const lineInput =
-  'h-control w-full rounded-control border bg-surface px-3 text-right text-body text-text monto outline-none transition-[border-color,box-shadow] duration-(--duration-fast) focus:ring-3'
+  'h-control-touch lg:h-control w-full rounded-control border bg-surface px-3 text-right text-body text-text monto transition-colors duration-(--duration-fast) focus-ring-field'
 // La rejilla de la linea suma 666 px fijos: solo cabe desde xl con la barra lateral abierta.
 const lineGrid = 'xl:grid xl:grid-cols-[112px_minmax(0,1fr)_96px_128px_104px_112px_44px] xl:items-start xl:gap-3'
 
@@ -255,7 +262,7 @@ export function NewSaleInvoicePage() {
           <button
             type="button"
             onClick={() => setCustomerModalOpen(true)}
-            className="self-start rounded-control text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="hit-area self-start rounded-control text-small font-medium text-brand-ink hover:underline focus-ring"
           >
             Nuevo cliente
           </button>
@@ -273,29 +280,18 @@ export function NewSaleInvoicePage() {
           value={form.invoiceDate}
           onChange={(event) => changeInvoiceDate(event.target.value)}
         />
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-label text-text">Tipo de pago</legend>
-          <div className="grid h-control grid-cols-2 gap-1 rounded-pill border border-border-control bg-surface p-1">
-            {(['CONTADO', 'CREDITO'] as const).map((type) => (
-              <label
-                key={type}
-                className={`flex cursor-pointer items-center justify-center rounded-pill text-button transition-colors duration-(--duration-fast) has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand ${
-                  form.paymentType === type ? 'bg-dark text-text-inverse' : 'text-text hover:bg-neutral-100'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentType"
-                  value={type}
-                  checked={form.paymentType === type}
-                  onChange={() => changePaymentType(type)}
-                  className="sr-only"
-                />
-                {type === 'CONTADO' ? 'Contado' : 'Crédito'}
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="flex flex-col gap-2">
+          <span id="tipo-pago" className="text-label text-text">
+            Tipo de pago
+          </span>
+          <SegmentedControl
+            aria-labelledby="tipo-pago"
+            options={PAYMENT_TYPE_OPTIONS}
+            value={form.paymentType}
+            onChange={changePaymentType}
+            className="grid grid-cols-2"
+          />
+        </div>
 
         {form.paymentType === 'CONTADO' ? (
           <>
@@ -597,14 +593,13 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                 <span className="font-normal text-text-muted xl:sr-only">Total </span>
                 {formatCurrency(amounts.base)}
               </span>
-              <button
-                type="button"
+              <IconButton
                 onClick={() => onRemove(line.key)}
                 aria-label={`Quitar ${name}`}
-                className="flex size-touch items-center justify-center self-end rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand xl:self-start"
+                className="self-end hover:text-error xl:self-start"
               >
                 <Trash2 {...iconMd} aria-hidden />
-              </button>
+              </IconButton>
             </li>
           )
         })}
@@ -655,7 +650,7 @@ function LineNumberInput({ label, value, min, max, step, onChange, hint, error }
         onChange={(event) => onChange(event.target.value)}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? `${id}-message` : undefined}
-        className={`${lineInput} ${error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'}`}
+        className={`${lineInput} ${error ? 'border-error' : 'border-border-control'}`}
       />
       {message && (
         <p id={`${id}-message`} aria-live="polite" className={`text-small ${error ? 'text-error' : 'text-text-muted'} xl:text-right`}>

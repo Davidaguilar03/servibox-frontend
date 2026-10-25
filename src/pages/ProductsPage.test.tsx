@@ -87,9 +87,9 @@ describe('productos', () => {
     expect(within(indicator('Con alerta de stock')).getByText('1 sin stock')).toBeInTheDocument()
     expect(within(indicator('Valor en inventario')).getByText('$ 3.777.000')).toBeInTheDocument()
 
-    const tabs = screen.getByRole('group', { name: 'Categorías' })
-    expect(within(tabs).getAllByRole('button').map((tab) => tab.textContent)).toEqual(['Todas4', 'BATERÍAS1', 'LLANTAS3'])
-    expect(within(tabs).getByRole('button', { name: /Todas/ })).toHaveAttribute('aria-pressed', 'true')
+    const tabs = screen.getByRole('tablist', { name: 'Categorías' })
+    expect(within(tabs).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Todas4', 'BATERÍAS1', 'LLANTAS3'])
+    expect(within(tabs).getByRole('tab', { name: /Todas/ })).toHaveAttribute('aria-selected', 'true')
 
     expect(codes()).toEqual(['BAT-004', 'LL-001', 'LL-003', 'LL-004'])
     const table = screen.getByRole('table')
@@ -109,7 +109,7 @@ describe('productos', () => {
     const router = renderRoute('/inventario')
     await loaded()
 
-    await user.click(within(screen.getByRole('group', { name: 'Categorías' })).getByRole('button', { name: /LLANTAS/ }))
+    await user.click(within(screen.getByRole('tablist', { name: 'Categorías' })).getByRole('tab', { name: /LLANTAS/ }))
     expect(router.state.location.search).toBe('?categoria=1')
     expect(codes()).toEqual(['LL-001', 'LL-003', 'LL-004'])
 

@@ -144,6 +144,16 @@
   --shadow-raised: 0 4px 12px rgb(0 0 0 / 10%);
   --shadow-overlay: 0 16px 40px rgb(0 0 0 / 16%);
 
+  /*
+   * Foco: un solo anillo de 2 px con 2 px de separacion en el color de foco (brand). Lo usan
+   * botones, enlaces, campos, segmentados, casillas, items de menu y summary (utilidades
+   * focus-ring, focus-ring-field y focus-ring-within de index.css).
+   */
+  --focus-ring: 2px solid var(--color-brand);
+  --focus-ring-offset: 2px;
+  /* Sobre los fondos -bg de Alert brand no llega a 3 a 1 (info 2,91; error 2,90): ahi el anillo usa brand-ink. */
+  --focus-ring-on-tint: 2px solid var(--color-brand-ink);
+
   /* Iconos Lucide: ver src/components/icons.ts, que usa estos valores. */
   --icon-sm: 16px;
   --icon-md: 20px;
@@ -153,9 +163,20 @@
   --spacing-sidebar: 240px;
   --spacing-sidebar-collapsed: 72px;
   --spacing-topbar: 64px;
-  --spacing-control: 40px;
+  /*
+   * Alturas de control y areas tactiles. Bajo lg todo control mide al menos hit-min (44) de
+   * area tactil; desde lg botones y campos miden control-height (40) y las acciones de fila con
+   * icono hit-row (36). Ver docs/ai-context/05-DESIGN-SYSTEM.md.
+   */
+  --control-height: 40px;
+  --control-height-touch: 44px;
+  --hit-min: 44px;
+  --hit-row: 36px;
+  --spacing-control: var(--control-height);
+  --spacing-control-touch: var(--control-height-touch);
   --spacing-row: 48px;
-  --spacing-touch: 44px;
+  --spacing-touch: var(--hit-min);
+  --spacing-hit-row: var(--hit-row);
   --spacing-button-x: 22px;
   --container-content: 1440px;
 

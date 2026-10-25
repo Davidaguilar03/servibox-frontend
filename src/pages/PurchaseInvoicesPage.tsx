@@ -44,7 +44,7 @@ const periodOptions = [
 ]
 
 const linkClass =
-  'rounded-control font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'hit-area rounded-control font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
 
 const card = 'rounded-surface border border-border bg-surface'
 
@@ -227,7 +227,7 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
               <li key={purchase.id}>
                 <Link
                   to={`/compras/${purchase.id}`}
-                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-ring"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="codigo text-small text-text">{purchase.invoiceNumber}</span>

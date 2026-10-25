@@ -4,7 +4,7 @@ import { LogOut } from 'lucide-react'
 import { clearSession, displayName, initials, roleLabel, useSession } from '../auth/session'
 import { iconSm } from '../components/icons'
 
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+const focusRing = 'focus-ring'
 
 /**
  * Menu de usuario de la barra superior, con el patron disclosure (no role=menu): el boton

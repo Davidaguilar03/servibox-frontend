@@ -4,7 +4,7 @@ import { SUPPORT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-control font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium text-brand-ink hover:underline focus-ring'
 
 /**
  * Terminos de uso y tratamiento de datos. Texto sin revision legal: el responsable figura como

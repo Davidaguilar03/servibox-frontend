@@ -31,8 +31,8 @@ export function TextField({ label, hint, error, type = 'text', disabled, valueRo
           disabled={disabled}
           aria-invalid={error ? true : undefined}
           aria-describedby={messageId}
-          className={`h-control w-full rounded-control border bg-surface px-3 text-body text-text outline-none transition-[border-color,box-shadow] duration-(--duration-fast) placeholder:text-text-muted focus:ring-3 disabled:border-border disabled:bg-neutral-200 disabled:text-text-subtle read-only:bg-neutral-200 read-only:text-text-muted ${
-            error ? 'border-error focus:ring-error/20' : 'border-border-control focus:border-brand focus:ring-brand/20'
+          className={`h-control-touch lg:h-control w-full rounded-control border bg-surface px-3 text-body text-text transition-colors duration-(--duration-fast) placeholder:text-text-muted focus-ring-field disabled:border-border disabled:bg-neutral-200 disabled:text-text-subtle read-only:bg-neutral-200 read-only:text-text-muted ${
+            error ? 'border-error' : 'border-border-control'
           } ${isPassword ? 'pr-12' : ''} ${valueRole ?? ''}`}
           {...props}
         />
@@ -42,7 +42,7 @@ export function TextField({ label, hint, error, type = 'text', disabled, valueRo
             onClick={() => setRevealed((value) => !value)}
             disabled={disabled}
             aria-label={revealed ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            className="absolute inset-y-0 right-0 flex w-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:text-text-subtle"
+            className="absolute inset-y-0 right-0 flex w-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:text-text focus-ring disabled:text-text-subtle"
           >
             {revealed ? <EyeOff {...iconSm} /> : <Eye {...iconSm} />}
           </button>

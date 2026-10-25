@@ -15,6 +15,7 @@ import {
 import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
 import { useBreadcrumbTailValue } from './breadcrumb'
+import { SkipLink } from '../components/SkipLink'
 import { UserMenu } from './UserMenu'
 import { iconMd } from '../components/icons'
 
@@ -40,7 +41,7 @@ export interface RouteHandle {
   breadcrumb: Crumb[]
 }
 
-const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+const focusRing = 'focus-ring'
 
 const DESKTOP_QUERY = '(min-width: 1024px)'
 
@@ -131,16 +132,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-canvas">
-      <a
-        href="#contenido"
-        onClick={(event) => {
-          event.preventDefault()
-          mainRef.current?.focus()
-        }}
-        className={`sr-only z-50 rounded-control bg-surface px-4 py-2 text-small font-medium text-text shadow-raised focus:not-sr-only focus:fixed focus:top-2 focus:left-2 ${focusRing}`}
-      >
-        Saltar al contenido
-      </a>
+      <SkipLink />
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-30 bg-overlay/40 lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden />
@@ -162,7 +154,7 @@ export function AppShell() {
           {collapsed && <span className="hidden font-display text-title font-bold text-brand lg:inline">S</span>}
         </div>
 
-        <nav aria-label="Principal" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+        <nav aria-label="Principal" className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-4 lg:gap-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -211,7 +203,7 @@ export function AppShell() {
             aria-label="Abrir menú"
             aria-expanded={mobileMenuOpen}
             aria-controls="menu-lateral"
-            className={`-ml-3 flex size-touch items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
+            className={`-ml-3 flex size-touch shrink-0 items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
           >
             <Menu {...iconMd} />
           </button>
@@ -234,7 +226,10 @@ export function AppShell() {
                         {crumb.label}
                       </span>
                     ) : (
-                      <Link to={crumb.to} className={`truncate rounded-control text-text-muted hover:text-text hover:underline ${focusRing}`}>
+                      <Link
+                        to={crumb.to}
+                        className={`block truncate rounded-control px-1 leading-11 text-text-muted hover:text-text hover:underline lg:px-0 lg:leading-normal ${focusRing}`}
+                      >
                         {crumb.label}
                       </Link>
                     )}

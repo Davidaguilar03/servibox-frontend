@@ -30,7 +30,7 @@ const accountTypeLabels: Record<AccountType, string> = {
 }
 
 const linkClass =
-  'rounded-control text-small font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'hit-area rounded-control text-small font-medium text-brand-ink hover:underline focus-ring'
 
 function Section({ title, link, children }: { title: string; link: { to: string; label: string }; children: ReactNode }) {
   return (

@@ -5,6 +5,7 @@ import { FilePlus, Pencil, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
+import { IconButton, IconLink } from '../components/IconButton'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
@@ -56,8 +57,6 @@ export interface CounterpartiesConfig {
 }
 
 const card = 'rounded-surface border border-border bg-surface'
-const iconButton =
-  'flex size-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-medium text-text-muted'
 
 const balanceOptions = [
@@ -119,7 +118,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   )
 
   const documentCell = (counterparty: Counterparty) => (
-    <span className="whitespace-nowrap">
+    <span className="md:whitespace-nowrap">
       {counterparty.documentType} <span className="codigo">{counterparty.documentNumber}</span>
     </span>
   )
@@ -136,26 +135,23 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   }
 
   const actions = (counterparty: Counterparty) => (
-    <div className="flex justify-end gap-1">
+    <div className="flex justify-end gap-2 lg:gap-1">
       {!isSystemCounterparty(counterparty) && (
-        <button
-          type="button"
-          className={iconButton}
+        <IconButton
           aria-label={`Editar ${config.singular} ${counterparty.name}`}
           title="Editar"
           onClick={() => setDialog({ kind: 'edit', counterparty })}
         >
           <Pencil {...iconMd} aria-hidden />
-        </button>
+        </IconButton>
       )}
-      <Link
+      <IconLink
         to={config.newInvoicePath(counterparty.id)}
-        className={iconButton}
         aria-label={`${config.newInvoiceLabel} para ${counterparty.name}`}
         title={config.newInvoiceLabel}
       >
         <FilePlus {...iconMd} aria-hidden />
-      </Link>
+      </IconLink>
     </div>
   )
 
@@ -288,7 +284,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           <div role="alert" className="flex flex-wrap items-center gap-2 text-small text-text">
             <TriangleAlert {...iconSm} className="text-error" aria-hidden />
             No pudimos cargar los saldos.
-            <Button variant="text" className="px-2" onClick={retryInvoices}>
+            <Button variant="text" onClick={retryInvoices}>
               Reintentar
             </Button>
           </div>

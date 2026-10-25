@@ -49,9 +49,57 @@
   }
 }
 
-/* Rol codigo: numero de factura, codigo de producto y NIT. Es el unico uso de IBM Plex Mono. */
+/* Rol codigo: numero de factura, codigo de producto y NIT. Es el unico uso de IBM Plex Mono. No se parte. */
 @utility codigo {
   font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* Foco de botones, enlaces, segmentados, items de menu y summary: solo con teclado. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+/* Foco de campos (input, select, textarea): el mismo anillo con cualquier foco. */
+@utility focus-ring-field {
+  &:focus {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+/* Foco de un rotulo que envuelve un control oculto (casillas de color, tarjetas de reporte). */
+@utility focus-ring-within {
+  &:has(:focus-visible) {
+    outline: var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+/*
+ * Zona de clic ampliada sin cambiar el aspecto: un ::after centrado de al menos hit-min (44)
+ * bajo lg y hit-row (36) desde lg. Para enlaces y botones de texto cuyo aspecto es menor.
+ */
+@utility hit-area {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--hit-min));
+    height: max(100%, var(--hit-min));
+    transform: translate(-50%, -50%);
+  }
+  @variant lg {
+    &::after {
+      width: 100%;
+      height: max(100%, var(--hit-row));
+    }
+  }
 }
 
 /* Entrada del panel del menu de usuario: aparece. */

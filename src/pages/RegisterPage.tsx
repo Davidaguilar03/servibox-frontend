@@ -22,7 +22,7 @@ import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-control font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium text-brand-ink hover:underline focus-ring'
 
 const legendClass = 'text-label text-text-muted'
 
@@ -240,9 +240,9 @@ export function RegisterPage() {
                 aria-describedby={fieldError('acceptTerms') ? 'acceptTerms-message' : undefined}
                 onChange={(event) => set('acceptTerms', event.target.checked)}
                 onBlur={() => blur('acceptTerms')}
-                className="mt-1 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                className="mt-4 size-4 shrink-0 accent-brand focus-ring"
               />
-              <label htmlFor="acceptTerms" className="text-small text-text">
+              <label htmlFor="acceptTerms" className="min-h-touch flex-1 cursor-pointer py-3 text-small text-text">
                 Acepto los{' '}
                 <Link to="/terminos" target="_blank" rel="noopener" className={linkClass}>
                   términos de uso y el tratamiento de datos

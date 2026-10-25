@@ -149,8 +149,15 @@ necesite, no antes.
   `GET /api/reporting/kpis`; `totalSales` y `totalPurchases` (con IVA) quedan para los
   listados de Ventas y Compras. Las seis filas del Estado de resultados son las del archivo
   exportado (`incomeStatementRows`).
-* El primer enfocable de `AppShell` es "Saltar al contenido" (visible solo con foco, mismo
-  estilo que el de la landing); lleva el foco al `main#contenido` (`tabIndex -1`).
+* El primer enfocable de `AppShell` es "Saltar al contenido" (`SkipLink`, el mismo
+  componente de la landing); lleva el foco al `main#contenido` (`tabIndex -1`).
+* Todo control interactivo cumple el area minima: 44 x 44 bajo lg; desde lg 40 de alto en
+  botones y campos y 36 en acciones de fila con icono, con 8 px entre objetivos bajo lg. Un
+  boton de solo icono es `IconButton` (o `IconLink`) con `aria-label`; un enlace de texto
+  pequeno lleva `hit-area`. Ver [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md).
+* Una sola implementacion de segmentado: `SegmentedControl` (radiogroup) y `TabList`
+  (pestanas). Nada de `aria-pressed`, `role="tab"` ni radios propios en las pantallas salvo
+  las excepciones documentadas; `controls.test.tsx` lo comprueba.
 * Menu lateral bajo lg: cerrado es `inert` (ni foco ni lector de pantalla). Abierto, el foco
   pasa al primer enlace, Tab no sale del menu, Esc o el fondo lo cierran, el foco vuelve al
   boton "Abrir menu" (`aria-expanded`, `aria-controls="menu-lateral"`) y el resto de la

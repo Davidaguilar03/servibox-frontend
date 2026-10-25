@@ -156,11 +156,11 @@ describe('cuentas', () => {
     const { fetchMock, user, router } = await setup()
     await screen.findByRole('table')
 
-    await user.click(within(screen.getByRole('group', { name: 'Período' })).getByRole('button', { name: 'Esta semana' }))
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Período' })).getByRole('radio', { name: 'Esta semana' }))
     expect(router.state.location.search).toBe('?periodo=esta-semana')
     await waitFor(() => expect(calls(fetchMock, '/api/treasury/movements')).toContain('/api/treasury/movements?desde=2026-10-12&hasta=2026-10-18'))
 
-    await user.click(screen.getByRole('button', { name: 'Personalizado' }))
+    await user.click(screen.getByRole('radio', { name: 'Personalizado' }))
     expect(router.state.location.search).toBe('?periodo=personalizado&desde=2026-10-12&hasta=2026-10-18')
 
     const before = calls(fetchMock, '/api/treasury/movements').length
@@ -221,7 +221,7 @@ describe('cuentas', () => {
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('No hay movimientos en este período.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cambiar el período' }))
-    expect(screen.getByRole('button', { name: 'Este mes' })).toHaveFocus()
+    expect(screen.getByRole('radio', { name: 'Este mes' })).toHaveFocus()
   })
 
   it('sin cuentas muestra el vacio y deshabilita la transferencia', async () => {
