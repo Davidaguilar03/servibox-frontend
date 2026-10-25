@@ -22,9 +22,13 @@ import { errorMessage } from '../lib/errorMessage'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
-  'rounded-tag font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control font-medium text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
-const legendClass = 'font-mono text-label uppercase text-text-muted'
+const legendClass = 'text-label text-text-muted'
+
+/** Lo que crea el backend al registrar (TenantRegistrationService), sin el administrador. */
+export const REGISTER_SUCCESS =
+  'Serviteca creada. Dejamos listas tu Caja General, las categorías base y el IVA del 19 %. Solo falta configurar tus márgenes para el precio sugerido.'
 
 /** El 409 de un identificador repetido, atado al slug que lo provoco. */
 interface SlugConflict {
@@ -34,8 +38,8 @@ interface SlugConflict {
 
 export function RegisterPage() {
   usePageMeta(
-    'Crea tu serviteca · ServiBox',
-    'Registra tu serviteca en ServiBox y empieza hoy. Dejamos lista la caja, las categorías base y el IVA.',
+    'Crear cuenta | ServiBox',
+    'Registra tu serviteca en ServiBox. Dejamos listas la Caja General, las categorías base y el IVA del 19 %.',
   )
   const session = useSession()
   const [values, setValues] = useState<RegisterValues>(EMPTY_REGISTER_VALUES)
@@ -50,7 +54,7 @@ export function RegisterPage() {
     mutationFn: register,
     onSuccess: (response) => {
       rememberTenantSlug(response.tenant.slug)
-      showToast('Serviteca creada. Bienvenido a ServiBox.')
+      showToast(REGISTER_SUCCESS)
       startSession(response)
     },
     onError: (error, request) => {
@@ -110,178 +114,161 @@ export function RegisterPage() {
           : null
 
   return (
-    <div className="flex min-h-screen bg-canvas">
-      <section className="relative hidden flex-col overflow-hidden bg-nav p-16 lg:flex lg:w-1/2 xl:w-5/12">
-        <div
-          className="absolute inset-0 bg-brand/20 [clip-path:polygon(72%_0,100%_0,100%_100%,34%_100%)]"
-          aria-hidden
-        />
-        <div className="relative">
-          <WordmarkLink onDark />
-        </div>
-        <div className="relative my-auto max-w-md">
-          <p className="font-mono text-label uppercase text-text-subtle">Servitecas y talleres</p>
-          <p className="mt-4 font-display text-display text-text-inverse">Tu serviteca lista en minutos.</p>
-          <p className="mt-6 text-body text-text-subtle">
-            Registra una venta y el inventario y la cuenta se actualizan solos. Sin archivos separados ni
-            conciliación a fin de mes.
-          </p>
-        </div>
-        <p className="relative text-small text-text-subtle">ServiBox · Plataforma web para servitecas · 2026</p>
-      </section>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12 sm:px-6">
+      <div className="mb-8">
+        <WordmarkLink />
+      </div>
+      <div className="w-full max-w-xl rounded-surface border border-border bg-surface p-6 sm:p-8">
+        <h1 className="text-title text-text">Crea tu serviteca</h1>
+        <p className="mt-1 text-small text-text-muted">
+          Llena los datos del negocio y de quien lo administra. La información de cada serviteca se guarda por separado.
+        </p>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 lg:hidden">
-          <WordmarkLink />
-        </div>
-        <div className="w-full max-w-xl rounded-card border border-border bg-surface p-6 shadow-card sm:p-8">
-          <h1 className="text-h2 text-text">Crea tu serviteca</h1>
-          <p className="mt-1 text-small text-text-muted">La información de tu serviteca queda aislada de las demás.</p>
-
-          <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
-            {alert && (
-              <Alert tone="error" title={alert.title}>
-                {alert.body}
-              </Alert>
-            )}
-
-            <fieldset className="flex flex-col gap-4">
-              <legend className={`mb-4 ${legendClass}`}>1. Datos de la serviteca</legend>
-              <TextField
-                label="Nombre comercial"
-                name="businessName"
-                autoComplete="organization"
-                value={values.businessName}
-                error={fieldError('businessName')}
-                onChange={(event) => changeBusinessName(event.target.value)}
-                onBlur={() => blur('businessName')}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextField
-                  label="NIT"
-                  name="nit"
-                  inputMode="numeric"
-                  hint="Por ejemplo, 900123456-7"
-                  value={values.nit}
-                  error={fieldError('nit')}
-                  onChange={(event) => set('nit', event.target.value)}
-                  onBlur={() => blur('nit')}
-                />
-                <TextField
-                  label="Teléfono"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  value={values.phone}
-                  error={fieldError('phone')}
-                  onChange={(event) => set('phone', event.target.value)}
-                  onBlur={() => blur('phone')}
-                />
-              </div>
-              <TextField
-                ref={slugRef}
-                label="Identificador de la serviteca"
-                name="slug"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                hint="Tu equipo lo escribirá en “Serviteca” para iniciar sesión. Solo minúsculas, números y guiones."
-                value={values.slug}
-                error={slugError ?? fieldError('slug')}
-                onChange={(event) => changeSlug(event.target.value)}
-                onBlur={() => blur('slug')}
-              />
-            </fieldset>
-
-            <fieldset className="flex flex-col gap-4">
-              <legend className={`mb-4 ${legendClass}`}>2. Administrador</legend>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextField
-                  label="Nombre completo"
-                  name="adminFullName"
-                  autoComplete="name"
-                  value={values.adminFullName}
-                  error={fieldError('adminFullName')}
-                  onChange={(event) => set('adminFullName', event.target.value)}
-                  onBlur={() => blur('adminFullName')}
-                />
-                <TextField
-                  label="Correo"
-                  name="adminEmail"
-                  type="email"
-                  autoComplete="email"
-                  value={values.adminEmail}
-                  error={fieldError('adminEmail')}
-                  onChange={(event) => set('adminEmail', event.target.value)}
-                  onBlur={() => blur('adminEmail')}
-                />
-                <TextField
-                  label="Usuario"
-                  name="adminUsername"
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  value={values.adminUsername}
-                  error={fieldError('adminUsername')}
-                  onChange={(event) => set('adminUsername', event.target.value)}
-                  onBlur={() => blur('adminUsername')}
-                />
-                <TextField
-                  label="Contraseña"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  hint="Mínimo 8 caracteres."
-                  value={values.password}
-                  error={fieldError('password')}
-                  onChange={(event) => set('password', event.target.value)}
-                  onBlur={() => blur('password')}
-                />
-              </div>
-            </fieldset>
-
-            <Alert tone="info" title="Dejamos todo listo">
-              Creamos la Caja General, las categorías base (Llantas, Lubricantes y Baterías) y el IVA del 19%.
+        <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
+          {alert && (
+            <Alert tone="error" title={alert.title}>
+              {alert.body}
             </Alert>
+          )}
 
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-start gap-3">
-                <input
-                  id="acceptTerms"
-                  type="checkbox"
-                  checked={values.acceptTerms}
-                  aria-invalid={fieldError('acceptTerms') ? true : undefined}
-                  aria-describedby={fieldError('acceptTerms') ? 'acceptTerms-message' : undefined}
-                  onChange={(event) => set('acceptTerms', event.target.checked)}
-                  onBlur={() => blur('acceptTerms')}
-                  className="mt-0.5 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                />
-                <label htmlFor="acceptTerms" className="text-small text-text">
-                  Acepto los{' '}
-                  <Link to="/terminos" target="_blank" rel="noopener" className={linkClass}>
-                    Términos y condiciones
-                  </Link>
-                </label>
-              </div>
-              {fieldError('acceptTerms') && (
-                <p id="acceptTerms-message" aria-live="polite" className="text-small text-error">
-                  {fieldError('acceptTerms')}
-                </p>
-              )}
+          <fieldset className="flex flex-col gap-4">
+            <legend className={`mb-4 ${legendClass}`}>1. Datos de la serviteca</legend>
+            <TextField
+              label="Nombre comercial"
+              name="businessName"
+              autoComplete="organization"
+              value={values.businessName}
+              error={fieldError('businessName')}
+              onChange={(event) => changeBusinessName(event.target.value)}
+              onBlur={() => blur('businessName')}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                label="NIT"
+                name="nit"
+                inputMode="numeric"
+                hint="Por ejemplo, 900123456-7"
+                value={values.nit}
+                error={fieldError('nit')}
+                onChange={(event) => set('nit', event.target.value)}
+                onBlur={() => blur('nit')}
+              />
+              <TextField
+                label="Teléfono"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                value={values.phone}
+                error={fieldError('phone')}
+                onChange={(event) => set('phone', event.target.value)}
+                onBlur={() => blur('phone')}
+              />
             </div>
+            <TextField
+              ref={slugRef}
+              label="Código de tu serviteca"
+              name="slug"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              hint="El nombre corto con el que tu equipo inicia sesión. Solo minúsculas, números y guiones."
+              value={values.slug}
+              error={slugError ?? fieldError('slug')}
+              onChange={(event) => changeSlug(event.target.value)}
+              onBlur={() => blur('slug')}
+            />
+          </fieldset>
 
-            <Button type="submit" className="w-full" disabled={!valid || Boolean(slugError) || mutation.isPending}>
-              {mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}
-            </Button>
-          </form>
+          <fieldset className="flex flex-col gap-4">
+            <legend className={`mb-4 ${legendClass}`}>2. Administrador</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                label="Nombre completo"
+                name="adminFullName"
+                autoComplete="name"
+                value={values.adminFullName}
+                error={fieldError('adminFullName')}
+                onChange={(event) => set('adminFullName', event.target.value)}
+                onBlur={() => blur('adminFullName')}
+              />
+              <TextField
+                label="Correo"
+                name="adminEmail"
+                type="email"
+                autoComplete="email"
+                value={values.adminEmail}
+                error={fieldError('adminEmail')}
+                onChange={(event) => set('adminEmail', event.target.value)}
+                onBlur={() => blur('adminEmail')}
+              />
+              <TextField
+                label="Usuario"
+                name="adminUsername"
+                autoComplete="username"
+                autoCapitalize="none"
+                value={values.adminUsername}
+                error={fieldError('adminUsername')}
+                onChange={(event) => set('adminUsername', event.target.value)}
+                onBlur={() => blur('adminUsername')}
+              />
+              <TextField
+                label="Contraseña"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                hint="Mínimo 8 caracteres."
+                value={values.password}
+                error={fieldError('password')}
+                onChange={(event) => set('password', event.target.value)}
+                onBlur={() => blur('password')}
+              />
+            </div>
+          </fieldset>
 
-          <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className={linkClass}>
-              Iniciar sesión
-            </Link>
-          </p>
-        </div>
-      </main>
-    </div>
+          <Alert tone="info" title="Al crear la cuenta">
+            Dejamos listas la Caja General, las categorías base (Llantas, Lubricantes y Baterías), el IVA del 19 % y
+            el cliente Consumidor final.
+          </Alert>
+
+          <div className="flex flex-col gap-1">
+            <div className="flex items-start gap-3">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                checked={values.acceptTerms}
+                aria-invalid={fieldError('acceptTerms') ? true : undefined}
+                aria-describedby={fieldError('acceptTerms') ? 'acceptTerms-message' : undefined}
+                onChange={(event) => set('acceptTerms', event.target.checked)}
+                onBlur={() => blur('acceptTerms')}
+                className="mt-1 size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              />
+              <label htmlFor="acceptTerms" className="text-small text-text">
+                Acepto los{' '}
+                <Link to="/terminos" target="_blank" rel="noopener" className={linkClass}>
+                  términos de uso y el tratamiento de datos
+                </Link>
+                .
+              </label>
+            </div>
+            {fieldError('acceptTerms') && (
+              <p id="acceptTerms-message" aria-live="polite" className="text-small text-error">
+                {fieldError('acceptTerms')}
+              </p>
+            )}
+          </div>
+
+          <Button type="submit" className="w-full" disabled={!valid || Boolean(slugError) || mutation.isPending}>
+            {mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}
+          </Button>
+        </form>
+
+        <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className={linkClass}>
+            Iniciar sesión
+          </Link>
+        </p>
+      </div>
+    </main>
   )
 }

@@ -10,9 +10,8 @@ import { ICON_STROKE, iconLg, iconMd, iconSm } from '../components/icons'
 
 const ROOT = 'src'
 
-/** Fuera del alcance: la landing, el registro y el login (los redisena la tarea 7), las pruebas y los tokens. */
+/** Fuera del alcance: las pruebas y los tokens. */
 const EXCLUDED = [
-  /^pages\/(LandingPage|RegisterPage|LoginPage)\.tsx$/,
   /\.test\.tsx?$/,
   /^test\//,
   /^styles\/tokens\.css$/,
@@ -28,6 +27,8 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'components/ComboboxField.tsx': ['shadow-raised'],
   // Menu movil (overlay) y enlace "Saltar al contenido" cuando recibe foco (raised).
   'layout/AppShell.tsx': ['shadow-overlay', 'shadow-raised'],
+  // Enlace "Saltar al contenido" de la landing cuando recibe foco.
+  'pages/LandingPage.tsx': ['shadow-raised'],
   // Barra de acciones fija al pie del formulario de producto.
   'pages/ProductFormPage.tsx': ['shadow-raised'],
   // Panel del menu de usuario de la barra superior.
@@ -36,8 +37,8 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
 
 /**
  * Roles con lugar fijo: text-title solo en el h1 de la pantalla (y en la marca), text-section
- * solo en titulos h2 y h3 (secciones y modales) y text-figure solo en el valor de indicadores y
- * totales destacados.
+ * solo en titulos h2 y h3 (secciones y modales), text-figure solo en el valor de indicadores y
+ * totales destacados y text-display solo en el h1 de la landing (excepcion documentada).
  */
 const TITLE_BRAND_FILES = ['brand/Wordmark.tsx', 'layout/AppShell.tsx']
 const FIGURE_FILES = [
@@ -51,6 +52,9 @@ const FIGURE_FILES = [
   'pages/SaleDetailPage.tsx',
   'pages/PurchaseDetailPage.tsx',
 ]
+const DISPLAY_FILES = ['index.css', 'pages/LandingPage.tsx']
+/** La landing usa text-title tambien en sus titulos de seccion (h2). */
+const TITLE_H2_FILES = ['pages/LandingPage.tsx']
 
 /** Desplazamientos de 1 px documentados: solapar el borde de las pestanas y centrar el icono del Alert. */
 const ONE_PX_OFFSETS: Record<string, string[]> = {
@@ -62,7 +66,7 @@ const VARIANTS = String.raw`(?:[\w-]+:)*`
 const SPACING = String.raw`(?:p|px|py|pt|pb|pl|pr|ps|pe|m|mx|my|mt|mb|ml|mr|ms|me|gap|gap-x|gap-y|size|h|w|min-h|min-w|max-h|max-w|top|right|left|bottom|inset|inset-x|inset-y|space-y|space-x|translate-x|translate-y|scroll-mt|scroll-pt)`
 
 const RULES = {
-  text: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:xs|sm|base|lg|[2-9]?xl|display|h1|h2|h3|\[[^\]]+\])(?![\w-])`, 'g'),
+  text: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:xs|sm|base|lg|[2-9]?xl|h1|h2|h3|\[[^\]]+\])(?![\w-])`, 'g'),
   shadow: new RegExp(String.raw`(?<![\w-])${VARIANTS}shadow-(?!none(?![\w-]))[\w\[\]().,%/-]+`, 'g'),
   halfStep: new RegExp(String.raw`(?<![\w-])-?${VARIANTS}-?${SPACING}-(?:\d+\.\d+|px)(?![\w-])`, 'g'),
   arbitraryPx: new RegExp(String.raw`(?<![\w-])-?${VARIANTS}[a-z][\w-]*-\[[^\]\s'"\x60]*?\d+(?:\.\d+)?px[^\]\s'"\x60]*\]`, 'g'),
@@ -73,7 +77,7 @@ const RULES = {
   iconPx: /\b(?:size|strokeWidth)=\{\s*[\d.]+\s*\}/g,
   mono: new RegExp(String.raw`(?<![\w-])${VARIANTS}font-mono(?![\w-])`, 'g'),
   motion: new RegExp(String.raw`(?<![\w-])${VARIANTS}(?:duration-\d+|duration-\[[^\]]+\]|ease-(?:linear|in|out|in-out))(?![\w-])`, 'g'),
-  role: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:title|section|figure)(?![\w-])`, 'g'),
+  role: new RegExp(String.raw`(?<![\w-])${VARIANTS}text-(?:title|section|figure|display)(?![\w-])`, 'g'),
 }
 
 /** Etiqueta JSX que abre el elemento donde aparece la clase: `h1`, `p`... */
@@ -82,8 +86,10 @@ function openingTag(code: string, index: number) {
 }
 
 function misplacedRole(token: string, tag: string | undefined, file: string) {
-  if (token.endsWith('text-title')) return tag !== 'h1' && !TITLE_BRAND_FILES.includes(file)
+  if (token.endsWith('text-title'))
+    return tag !== 'h1' && !TITLE_BRAND_FILES.includes(file) && !(tag === 'h2' && TITLE_H2_FILES.includes(file))
   if (token.endsWith('text-section')) return tag !== 'h2' && tag !== 'h3'
+  if (token.endsWith('text-display')) return !DISPLAY_FILES.includes(file) || (file.endsWith('.tsx') && tag !== 'h1')
   return !FIGURE_FILES.includes(file)
 }
 
@@ -142,7 +148,7 @@ describe('guarda del sistema de diseno', () => {
   it('lee los archivos de la app', () => {
     expect(files).toContain('components/DataTable.tsx')
     expect(files).toContain('index.css')
-    expect(files).not.toContain('pages/LandingPage.tsx')
+    for (const page of ['LandingPage', 'LoginPage', 'RegisterPage', 'TermsPage']) expect(files).toContain(`pages/${page}.tsx`)
   })
 
   it.each(files)('%s usa solo la escala, las sombras, la rejilla, los radios y los iconos del sistema', (file) => {
@@ -179,6 +185,28 @@ describe('guarda del sistema de diseno', () => {
       <p className="text-figure">$ 1.000</p>`
     expect(violations(bad, 'pages/Fake.tsx')).toEqual(['role: text-title', 'role: text-section', 'role: text-figure'])
     expect(violations('<p className="mt-2 text-figure text-text">', 'components/IndicatorCard.tsx')).toEqual([])
+  })
+
+  it('text-display solo en el h1 de la landing', () => {
+    expect(violations('<h1 className="text-display text-text">Titular</h1>', 'pages/LandingPage.tsx')).toEqual([])
+    expect(violations('<p className="text-display">Titular</p>', 'pages/LandingPage.tsx')).toEqual(['role: text-display'])
+    expect(violations('<h1 className="text-display">Titular</h1>', 'pages/LoginPage.tsx')).toEqual(['role: text-display'])
+    expect(violations('<h2 className="md:text-display">Titular</h2>', 'pages/DashboardPage.tsx')).toEqual(['role: md:text-display'])
+    // Los titulos de seccion de la landing van en text-title; en el resto de la app no.
+    expect(violations('<h2 className="text-title">Seccion</h2>', 'pages/LandingPage.tsx')).toEqual([])
+    expect(violations('<h2 className="text-title">Seccion</h2>', 'pages/LoginPage.tsx')).toEqual(['role: text-title'])
+  })
+
+  it('los tokens de legado de la landing, el login y el registro ya no existen', () => {
+    for (const name of ['text-h1', 'text-h2', 'text-h3', 'radius-tag', 'radius-card', 'radius-container', 'shadow-card', 'shadow-menu', 'shadow-modal']) {
+      expect(tokens).not.toMatch(new RegExp(String.raw`--${name}:`))
+    }
+    expect(tokens).not.toMatch(/--text-display:/)
+    expect(violations('<p className="text-h2 rounded-card shadow-card">', 'pages/LandingPage.tsx')).toEqual([
+      'text: text-h2',
+      'shadow: shadow-card',
+      'rounded: rounded-card',
+    ])
   })
 
   it('acepta lo que el sistema permite', () => {
@@ -219,6 +247,12 @@ describe('tokens del sistema de diseno', () => {
     ['figure-size-md', '28px'],
     ['figure-line-height-md', '32px'],
     ['figure-font-weight', '600'],
+    // display: solo el h1 de la landing, 32/36 bajo md y 40/44 desde md.
+    ['display-size', '32px'],
+    ['display-line-height', '36px'],
+    ['display-size-md', '40px'],
+    ['display-line-height-md', '44px'],
+    ['display-font-weight', '700'],
     ['text-body', '15px'],
     ['text-body--font-weight', '400'],
     ['text-small', '13px'],

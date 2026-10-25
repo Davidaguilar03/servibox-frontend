@@ -135,7 +135,7 @@ describe('menu de usuario', () => {
     await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     expect(getToken()).toBeNull()
-    await screen.findByRole('heading', { name: 'Inicia sesión' })
+    await screen.findByRole('heading', { name: 'Iniciar sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 })

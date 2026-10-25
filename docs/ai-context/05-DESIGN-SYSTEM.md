@@ -6,11 +6,10 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (sin cambio en esta tarea).
 
-Alcance: toda la app. Quedan fuera la landing (`LandingPage`), el login y el registro, que
-redisena la tarea 7; usan tokens de legado (`text-display`, `text-h1` a `text-h3`,
-`rounded-tag`, `rounded-card`, `rounded-container`, `shadow-card`, `shadow-menu`,
-`shadow-modal`) que la guarda prohibe en el resto. Sus componentes compartidos (Wordmark,
-campos, botones) si usan la escala.
+Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` desde el
+2026-10-25. Los tokens de legado (`--text-display` 48, `--text-h1` a `--text-h3`,
+`--radius-tag`, `--radius-card`, `--radius-container`, `--shadow-card`, `--shadow-menu`,
+`--shadow-modal`) se eliminaron de `tokens.css` y la guarda ya no excluye ninguna pagina.
 
 ## Tipografia: tres tamanos de contenido y los de componente
 
@@ -23,6 +22,7 @@ campos, botones) si usan la escala.
 | `text-label` | 12 px | 16 px | 600 | Rotulos de campo, leyendas de grupo, encabezados de columna (estos en mayusculas) |
 | `text-button` | 14 px | 1 | 600 | Botones, paginacion, segmentos y chips que actuan como boton |
 | `text-figure` | 24/28 bajo md, 28/32 desde md | | 600 | Componente: valor de indicadores y totales destacados (total de factura, saldo pendiente, saldos y totales de Cuentas, total disponible). Inter con numeros tabulares (rol monto) |
+| `text-display` | 32/36 bajo md, 40/44 desde md | | 700 | Componente con excepcion unica: solo el titular (`h1`) de la landing. Montserrat |
 
 * El peso va en el token (`--text-*--font-weight`): no hace falta `font-semibold` con estas
   clases. `font-medium` sigue disponible para destacar dentro de un tamano.
@@ -34,7 +34,12 @@ campos, botones) si usan la escala.
   no cuenta como tamano de contenido. Tres tamanos de contenido por pantalla: title 24, body 15
   (con section) y small 13.
 * La guarda solo deja `text-title` en un `h1` (y en Wordmark y AppShell), `text-section` en un
-  `h2` o `h3` y `text-figure` en la lista `FIGURE_FILES`.
+  `h2` o `h3`, `text-figure` en la lista `FIGURE_FILES` y `text-display` en el `h1` de
+  `LandingPage.tsx` (`DISPLAY_FILES`, mas su definicion en `index.css`).
+* **Excepcion documentada de la landing:** `text-display` (tokens `--display-*`, utilidad en
+  `index.css`) solo en su `h1`, y sus titulos de seccion (`h2`) en `text-title`
+  (`TITLE_H2_FILES`). No cuenta como tamano de contenido: la landing usa title 24, body 15 (con
+  section) y small 13 mas display y button.
 * **Desvio del manual v1.0:** el manual define label en 11 px con tracking 0,06em; aqui es
   12/16/600 sin tracking. Pendiente de validar con el disenador.
 * Una pantalla usa como maximo title, body (y section) y small mas label, button y figure. Prohibidos
@@ -56,7 +61,7 @@ campos, botones) si usan la escala.
 
 | Token | Valor | Uso |
 |-|-|-|
-| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox, menu de usuario), toasts, tooltips, barra fija del formulario de producto, enlace "Saltar al contenido" |
+| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox, menu de usuario), toasts, tooltips, barra fija del formulario de producto, enlace "Saltar al contenido" (shell y landing) |
 | `--shadow-overlay` | `0 16px 40px rgb(0 0 0 / 16%)` | Modales y menu movil abierto (`lg:shadow-none` en escritorio) |
 
 Tarjetas, tablas, paneles, tarjetas de indicador y estados no llevan sombra: se separan con
@@ -136,6 +141,7 @@ Pendientes de decidir o validar con el disenador (detalle en
 5. Menu lateral, pestanas de Configuracion y badges en `small`; pestanas de Productos en
    `body`.
 6. `font-medium` (500) sigue en unos 70 usos para destacar dentro de un tamano.
-7. Tokens de legado en `tokens.css` para landing, login y registro hasta su rediseno.
+7. **Resuelto el 2026-10-25:** tokens de legado eliminados; landing, login y registro usan la
+   escala (excepcion `text-display` en el `h1` de la landing).
 
 Ademas: label 12/16/600 sin tracking es un desvio del manual (11 px con tracking 0,06em).

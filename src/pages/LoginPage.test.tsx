@@ -2,24 +2,36 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
-import { jsonResponse, renderRoute, validToken } from '../test/utils'
+import { WHATSAPP_URL } from '../config/contact'
+import { jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 async function fillAndSubmit() {
   const user = userEvent.setup()
-  await user.type(await screen.findByLabelText('Serviteca'), 'demo')
+  await user.type(await screen.findByLabelText('Código de tu serviteca'), 'demo')
   await user.type(screen.getByLabelText('Usuario'), 'admin')
   await user.type(screen.getByLabelText('Contraseña'), 'admin123')
-  await user.click(screen.getByRole('button', { name: 'Ingresar' }))
+  await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 }
 
 describe('formulario de login', () => {
-  it('tiene un unico h1, el titulo del formulario', async () => {
+  it('tiene un unico h1, el subtitulo y ningun lema', async () => {
     renderRoute('/login')
 
     const headings = await screen.findAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toHaveTextContent('Inicia sesión')
-    expect(screen.getByText('Tu negocio en buenas manos.').tagName).toBe('P')
+    expect(headings[0]).toHaveTextContent('Iniciar sesión')
+    expect(screen.getByText('Ventas, inventario y caja en un solo lugar.')).toBeInTheDocument()
+    expect(screen.queryByText(/buenas manos/)).not.toBeInTheDocument()
+    expect(primaryActions()).toHaveLength(1)
+  })
+
+  it('rotula el codigo de la serviteca con su ayuda y ofrece soporte por WhatsApp', async () => {
+    renderRoute('/login')
+
+    const slug = await screen.findByLabelText('Código de tu serviteca')
+    expect(slug).toHaveAccessibleDescription('El nombre corto que elegiste al registrarte.')
+    expect(screen.getByText(/¿No puedes entrar\?/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Escríbenos por WhatsApp.' })).toHaveAttribute('href', WHATSAPP_URL)
   })
 
   it('envia los tres campos, guarda la sesion y entra a la pagina pedida', async () => {
@@ -62,7 +74,7 @@ describe('formulario de login', () => {
   it('no ofrece recuperar la contrasena: la funcion no existe', async () => {
     const router = renderRoute('/login')
 
-    expect(await screen.findByRole('button', { name: 'Ingresar' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
     expect(screen.queryByText(/Olvidaste/)).not.toBeInTheDocument()
     expect(screen.queryByText(/recuperar/i)).not.toBeInTheDocument()
     expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/recuperar-contrasena')).toBe(false)
@@ -75,7 +87,7 @@ describe('formulario de login', () => {
     localStorage.setItem('servibox.tenantSlug', 'autollantas')
     renderRoute('/login')
 
-    expect(await screen.findByLabelText('Serviteca')).toHaveValue('autollantas')
+    expect(await screen.findByLabelText('Código de tu serviteca')).toHaveValue('autollantas')
   })
 
   it('guarda el nombre completo cuando el login lo devuelve', async () => {
@@ -99,14 +111,14 @@ describe('formulario de login', () => {
     expect(screen.getByRole('button', { name: 'Menú de usuario de Laura Gómez' })).toBeInTheDocument()
   })
 
-  it('Crea tu cuenta lleva a /registro y el wordmark a la landing', async () => {
+  it('Crear cuenta lleva a /registro y el wordmark a la landing', async () => {
     renderRoute('/login')
 
-    expect(await screen.findByRole('link', { name: 'Crea tu cuenta' })).toHaveAttribute('href', '/registro')
+    expect(await screen.findByRole('link', { name: 'Crear cuenta' })).toHaveAttribute('href', '/registro')
     for (const link of screen.getAllByRole('link', { name: 'ServiBox, ir a la página principal' })) {
       expect(link).toHaveAttribute('href', '/')
     }
-    expect(document.title).toBe('Inicia sesión · ServiBox')
+    expect(document.title).toBe('Iniciar sesión | ServiBox')
   })
 
   it('con sesion redirige a /inicio', async () => {

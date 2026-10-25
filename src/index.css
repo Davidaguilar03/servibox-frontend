@@ -38,6 +38,17 @@
   }
 }
 
+/* Rol display: solo el titular (h1) de la landing. 32/36 bajo md y 40/44 desde md. */
+@utility text-display {
+  font-size: var(--display-size);
+  line-height: var(--display-line-height);
+  font-weight: var(--display-font-weight);
+  @variant md {
+    font-size: var(--display-size-md);
+    line-height: var(--display-line-height-md);
+  }
+}
+
 /* Rol codigo: numero de factura, codigo de producto y NIT. Es el unico uso de IBM Plex Mono. */
 @utility codigo {
   font-family: var(--font-mono);

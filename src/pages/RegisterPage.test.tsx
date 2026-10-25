@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
-import { jsonResponse, makeToken, renderRoute, validToken } from '../test/utils'
+import { jsonResponse, makeToken, primaryActions, renderRoute, validToken } from '../test/utils'
+import { REGISTER_SUCCESS } from './RegisterPage'
 
 const token = makeToken({ sub: 'laura.gomez', role: 'ADMIN', exp: Math.floor(Date.now() / 1000) + 3600 })
 
@@ -33,7 +34,7 @@ async function fillForm(user = userEvent.setup()) {
   await user.type(screen.getByLabelText('Correo'), 'laura@elroble.co')
   await user.type(screen.getByLabelText('Usuario'), 'laura.gomez')
   await user.type(screen.getByLabelText('Contraseña'), 'secreta123')
-  await user.click(screen.getByRole('checkbox', { name: /Acepto los Términos y condiciones/ }))
+  await user.click(screen.getByRole('checkbox', { name: 'Acepto los términos de uso y el tratamiento de datos.' }))
   return user
 }
 
@@ -46,14 +47,16 @@ describe('registro de serviteca', () => {
     const headings = await screen.findAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
     expect(headings[0]).toHaveTextContent('Crea tu serviteca')
-    expect(screen.getByText('Tu serviteca lista en minutos.').tagName).toBe('P')
+    expect(screen.getByText(/La información de cada serviteca se guarda por separado\./)).toBeInTheDocument()
+    expect(screen.queryByText('Tu serviteca lista en minutos.')).not.toBeInTheDocument()
+    expect(primaryActions()).toHaveLength(1)
   })
 
   it('sugiere el identificador desde el nombre comercial hasta que se edita a mano', async () => {
     const user = userEvent.setup()
     renderRoute('/registro')
     const name = await screen.findByLabelText('Nombre comercial')
-    const slug = screen.getByLabelText('Identificador de la serviteca')
+    const slug = screen.getByLabelText('Código de tu serviteca')
 
     await user.type(name, 'Serviteca El Roble')
     expect(slug).toHaveValue('serviteca-el-roble')
@@ -95,19 +98,40 @@ describe('registro de serviteca', () => {
     await user.tab()
 
     expect(submit()).toBeDisabled()
-    expect(screen.getByText('Acepta los términos y condiciones para continuar.')).toBeInTheDocument()
+    expect(screen.getByText('Acepta los términos de uso y el tratamiento de datos para continuar.')).toBeInTheDocument()
     expect(registerCalls(fetchMock)).toHaveLength(0)
   })
 
   it('el enlace de los terminos abre /terminos en una pestana nueva', async () => {
     renderRoute('/registro')
 
-    const link = await screen.findByRole('link', { name: 'Términos y condiciones' })
+    const link = await screen.findByRole('link', { name: 'términos de uso y el tratamiento de datos' })
     expect(link).toHaveAttribute('href', '/terminos')
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noopener')
-    expect(screen.getByText(/Creamos la Caja General, las categorías base/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Dejamos listas la Caja General, las categorías base \(Llantas, Lubricantes y Baterías\), el IVA del 19 %/),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
+  })
+
+  it('el mensaje de exito lista solo lo que crea el backend', () => {
+    // TenantRegistrationService crea la Caja General, LLANTAS, LUBRICANTES y BATERIAS con margen
+    // objetivo 0 y el IVA del 19 %, ademas del administrador y el Consumidor final.
+    expect(REGISTER_SUCCESS).toBe(
+      'Serviteca creada. Dejamos listas tu Caja General, las categorías base y el IVA del 19 %. Solo falta configurar tus márgenes para el precio sugerido.',
+    )
+  })
+
+  it('NIT y telefono siguen siendo obligatorios', async () => {
+    const user = userEvent.setup()
+    renderRoute('/registro')
+    await user.click(await screen.findByLabelText('NIT'))
+    await user.tab()
+    await user.tab()
+
+    expect(screen.getByLabelText('NIT')).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByLabelText('Teléfono')).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('envia el cuerpo exacto, guarda la sesion con fullName y entra a /inicio con el toast', async () => {
@@ -117,7 +141,7 @@ describe('registro de serviteca', () => {
 
     await user.click(submit())
 
-    expect(await screen.findByText('Serviteca creada. Bienvenido a ServiBox.')).toBeInTheDocument()
+    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
     const [url, init] = registerCalls(fetchMock)[0] as [string, RequestInit]
     expect(url).toBe('/api/auth/register')
     expect(init.method).toBe('POST')
@@ -157,7 +181,7 @@ describe('registro de serviteca', () => {
 
     await user.click(submit())
 
-    const slug = screen.getByLabelText('Identificador de la serviteca')
+    const slug = screen.getByLabelText('Código de tu serviteca')
     expect(await screen.findByText('Ya existe una serviteca con el identificador serviteca-el-roble')).toBeInTheDocument()
     expect(slug).toHaveAttribute('aria-invalid', 'true')
     await waitFor(() => expect(slug).toHaveFocus())
@@ -228,7 +252,7 @@ describe('registro de serviteca', () => {
     expect(loading).toBeDisabled()
     expect(registerCalls(fetchMock)).toHaveLength(1)
     resolve(jsonResponse(created, 201))
-    expect(await screen.findByText('Serviteca creada. Bienvenido a ServiBox.')).toBeInTheDocument()
+    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
   })
 
   it('con sesion redirige a /inicio', async () => {
@@ -243,7 +267,7 @@ describe('registro de serviteca', () => {
     renderRoute('/registro')
 
     await screen.findByRole('heading', { name: 'Crea tu serviteca' })
-    expect(document.title).toBe('Crea tu serviteca · ServiBox')
+    expect(document.title).toBe('Crear cuenta | ServiBox')
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
       expect.stringContaining('Registra tu serviteca'),
