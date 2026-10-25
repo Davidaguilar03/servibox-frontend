@@ -34,8 +34,9 @@ import { ApiError } from '../lib/api'
 import { errorMessage } from '../lib/errorMessage'
 import { formatCurrency } from '../lib/format'
 import type { ListState } from './ProductsPage'
+import { iconLg } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 const PENDING_PRICE = 'Se calcula al guardar'
 
 /** Ruta del listado con los filtros que tenia al entrar al formulario. */
@@ -48,8 +49,8 @@ function NotFound() {
   const listPath = useListPath()
   return (
     <div className={`${card} flex flex-col items-center gap-3 py-12 text-center`}>
-      <PackageSearch size={24} strokeWidth={1.5} className="text-text-subtle" aria-hidden />
-      <h1 className="text-h2 text-text">Producto no encontrado</h1>
+      <PackageSearch {...iconLg} className="text-text-subtle" aria-hidden />
+      <h1 className="text-title text-text">Producto no encontrado</h1>
       <p className="text-small text-text-muted">Revisa el enlace o búscalo en el listado.</p>
       <Link to={listPath} className={buttonClasses('secondary')} data-variant="secondary">
         Volver a Productos
@@ -163,7 +164,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex max-w-2xl flex-col gap-6">
       <div>
-        <h1 className="text-h1 text-text">{creating ? 'Nuevo producto' : 'Editar producto'}</h1>
+        <h1 className="text-title text-text">{creating ? 'Nuevo producto' : 'Editar producto'}</h1>
         <p className="mt-1 text-small text-text-muted">
           El IVA y el precio sugerido los calcula ServiBox con el costo y el margen de la categoría.
         </p>
@@ -176,13 +177,14 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       )}
 
       <section className={card} aria-labelledby="product-data-title">
-        <h2 id="product-data-title" className="mb-4 text-h3 text-text">
+        <h2 id="product-data-title" className="mb-4 text-title text-text">
           Datos del producto
         </h2>
         <div className="flex flex-col gap-4">
           <TextField
             ref={codeRef}
             label="Código"
+            valueRole="codigo"
             value={values.code}
             onChange={(event) => change('code')(event.target.value)}
             onBlur={touch('code')}
@@ -222,7 +224,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       </section>
 
       <section className={card} aria-labelledby="product-price-title">
-        <h2 id="product-price-title" className="mb-4 text-h3 text-text">
+        <h2 id="product-price-title" className="mb-4 text-title text-text">
           Costo y precio
         </h2>
         <div className="flex flex-col gap-4">
@@ -238,12 +240,14 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           />
           <TextField
             label="IVA del costo"
+            valueRole="monto"
             value={product ? formatCurrency(product.taxAmount) : PENDING_PRICE}
             readOnly
             hint={product ? 'Se recalcula al guardar si cambias el costo o la categoría.' : undefined}
           />
           <TextField
             label="Precio sugerido sin IVA"
+            valueRole="monto"
             value={product ? formatCurrency(product.suggestedPrice) : PENDING_PRICE}
             readOnly
             hint="Según el margen objetivo de la categoría."
@@ -252,7 +256,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       </section>
 
       <section className={card} aria-labelledby="product-stock-title">
-        <h2 id="product-stock-title" className="mb-4 text-h3 text-text">
+        <h2 id="product-stock-title" className="mb-4 text-title text-text">
           Inventario
         </h2>
         {!product ? (
@@ -276,7 +280,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
         )}
       </section>
 
-      <div className="sticky bottom-0 z-10 flex flex-wrap justify-end gap-3 rounded-card border border-border bg-surface p-4 shadow-menu">
+      <div className="sticky bottom-0 z-10 flex flex-wrap justify-end gap-3 rounded-surface border border-border bg-surface p-4 shadow-raised">
         <Button variant="secondary" onClick={() => void navigate(listPath)}>
           Cancelar
         </Button>

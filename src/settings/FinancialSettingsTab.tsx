@@ -21,7 +21,7 @@ import {
 } from './settingsForms'
 import { READ_ONLY_NOTICE } from './TenantProfileTab'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 
 // Rotulos y ejemplos de la seccion Deducibles de Autollantas.
 const fieldTexts: Record<FinancialField, { label: string; hint: string }> = {
@@ -118,7 +118,7 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
 
   return (
     <section className={card} aria-labelledby="financiera-titulo">
-      <h2 id="financiera-titulo" className="text-h3 text-text">
+      <h2 id="financiera-titulo" className="text-title text-text">
         Configuración financiera
       </h2>
       <p className="mt-1 text-small text-text-muted">

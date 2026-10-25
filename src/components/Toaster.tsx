@@ -1,5 +1,6 @@
 import { CircleCheck } from 'lucide-react'
 import { useToasts } from './toast'
+import { iconSm } from './icons'
 
 /**
  * Region de avisos: abajo a la derecha, anunciada con aria-live. Cada aviso entra en 200 ms
@@ -16,9 +17,9 @@ export function Toaster() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="flex animate-[toast-in_var(--duration-base)_ease-out] items-center gap-3 rounded-control border border-border bg-surface p-4 shadow-menu"
+          className="flex animate-[toast-in_var(--duration-base)_var(--ease-standard)] items-center gap-3 rounded-surface border border-border bg-surface p-4 shadow-raised"
         >
-          <CircleCheck size={18} strokeWidth={1.5} className="shrink-0 text-success" aria-hidden />
+          <CircleCheck {...iconSm} className="shrink-0 text-success" aria-hidden />
           <p className="text-small text-text">{toast.message}</p>
         </div>
       ))}

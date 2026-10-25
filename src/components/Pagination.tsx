@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { pageItems, type Page } from '../lib/pagination'
+import { iconSm } from './icons'
 
 interface PaginationProps {
   page: Omit<Page<unknown>, 'rows'>
@@ -9,7 +10,7 @@ interface PaginationProps {
 }
 
 const pageButton =
-  'flex size-9 items-center justify-center rounded-control text-small font-medium transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:text-text-subtle'
+  'flex size-9 items-center justify-center rounded-control text-button transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:text-text-subtle'
 
 /** Texto del rango y botones anterior, numeros y siguiente. */
 export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
@@ -29,7 +30,7 @@ export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
                 disabled={page.page === 1}
                 aria-label="Página anterior"
               >
-                <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
+                <ChevronLeft {...iconSm} aria-hidden />
               </button>
             </li>
             {pageItems(page.page, page.totalPages).map((item, index) =>
@@ -63,7 +64,7 @@ export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
                 disabled={page.page === page.totalPages}
                 aria-label="Página siguiente"
               >
-                <ChevronRight size={16} strokeWidth={1.5} aria-hidden />
+                <ChevronRight {...iconSm} aria-hidden />
               </button>
             </li>
           </ul>

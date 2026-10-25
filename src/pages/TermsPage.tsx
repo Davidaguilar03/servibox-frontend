@@ -9,9 +9,9 @@ export function TermsPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
-      <div className="w-full max-w-md rounded-card border border-border bg-surface p-8 text-center shadow-card">
+      <div className="w-full max-w-md rounded-surface border border-border bg-surface p-8 text-center">
         <WordmarkLink />
-        <h1 className="mt-6 text-h2 text-text">Términos y condiciones</h1>
+        <h1 className="mt-6 text-title text-text">Términos y condiciones</h1>
         <p className="mt-2 text-small text-text-muted">Próximamente. Estamos preparando este texto.</p>
         <Link to="/" className={`mt-6 ${buttonClasses('secondary')}`} data-variant="secondary">
           Volver a la página principal

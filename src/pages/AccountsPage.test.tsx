@@ -131,6 +131,10 @@ describe('cuentas', () => {
         ['05/10/2026', 'Ingreso', 'Venta de contado', 'VENTA FV-0003', '+$ 160.650'],
       ]),
     )
+    // Montos con el rol monto en la tabla y en los totales; Origen no es un codigo.
+    expect(within(screen.getByRole('table')).getByText('-$ 300.000')).toHaveClass('monto')
+    expect(screen.getByText('Ingresos del período').nextElementSibling).toHaveClass('monto')
+    expect(within(screen.getByRole('table')).getByText('GASTO OPERATIVO')).not.toHaveClass('codigo')
   })
 
   it('Todas las cuentas suma todo y agrega la columna Cuenta; la cuenta va en la URL', async () => {

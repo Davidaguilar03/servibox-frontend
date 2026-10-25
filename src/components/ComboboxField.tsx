@@ -1,6 +1,7 @@
 import { useId, useState, type KeyboardEvent } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { normalizeText } from '../lib/text'
+import { iconSm } from './icons'
 
 export interface ComboboxOption {
   value: number
@@ -66,8 +67,8 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className={`text-small font-medium text-text ${compactLabel ? 'xl:sr-only' : ''}`}>
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className={`text-label text-text ${compactLabel ? 'xl:sr-only' : ''}`}>
         {label}
       </label>
       <div className="relative">
@@ -99,8 +100,7 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
           }`}
         />
         <ChevronDown
-          size={16}
-          strokeWidth={1.5}
+          {...iconSm}
           aria-hidden
           className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-muted"
         />
@@ -109,7 +109,7 @@ export function ComboboxField({ label, compactLabel, options, value, onChange, p
             id={listId}
             role="listbox"
             aria-label={label}
-            className="absolute z-30 mt-1 max-h-64 w-full min-w-64 overflow-y-auto rounded-control border border-border bg-surface py-1 shadow-menu"
+            className="absolute z-30 mt-1 max-h-64 w-full min-w-64 overflow-y-auto rounded-control border border-border bg-surface py-1 shadow-raised"
           >
             {filtered.length === 0 ? (
               <li className="px-3 py-2 text-small text-text-muted">Sin resultados.</li>

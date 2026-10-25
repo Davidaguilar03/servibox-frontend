@@ -19,6 +19,17 @@
   }
 }
 
+/* Rol monto: todo valor en dinero. Fuente de cuerpo con numeros tabulares; a la derecha en tablas. */
+@utility monto {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rol codigo: numero de factura, codigo de producto y NIT. Es el unico uso de IBM Plex Mono. */
+@utility codigo {
+  font-family: var(--font-mono);
+}
+
 /* Entrada de los avisos (Toaster): sube y aparece. */
 @keyframes toast-in {
   from {

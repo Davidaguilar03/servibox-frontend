@@ -83,6 +83,30 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --font-sans: var(--font-body);
 
+  /*
+   * Escala de la app: tres tamanos de CONTENIDO (title, body, small) y dos de COMPONENTE
+   * (label, button), cada uno con interlineado y peso. Una pantalla usa solo estos cinco.
+   * body, small y button son los del manual v1.0; title (20) es nuevo porque el manual no tiene
+   * un rol de titulo unico; label sube a 12 sin tracking para servir de rotulo de campo.
+   * Ver docs/ai-context/05-DESIGN-SYSTEM.md.
+   */
+  --text-title: 20px;
+  --text-title--line-height: 28px;
+  --text-title--font-weight: 600;
+  --text-body: 15px;
+  --text-body--line-height: 1.6;
+  --text-body--font-weight: 400;
+  --text-small: 13px;
+  --text-small--line-height: 1.5;
+  --text-small--font-weight: 400;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 600;
+  --text-button: 14px;
+  --text-button--line-height: 1;
+  --text-button--font-weight: 600;
+
+  /* Legado del manual, solo para la landing, el login y el registro (los redisena la tarea 7). */
   --text-display: 48px;
   --text-display--line-height: 1.1;
   --text-display--font-weight: 700;
@@ -95,34 +119,34 @@
   --text-h3: 18px;
   --text-h3--line-height: 1.4;
   --text-h3--font-weight: 600;
-  --text-body: 15px;
-  --text-body--line-height: 1.6;
-  --text-body--font-weight: 400;
-  --text-button: 14px;
-  --text-button--line-height: 1;
-  --text-button--font-weight: 600;
-  --text-small: 13px;
-  --text-small--line-height: 1.5;
-  --text-small--font-weight: 400;
-  --text-label: 11px;
-  --text-label--line-height: 1.4;
-  --text-label--font-weight: 600;
-  --text-label--letter-spacing: 0.06em;
 
   /* Espaciado: base de 4 px (p-1 = 4, p-2 = 8, p-3 = 12, p-4 = 16, p-6 = 24...). */
   --spacing: 4px;
 
-  /* Radios */
-  --radius-tag: 4px;
+  /* Radios: control (campos, botones, selectores), surface (tarjetas, tablas, modales, alertas) y pill. */
   --radius-control: 8px;
-  --radius-card: 12px;
-  --radius-container: 20px;
+  --radius-surface: 12px;
   --radius-pill: 999px;
+  /* Legado, solo landing, login y registro (tarea 7). La guarda impide usarlos en la app. */
+  --radius-tag: 4px;
+  --radius-card: var(--radius-surface);
+  --radius-container: 20px;
 
-  /* Sombras */
+  /*
+   * Sombras: solo lo que flota. raised para menus desplegables, toasts, tooltips y la barra fija;
+   * overlay para modales y el menu movil. Las tarjetas, tablas y paneles van con borde.
+   */
+  --shadow-raised: 0 4px 12px rgb(0 0 0 / 10%);
+  --shadow-overlay: 0 16px 40px rgb(0 0 0 / 16%);
+  /* Legado, solo landing, login y registro (tarea 7). La guarda impide usarlos en la app. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 6%);
-  --shadow-menu: 0 4px 12px rgb(0 0 0 / 10%);
-  --shadow-modal: 0 16px 40px rgb(0 0 0 / 16%);
+  --shadow-menu: var(--shadow-raised);
+  --shadow-modal: var(--shadow-overlay);
+
+  /* Iconos Lucide: ver src/components/icons.ts, que usa estos valores. */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
 
   /* Layout */
   --spacing-sidebar: 240px;
@@ -140,8 +164,11 @@
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
 
-  /* Movimiento */
+  /* Movimiento: hover y foco en fast, menus y toasts en base, modales en slow. Sin rebotes. */
   --duration-fast: 120ms;
   --duration-base: 200ms;
-  --duration-slow: 280ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
 }

@@ -62,9 +62,9 @@ const sortOptions = [
 ]
 
 const linkClass =
-  'rounded-tag text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 
 /** Lo que el formulario necesita para volver al listado con los mismos filtros. */
 export interface ListState {
@@ -103,7 +103,7 @@ export function ProductsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Productos</h1>
+          <h1 className="text-title text-text">Productos</h1>
           <p className="mt-1 text-small text-text-muted">
             Catálogo de productos con alertas de stock. Costos y precios sin IVA.
           </p>
@@ -250,7 +250,7 @@ function CategoryTabs({ categories, products, selected, onSelect }: CategoryTabs
                 type="button"
                 aria-pressed={active}
                 onClick={() => onSelect(tab.id)}
-                className={`flex min-h-touch items-center gap-1.5 border-b-2 rounded-tag text-body whitespace-nowrap transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                className={`flex min-h-touch items-center gap-2 border-b-2 rounded-control text-body whitespace-nowrap transition-colors duration-(--duration-fast) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                   active ? 'border-brand font-medium text-text' : 'border-transparent text-text-muted hover:text-text'
                 }`}
               >
@@ -290,7 +290,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
   )
 
   const columns: Column<InventoryProduct>[] = [
-    { header: 'Código', render: (p) => <span className="font-mono">{p.code}</span> },
+    { header: 'Código', render: (p) => <span className="codigo">{p.code}</span> },
     { header: 'Descripción', render: (p) => p.description },
     {
       header: 'Categoría',
@@ -306,8 +306,8 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
       align: 'right',
       render: (p) => <span className={(p.quantity ?? 0) <= 0 ? 'font-medium text-brand-ink' : ''}>{p.quantity ?? 0}</span>,
     },
-    { header: 'Costo sin IVA', align: 'right', render: (p) => formatCurrency(p.purchaseCost) },
-    { header: 'Precio sugerido sin IVA', align: 'right', render: (p) => formatCurrency(p.suggestedPrice) },
+    { header: 'Costo sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.purchaseCost)}</span> },
+    { header: 'Precio sugerido sin IVA', align: 'right', render: (p) => <span className="monto">{formatCurrency(p.suggestedPrice)}</span> },
     { header: 'Estado', render: (p) => byId && <StatusBadge status={badgeFor[productStatus(p, byId)]} /> },
     { header: '', render: editLink },
   ]
@@ -348,10 +348,10 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
                   to={`/inventario/${product.id}/editar`}
                   state={listState}
                   aria-label={`Editar ${product.code}, ${product.description}`}
-                  className="flex items-start justify-between gap-4 rounded-control border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   <span className="flex min-w-0 flex-col gap-1">
-                    <span className="font-mono text-small text-text">{product.code}</span>
+                    <span className="codigo text-small text-text">{product.code}</span>
                     <span className="text-body text-text">{product.description}</span>
                     <span className="flex items-center gap-2 text-small text-text-muted">
                       <CategoryDot color={product.categoryId === null ? undefined : byId.get(product.categoryId)?.color} />
@@ -359,8 +359,8 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="tabular text-body font-medium text-text">{units(product.quantity ?? 0)}</span>
-                    <span className="tabular text-small text-text-muted">{formatCurrency(product.suggestedPrice)}</span>
+                    <span className="monto text-body font-medium text-text">{units(product.quantity ?? 0)}</span>
+                    <span className="monto text-small text-text-muted">{formatCurrency(product.suggestedPrice)}</span>
                     <StatusBadge status={badgeFor[productStatus(product, byId)]} />
                   </span>
                 </Link>

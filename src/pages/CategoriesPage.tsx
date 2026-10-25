@@ -39,10 +39,11 @@ import { productCounts } from '../inventory/productList'
 import { errorMessage } from '../lib/errorMessage'
 import { EMPTY_VALUE } from '../lib/format'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
+import { iconSm } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 const linkClass =
-  'rounded-tag text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
+  'rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 /** null cerrado, 'new' para crear, o la categoria a editar. */
 type ModalTarget = null | 'new' | InventoryCategory
@@ -163,14 +164,14 @@ export function CategoriesPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Categorías</h1>
+          <h1 className="text-title text-text">Categorías</h1>
           <p className="mt-1 text-small text-text-muted">
             Cada categoría define cuándo avisar por stock bajo, el margen del precio sugerido y sus impuestos.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
-            <ArrowLeft size={18} strokeWidth={1.5} aria-hidden />
+            <ArrowLeft {...iconSm} aria-hidden />
             Volver a Productos
           </Link>
           <Button onClick={() => setTarget('new')}>Nueva categoría</Button>
@@ -344,8 +345,8 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
         />
 
         <fieldset>
-          <legend className="text-small font-medium text-text">Color</legend>
-          <div className="mt-1.5 flex flex-wrap gap-2">
+          <legend className="text-label text-text">Color</legend>
+          <div className="mt-2 flex flex-wrap gap-2">
             {colors.map((color) => {
               const selected = values.color === color.value
               return (
@@ -368,7 +369,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
                     style={{ backgroundColor: color.value }}
                     aria-hidden
                   >
-                    {selected && <Check size={14} strokeWidth={2.5} className="text-text-inverse" />}
+                    {selected && <Check {...iconSm} className="text-text-inverse" />}
                   </span>
                 </label>
               )
@@ -411,20 +412,20 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
         />
 
         <fieldset>
-          <legend className="text-small font-medium text-text">Impuestos</legend>
+          <legend className="text-label text-text">Impuestos</legend>
           {taxTypes.isError ? (
-            <div role="alert" className="mt-1.5 flex flex-wrap items-center gap-2">
+            <div role="alert" className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-small text-text">No pudimos cargar los impuestos.</span>
               <Button variant="text" className="px-2" onClick={() => void taxTypes.refetch()}>
                 Reintentar
               </Button>
             </div>
           ) : taxTypes.isPending ? (
-            <Skeleton className="mt-1.5 h-6 w-40" />
+            <Skeleton className="mt-2 h-6 w-40" />
           ) : taxTypes.data.length === 0 ? (
-            <p className="mt-1.5 text-small text-text-muted">No hay impuestos configurados.</p>
+            <p className="mt-2 text-small text-text-muted">No hay impuestos configurados.</p>
           ) : (
-            <ul className="mt-1.5 flex flex-col gap-1">
+            <ul className="mt-2 flex flex-col gap-1">
               {taxTypes.data.map((tax) => (
                 <li key={tax.id}>
                   <label className="flex min-h-touch cursor-pointer items-center gap-3 text-body text-text">

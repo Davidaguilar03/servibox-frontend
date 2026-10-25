@@ -77,7 +77,7 @@ export function DataTable<T>({
                   className="h-row border-b border-border transition-colors duration-(--duration-fast) last:border-b-0 even:bg-row-alt hover:bg-neutral-100"
                 >
                   {columns.map((column) => (
-                    <td key={column.header} className={`px-3 text-small text-text ${alignClass(column)}`}>
+                    <td key={column.header} className={`px-3 text-body text-text ${alignClass(column)}`}>
                       {column.render(row)}
                     </td>
                   ))}
@@ -97,13 +97,13 @@ export function DataTable<T>({
       {loading ? (
         <div className="flex flex-col gap-3 md:hidden" aria-busy>
           {Array.from({ length: skeletonRows }, (_, index) => (
-            <Skeleton key={index} className="h-16 w-full rounded-control" />
+            <Skeleton key={index} className="h-16 w-full rounded-surface" />
           ))}
         </div>
       ) : (
         <ul className="flex flex-col gap-3 md:hidden" aria-label={cardsLabel}>
           {rows?.map((row) => (
-            <li key={rowKey(row)} className="flex flex-col gap-2 rounded-control border border-border p-4">
+            <li key={rowKey(row)} className="flex flex-col gap-2 rounded-surface border border-border p-4">
               {card(row)}
             </li>
           ))}

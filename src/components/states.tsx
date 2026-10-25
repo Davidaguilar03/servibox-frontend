@@ -3,10 +3,11 @@ import { Link } from 'react-router'
 import { Inbox, TriangleAlert } from 'lucide-react'
 import { Button } from './Button'
 import { buttonClasses } from './buttonStyles'
+import { iconLg } from './icons'
 
 /** Bloque gris de carga. El tamano lo da quien lo usa. */
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <span className={`block animate-pulse rounded-tag bg-neutral-200 ${className}`} aria-hidden />
+  return <span className={`block animate-pulse rounded-control bg-neutral-200 ${className}`} aria-hidden />
 }
 
 export interface EmptyStateAction {
@@ -27,7 +28,7 @@ export function EmptyState({ message, action }: { message: string; action?: Empt
   const variant = action?.variant ?? 'secondary'
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-      <Inbox size={20} strokeWidth={1.5} className="text-text-subtle" aria-hidden />
+      <Inbox {...iconLg} className="text-text-subtle" aria-hidden />
       <p className="text-small text-text-muted">{message}</p>
       {action && (
         <div className="mt-2">
@@ -50,7 +51,7 @@ export function EmptyState({ message, action }: { message: string; action?: Empt
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div role="alert" className="flex flex-col items-center gap-3 px-4 py-8 text-center">
-      <TriangleAlert size={20} strokeWidth={1.5} className="text-error" aria-hidden />
+      <TriangleAlert {...iconLg} className="text-error" aria-hidden />
       <p className="text-small text-text">{message}</p>
       <Button variant="secondary" onClick={onRetry}>
         Reintentar

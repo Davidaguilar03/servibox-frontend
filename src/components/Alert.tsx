@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CircleCheck, Info, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { iconSm } from './icons'
 
 export type AlertTone = 'success' | 'warning' | 'error' | 'info'
 
@@ -23,8 +24,8 @@ export function Alert({ tone, title, children }: AlertProps) {
   const urgent = tone === 'error' || tone === 'warning'
 
   return (
-    <div role={urgent ? 'alert' : 'status'} className={`flex gap-3 rounded-control p-4 ${box}`}>
-      <Icon size={18} strokeWidth={1.5} className={`mt-px shrink-0 ${iconColor}`} aria-hidden />
+    <div role={urgent ? 'alert' : 'status'} className={`flex gap-3 rounded-surface p-4 ${box}`}>
+      <Icon {...iconSm} className={`mt-px shrink-0 ${iconColor}`} aria-hidden />
       <div className="text-small">
         <p className={`font-medium ${titleClass}`}>{title}</p>
         {children && <div className="text-text">{children}</div>}

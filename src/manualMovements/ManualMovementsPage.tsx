@@ -31,6 +31,7 @@ import {
   type ManualFilters,
 } from './manualMovements'
 import { fetchManualMovements, type ManualCategory } from './manualMovementsApi'
+import { iconMd } from '../components/icons'
 
 /** Lo que distingue Gastos operativos de Ingresos ocasionales. */
 export interface ManualMovementsConfig {
@@ -51,7 +52,7 @@ export interface ManualMovementsConfig {
   accountHint: string
 }
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 const iconButton =
   'flex size-touch items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
@@ -98,7 +99,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         title="Editar"
         onClick={() => setDialog({ kind: 'edit', movement })}
       >
-        <Pencil size={18} strokeWidth={1.5} aria-hidden />
+        <Pencil {...iconMd} aria-hidden />
       </button>
       <button
         type="button"
@@ -107,13 +108,13 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         title="Eliminar"
         onClick={() => setDialog({ kind: 'delete', movement })}
       >
-        <Trash2 size={18} strokeWidth={1.5} aria-hidden />
+        <Trash2 {...iconMd} aria-hidden />
       </button>
     </div>
   )
 
   const signed = (movement: TreasuryMovement) => (
-    <span className={`tabular font-medium whitespace-nowrap ${amountClass}`}>{formatSignedAmount(movement)}</span>
+    <span className={`monto font-medium whitespace-nowrap ${amountClass}`}>{formatSignedAmount(movement)}</span>
   )
 
   const columns: Column<TreasuryMovement>[] = [
@@ -160,7 +161,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         </div>
         <ul className="flex flex-col gap-3 md:hidden" aria-label={config.title}>
           {page.rows.map((movement) => (
-            <li key={movement.id} className="flex flex-col gap-2 rounded-control border border-border p-4">
+            <li key={movement.id} className="flex flex-col gap-2 rounded-surface border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <span className="flex min-w-0 flex-col gap-1">
                   <span className="text-body text-text">{movement.concept}</span>
@@ -197,7 +198,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">{config.title}</h1>
+          <h1 className="text-title text-text">{config.title}</h1>
           <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -226,8 +227,8 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
       <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto] lg:items-end`}>
         <SearchField label="Buscar" placeholder="Concepto" {...search} />
         {accounts.isError ? (
-          <div className="flex flex-col gap-1.5" role="alert">
-            <span className="text-small font-medium text-text">Cuenta</span>
+          <div className="flex flex-col gap-2" role="alert">
+            <span className="text-label text-text">Cuenta</span>
             <span className="flex items-center gap-2 text-small text-text">
               No pudimos cargar las cuentas.
               <Button variant="text" className="px-2" onClick={() => void accounts.refetch()}>

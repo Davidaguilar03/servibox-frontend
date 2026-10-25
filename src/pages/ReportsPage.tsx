@@ -25,8 +25,9 @@ import {
   type ReportType,
 } from '../reports/reports'
 import { monthRange } from '../sales/salesList'
+import { iconMd, iconSm } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 const focusWithin = 'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-brand'
 
 /** Espera antes de pedir la vista previa de un rango nuevo, para no llamar en cada tecla. */
@@ -96,7 +97,7 @@ export function ReportsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-h1 text-text">Reportes</h1>
+        <h1 className="text-title text-text">Reportes</h1>
         <p className="mt-1 text-small text-text-muted">
           Genera reportes del período en PDF o Excel. Las facturas anuladas no se incluyen.
         </p>
@@ -112,12 +113,12 @@ export function ReportsPage() {
             generate()
           }}
         >
-          <h2 id="report-form-title" className="text-h3 text-text">
+          <h2 id="report-form-title" className="text-title text-text">
             Nuevo reporte
           </h2>
 
           <fieldset className="flex flex-col gap-3">
-            <legend className="mb-2 text-small font-medium text-text">Tipo de reporte</legend>
+            <legend className="mb-2 text-label text-text">Tipo de reporte</legend>
             {REPORT_OPTIONS.map((option) => {
               const checked = type === option.type
               return (
@@ -184,12 +185,12 @@ export function ReportsPage() {
             ))}
 
           <fieldset>
-            <legend className="mb-2 text-small font-medium text-text">Formato</legend>
-            <div className="grid grid-cols-2 gap-1 rounded-control border border-border-control bg-surface p-1">
+            <legend className="mb-2 text-label text-text">Formato</legend>
+            <div className="grid grid-cols-2 gap-1 rounded-pill border border-border-control bg-surface p-1">
               {formats.map((option) => (
                 <label
                   key={option.value}
-                  className={`flex min-h-touch cursor-pointer items-center justify-center rounded-tag text-button transition-colors duration-(--duration-fast) ${focusWithin} ${
+                  className={`flex min-h-touch cursor-pointer items-center justify-center rounded-pill text-button transition-colors duration-(--duration-fast) ${focusWithin} ${
                     format === option.value ? 'bg-dark text-text-inverse' : 'text-text hover:bg-neutral-100'
                   }`}
                 >
@@ -224,8 +225,8 @@ export function ReportsPage() {
         {type === 'MOVIMIENTOS' && (
           <section className={card} aria-labelledby="movements-info-title">
             <div className="flex items-center gap-3">
-              <FileDown size={20} strokeWidth={1.5} className="shrink-0 text-text-muted" aria-hidden />
-              <h2 id="movements-info-title" className="text-h3 text-text">
+              <FileDown {...iconMd} className="shrink-0 text-text-muted" aria-hidden />
+              <h2 id="movements-info-title" className="text-title text-text">
                 Movimientos de cuentas
               </h2>
             </div>
@@ -259,7 +260,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
   return (
     <section className={`${card} flex min-w-0 flex-col gap-4`} aria-labelledby="preview-title" aria-busy={current.isPending}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="preview-title" className="text-h3 text-text">
+        <h2 id="preview-title" className="text-title text-text">
           Vista previa · Estado de resultados
         </h2>
         <p className="text-small text-text-muted">{periodTitle(desde, hasta)}</p>
@@ -314,7 +315,7 @@ function Variation({ value }: { value: number | null }) {
   const direction = value > 0 ? 'Subió' : value < 0 ? 'Bajó' : 'Sin cambio,'
   return (
     <span className="flex items-center gap-1 text-text-muted">
-      <Icon size={14} strokeWidth={2} className={`shrink-0 ${tone}`} aria-hidden />
+      <Icon {...iconSm} className={`shrink-0 ${tone}`} aria-hidden />
       <span className="sr-only">{direction} </span>
       <span className={`tabular font-medium ${tone}`}>{Math.abs(value)}%</span>
       <span>vs. período anterior</span>
@@ -346,10 +347,10 @@ function StatementTable({ kpis }: { kpis: Kpis }) {
           const valueClass = row.total ? '' : negative ? 'text-error' : 'text-text'
           return (
             <tr key={row.concept} className={`h-row ${rowClass}`}>
-              <th scope="row" className={`px-3 text-left text-small ${row.total ? 'font-semibold' : 'font-normal text-text'}`}>
+              <th scope="row" className={`px-3 text-left text-body ${row.total ? 'font-semibold' : 'font-normal text-text'}`}>
                 {row.concept}
               </th>
-              <td className={`tabular px-3 text-right text-small whitespace-nowrap ${valueClass}`}>
+              <td className={`monto px-3 text-right text-body whitespace-nowrap ${valueClass}`}>
                 {formatCurrency(row.value)}
               </td>
             </tr>

@@ -7,7 +7,7 @@ export function WordmarkLink({ onDark = false }: { onDark?: boolean }) {
     <Link
       to="/"
       aria-label="ServiBox, ir a la página principal"
-      className="inline-block rounded-tag focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      className="inline-block rounded-control focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       <Wordmark onDark={onDark} />
     </Link>

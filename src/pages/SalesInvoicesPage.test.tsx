@@ -124,6 +124,9 @@ describe('facturas de venta', () => {
     expect(rows[1]).toHaveTextContent('09/11/2026')
     expect(rows[1]).toHaveTextContent('Crédito')
     expect(rows[1]).toHaveTextContent('$ 2.380.000')
+    // Montos con el rol monto (numeros tabulares) y el numero de factura con el rol codigo.
+    expect(within(rows[1] as HTMLElement).getByText('$ 2.380.000')).toHaveClass('monto')
+    expect(within(rows[1] as HTMLElement).getByText('FV-0002')).toHaveClass('codigo')
     expect(rows[1]).toHaveTextContent('Pendiente')
     expect(within(rows[2] as HTMLElement).getAllByRole('cell')[3]).toHaveTextContent(EMPTY_VALUE)
     expect(within(rows[2] as HTMLElement).getByRole('link', { name: 'Ver detalle' })).toHaveAttribute('href', '/ventas/1')

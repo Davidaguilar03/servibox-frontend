@@ -32,8 +32,9 @@ import {
   type CollectionDraft,
 } from '../sales/saleDetail'
 import { annulSale, createCollection, fetchSale, fetchSaleMovements, type SaleDetail } from '../sales/salesApi'
+import { iconLg } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface p-6 shadow-card'
+const card = 'rounded-surface border border-border bg-surface p-6'
 
 const paymentTypeLabels: Record<SaleDetail['paymentType'], string> = { CONTADO: 'Contado', CREDITO: 'Crédito' }
 
@@ -41,18 +42,18 @@ type Line = SaleDetail['details'][number]
 type SaleMovement = Awaited<ReturnType<typeof fetchSaleMovements>>[number]
 
 const lineColumns: Column<Line>[] = [
-  { header: 'Código', render: (line) => <span className="font-mono">{line.productCode ?? EMPTY_VALUE}</span> },
+  { header: 'Código', render: (line) => <span className="codigo">{line.productCode ?? EMPTY_VALUE}</span> },
   { header: 'Descripción', render: (line) => line.productDescription ?? EMPTY_VALUE },
   { header: 'Cant.', align: 'right', render: (line) => line.quantity },
-  { header: 'Precio', align: 'right', render: (line) => formatCurrency(line.price) },
-  { header: 'IVA', align: 'right', render: (line) => formatCurrency(line.ivaAmount) },
-  { header: 'Total', align: 'right', render: (line) => formatCurrency(lineTotal(line)) },
+  { header: 'Precio', align: 'right', render: (line) => <span className="monto">{formatCurrency(line.price)}</span> },
+  { header: 'IVA', align: 'right', render: (line) => <span className="monto">{formatCurrency(line.ivaAmount)}</span> },
+  { header: 'Total', align: 'right', render: (line) => <span className="monto">{formatCurrency(lineTotal(line))}</span> },
 ]
 
 const movementColumns: Column<SaleMovement>[] = [
   { header: 'Fecha', render: (movement) => formatDate(movement.date) },
   { header: 'Cuenta', render: (movement) => movement.accountName ?? EMPTY_VALUE },
-  { header: 'Valor', align: 'right', render: (movement) => formatCurrency(movement.amount) },
+  { header: 'Valor', align: 'right', render: (movement) => <span className="monto">{formatCurrency(movement.amount)}</span> },
 ]
 
 function methodLabel(method: string | null) {
@@ -70,8 +71,8 @@ export function SaleDetailPage() {
 function NotFound() {
   return (
     <div className={`${card} flex flex-col items-center gap-3 py-12 text-center`}>
-      <FileQuestion size={24} strokeWidth={1.5} className="text-text-subtle" aria-hidden />
-      <h1 className="text-h2 text-text">Factura no encontrada</h1>
+      <FileQuestion {...iconLg} className="text-text-subtle" aria-hidden />
+      <h1 className="text-title text-text">Factura no encontrada</h1>
       <p className="text-small text-text-muted">Revisa el número o búscala en el listado.</p>
       <Link to="/ventas" className={buttonClasses('secondary')} data-variant="secondary">
         Volver a Facturas de venta
@@ -133,7 +134,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-h1 text-text">{data.invoiceNumber}</h1>
+            <h1 className="codigo text-title text-text">{data.invoiceNumber}</h1>
             <StatusBadge status={data.status} />
           </div>
           <p className="mt-1 text-small text-text-muted">{subtitle}</p>
@@ -159,7 +160,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]">
         <div className="flex min-w-0 flex-col gap-6">
           <section className={card} aria-labelledby="sale-data-title">
-            <h2 id="sale-data-title" className="mb-4 text-h3 text-text">
+            <h2 id="sale-data-title" className="mb-4 text-title text-text">
               Datos de la factura
             </h2>
             <dl className="grid gap-4 sm:grid-cols-2">
@@ -177,7 +178,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
           </section>
 
           <section className={card} aria-labelledby="sale-lines-title">
-            <h2 id="sale-lines-title" className="mb-4 text-h3 text-text">
+            <h2 id="sale-lines-title" className="mb-4 text-title text-text">
               Productos
             </h2>
             <div className="hidden md:block">
@@ -193,10 +194,10 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
             </div>
             <ul className="flex flex-col gap-3 md:hidden" aria-label="Productos">
               {data.details.map((line) => (
-                <li key={line.id} className="rounded-control border border-border p-4">
-                  <p className="font-mono text-small text-text-muted">{line.productCode}</p>
+                <li key={line.id} className="rounded-surface border border-border p-4">
+                  <p className="codigo text-small text-text-muted">{line.productCode}</p>
                   <p className="text-body text-text">{line.productDescription}</p>
-                  <p className="tabular mt-2 flex justify-between gap-3 text-small text-text-muted">
+                  <p className="monto mt-2 flex justify-between gap-3 text-small text-text-muted">
                     <span>
                       {line.quantity} × {formatCurrency(line.price)} · IVA {formatCurrency(line.ivaAmount)}
                     </span>
@@ -208,7 +209,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
           </section>
 
           <section className={card} aria-labelledby="sale-collections-title">
-            <h2 id="sale-collections-title" className="mb-4 text-h3 text-text">
+            <h2 id="sale-collections-title" className="mb-4 text-title text-text">
               {data.paymentType === 'CREDITO' ? 'Abonos registrados' : 'Pago recibido'}
             </h2>
             <CollectionsBlock sale={data} movements={movements} />
@@ -216,7 +217,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
         </div>
 
         <aside className={card} aria-labelledby="sale-summary-title">
-          <h2 id="sale-summary-title" className="mb-4 text-h3 text-text">
+          <h2 id="sale-summary-title" className="mb-4 text-title text-text">
             Resumen
           </h2>
           <dl className="flex flex-col gap-3 text-body">
@@ -230,7 +231,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
             />
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
               <dt className="font-medium text-text">Saldo pendiente</dt>
-              <dd className="tabular font-display text-h2 font-bold text-text">
+              <dd className="monto text-title text-text">
                 {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
               </dd>
             </div>
@@ -279,7 +280,7 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-text-muted">{label}</dt>
-      <dd className={`tabular font-medium ${tone ?? 'text-text'}`}>{value}</dd>
+      <dd className={`monto font-medium ${tone ?? 'text-text'}`}>{value}</dd>
     </div>
   )
 }
@@ -326,12 +327,12 @@ function CollectionsBlock({ sale, movements }: CollectionsBlockProps) {
       </div>
       <ul className="flex flex-col gap-3 md:hidden" aria-label="Abonos">
         {rows.map((movement) => (
-          <li key={movement.id} className="flex items-center justify-between gap-4 rounded-control border border-border p-4">
+          <li key={movement.id} className="flex items-center justify-between gap-4 rounded-surface border border-border p-4">
             <span className="flex flex-col">
               <span className="text-body text-text">{movement.accountName ?? EMPTY_VALUE}</span>
               <span className="text-small text-text-muted">{formatDate(movement.date)}</span>
             </span>
-            <span className="tabular text-body font-medium text-text">{formatCurrency(movement.amount)}</span>
+            <span className="monto text-body font-medium text-text">{formatCurrency(movement.amount)}</span>
           </li>
         ))}
       </ul>
@@ -406,7 +407,7 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
         </p>
         <div className="flex items-center justify-between rounded-control bg-neutral-200 p-4">
           <span className="text-small text-text-muted">Saldo pendiente</span>
-          <span className="tabular text-body font-semibold text-text">{formatCurrency(sale.pendingBalance)}</span>
+          <span className="monto text-body font-semibold text-text">{formatCurrency(sale.pendingBalance)}</span>
         </div>
         {save.isError && (
           <Alert tone="error" title="No pudimos registrar el abono">

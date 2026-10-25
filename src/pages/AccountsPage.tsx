@@ -45,8 +45,9 @@ import { formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
+import { iconSm } from '../components/icons'
 
-const card = 'rounded-card border border-border bg-surface shadow-card'
+const card = 'rounded-surface border border-border bg-surface'
 const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand'
 
 type ModalName = 'account' | 'transfer' | null
@@ -127,7 +128,7 @@ export function AccountsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-text">Cuentas</h1>
+          <h1 className="text-title text-text">Cuentas</h1>
           <p className="mt-1 text-small text-text-muted">Saldos de caja y bancos, y el detalle de cada movimiento.</p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -139,7 +140,7 @@ export function AccountsPage() {
               aria-busy={download.isPending || undefined}
               aria-describedby={!range.valid ? 'export-help' : undefined}
             >
-              <FileSpreadsheet size={16} strokeWidth={1.5} aria-hidden />
+              <FileSpreadsheet {...iconSm} aria-hidden />
               {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
             </Button>
             {/* El primario depende del estado (sin dos cuentas no hay transferencia) y va al final. */}
@@ -180,7 +181,7 @@ export function AccountsPage() {
       {accounts.isSuccess && accountList.length > 0 && (
         <>
           <section className={`${card} p-6`} aria-labelledby="period-title">
-            <h2 id="period-title" className="text-h3 text-text">
+            <h2 id="period-title" className="text-title text-text">
               {scopeName} · {periodLabel(filters)}
             </h2>
             <div ref={periodRef} role="group" aria-label="Período" className="mt-4 flex flex-wrap gap-2">
@@ -192,7 +193,7 @@ export function AccountsPage() {
                     type="button"
                     aria-pressed={active}
                     onClick={() => choosePeriod(option.value)}
-                    className={`min-h-touch rounded-pill border px-4 text-small font-medium transition-colors duration-(--duration-fast) ${focusRing} ${
+                    className={`min-h-touch rounded-pill border px-4 text-button transition-colors duration-(--duration-fast) ${focusRing} ${
                       active ? 'border-nav bg-nav text-text-inverse' : 'border-border-control bg-surface text-text hover:bg-neutral-100'
                     }`}
                   >
@@ -270,7 +271,7 @@ function PeriodTotal({ label, value, tone }: { label: string; value: string | un
   return (
     <div className="flex items-baseline justify-between gap-4 rounded-control bg-neutral-100 px-4 py-3">
       <dt className="text-small text-text-muted">{label}</dt>
-      <dd className={`tabular font-display text-h3 font-bold ${tone}`}>
+      <dd className={`monto text-title ${tone}`}>
         {value ?? <Skeleton className="h-6 w-28" />}
       </dd>
     </div>
@@ -306,7 +307,7 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
     return (
       <div className="flex gap-4" aria-busy>
         {[0, 1, 2].map((index) => (
-          <Skeleton key={index} className="h-28 w-64 shrink-0 rounded-card" />
+          <Skeleton key={index} className="h-28 w-64 shrink-0 rounded-surface" />
         ))}
       </div>
     )
@@ -323,24 +324,24 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
   }
 
   const tile = (active: boolean) =>
-    `flex w-64 shrink-0 flex-col gap-1 rounded-card border bg-surface p-5 text-left shadow-card transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing} ${
+    `flex w-64 shrink-0 flex-col gap-1 rounded-surface border bg-surface p-5 text-left transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing} ${
       active ? 'border-brand ring-1 ring-brand' : 'border-border'
     }`
 
   return (
     <div className="flex flex-col gap-2">
       <div className="overflow-x-auto pb-1 [scrollbar-width:thin]">
-      <ul className="flex min-w-max gap-4 p-0.5" role="group" aria-label="Cuentas">
+      <ul className="flex min-w-max gap-4 p-1" role="group" aria-label="Cuentas">
         <li>
           <button type="button" aria-pressed={allSelected} onClick={() => onSelect(ALL_ACCOUNTS)} className={tile(allSelected)}>
             <span className="flex items-center gap-2 text-small font-medium text-text">
-              <Wallet size={16} strokeWidth={1.5} className="text-text-muted" aria-hidden />
+              <Wallet {...iconSm} className="text-text-muted" aria-hidden />
               Todas las cuentas
             </span>
             {balance.isError ? (
               <span className="text-small text-text">Total no disponible</span>
             ) : balance.data ? (
-              <span className="tabular font-display text-h2 font-bold text-text">{formatCurrency(balance.data.total)}</span>
+              <span className="monto text-title text-text">{formatCurrency(balance.data.total)}</span>
             ) : (
               <Skeleton className="h-8 w-40" />
             )}
@@ -355,10 +356,10 @@ function AccountCards({ accounts, balance, selectedId, allSelected, onSelect, on
               <li key={account.id}>
                 <button type="button" aria-pressed={active} onClick={() => onSelect(account.id)} className={tile(active)}>
                   <span className="flex items-center gap-2 text-small font-medium text-text">
-                    <Wallet size={16} strokeWidth={1.5} className={active ? 'text-brand-ink' : 'text-text-muted'} aria-hidden />
+                    <Wallet {...iconSm} className={active ? 'text-brand-ink' : 'text-text-muted'} aria-hidden />
                     {account.name}
                   </span>
-                  <span className="tabular font-display text-h2 font-bold text-text">{formatCurrency(account.currentBalance)}</span>
+                  <span className="monto text-title text-text">{formatCurrency(account.currentBalance)}</span>
                   <span className="text-small text-text-muted">{ACCOUNT_TYPE_LABELS[account.type]} · Saldo actual</span>
                 </button>
               </li>
@@ -400,11 +401,11 @@ function MovementsBlock(props: MovementsBlockProps) {
     ...(showAccount ? [{ header: 'Cuenta', render: (m: TreasuryMovement) => m.accountName ?? '' }] : []),
     { header: 'Tipo', render: (m) => <StatusBadge status={m.type} /> },
     { header: 'Concepto', render: (m) => m.concept },
-    { header: 'Origen', render: (m) => <span className="font-mono text-small whitespace-nowrap">{movementOrigin(m, origin)}</span> },
+    { header: 'Origen', render: (m) => <span className="text-small whitespace-nowrap">{movementOrigin(m, origin)}</span> },
     {
       header: 'Monto',
       align: 'right',
-      render: (m) => <span className={`font-medium whitespace-nowrap ${amountClass(m)}`}>{formatSignedAmount(m)}</span>,
+      render: (m) => <span className={`monto font-medium whitespace-nowrap ${amountClass(m)}`}>{formatSignedAmount(m)}</span>,
     },
   ]
 
@@ -441,17 +442,17 @@ function MovementsBlock(props: MovementsBlockProps) {
         </div>
         <ul className="flex flex-col gap-3 md:hidden" aria-label="Movimientos">
           {page.rows.map((movement) => (
-            <li key={movement.id} className="flex items-start justify-between gap-4 rounded-control border border-border p-4">
+            <li key={movement.id} className="flex items-start justify-between gap-4 rounded-surface border border-border p-4">
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="tabular text-small text-text-muted">
                   {formatDate(movement.date)}
                   {showAccount && movement.accountName ? ` · ${movement.accountName}` : ''}
                 </span>
                 <span className="text-body text-text">{movement.concept}</span>
-                <span className="font-mono text-small text-text-muted">{movementOrigin(movement, origin)}</span>
+                <span className="text-small text-text-muted">{movementOrigin(movement, origin)}</span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-1">
-                <span className={`tabular text-body font-medium ${amountClass(movement)}`}>{formatSignedAmount(movement)}</span>
+                <span className={`monto text-body font-medium ${amountClass(movement)}`}>{formatSignedAmount(movement)}</span>
                 <StatusBadge status={movement.type} />
               </span>
             </li>
@@ -466,7 +467,7 @@ function MovementsBlock(props: MovementsBlockProps) {
 
   return (
     <section className={`${card} p-4`} aria-labelledby="movements-title">
-      <h2 id="movements-title" className="mb-4 px-2 text-h3 text-text">
+      <h2 id="movements-title" className="mb-4 px-2 text-title text-text">
         Movimientos
       </h2>
       {content}

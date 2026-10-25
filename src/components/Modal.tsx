@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { iconMd } from './icons'
 
 interface ModalProps {
   title: string
@@ -70,10 +71,10 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-card bg-surface p-6 shadow-modal outline-none"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-surface bg-surface p-6 shadow-overlay outline-none"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id={titleId} className="text-h3 text-text">
+          <h2 id={titleId} className="text-title text-text">
             {title}
           </h2>
           <button
@@ -82,7 +83,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
             aria-label="Cerrar"
             className="-mt-1 -mr-2 flex size-9 items-center justify-center rounded-control text-text-muted transition-colors duration-(--duration-fast) hover:bg-neutral-100 hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <X size={18} strokeWidth={1.5} aria-hidden />
+            <X {...iconMd} aria-hidden />
           </button>
         </div>
         <div ref={bodyRef} className="mt-4">
