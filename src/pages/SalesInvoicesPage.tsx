@@ -1,11 +1,15 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
+import { CellLink } from '../components/CellLink'
 import { DataTable, type Column } from '../components/DataTable'
+import { FilterBar } from '../components/FilterBar'
 import { IndicatorCard } from '../components/IndicatorCard'
+import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
+import { PendingBalance } from '../components/PendingBalance'
+import { PeriodPicker } from '../components/PeriodPicker'
 import { SearchField } from '../components/SearchField'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge } from '../components/StatusBadge'
@@ -14,6 +18,7 @@ import { fetchKpis, fetchSales, type Sale } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
+import { periodRange } from '../lib/period'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { fetchSaleCollections } from '../sales/salesApi'
 import {
@@ -22,6 +27,7 @@ import {
   creditCollections,
   customerName,
   filterSales,
+  filtersActive,
   filtersToParams,
   monthRange,
   parseFilters,
@@ -46,34 +52,25 @@ const paymentOptions = [
   { value: 'CREDITO', label: 'Crédito' },
 ]
 
-const periodOptions = [
+const periodOptions: Array<{ value: SalesFilters['periodo']; label: string }> = [
   { value: 'este-mes', label: 'Este mes' },
   { value: 'mes-anterior', label: 'Mes anterior' },
   { value: 'este-ano', label: 'Este año' },
   { value: 'todas', label: 'Todas' },
 ]
 
-const linkClass =
-  'hit-area rounded-control font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
-
 const card = 'rounded-surface border border-border bg-surface'
 
 const columns: Column<Sale>[] = [
   { header: 'N.º factura', render: (s) => <span className="codigo">{s.invoiceNumber}</span> },
-  { header: 'Cliente', render: (s) => customerName(s) },
   { header: 'Fecha', render: (s) => formatDate(s.invoiceDate) },
+  { header: 'Cliente', render: (s) => customerName(s) },
   { header: 'Vence', render: (s) => (s.paymentType === 'CONTADO' ? EMPTY_VALUE : formatDate(s.dueDate)) },
   { header: 'Forma de pago', render: (s) => paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE },
-  { header: 'Total', align: 'right', render: (s) => <span className="monto">{formatCurrency(s.total)}</span> },
   { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
-  {
-    header: '',
-    render: (s) => (
-      <Link to={`/ventas/${s.id}`} className={linkClass}>
-        Ver detalle
-      </Link>
-    ),
-  },
+  { header: 'Total', align: 'right', render: (s) => <span className="monto whitespace-nowrap">{formatCurrency(s.total)}</span> },
+  { header: 'Saldo pendiente', align: 'right', render: (s) => <PendingBalance invoice={s} /> },
+  { header: '', render: (s) => <CellLink to={`/ventas/${s.id}`}>Ver detalle</CellLink> },
 ]
 
 /** Facturas de venta: indicadores, filtros en la URL y listado paginado. */
@@ -102,28 +99,26 @@ export function SalesInvoicesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">Facturas de venta</h1>
-          <p className="mt-1 text-small text-text-muted">
-            Ventas de contado y a crédito. Las facturas anuladas están en la papelera.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/ventas/clientes" className={buttonClasses('secondary')} data-variant="secondary">
-            Clientes
-          </Link>
-          <Link to="/ventas/ingresos" className={buttonClasses('secondary')} data-variant="secondary">
-            Ingresos ocasionales
-          </Link>
-          <Link to="/ventas/papelera" className={buttonClasses('secondary')} data-variant="secondary">
-            Papelera
-          </Link>
+      <ListHeader
+        title="Facturas de venta"
+        subtitle="Ventas de contado y a crédito. Las facturas anuladas están en la papelera."
+        primary={
           <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
             Registrar venta
           </Link>
-        </div>
-      </div>
+        }
+        secondary={[
+          <Link key="clientes" to="/ventas/clientes" className={buttonClasses('secondary')} data-variant="secondary">
+            Clientes
+          </Link>,
+          <Link key="ingresos" to="/ventas/ingresos" className={buttonClasses('secondary')} data-variant="secondary">
+            Ingresos ocasionales
+          </Link>,
+          <Link key="papelera" to="/ventas/papelera" className={buttonClasses('secondary')} data-variant="secondary">
+            Papelera
+          </Link>,
+        ]}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         <IndicatorCard
@@ -150,34 +145,32 @@ export function SalesInvoicesPage() {
         />
       </div>
 
-      <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto] lg:items-end`}>
-        <SearchField
-          label="Buscar"
-          placeholder="Número de factura o cliente"
-          {...search}
-        />
-        <SelectField
-          label="Estado"
-          options={statusOptions}
-          value={filters.estado}
-          onChange={(event) => updateFilters({ estado: event.target.value as SalesFilters['estado'] })}
-        />
-        <SelectField
-          label="Forma de pago"
-          options={paymentOptions}
-          value={filters.pago}
-          onChange={(event) => updateFilters({ pago: event.target.value as SalesFilters['pago'] })}
-        />
-        <SelectField
-          label="Periodo"
-          options={periodOptions}
-          value={filters.periodo}
-          onChange={(event) => updateFilters({ periodo: event.target.value as SalesFilters['periodo'] })}
-        />
-        <Button variant="secondary" onClick={clearFilters}>
-          Limpiar
-        </Button>
-      </div>
+      <FilterBar active={filtersActive(filters)} onClear={clearFilters}>
+        {[
+          <SearchField key="q" label="Buscar" placeholder="Número de factura o cliente" {...search} />,
+          <SelectField
+            key="estado"
+            label="Estado"
+            options={statusOptions}
+            value={filters.estado}
+            onChange={(event) => updateFilters({ estado: event.target.value as SalesFilters['estado'] })}
+          />,
+          <SelectField
+            key="pago"
+            label="Forma de pago"
+            options={paymentOptions}
+            value={filters.pago}
+            onChange={(event) => updateFilters({ pago: event.target.value as SalesFilters['pago'] })}
+          />,
+          <PeriodPicker
+            key="periodo"
+            options={periodOptions}
+            value={filters.periodo}
+            onChange={(periodo) => updateFilters({ periodo })}
+            range={filters.periodo === 'todas' ? null : periodRange(filters.periodo, today)}
+          />,
+        ]}
+      </FilterBar>
 
       <SalesTable
         sales={sales.data}
@@ -244,8 +237,11 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
                     <span className="truncate text-body text-text">{customerName(sale)}</span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-medium text-text">{formatCurrency(sale.total)}</span>
+                    <span className="monto text-body font-semibold text-text">{formatCurrency(sale.total)}</span>
                     <StatusBadge status={sale.status} />
+                    <span className="text-small text-text-muted">
+                      Saldo pendiente <PendingBalance invoice={sale} />
+                    </span>
                   </span>
                 </Link>
               </li>

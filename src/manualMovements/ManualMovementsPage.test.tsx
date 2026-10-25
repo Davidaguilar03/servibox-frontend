@@ -174,7 +174,7 @@ describe('Gastos operativos', () => {
     const router = renderRoute('/compras/gastos?q=zzz')
 
     expect(await screen.findByText('No hay gastos con esos filtros.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(await screen.findAllByText('Arriendo del local')).not.toHaveLength(0)
   })

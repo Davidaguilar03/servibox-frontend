@@ -156,11 +156,11 @@ describe('cuentas', () => {
     const { fetchMock, user, router } = await setup()
     await screen.findByRole('table')
 
-    await user.click(within(screen.getByRole('radiogroup', { name: 'Período' })).getByRole('radio', { name: 'Esta semana' }))
+    await user.selectOptions(screen.getByLabelText('Período'), 'esta-semana')
     expect(router.state.location.search).toBe('?periodo=esta-semana')
     await waitFor(() => expect(calls(fetchMock, '/api/treasury/movements')).toContain('/api/treasury/movements?desde=2026-10-12&hasta=2026-10-18'))
 
-    await user.click(screen.getByRole('radio', { name: 'Personalizado' }))
+    await user.selectOptions(screen.getByLabelText('Período'), 'personalizado')
     expect(router.state.location.search).toBe('?periodo=personalizado&desde=2026-10-12&hasta=2026-10-18')
 
     const before = calls(fetchMock, '/api/treasury/movements').length
@@ -221,7 +221,7 @@ describe('cuentas', () => {
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('No hay movimientos en este período.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cambiar el período' }))
-    expect(screen.getByRole('radio', { name: 'Este mes' })).toHaveFocus()
+    expect(screen.getByLabelText('Período')).toHaveFocus()
   })
 
   it('sin cuentas muestra el vacio y deshabilita la transferencia', async () => {
@@ -313,6 +313,8 @@ describe('cuentas', () => {
           : jsonResponse({ id: 9, currentBalance: 150000, ...(body as object) }, 201)
       },
     })
+    // Con dos cuentas Nueva cuenta pasa a secundaria: se espera a que las cuentas carguen.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nueva cuenta' })).toHaveAttribute('data-variant', 'secondary'))
     await user.click(screen.getByRole('button', { name: 'Nueva cuenta' }))
     const dialog = await screen.findByRole('dialog', { name: 'Nueva cuenta' })
 
@@ -342,6 +344,8 @@ describe('cuentas', () => {
 
   it('nueva cuenta con datos pide confirmar al cerrar con Esc', async () => {
     const { user } = await setup()
+    // Con dos cuentas Nueva cuenta pasa a secundaria: se espera a que las cuentas carguen.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Nueva cuenta' })).toHaveAttribute('data-variant', 'secondary'))
     await user.click(screen.getByRole('button', { name: 'Nueva cuenta' }))
     await user.type(within(await screen.findByRole('dialog')).getByLabelText('Nombre'), 'Nequi')
     await user.keyboard('{Escape}')

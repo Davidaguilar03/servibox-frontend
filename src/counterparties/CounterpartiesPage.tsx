@@ -5,8 +5,10 @@ import { FilePlus, Pencil, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
+import { FilterBar } from '../components/FilterBar'
 import { IconButton, IconLink } from '../components/IconButton'
 import { IndicatorCard } from '../components/IndicatorCard'
+import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
 import { SelectField } from '../components/SelectField'
@@ -57,7 +59,7 @@ export interface CounterpartiesConfig {
 }
 
 const card = 'rounded-surface border border-border bg-surface'
-const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-medium text-text-muted'
+const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-semibold text-text-muted'
 
 const balanceOptions = [
   { value: '', label: 'Todos' },
@@ -128,7 +130,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
     const balance = balances.get(counterparty.id) ?? ZERO_BALANCE
     return (
       <span className="flex flex-col items-end">
-        <span className="monto font-medium whitespace-nowrap text-text">{formatCurrency(balance.amount)}</span>
+        <span className="monto font-semibold whitespace-nowrap text-text">{formatCurrency(balance.amount)}</span>
         {balance.count > 0 && <span className="text-small whitespace-nowrap text-text-muted">{invoicesText(balance.count)}</span>}
       </span>
     )
@@ -220,18 +222,16 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">{config.title}</h1>
-          <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
+      <ListHeader
+        title={config.title}
+        subtitle={config.subtitle}
+        primary={<Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>}
+        secondary={[
+          <Link key="volver" to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
             Volver a {config.listLabel}
-          </Link>
-          <Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>
-        </div>
-      </div>
+          </Link>,
+        ]}
+      />
 
       <div className="grid gap-6 md:grid-cols-3">
         <IndicatorCard
@@ -260,24 +260,28 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         />
       </div>
 
-      <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto] lg:items-end`}>
-        <SearchField label="Buscar" placeholder="Nombre, documento o correo" {...search} />
-        <SelectField
-          label="Saldo"
-          options={balanceOptions}
-          value={filters.saldo}
-          onChange={(event) => updateFilters({ saldo: event.target.value as CounterpartyFilters['saldo'] })}
-        />
-        <SelectField
-          label="Ordenar por"
-          options={orderOptions}
-          value={filters.orden}
-          onChange={(event) => updateFilters({ orden: event.target.value as CounterpartyFilters['orden'] })}
-        />
-        <Button variant="secondary" onClick={clearFilters}>
-          Limpiar
-        </Button>
-      </div>
+      <FilterBar
+        active={(['q', 'saldo', 'orden'] as const).some((key) => filters[key] !== DEFAULT_COUNTERPARTY_FILTERS[key])}
+        onClear={clearFilters}
+      >
+        {[
+          <SearchField key="q" label="Buscar" placeholder="Nombre, documento o correo" {...search} />,
+          <SelectField
+            key="saldo"
+            label="Saldo"
+            options={balanceOptions}
+            value={filters.saldo}
+            onChange={(event) => updateFilters({ saldo: event.target.value as CounterpartyFilters['saldo'] })}
+          />,
+          <SelectField
+            key="orden"
+            label="Ordenar por"
+            options={orderOptions}
+            value={filters.orden}
+            onChange={(event) => updateFilters({ orden: event.target.value as CounterpartyFilters['orden'] })}
+          />,
+        ]}
+      </FilterBar>
 
       <section className={`${card} flex flex-col gap-4 p-4`} aria-label={config.title}>
         {invoices.isError && counterparties.data && (

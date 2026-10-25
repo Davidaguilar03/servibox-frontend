@@ -71,7 +71,7 @@ export function UserMenu() {
         >
           {initials(session)}
         </span>
-        <span className="hidden max-w-48 truncate text-small font-medium text-text md:inline" aria-hidden>
+        <span className="hidden max-w-48 truncate text-small font-semibold text-text md:inline" aria-hidden>
           {session.tenantName}
         </span>
       </button>
@@ -83,7 +83,7 @@ export function UserMenu() {
           className="absolute top-full right-0 z-30 mt-2 flex w-64 animate-[fade-in_var(--duration-base)_var(--ease-standard)] flex-col gap-1 rounded-surface border border-border bg-surface p-2 shadow-raised outline-none"
         >
           <div className="flex flex-col px-3 py-2">
-            <span className="truncate text-body font-medium text-text">{displayName(session)}</span>
+            <span className="truncate text-body font-semibold text-text">{displayName(session)}</span>
             <span className="text-small text-text-muted">{roleLabel(session.role)}</span>
             <span className="truncate text-small text-text-muted">{session.tenantName}</span>
           </div>

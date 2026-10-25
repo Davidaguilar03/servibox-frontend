@@ -71,7 +71,7 @@ function numbers() {
   return within(screen.getByRole('table'))
     .getAllByRole('row')
     .slice(1)
-    .map((row) => /F[VC]-\d+/.exec(row.textContent ?? '')?.[0])
+    .map((row) => /F[VC]-\d+/.exec((row as HTMLTableRowElement).cells[0]?.textContent ?? '')?.[0])
 }
 
 describe('papelera de ventas', () => {
@@ -93,23 +93,23 @@ describe('papelera de ventas', () => {
     expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Papelera')
     expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o recuperarlas.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
-    expect(screen.getByLabelText('Periodo')).toHaveValue('todas')
+    expect(screen.getByLabelText('Período')).toHaveValue('todas')
 
     await waitFor(() => expect(numbers()).toEqual(['FV-0001', 'FV-0002']))
     const rows = within(screen.getByRole('table')).getAllByRole('row')
     expect(within(rows[0] as HTMLElement).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual([
       'N.º factura',
-      'Cliente',
       'Fecha',
+      'Cliente',
       'Forma de pago',
-      'Total',
       'Estado',
+      'Total',
       '',
     ])
-    expect(rows[1]).toHaveTextContent('FV-0001José Pérez12/10/2026Contado$ 540.000Anulada')
+    expect(rows[1]).toHaveTextContent('FV-000112/10/2026José PérezContadoAnulada$ 540.000')
     expect(within(rows[1] as HTMLElement).getByRole('link', { name: 'FV-0001' })).toHaveAttribute('href', '/ventas/1')
     expect(within(rows[1] as HTMLElement).getByRole('button', { name: 'Recuperar factura FV-0001' })).toHaveClass('bg-surface')
-    expect(rows[2]).toHaveTextContent('Crédito$ 2.380.000')
+    expect(rows[2]).toHaveTextContent('CréditoAnulada$ 2.380.000')
     expect(screen.queryByText('Pagada')).not.toBeInTheDocument()
 
     const cards = screen.getByRole('list', { name: 'Facturas anuladas' })
@@ -134,11 +134,11 @@ describe('papelera de ventas', () => {
     expect(numbers()).toEqual(['FV-0001'])
     expect(router.state.location.search).toBe('?q=JOSE')
 
-    await user.selectOptions(screen.getByLabelText('Periodo'), 'mes-anterior')
+    await user.selectOptions(screen.getByLabelText('Período'), 'mes-anterior')
     expect(router.state.location.search).toBe('?q=JOSE&periodo=mes-anterior')
     expect(screen.getByText('No hay facturas anuladas con esos filtros.')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(numbers()).toEqual(['FV-0001', 'FV-0002'])
   })
@@ -157,7 +157,7 @@ describe('papelera de ventas', () => {
     expect(router.state.historyAction).toBe('REPLACE')
     expect(numbers()).toEqual(['FV-0002'])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(input).toHaveValue('')
 

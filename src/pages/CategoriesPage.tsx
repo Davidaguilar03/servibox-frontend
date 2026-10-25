@@ -6,7 +6,9 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { CategoryDot } from '../components/CategoryDot'
+import { CellButton } from '../components/CellLink'
 import { DataTable, type Column } from '../components/DataTable'
+import { ListHeader } from '../components/ListHeader'
 import { Modal } from '../components/Modal'
 import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -42,8 +44,7 @@ import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/sett
 import { iconSm } from '../components/icons'
 
 const card = 'rounded-surface border border-border bg-surface'
-const linkClass =
-  'hit-area rounded-control text-small font-medium whitespace-nowrap text-brand-ink hover:underline focus-ring'
+const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
 /** null cerrado, 'new' para crear, o la categoria a editar. */
 type ModalTarget = null | 'new' | InventoryCategory
@@ -93,9 +94,9 @@ export function CategoriesPage() {
     {
       header: '',
       render: (c) => (
-        <button type="button" className={linkClass} onClick={() => setTarget(c)} aria-label={`Editar ${c.name}`}>
+        <CellButton onClick={() => setTarget(c)} aria-label={`Editar ${c.name}`}>
           Editar
-        </button>
+        </CellButton>
       ),
     },
   ]
@@ -105,7 +106,7 @@ export function CategoriesPage() {
   const categoryCard = (c: InventoryCategory) => (
     <>
       <div className="flex items-center justify-between gap-4">
-        <span className="min-w-0 text-body font-medium text-text">{cell(c, 'Nombre')}</span>
+        <span className="min-w-0 text-body font-semibold text-text">{cell(c, 'Nombre')}</span>
         {cell(c, '')}
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-small">
@@ -162,21 +163,17 @@ export function CategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">Categorías</h1>
-          <p className="mt-1 text-small text-text-muted">
-            Cada categoría define cuándo avisar por stock bajo, el margen del precio sugerido y sus impuestos.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
+      <ListHeader
+        title="Categorías"
+        subtitle="Cada categoría define cuándo avisar por stock bajo, el margen del precio sugerido y sus impuestos."
+        primary={<Button onClick={() => setTarget('new')}>Nueva categoría</Button>}
+        secondary={[
+          <Link key="volver" to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
             <ArrowLeft {...iconSm} aria-hidden />
             Volver a Productos
-          </Link>
-          <Button onClick={() => setTarget('new')}>Nueva categoría</Button>
-        </div>
-      </div>
+          </Link>,
+        ]}
+      />
 
       {financialAtZero && (
         <Alert tone="info" title="Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.">

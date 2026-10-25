@@ -7,12 +7,14 @@ import { formatSignedAmount } from '../accounts/accountsView'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
+import { FilterBar } from '../components/FilterBar'
 import { IconButton } from '../components/IconButton'
 import { IndicatorCard } from '../components/IndicatorCard'
+import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
+import { PeriodPicker } from '../components/PeriodPicker'
 import { SearchField } from '../components/SearchField'
 import { SelectField } from '../components/SelectField'
-import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts } from '../dashboard/dashboardApi'
@@ -109,7 +111,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
   )
 
   const signed = (movement: TreasuryMovement) => (
-    <span className={`monto font-medium whitespace-nowrap ${amountClass}`}>{formatSignedAmount(movement)}</span>
+    <span className={`monto font-semibold whitespace-nowrap ${amountClass}`}>{formatSignedAmount(movement)}</span>
   )
 
   const columns: Column<TreasuryMovement>[] = [
@@ -191,18 +193,16 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">{config.title}</h1>
-          <p className="mt-1 text-small text-text-muted">{config.subtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
+      <ListHeader
+        title={config.title}
+        subtitle={config.subtitle}
+        primary={<Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>}
+        secondary={[
+          <Link key="volver" to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
             Volver a {config.listLabel}
-          </Link>
-          <Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>
-        </div>
-      </div>
+          </Link>,
+        ]}
+      />
 
       <div className="grid gap-6 md:grid-cols-2">
         <IndicatorCard
@@ -219,55 +219,43 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         />
       </div>
 
-      <div className={`${card} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto] lg:items-end`}>
-        <SearchField label="Buscar" placeholder="Concepto" {...search} />
-        {accounts.isError ? (
-          <div className="flex flex-col gap-2" role="alert">
-            <span className="text-label text-text">Cuenta</span>
-            <span className="flex items-center gap-2 text-small text-text">
-              No pudimos cargar las cuentas.
-              <Button variant="text" onClick={() => void accounts.refetch()}>
-                Reintentar
-              </Button>
-            </span>
-          </div>
-        ) : (
-          <SelectField
-            label="Cuenta"
-            options={accountOptions}
-            value={filters.cuenta === null ? '' : String(filters.cuenta)}
-            disabled={accounts.isPending}
-            onChange={(event) => updateFilters({ cuenta: event.target.value ? Number(event.target.value) : null })}
-          />
-        )}
-        <SelectField
-          label="Período"
-          options={MANUAL_PERIOD_OPTIONS}
-          value={filters.periodo}
-          onChange={(event) => updateFilters({ periodo: event.target.value as ManualFilters['periodo'] })}
-        />
-        <Button variant="secondary" onClick={clearFilters}>
-          Limpiar
-        </Button>
-        {filters.periodo === 'personalizado' && (
-          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2 lg:col-span-3">
-            <TextField
-              label="Desde"
-              type="date"
-              value={filters.desde}
-              error={range.errors.desde}
-              onChange={(event) => updateFilters({ desde: event.target.value }, true)}
+      <FilterBar active={!atDefaults} onClear={clearFilters}>
+        {[
+          <SearchField key="q" label="Buscar" placeholder="Concepto" {...search} />,
+          accounts.isError ? (
+            <div key="cuenta" className="flex flex-col gap-2" role="alert">
+              <span className="text-label text-text">Cuenta</span>
+              <span className="flex items-center gap-2 text-small text-text">
+                No pudimos cargar las cuentas.
+                <Button variant="text" onClick={() => void accounts.refetch()}>
+                  Reintentar
+                </Button>
+              </span>
+            </div>
+          ) : (
+            <SelectField
+              key="cuenta"
+              label="Cuenta"
+              options={accountOptions}
+              value={filters.cuenta === null ? '' : String(filters.cuenta)}
+              disabled={accounts.isPending}
+              onChange={(event) => updateFilters({ cuenta: event.target.value ? Number(event.target.value) : null })}
             />
-            <TextField
-              label="Hasta"
-              type="date"
-              value={filters.hasta}
-              error={range.errors.hasta}
-              onChange={(event) => updateFilters({ hasta: event.target.value }, true)}
-            />
-          </div>
-        )}
-      </div>
+          ),
+          <PeriodPicker
+            key="periodo"
+            options={MANUAL_PERIOD_OPTIONS}
+            value={filters.periodo}
+            onChange={(periodo) => updateFilters({ periodo })}
+            range={range.valid && range.desde && range.hasta ? { desde: range.desde, hasta: range.hasta } : null}
+            custom={{
+              desde: { value: filters.desde, onChange: (event) => updateFilters({ desde: event.target.value }, true) },
+              hasta: { value: filters.hasta, onChange: (event) => updateFilters({ hasta: event.target.value }, true) },
+              errors: range.errors,
+            }}
+          />,
+        ]}
+      </FilterBar>
 
       <section className={`${card} p-4`} aria-label={config.title}>
         {content}

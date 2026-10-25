@@ -117,7 +117,7 @@ describe('productos', () => {
     expect(router.state.location.search).toBe('?categoria=1&estado=SIN_STOCK')
     expect(codes()).toEqual(['LL-004'])
 
-    await user.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
@@ -158,7 +158,7 @@ describe('productos', () => {
     expect(router.state.historyAction).toBe('REPLACE')
     expect(codes()).toEqual(['BAT-004'])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(input).toHaveValue('')
 
@@ -213,7 +213,7 @@ describe('productos', () => {
     const router = renderRoute('/inventario?q=zzz')
 
     expect(await screen.findByText('No hay productos con esos filtros.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
     expect(codes()).toHaveLength(4)
   })

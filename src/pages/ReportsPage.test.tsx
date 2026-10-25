@@ -100,8 +100,9 @@ describe('ReportsPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Reportes' })).toBeInTheDocument()
     expect(screen.getByText(/Las facturas anuladas no se incluyen/)).toBeInTheDocument()
-    expect(screen.getByLabelText('Desde')).toHaveValue('2026-10-01')
-    expect(screen.getByLabelText('Hasta')).toHaveValue('2026-10-19')
+    expect(screen.getByLabelText('Período')).toHaveValue('este-mes')
+    expect(screen.getByText('1 oct. 2026 al 19 oct. 2026')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Desde')).not.toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /Estado de resultados/ })).toBeChecked()
     expect(screen.getByText('Ventas, costo de lo vendido, gastos y utilidad del período.')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'PDF' })).toBeChecked()
@@ -188,6 +189,7 @@ describe('ReportsPage', () => {
     })
     renderRoute('/reportes')
 
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-09-01' } })
     fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-09-30' } })
 
@@ -271,6 +273,7 @@ describe('ReportsPage', () => {
     renderRoute('/reportes')
 
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-01-01' } })
     await user.click(screen.getByRole('button', { name: 'Generar reporte' }))
 
@@ -315,6 +318,7 @@ describe('ReportsPage', () => {
     renderRoute('/reportes')
     const button = screen.getByRole('button', { name: 'Generar reporte' })
 
+    fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-10-20' } })
     expect(screen.getByText('Hasta no puede ser anterior a Desde.')).toBeInTheDocument()
     expect(button).toBeDisabled()

@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 
 export interface SegmentOption<T> {
   value: T
@@ -94,20 +94,54 @@ interface TabListProps<T> extends GroupProps<T> {
   /** id de cada pestana y del panel que controla, si hay `tabpanel`. */
   tabId?: (value: T) => string
   panelId?: (value: T) => string
+  /**
+   * Pocas pestanas: se reparten el ancho por igual y la etiqueta pasa a dos lineas si hace
+   * falta (Configuracion). Sin `fill` se desplazan en horizontal (categorias de Productos).
+   */
+  fill?: boolean
 }
+
+/** Mascara del borde derecho: indica que hay mas pestanas al desplazar. */
+const FADE_END = '[mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)]'
 
 /**
  * Pestanas de navegacion de contenido (Configuracion, categorias de Productos): `tablist` con
- * `role="tab"` y `aria-selected`. Se desplaza en horizontal si no cabe.
+ * `role="tab"` y `aria-selected`, en rol small. Si no caben se desplazan, con el borde
+ * difuminado mientras haya mas a la derecha, y la seleccionada se desplaza a la vista.
  */
-export function TabList<T>({ options, value, onChange, tabId, panelId, className = '', ...labelProps }: TabListProps<T>) {
+export function TabList<T>({ options, value, onChange, tabId, panelId, fill = false, className = '', ...labelProps }: TabListProps<T>) {
   const { onKeyDown, bind } = useRoving(options, value, onChange)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [moreToRight, setMoreToRight] = useState(false)
+
+  useEffect(() => {
+    const list = listRef.current
+    if (!list || fill) return
+    const update = () => setMoreToRight(list.scrollLeft + list.clientWidth < list.scrollWidth - 1)
+    update()
+    list.addEventListener('scroll', update)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
+    observer?.observe(list)
+    return () => {
+      list.removeEventListener('scroll', update)
+      observer?.disconnect()
+    }
+  }, [fill, options.length])
+
+  // La pestana seleccionada siempre a la vista.
+  useEffect(() => {
+    listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  }, [value])
+
   return (
     <div
+      ref={listRef}
       role="tablist"
       {...labelProps}
       onKeyDown={onKeyDown}
-      className={`flex gap-6 overflow-x-auto overflow-y-hidden border-b border-border [scrollbar-width:thin] ${className}`}
+      className={`flex border-b border-border ${
+        fill ? 'gap-2' : `gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:thin] ${moreToRight ? FADE_END : ''}`
+      } ${className}`}
     >
       {options.map((option, index) => {
         const selected = Object.is(option.value, value)
@@ -120,9 +154,9 @@ export function TabList<T>({ options, value, onChange, tabId, panelId, className
             aria-selected={selected}
             aria-controls={panelId?.(option.value)}
             onClick={() => onChange(option.value)}
-            className={`-mb-px flex min-h-touch shrink-0 items-center gap-2 rounded-control border-b-2 px-1 text-body whitespace-nowrap transition-colors duration-(--duration-fast) focus-ring lg:min-h-control ${
-              selected ? 'border-brand font-medium text-text' : 'border-transparent text-text-muted hover:text-text'
-            }`}
+            className={`-mb-px flex min-h-touch items-center gap-2 rounded-control border-b-2 px-1 text-small transition-colors duration-(--duration-fast) focus-ring lg:min-h-control ${
+              fill ? 'min-w-0 flex-1 justify-center py-2 text-center' : 'shrink-0 whitespace-nowrap'
+            } ${selected ? 'border-brand font-semibold text-text' : 'border-transparent text-text-muted hover:text-text'}`}
             {...bind(index)}
           >
             {option.label}

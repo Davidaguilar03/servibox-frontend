@@ -1,7 +1,7 @@
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { defaultCashAccount } from '../lib/accountPayment'
-import { addDays } from '../lib/businessDate'
 import { formatCurrency, formatDate } from '../lib/format'
+import { periodRange as sharedPeriodRange } from '../lib/period'
 import { validateRange } from '../reports/reports'
 import type { TreasuryMovement } from './accountsApi'
 
@@ -72,32 +72,9 @@ export function accountsFiltersToParams(filters: AccountsFilters): URLSearchPara
   return params
 }
 
-/** Lunes 0 a domingo 6 de una fecha `yyyy-MM-dd`, sin pasar por la zona del navegador. */
-function weekdayFromMonday(date: string): number {
-  const [year = 0, month = 1, day = 1] = date.split('-').map(Number)
-  return (new Date(Date.UTC(year, month - 1, day)).getUTCDay() + 6) % 7
-}
-
-/**
- * Rango de un periodo, con `today` en la zona del negocio (`businessToday`). Los que
- * empiezan en el pasado terminan hoy; Mes anterior cubre el mes completo.
- */
+/** Rango de un periodo fijo en la zona del negocio: ver `lib/period.ts`. */
 export function periodRange(periodo: Exclude<PeriodKey, 'personalizado'>, today: string) {
-  const firstOfMonth = `${today.slice(0, 8)}01`
-  switch (periodo) {
-    case 'hoy':
-      return { desde: today, hasta: today }
-    case 'esta-semana':
-      return { desde: addDays(today, -weekdayFromMonday(today)), hasta: today }
-    case 'este-mes':
-      return { desde: firstOfMonth, hasta: today }
-    case 'mes-anterior': {
-      const lastOfPrevious = addDays(firstOfMonth, -1)
-      return { desde: `${lastOfPrevious.slice(0, 8)}01`, hasta: lastOfPrevious }
-    }
-    case 'este-ano':
-      return { desde: `${today.slice(0, 4)}-01-01`, hasta: today }
-  }
+  return sharedPeriodRange(periodo, today)
 }
 
 /**

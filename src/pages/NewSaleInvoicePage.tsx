@@ -262,7 +262,7 @@ export function NewSaleInvoicePage() {
           <button
             type="button"
             onClick={() => setCustomerModalOpen(true)}
-            className="hit-area self-start rounded-control text-small font-medium text-brand-ink hover:underline focus-ring"
+            className="hit-area self-start rounded-control text-small font-semibold text-brand-ink hover:underline focus-ring"
           >
             Nuevo cliente
           </button>
@@ -395,14 +395,14 @@ export function NewSaleInvoicePage() {
           <dl className="flex flex-col gap-3 text-body">
             <div className="flex justify-between gap-4">
               <dt className="text-text-muted">Subtotal</dt>
-              <dd className="monto font-medium text-text">{formatCurrency(totals.subtotal)}</dd>
+              <dd className="monto font-semibold text-text">{formatCurrency(totals.subtotal)}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-text-muted">IVA</dt>
-              <dd className="monto font-medium text-text">{formatCurrency(totals.iva)}</dd>
+              <dd className="monto font-semibold text-text">{formatCurrency(totals.iva)}</dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
-              <dt className="font-medium text-text">Total</dt>
+              <dt className="font-semibold text-text">Total</dt>
               <dd className="text-figure text-text">{formatCurrency(totals.total)}</dd>
             </div>
           </dl>
@@ -589,7 +589,7 @@ function LinesBlock({ lines, products, categories, productsById, rateOf, errors,
                 <span className="text-text-muted xl:sr-only">IVA </span>
                 {formatCurrency(amounts.iva)}
               </span>
-              <span className="monto flex justify-between text-small font-medium text-text xl:block xl:pt-2 xl:text-right xl:text-body">
+              <span className="monto flex justify-between text-small font-semibold text-text xl:block xl:pt-2 xl:text-right xl:text-body">
                 <span className="font-normal text-text-muted xl:sr-only">Total </span>
                 {formatCurrency(amounts.base)}
               </span>

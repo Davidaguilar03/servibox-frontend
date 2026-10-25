@@ -79,7 +79,7 @@ function invoiceNumbers() {
   return within(table())
     .getAllByRole('row')
     .slice(1)
-    .map((row) => /FV-\d+/.exec(row.textContent ?? '')?.[0])
+    .map((row) => /FV-\d+/.exec((row as HTMLTableRowElement).cells[0]?.textContent ?? '')?.[0])
 }
 
 describe('facturas de venta', () => {
@@ -91,6 +91,24 @@ describe('facturas de venta', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it('muestra el saldo pendiente de cada factura, coherente con el estado', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/ventas?periodo=todas')
+    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001', 'FV-0003']))
+
+    const rows = within(table()).getAllByRole('row') as HTMLTableRowElement[]
+    const headers = within(rows[0]!).getAllByRole('columnheader').map((cell) => cell.textContent)
+    const balance = headers.indexOf('Saldo pendiente')
+    expect(balance).toBe(headers.indexOf('Total') + 1)
+    // Pendiente con abonos parciales: saldo menor que el total. Pagada: $ 0 en tono neutro.
+    expect(rows[1]!.cells[headers.indexOf('Total')]).toHaveTextContent('$ 2.380.000')
+    expect(rows[1]!.cells[balance]).toHaveTextContent('$ 1.380.000')
+    expect(rows[2]!.cells[balance]).toHaveTextContent('$ 0')
+    expect(within(rows[2]!.cells[balance]!).getByText('$ 0')).toHaveClass('text-text-muted')
+    expect(rows[3]!.cells[balance]).toHaveTextContent('$ 1.150.000')
+    expect(screen.getAllByText('Saldo pendiente', { selector: 'li span' })).toHaveLength(3)
   })
 
   it('muestra indicadores, filtros y la tabla del mes', async () => {
@@ -115,7 +133,7 @@ describe('facturas de venta', () => {
     )
     expect(fetchMock.mock.calls.filter(([url]) => url === '/api/sales')).toHaveLength(1)
 
-    expect(screen.getByLabelText('Periodo')).toHaveValue('este-mes')
+    expect(screen.getByLabelText('Período')).toHaveValue('este-mes')
     await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001']))
     expect(screen.queryByText('Anulada')).not.toBeInTheDocument()
     expect(within(screen.getByLabelText('Estado')).queryByRole('option', { name: 'Anulada' })).not.toBeInTheDocument()
@@ -143,7 +161,7 @@ describe('facturas de venta', () => {
 
     await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0003']))
     expect(screen.getByLabelText('Estado')).toHaveValue('PENDIENTE')
-    expect(screen.getByLabelText('Periodo')).toHaveValue('todas')
+    expect(screen.getByLabelText('Período')).toHaveValue('todas')
 
     // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
@@ -156,7 +174,7 @@ describe('facturas de venta', () => {
     expect(router.state.location.search).toBe('?q=MARIA&estado=PENDIENTE&pago=CONTADO&periodo=todas')
     expect(screen.getByText('No hay facturas con esos filtros.')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('?periodo=todas')
     expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0001', 'FV-0003'])
     expect(screen.getByLabelText('Buscar')).toHaveValue('')
@@ -188,7 +206,7 @@ describe('facturas de venta', () => {
     expect(router.state.historyAction).toBe('REPLACE')
     expect(invoiceNumbers()).toEqual(['FV-0003'])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('?periodo=todas')
     expect(input).toHaveValue('')
 

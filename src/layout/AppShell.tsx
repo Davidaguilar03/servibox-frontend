@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, NavLink, Outlet, useMatches } from 'react-router'
 import {
   ChartColumn,
@@ -16,6 +16,7 @@ import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
 import { useBreadcrumbTailValue } from './breadcrumb'
 import { SkipLink } from '../components/SkipLink'
+import { DESKTOP_QUERY, useMediaQuery } from '../lib/useMediaQuery'
 import { UserMenu } from './UserMenu'
 import { iconMd } from '../components/icons'
 
@@ -43,18 +44,8 @@ export interface RouteHandle {
 
 const focusRing = 'focus-ring'
 
-const DESKTOP_QUERY = '(min-width: 1024px)'
-
-function subscribeDesktop(listener: () => void) {
-  const query = window.matchMedia?.(DESKTOP_QUERY)
-  query?.addEventListener('change', listener)
-  return () => query?.removeEventListener('change', listener)
-}
-
 /** Desde lg la barra lateral es fija; por debajo es un menu que se abre sobre el contenido. */
-function useIsDesktop() {
-  return useSyncExternalStore(subscribeDesktop, () => window.matchMedia?.(DESKTOP_QUERY).matches ?? false)
-}
+const useIsDesktop = () => useMediaQuery(DESKTOP_QUERY, false)
 
 function useBreadcrumb(): Crumb[] {
   const matches = useMatches()
@@ -162,7 +153,7 @@ export function AppShell() {
               title={collapsed ? label : undefined}
               onClick={() => setMenuOpen(false)}
               className={({ isActive }) =>
-                `flex min-h-touch items-center gap-3 rounded-control px-3 text-small font-medium transition-colors duration-(--duration-fast) ${focusRing} ${
+                `flex min-h-touch items-center gap-3 rounded-control px-3 text-small font-semibold transition-colors duration-(--duration-fast) ${focusRing} ${
                   collapsed ? 'lg:justify-center lg:px-0' : ''
                 } ${isActive ? 'bg-action text-text-inverse ring-1 ring-brand ring-inset' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
               }
@@ -220,7 +211,7 @@ export function AppShell() {
                     )}
                     {current || !crumb.to ? (
                       <span
-                        className={`truncate ${current ? 'font-medium text-text' : 'text-text-muted'}`}
+                        className={`truncate ${current ? 'font-semibold text-text' : 'text-text-muted'}`}
                         aria-current={current ? 'page' : undefined}
                       >
                         {crumb.label}
