@@ -101,7 +101,7 @@ describe('facturas de venta', () => {
     expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
       'Ventas/Facturas de venta',
     )
-    expect(screen.getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('href', '/ventas/nueva')
+    expect(screen.getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('href', '/ventas/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/ventas/papelera')
 
     expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
@@ -220,8 +220,8 @@ describe('facturas de venta', () => {
     mockApi({ ...fullRoutes(), '/api/sales': () => jsonResponse([]), '/api/treasury/movements': () => jsonResponse([]) })
     renderRoute('/ventas')
 
-    expect(await screen.findByText('Aún no registras ventas. Crea tu primera factura.')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Nueva factura' })).toHaveLength(2)
+    expect(await screen.findByText('Aún no registras ventas. Registra tu primera venta.')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Registrar venta' })).toHaveLength(2)
     expect(within(indicator('Por cobrar')).getByText('$ 0')).toBeInTheDocument()
     expect(within(indicator('Por cobrar')).getByText('0 facturas pendientes de abono')).toBeInTheDocument()
   })
@@ -230,12 +230,12 @@ describe('facturas de venta', () => {
     mockApi({ ...fullRoutes(), '/api/sales': () => jsonResponse([]), '/api/treasury/movements': () => jsonResponse([]) })
     renderRoute('/ventas')
 
-    expect(await screen.findByText('Aún no registras ventas. Crea tu primera factura.')).toBeInTheDocument()
+    expect(await screen.findByText('Aún no registras ventas. Registra tu primera venta.')).toBeInTheDocument()
     const [primary, ...rest] = primaryActions()
     expect(rest).toHaveLength(0)
-    expect(primary).toHaveTextContent('Nueva factura')
-    expect(emptyStateOf('Aún no registras ventas. Crea tu primera factura.')).not.toContainElement(primary ?? null)
-    expect(within(emptyStateOf('Aún no registras ventas. Crea tu primera factura.')).getByRole('link', { name: 'Nueva factura' })).toHaveAttribute('data-variant', 'secondary')
+    expect(primary).toHaveTextContent('Registrar venta')
+    expect(emptyStateOf('Aún no registras ventas. Registra tu primera venta.')).not.toContainElement(primary ?? null)
+    expect(within(emptyStateOf('Aún no registras ventas. Registra tu primera venta.')).getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('un indicador con error no afecta a los demas y se puede reintentar', async () => {

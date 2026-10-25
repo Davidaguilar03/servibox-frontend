@@ -106,11 +106,6 @@ export function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <div className="text-right text-small">
-              <Link to="/recuperar-contrasena" className={linkClass}>
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
             <Button type="submit" className="w-full" disabled={mutation.isPending}>
               {mutation.isPending ? 'Ingresando…' : 'Ingresar'}
             </Button>

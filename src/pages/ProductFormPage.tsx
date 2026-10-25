@@ -233,7 +233,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
             onChange={(event) => change('purchaseCost')(event.target.value)}
             onBlur={touch('purchaseCost')}
             error={shown('purchaseCost')}
-            hint="En pesos. Usa coma para los centavos."
+            hint="Costo de compra antes de IVA, en pesos colombianos."
             required
           />
           <TextField

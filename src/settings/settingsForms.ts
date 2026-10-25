@@ -4,11 +4,10 @@ import type { FinancialSettings, TenantProfile, TenantProfileRequest } from './s
 
 // Formularios de Configuracion. Reglas en docs/ai-context/03-DECISIONS.md.
 
-export type SettingsTab = 'datos' | 'usuarios' | 'financiera'
+export type SettingsTab = 'datos' | 'financiera'
 
 export const SETTINGS_TABS: Array<{ value: SettingsTab; label: string }> = [
   { value: 'datos', label: 'Datos de la serviteca' },
-  { value: 'usuarios', label: 'Usuarios' },
   { value: 'financiera', label: 'Configuración financiera' },
 ]
 

@@ -215,6 +215,40 @@ describe('categorias', () => {
     expect(within(emptyStateOf(message)).getByRole('button', { name: 'Nueva categoría' })).toHaveAttribute('data-variant', 'secondary')
   })
 
+  it('el encabezado tiene un solo primario y Volver a Productos es secundario sin color de marca', async () => {
+    await setup()
+
+    const [primary, ...rest] = primaryActions()
+    expect(rest).toHaveLength(0)
+    expect(primary).toHaveTextContent('Nueva categoría')
+    const back = screen.getByRole('link', { name: 'Volver a Productos' })
+    expect(back).toHaveAttribute('href', '/inventario')
+    expect(back).toHaveAttribute('data-variant', 'secondary')
+    expect(back.querySelector('svg')).not.toBeNull()
+    // Solo el anillo de foco usa la marca: ni texto ni fondo de color de marca.
+    expect(back.className).not.toMatch(/(text|bg)-(brand|action|danger|error)/)
+  })
+
+  it('avisa la configuracion financiera en 0 % si gastos, renta e ICA estan en cero', async () => {
+    const zeros = { expensesRate: 0, dianRate: 0, icaRate: 0, cardCommissionRate: 0.025 }
+    await setup({ ...fullRoutes(), 'GET /api/inventory/financial-settings': () => jsonResponse(zeros) })
+
+    const notice = (await screen.findByText(/Tu configuración financiera está en 0 %/)).closest('[role="status"]') as HTMLElement
+    expect(notice).toHaveTextContent(
+      'Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.Configúrala en Configuración para calcular precios con tus márgenes.',
+    )
+    expect(within(notice).getByRole('link', { name: 'Configuración' })).toHaveAttribute('href', '/configuracion?tab=financiera')
+    expect(within(notice).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('sin aviso financiero si alguno de los tres es distinto de 0', async () => {
+    const settings = { expensesRate: 0, dianRate: 0, icaRate: 0.0082, cardCommissionRate: 0 }
+    const { fetchMock } = await setup({ ...fullRoutes(), 'GET /api/inventory/financial-settings': () => jsonResponse(settings) })
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/inventory/financial-settings', expect.anything()))
+    expect(screen.queryByText(/Tu configuración financiera está en 0 %/)).not.toBeInTheDocument()
+  })
+
   it('un error al cargar las categorias ofrece reintentar', async () => {
     let calls = 0
     mockApi({

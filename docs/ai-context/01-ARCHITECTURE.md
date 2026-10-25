@@ -68,7 +68,6 @@ src/
 | `/login` | publica | `LoginPage`. Con sesion activa redirige a la pagina pedida o a `/inicio` |
 | `/registro` | publica | `RegisterPage`, registro de serviteca. Con sesion activa redirige a `/inicio` |
 | `/terminos` | publica | `TermsPage` ("Proximamente") |
-| `/recuperar-contrasena` | publica | `ComingSoonPage` ("Proximamente") |
 | `/crear-cuenta` | publica | redirige a `/registro` (enlace viejo del login) |
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
@@ -89,7 +88,7 @@ src/
 | `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
 | `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
 | `/compras/proveedores` | privada | `SuppliersPage`, Proveedores (`CounterpartiesPage` con el rol PROVEEDOR) |
-| `/configuracion` | privada | `SettingsPage`, Configuracion: pestanas Datos de la serviteca, Usuarios (Proximamente) y Configuracion financiera en `?tab=` |
+| `/configuracion` | privada | `SettingsPage`, Configuracion: pestanas Datos de la serviteca y Configuracion financiera en `?tab=` |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las

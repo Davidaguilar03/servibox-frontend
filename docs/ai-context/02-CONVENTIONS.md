@@ -189,6 +189,13 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Etiquetas de tabla en mayusculas sostenidas (`text-label uppercase`).
 * Un error le dice al usuario que paso y que hacer (`Revisa tus datos e intenta de nuevo.`).
   Excepcion pendiente en Manejo de errores.
+* La interfaz no ofrece funciones que no existen: nada de enlaces, pestanas, opciones ni
+  textos "Proximamente" para algo que hoy no funciona. Si una funcion no esta, no se muestra;
+  se agrega cuando exista. Excepcion: `/terminos`, que el registro necesita enlazar.
+* Un solo verbo de mostrador por accion, igual en el boton primario, el estado vacio, los
+  menus y los iconos que llevan a ella: `Registrar venta` (`/ventas/nueva`) y `Registrar
+  compra` (`/compras/nueva`). Los titulos de las pantallas (`Nueva factura de venta`, `Nueva
+  factura de compra`) y su miga de pan no cambian.
 
 ## Manejo de errores
 

@@ -4,16 +4,14 @@ import { formatDate } from '../lib/format'
 
 // Logica de la pantalla Reportes. Reglas en docs/ai-context/03-DECISIONS.md.
 
-/** Valores de `type` en `GET /api/reporting/export`, mas los que el backend aun no exporta. */
-export type ReportType = 'ESTADO_RESULTADOS' | 'VENTAS' | 'COMPRAS' | 'MOVIMIENTOS'
+/** Valores de `type` en `GET /api/reporting/export` que el backend exporta hoy. */
+export type ReportType = 'ESTADO_RESULTADOS' | 'MOVIMIENTOS'
 export type ReportFormat = 'PDF' | 'XLSX'
 
 export interface ReportOption {
   type: ReportType
   title: string
   description: string
-  /** false: se muestra con "Proximamente" y no se puede elegir. */
-  available: boolean
 }
 
 export const REPORT_OPTIONS: ReportOption[] = [
@@ -21,11 +19,8 @@ export const REPORT_OPTIONS: ReportOption[] = [
     type: 'ESTADO_RESULTADOS',
     title: 'Estado de resultados',
     description: 'Ventas, compras, gastos y utilidad del período',
-    available: true,
   },
-  { type: 'VENTAS', title: 'Ventas', description: 'Facturas de venta por cliente y estado', available: false },
-  { type: 'COMPRAS', title: 'Compras', description: 'Facturas de proveedor y pagos', available: false },
-  { type: 'MOVIMIENTOS', title: 'Movimientos de cuentas', description: 'Ingresos y egresos por cuenta', available: true },
+  { type: 'MOVIMIENTOS', title: 'Movimientos de cuentas', description: 'Ingresos y egresos por cuenta' },
 ]
 
 /** Rango maximo de un reporte, contando los dos extremos (`ReportExportService.MAX_DIAS`). */

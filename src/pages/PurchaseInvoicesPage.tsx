@@ -110,7 +110,7 @@ export function PurchaseInvoicesPage() {
             Papelera
           </Link>
           <Link to="/compras/nueva" className={buttonClasses('primary')} data-variant="primary">
-            Nueva factura
+            Registrar compra
           </Link>
         </div>
       </div>
@@ -205,8 +205,8 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
   } else if (activePurchases(purchases).length === 0) {
     content = (
       <EmptyState
-        message="Aún no registras compras. Crea tu primera factura de compra."
-        action={{ label: 'Nueva factura', to: '/compras/nueva' }}
+        message="Aún no registras compras. Registra tu primera compra."
+        action={{ label: 'Registrar compra', to: '/compras/nueva' }}
       />
     )
   } else {

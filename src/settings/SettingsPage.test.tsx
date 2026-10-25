@@ -66,18 +66,40 @@ describe('pestanas', () => {
 
     datos.focus()
     await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: 'Usuarios' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Usuarios' })).toHaveFocus()
-    expect(router.state.location.search).toBe('?tab=usuarios')
-    expect(screen.getByRole('heading', { name: 'Próximamente' })).toBeInTheDocument()
-    expect(screen.getByText(/La gestión de usuarios y roles llegará más adelante/)).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Configuración financiera' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Configuración financiera' })).toHaveFocus()
+    expect(router.state.location.search).toBe('?tab=financiera')
 
+    await user.keyboard('{Home}')
+    expect(router.state.location.search).toBe('')
     await user.keyboard('{End}')
     expect(router.state.location.search).toBe('?tab=financiera')
     await user.keyboard('{ArrowRight}')
     expect(router.state.location.search).toBe('')
     await user.keyboard('{ArrowLeft}')
     expect(router.state.location.search).toBe('?tab=financiera')
+  })
+})
+
+describe('sin funciones que no existen', () => {
+  it('no hay pestana Usuarios y ?tab=usuarios cae en Datos', async () => {
+    mockApi(routes())
+    renderRoute('/configuracion?tab=usuarios')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Configuración' })).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Datos de la serviteca', 'Configuración financiera'])
+    expect(screen.queryByRole('tab', { name: /Usuarios/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Próximamente/)).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Datos de la serviteca' })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('rotula Impuesto de renta deducible y no menciona DIAN', async () => {
+    mockApi(routes())
+    renderRoute('/configuracion?tab=financiera')
+
+    const field = await screen.findByLabelText('Impuesto de renta deducible (%)')
+    expect(field).toHaveAccessibleDescription('Se usa en el cálculo del precio sugerido; no es facturación electrónica.')
+    expect(document.body.textContent).not.toMatch(/DIAN/)
   })
 })
 
@@ -230,7 +252,7 @@ describe('Configuración financiera', () => {
 
     for (const [label, value] of [
       ['Gastos (%)', '10'],
-      ['DIAN (%)', '5'],
+      ['Impuesto de renta deducible (%)', '5'],
       ['ICA (por mil)', '8,2'],
       ['Comisión de tarjeta (%)', '3'],
     ]) {
@@ -261,7 +283,7 @@ describe('Configuración financiera', () => {
     renderRoute('/configuracion?tab=financiera')
 
     expect(await screen.findByLabelText('Gastos (%)')).toHaveValue('34,3')
-    expect(screen.getByLabelText('DIAN (%)')).toHaveValue('35')
+    expect(screen.getByLabelText('Impuesto de renta deducible (%)')).toHaveValue('35')
     expect(screen.getByLabelText('ICA (por mil)')).toHaveValue('8,2')
     expect(screen.getByLabelText('Comisión de tarjeta (%)')).toHaveValue('2,5')
     expect(screen.queryByText('Aún no has configurado estos valores')).not.toBeInTheDocument()
@@ -276,7 +298,7 @@ describe('Configuración financiera', () => {
     await user.clear(gastos)
     await user.type(gastos, '60')
     expect(screen.queryByText(/queda igual al costo/)).not.toBeInTheDocument()
-    const dian = screen.getByLabelText('DIAN (%)')
+    const dian = screen.getByLabelText('Impuesto de renta deducible (%)')
     await user.clear(dian)
     await user.type(dian, '60')
 
@@ -292,7 +314,7 @@ describe('Configuración financiera', () => {
     mockApi(routes())
     renderRoute('/configuracion?tab=financiera')
 
-    const dian = await screen.findByLabelText('DIAN (%)')
+    const dian = await screen.findByLabelText('Impuesto de renta deducible (%)')
     await user.clear(dian)
     await user.type(dian, '150')
     await user.tab()

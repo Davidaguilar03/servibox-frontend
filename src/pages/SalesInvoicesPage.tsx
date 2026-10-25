@@ -120,7 +120,7 @@ export function SalesInvoicesPage() {
             Papelera
           </Link>
           <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
-            Nueva factura
+            Registrar venta
           </Link>
         </div>
       </div>
@@ -215,8 +215,8 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
   } else if (activeSales(sales).length === 0) {
     content = (
       <EmptyState
-        message="Aún no registras ventas. Crea tu primera factura."
-        action={{ label: 'Nueva factura', to: '/ventas/nueva' }}
+        message="Aún no registras ventas. Registra tu primera venta."
+        action={{ label: 'Registrar venta', to: '/ventas/nueva' }}
       />
     )
   } else {

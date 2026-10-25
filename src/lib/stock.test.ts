@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { lowStockProducts, stockStatus } from './stock'
+import { lowStockProducts, stockAlertCounts, stockAlerts, stockStatus } from './stock'
 
 const thresholds = { yellowStockMin: 10, redStockMin: 3 }
 
@@ -67,5 +67,32 @@ describe('lowStockProducts', () => {
 
     expect(rows.map((p) => p.id)).toEqual([3, 8, 5, 1, 6])
     expect(rows.map((p) => p.status)).toEqual(['SIN_STOCK', 'SIN_STOCK', 'CRITICO', 'BAJO', 'BAJO'])
+  })
+})
+
+describe('stockAlerts y stockAlertCounts', () => {
+  const categories = [{ id: 1, ...thresholds }]
+  const product = (id: number, quantity: number) => ({ id, quantity, categoryId: 1 })
+
+  it('en los bordes: 0 sin stock, igual al rojo critico, igual al amarillo bajo, sobre el amarillo sin alerta', () => {
+    const products = [product(1, 0), product(2, 3), product(3, 10), product(4, 11)]
+
+    expect(stockAlerts(products, categories).map((p) => [p.id, p.status])).toEqual([
+      [1, 'SIN_STOCK'],
+      [2, 'CRITICO'],
+      [3, 'BAJO'],
+    ])
+    expect(stockAlertCounts(products, categories)).toEqual({ withAlert: 3, outOfStock: 1 })
+  })
+
+  it('cuenta los sin stock dentro de las alertas y no corta en un limite', () => {
+    const products = Array.from({ length: 8 }, (_, index) => product(index + 1, index % 2 === 0 ? 0 : 1))
+
+    expect(stockAlertCounts(products, categories)).toEqual({ withAlert: 8, outOfStock: 4 })
+    expect(lowStockProducts(products, categories, 5)).toHaveLength(5)
+  })
+
+  it('sin alertas da cero y cero', () => {
+    expect(stockAlertCounts([product(1, 50)], categories)).toEqual({ withAlert: 0, outOfStock: 0 })
   })
 })

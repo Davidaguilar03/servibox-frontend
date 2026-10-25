@@ -299,21 +299,19 @@ describe('ReportsPage', () => {
     expect(exportCalls(fetchMock)).toHaveLength(0)
   })
 
-  it('Ventas y Compras se muestran como Proximamente y no se pueden elegir', async () => {
+  it('solo ofrece los reportes que existen, sin opciones Proximamente', async () => {
     mockApi()
     const user = userEvent.setup()
     renderRoute('/reportes')
 
-    for (const name of [/^Ventas/, /^Compras/]) {
-      const radio = screen.getByRole('radio', { name })
-      expect(radio).toBeDisabled()
-      expect(radio.closest('label')).toHaveTextContent('Próximamente')
-      await user.click(radio.closest('label')!)
-      expect(radio).not.toBeChecked()
-    }
+    const radios = within(screen.getByRole('group', { name: 'Tipo de reporte' })).getAllByRole('radio')
+    expect(radios.map((radio) => radio.getAttribute('value'))).toEqual(['ESTADO_RESULTADOS', 'MOVIMIENTOS'])
+    for (const radio of radios) expect(radio).toBeEnabled()
+    expect(screen.queryByText(/Próximamente/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /^Ventas/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /^Compras/ })).not.toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /Estado de resultados/ })).toBeChecked()
 
-    // Con teclado, las flechas saltan las opciones deshabilitadas.
     screen.getByRole('radio', { name: /Estado de resultados/ }).focus()
     await user.keyboard('{ArrowDown}')
     expect(screen.getByRole('radio', { name: /Movimientos de cuentas/ })).toBeChecked()

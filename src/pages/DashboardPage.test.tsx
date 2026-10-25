@@ -95,6 +95,7 @@ describe('panel de control', () => {
 
     const stock = section('Productos con stock bajo')
     await waitFor(() => expect(bodyRows(stock)).toHaveLength(3))
+    expect(within(stock).getByText('Con alerta de stock: 3 · 1 sin stock')).toBeInTheDocument()
     const stockRows = bodyRows(stock).map((row) => row.textContent)
     expect(stockRows[0]).toContain('LL-004')
     expect(stockRows[0]).toContain('Sin stock')

@@ -12,6 +12,39 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-24: Sin promesas muertas, verbos de mostrador y alertas de stock unificadas
+
+* Decision:
+  * Se quitan de la interfaz las funciones que no existen: el enlace "Olvidaste tu
+    contrasena" del login con su ruta `/recuperar-contrasena` y `ComingSoonPage`, la pestana
+    Usuarios de Configuracion (`?tab=usuarios` cae en Datos) y las opciones Ventas y Compras
+    de Reportes (`ReportType` queda en `ESTADO_RESULTADOS | MOVIMIENTOS`, sin `available`).
+  * Botones de mostrador: `Registrar venta` y `Registrar compra` en el primario y el estado
+    vacio de cada listado y en el icono de Clientes y Proveedores
+    (`CounterpartiesConfig.newInvoiceLabel`).
+  * `stockAlerts` y `stockAlertCounts` (`src/lib/stock.ts`) son la unica definicion de
+    alerta de stock: sin stock, critico o bajo segun `stockStatus` (reglas sin cambio).
+    Inicio (`lowStockProducts` = primeras N de `stockAlerts`) e Inventario las usan. La
+    tarjeta de Inventario pasa de "Por debajo del minimo" (que omitia el stock 0) a "Con
+    alerta de stock: N" con "M sin stock" debajo si M > 0; Inicio muestra la misma linea
+    sobre su tabla. Se borra `belowMinimum`.
+  * Productos y Categorias muestran un Alert informativo si gastos, impuesto de renta
+    deducible e ICA estan en 0, con enlace a `/configuracion?tab=financiera`. Usan la misma
+    consulta de la pestana (`FINANCIAL_SETTINGS_KEY`). La comision de tarjeta no cuenta: no
+    entra en el precio sugerido.
+  * `dianRate` se rotula "Impuesto de renta deducible (%)" y la advertencia del divisor lo
+    nombra igual; el campo del API no cambia. La ayuda del costo ya no menciona centavos;
+    el parseo de dinero no cambia (el backend pasa a pesos enteros despues).
+  * Categorias: "Volver a Productos" es un enlace secundario con flecha; el unico rojo del
+    encabezado es "Nueva categoria".
+* Alternativas consideradas: dejar las opciones como "Proximamente" (prometen algo sin
+  fecha); contar en Inventario solo critico y bajo (dos cifras distintas para la misma
+  pregunta); un hook nuevo para la configuracion financiera (la consulta con la misma clave
+  ya comparte cache).
+* Motivo: un reporte externo de criticas a la interfaz. Lo que se ve debe funcionar hoy, y
+  la misma pregunta (cuantos productos tienen alerta) debe dar la misma cifra en todas las
+  pantallas.
+
 ## 2026-10-24: Otros ingresos en la utilidad neta y costo al anular o recuperar una compra
 
 * Contexto: el backend ya mergeo `feat/34-other-income-in-kpis` y

@@ -34,11 +34,13 @@ interface StockCategory extends StockThresholds {
   id: number
 }
 
-/** Productos sin stock, criticos o bajos, de menor a mayor stock, con su estado. */
-export function lowStockProducts<P extends StockProduct>(
+/**
+ * Productos con alerta de stock (sin stock, criticos o bajos), de menor a mayor stock, con su
+ * estado. Inicio e Inventario cuentan sus alertas con esta misma funcion.
+ */
+export function stockAlerts<P extends StockProduct>(
   products: P[],
   categories: StockCategory[],
-  limit: number,
 ): Array<P & { status: StockStatus }> {
   const byId = new Map(categories.map((category) => [category.id, category]))
   return products
@@ -48,5 +50,19 @@ export function lowStockProducts<P extends StockProduct>(
     }))
     .filter((product) => product.status !== 'NORMAL')
     .sort((a, b) => (a.quantity ?? 0) - (b.quantity ?? 0))
-    .slice(0, limit)
+}
+
+/** Cuantos productos tienen alerta de stock y cuantos de ellos estan sin stock. */
+export function stockAlertCounts(products: StockProduct[], categories: StockCategory[]) {
+  const alerts = stockAlerts(products, categories)
+  return { withAlert: alerts.length, outOfStock: alerts.filter((product) => product.status === 'SIN_STOCK').length }
+}
+
+/** Las primeras alertas de stock, hasta el limite. */
+export function lowStockProducts<P extends StockProduct>(
+  products: P[],
+  categories: StockCategory[],
+  limit: number,
+): Array<P & { status: StockStatus }> {
+  return stockAlerts(products, categories).slice(0, limit)
 }

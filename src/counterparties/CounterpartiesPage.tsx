@@ -47,6 +47,8 @@ export interface CounterpartiesConfig {
   /** "Por cobrar" o "Por pagar". */
   balanceLabel: string
   newInvoicePath: (id: number) => string
+  /** "Registrar venta" o "Registrar compra": el verbo de la accion de newInvoicePath. */
+  newInvoiceLabel: string
   createdToast: string
   /** Toast del 200: el documento ya existia con el otro rol y paso a AMBOS. */
   promotedToast: string
@@ -148,8 +150,8 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
       <Link
         to={config.newInvoicePath(counterparty.id)}
         className={iconButton}
-        aria-label={`Nueva factura para ${counterparty.name}`}
-        title="Nueva factura"
+        aria-label={`${config.newInvoiceLabel} para ${counterparty.name}`}
+        title={config.newInvoiceLabel}
       >
         <FilePlus size={18} strokeWidth={1.5} aria-hidden />
       </Link>

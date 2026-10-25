@@ -123,12 +123,8 @@ export function ReportsPage() {
               return (
                 <label
                   key={option.type}
-                  className={`flex items-start gap-3 rounded-control border p-4 transition-colors duration-(--duration-fast) ${focusWithin} ${
-                    !option.available
-                      ? 'cursor-not-allowed border-border bg-neutral-100'
-                      : checked
-                        ? 'cursor-pointer border-brand bg-error-bg'
-                        : 'cursor-pointer border-border bg-surface hover:bg-neutral-100'
+                  className={`flex cursor-pointer items-start gap-3 rounded-control border p-4 transition-colors duration-(--duration-fast) ${focusWithin} ${
+                    checked ? 'border-brand bg-error-bg' : 'border-border bg-surface hover:bg-neutral-100'
                   }`}
                 >
                   <input
@@ -136,20 +132,12 @@ export function ReportsPage() {
                     name="report-type"
                     value={option.type}
                     checked={checked}
-                    disabled={!option.available}
                     onChange={() => change(setType)(option.type)}
                     aria-describedby={`report-${option.type}-description`}
-                    className="mt-1 size-4 shrink-0 accent-brand disabled:cursor-not-allowed"
+                    className="mt-1 size-4 shrink-0 accent-brand"
                   />
                   <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className={`text-body font-medium ${option.available ? 'text-text' : 'text-text-muted'}`}>
-                        {option.title}
-                      </span>
-                      {!option.available && (
-                        <span className="rounded-tag bg-neutral-200 px-2 py-0.5 text-label text-text-muted">Próximamente</span>
-                      )}
-                    </span>
+                    <span className="text-body font-medium text-text">{option.title}</span>
                     <span id={`report-${option.type}-description`} className="text-small text-text-muted">
                       {option.description}
                     </span>
