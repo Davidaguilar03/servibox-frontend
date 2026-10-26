@@ -71,12 +71,13 @@ describe('productos', () => {
     vi.useRealTimers()
   })
 
-  it('muestra indicadores, pestanas y la tabla con su estado', async () => {
+  it('muestra indicadores, categoria y la tabla con su estado', async () => {
     mockApi(fullRoutes())
     renderRoute('/inventario')
 
     expect(await screen.findByRole('heading', { name: 'Productos' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Productos')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(document.title).toBe('Productos · ServiBox')
     expect(screen.getByRole('link', { name: 'Nuevo producto' })).toHaveAttribute('href', '/inventario/nuevo')
     expect(screen.getByRole('link', { name: 'Categorías' })).toHaveAttribute('href', '/inventario/categorias')
 
@@ -87,9 +88,9 @@ describe('productos', () => {
     expect(within(indicator('Con alerta de stock')).getByText('1 sin stock')).toBeInTheDocument()
     expect(within(indicator('Valor en inventario')).getByText('$ 3.777.000')).toBeInTheDocument()
 
-    const tabs = screen.getByRole('tablist', { name: 'Categorías' })
-    expect(within(tabs).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Todas4', 'BATERÍAS1', 'LLANTAS3'])
-    expect(within(tabs).getByRole('tab', { name: /Todas/ })).toHaveAttribute('aria-selected', 'true')
+    const category = screen.getByRole('combobox', { name: 'Categoría' })
+    expect(category).toHaveValue('')
+    expect(within(category).getAllByRole('option').map((option) => option.textContent)).toEqual(['Todas las categorías', 'BATERÍAS', 'LLANTAS'])
 
     expect(codes()).toEqual(['BAT-004', 'LL-001', 'LL-003', 'LL-004'])
     const table = screen.getByRole('table')
@@ -101,15 +102,29 @@ describe('productos', () => {
     expect(within(within(table).getByText('BAT-004').closest('tr') as HTMLElement).getByText('Stock crítico')).toBeInTheDocument()
     expect(within(within(table).getByText('LL-003').closest('tr') as HTMLElement).getByText('Stock bajo')).toBeInTheDocument()
     expect(within(within(table).getByText('LL-001').closest('tr') as HTMLElement).getByText('Disponible')).toBeInTheDocument()
+    const cards = screen.getByRole('list', { name: 'Productos' })
+    const mobileCard = within(cards).getByText('LL-004').closest('li') as HTMLElement
+    expect(mobileCard).toHaveTextContent('Costo sin IVA $ 168.000')
+    expect(mobileCard).toHaveTextContent('Precio sugerido sin IVA $ 307.440')
+    expect(within(mobileCard).getByRole('link', { name: 'Editar LL-004' })).toHaveAttribute('href', '/inventario/1/editar')
   })
 
-  it('filtra por pestana, estado y busqueda, y lo guarda en la URL', async () => {
+  it('muestra completo el valor de inventario con centavos y mantiene los conteos', async () => {
+    mockApi(fullRoutes([product(1, { quantity: 9, purchaseCost: 12345678.91 })]))
+    renderRoute('/inventario')
+
+    expect(await within(indicator('Valor en inventario')).findByText('$ 111.111.110,19')).toBeInTheDocument()
+    expect(within(indicator('Total de productos')).getByText('1')).toBeInTheDocument()
+    expect(within(indicator('En stock')).getByText('1')).toBeInTheDocument()
+  })
+
+  it('filtra por categoria, estado y busqueda, y lo guarda en la URL', async () => {
     mockApi(fullRoutes())
     const user = userEvent.setup()
     const router = renderRoute('/inventario')
     await loaded()
 
-    await user.click(within(screen.getByRole('tablist', { name: 'Categorías' })).getByRole('tab', { name: /LLANTAS/ }))
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Categoría' }), '1')
     expect(router.state.location.search).toBe('?categoria=1')
     expect(codes()).toEqual(['LL-001', 'LL-003', 'LL-004'])
 
@@ -119,6 +134,7 @@ describe('productos', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Limpiar filtros' }).at(-1)!)
     expect(router.state.location.search).toBe('')
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('')
     // La espera del buscador corre con el reloj simulado; avanza solo para que userEvent siga funcionando.
     vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true })
     await user.type(screen.getByLabelText('Buscar'), 'michelin')
@@ -130,6 +146,65 @@ describe('productos', () => {
     expect(router.state.location.search).toBe('?q=michelin&orden=stock-asc')
   })
 
+  it('lee categoria por id, conserva filtros al cambiarla y restaura la pagina al volver', async () => {
+    const many = Array.from({ length: 30 }, (_, index) => product(index + 1, {
+      code: `P-${String(index + 1).padStart(2, '0')}`,
+      categoryId: index < 15 ? 1 : 2,
+    }))
+    mockApi(fullRoutes(many))
+    const user = userEvent.setup()
+    const router = renderRoute('/inventario?q=P&estado=NORMAL&orden=stock-desc&pagina=2')
+    await loaded()
+    expect(codes()).toHaveLength(5)
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Categoría' }), '2')
+    expect(router.state.location.search).toBe('?q=P&categoria=2&estado=NORMAL&orden=stock-desc')
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('2')
+    expect(codes()).toHaveLength(15)
+    expect(within(indicator('Total de productos')).getByText('30')).toBeInTheDocument()
+
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?q=P&estado=NORMAL&orden=stock-desc&pagina=2')
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('')
+    expect(codes()).toHaveLength(5)
+    await act(() => router.navigate(1))
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('2')
+  })
+
+  it('acepta URL de categoria existente, y una eliminada se trata como Todas', async () => {
+    mockApi(fullRoutes())
+    const router = renderRoute('/inventario?categoria=1')
+    await loaded()
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('1')
+    expect(codes()).toEqual(['LL-001', 'LL-003', 'LL-004'])
+
+    await act(() => router.navigate('/inventario?categoria=999'))
+    expect(screen.getByRole('combobox', { name: 'Categoría' })).toHaveValue('')
+    expect(codes()).toHaveLength(4)
+    expect(router.state.location.search).toBe('?categoria=999')
+  })
+
+  it('ofrece muchas categorias y nombres largos en un solo selector', async () => {
+    const manyCategories = Array.from({ length: 40 }, (_, index) => ({
+      ...categories[0]!, id: index + 1, name: `CATEGORÍA CON UN NOMBRE EXTENSO ${index + 1}`,
+    }))
+    mockApi({
+      '/api/inventory/products': () => jsonResponse(products),
+      '/api/inventory/categories': () => jsonResponse(manyCategories),
+    })
+    const user = userEvent.setup()
+    const router = renderRoute('/inventario')
+    await loaded()
+
+    const category = screen.getByRole('combobox', { name: 'Categoría' })
+    expect(within(category).getAllByRole('option')).toHaveLength(41)
+    expect(within(category).getByRole('option', { name: 'CATEGORÍA CON UN NOMBRE EXTENSO 40' })).toHaveValue('40')
+    expect(screen.queryByRole('tablist', { name: 'Categorías' })).not.toBeInTheDocument()
+    await user.selectOptions(category, '40')
+    expect(router.state.location.search).toBe('?categoria=40')
+    expect(screen.getByText('No hay productos con esos filtros.')).toBeInTheDocument()
+  })
+
   it('lee los filtros de la URL al entrar y el enlace Editar los conserva', async () => {
     mockApi(fullRoutes())
     const user = userEvent.setup()
@@ -139,7 +214,7 @@ describe('productos', () => {
     expect(screen.getByLabelText('Ordenar por')).toHaveValue('stock-desc')
     expect(codes()).toEqual(['LL-001'])
 
-    await user.click(screen.getByRole('link', { name: 'Editar LL-001' }))
+    await user.click(within(screen.getByRole('table')).getByRole('link', { name: 'Editar LL-001' }))
     expect(router.state.location.pathname).toBe('/inventario/4/editar')
     expect(router.state.location.state).toEqual({ listSearch: '?orden=stock-desc&estado=NORMAL' })
   })

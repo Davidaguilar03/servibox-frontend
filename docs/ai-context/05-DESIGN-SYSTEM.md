@@ -6,6 +6,40 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Inventario (2026-10-26)
+
+* Correccion visual de David: Productos conserva ListHeader pero no monta barra superior;
+  el boton movil del shell va en su encabezado, sin hueco reservado. Categorias y
+  formularios conservan breadcrumb. El titulo de pestana sigue viniendo del shell.
+* Categoria deja TabList y pasa a SelectField dentro de FilterBar, junto a Buscar.
+  La opcion inicial es Todas las categorias; las demas son ids reales ordenados por
+  nombre. El parametro `categoria` en URL y su comportamiento no cambian. TabList
+  compartido permanece para Configuracion y otras pantallas.
+* Cuatro IndicatorCard usan info, success, warning y brand-strong, con iconos de
+  producto, disponibilidad, alerta y bodega. La variante compact solo en Productos
+  tiene dos columnas: iconLg en fondo tenue de 48 px, centrado verticalmente;
+  titulo, cifra y ayuda alineados a la izquierda en el bloque derecho. Usa relleno
+  de 16 px y text-kpi de 32/36 con numeros tabulares. La rejilla ocupa el ancho del
+  contenedor: una columna en movil, dos desde sm y cuatro desde 2xl. En una fila,
+  los tres conteos tienen ancho igual y el valor monetario recibe 1,35 veces ese
+  ancho. La altura sale del contenido y es igual dentro de cada fila. Inicio
+  conserva su composicion y text-figure.
+  El simbolo monetario se une al primer digito; la envoltura de cifras es compartida.
+* FilterBar admite embedded solo en Productos: filtros y listado quedan en una
+  superficie con divisor; inventory distribuye cuatro filtros en dos columnas hasta
+  2xl y en una fila cuando cabe. Los otros listados conservan su disposicion. Los
+  selectores de categoria y stock tienen ancho maximo de 240 px; orden, 288 px.
+  DataTable conserva
+  contorno, encabezado y columnas por prioridad. Las tarjetas moviles muestran
+  costo, precio y accion Editar.
+* Categorias mantiene DataTable y modal compartidos; nombres extensos pueden envolver.
+  El modal apila umbrales para que rotulos y ayudas tengan espacio. En alta y edicion,
+  codigo y categoria comparten fila desde sm, descripcion ocupa el ancho disponible,
+  costo y stock se acotan, y PricePanel queda junto al formulario desde lg y debajo
+  en movil. El panel usa un borde superior tenue para distinguir los importes calculados.
+* Revision visual pendiente de David. Estas reglas CSS no demuestran ausencia de
+  desbordes en un navegador.
+
 ## Marca provisional y superficies del rediseno (2026-10-26)
 
 * Correccion de Inicio solicitada por David: sin barra superior ni breadcrumb redundante;
@@ -88,6 +122,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 | `text-label` | 12 px | 16 px | 600 | Rotulos de campo, leyendas de grupo, encabezados de columna (estos en mayusculas) |
 | `text-button` | 14 px | 1 | 600 | Botones, paginacion, segmentos y chips que actuan como boton |
 | `text-figure` | 24/28 bajo md, 28/32 desde md | | 600 | Componente: valor de indicadores y totales destacados (total de factura, saldo pendiente, saldos y totales de Cuentas, total disponible). Inter con numeros tabulares (rol monto) |
+| `text-kpi` | 32/36 con tokens display de tamano y figure de peso | | 600 | Solo cifra de la variante compact de IndicatorCard en Productos; Inter con numeros tabulares |
 | `text-display` | 32/36 bajo md, 40/44 desde md | | 700 | Componente con excepcion unica: solo el titular (`h1`) de la landing. Montserrat |
 
 * El peso va en el token (`--text-*--font-weight`): no hace falta `font-semibold` con estas
@@ -268,8 +303,8 @@ Categorias):
   Total, Saldo pendiente y acciones. Encabezados en rol label (los pone `DataTable`), dinero
   en rol monto a la derecha y sin partir, estados con `StatusBadge`.
 * `TabList` con `fill` (Configuracion): las pestanas se reparten el ancho y la etiqueta pasa a
-  dos lineas. Sin `fill` (Productos): desplazamiento horizontal, borde derecho difuminado
-  mientras haya mas pestanas y la seleccionada se lleva a la vista (`scrollIntoView`).
+  dos lineas. Sin `fill`, las pestanas se desplazan horizontalmente y la seleccionada
+  se lleva a la vista (`scrollIntoView`). Productos usa SelectField desde esta correccion.
 * Tablas por prioridad (misma tecnica que las facturas: `useElementWidth` sobre el recuadro y
   `DataTable dense` en compacto). Bajo el ancho completo, las columnas de menor prioridad pasan
   a una segunda linea en `small` y `text-muted` bajo la celda principal:
@@ -338,8 +373,8 @@ Pendientes de decidir o validar con el disenador (detalle en
 3. Wordmark usa `text-title` con `font-bold italic` como marca provisional; el simbolo es
    SVG compartido. Pendiente de sustituir por los recursos oficiales cuando existan.
 4. **Resuelto el 2026-10-25:** los enlaces de celda usan `CellLink` (rol small, 600).
-5. **Resuelto el 2026-10-25:** las pestanas de Configuracion y de Productos usan `TabList` en
-   `small`; menu lateral y badges siguen en `small`.
+5. **Actualizado el 2026-10-26:** Configuracion usa `TabList` en `small`; Productos
+   paso a SelectField de categoria. Menu lateral y badges siguen en `small`.
 6. **Resuelto el 2026-10-25:** sin `font-medium`; los 55 usos pasaron a 600.
 7. **Resuelto el 2026-10-25:** tokens de legado eliminados; landing, login y registro usan la
    escala (excepcion `text-display` en el `h1` de la landing).

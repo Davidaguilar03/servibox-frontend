@@ -95,7 +95,7 @@ function EditProduct({ productId }: { productId: number }) {
   return <ProductEditor product={product.data} />
 }
 
-/** Formulario de una columna; los valores iniciales salen del producto o vacios al crear. */
+/** Los valores iniciales salen del producto o vacios al crear. */
 function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   const creating = product === undefined
   const navigate = useNavigate()
@@ -173,7 +173,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
-      className="grid items-start gap-6 lg:max-w-5xl lg:grid-cols-[minmax(0,1fr)_320px]"
+      className="grid items-start gap-6 lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]"
     >
       <div className="flex min-w-0 flex-col gap-6">
         <div>
@@ -193,7 +193,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           <h2 id="product-data-title" className="mb-4 text-section text-text">
             Datos del producto
           </h2>
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <TextField
               ref={codeRef}
               label="Código"
@@ -203,14 +203,6 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
               onBlur={touch('code')}
               error={codeConflict ?? shown('code')}
               autoComplete="off"
-              required
-            />
-            <TextField
-              label="Descripción"
-              value={values.description}
-              onChange={(event) => change('description')(event.target.value)}
-              onBlur={touch('description')}
-              error={shown('description')}
               required
             />
             {categories.isError ? (
@@ -233,6 +225,16 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
                 required
               />
             )}
+            <div className="sm:col-span-2">
+              <TextField
+                label="Descripción"
+                value={values.description}
+                onChange={(event) => change('description')(event.target.value)}
+                onBlur={touch('description')}
+                error={shown('description')}
+                required
+              />
+            </div>
           </div>
         </section>
 
@@ -240,7 +242,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           <h2 id="product-price-title" className="mb-4 text-section text-text">
             Costo
           </h2>
-          <div className="flex flex-col gap-4">
+          <div className="sm:max-w-md">
             <TextField
               label="Costo de compra sin IVA"
               inputMode="numeric"
@@ -258,25 +260,27 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
           <h2 id="product-stock-title" className="mb-4 text-section text-text">
             Inventario
           </h2>
-          {!product ? (
-            <TextField
-              label="Stock inicial"
-              inputMode="numeric"
-              value={values.quantity}
-              onChange={(event) => change('quantity')(event.target.value)}
-              onBlur={touch('quantity')}
-              error={shown('quantity')}
-              hint="Unidades en bodega hoy. Después cambia con las ventas y las compras."
-              required
-            />
-          ) : (
-            <TextField
-              label="Stock"
-              value={String(product.quantity ?? 0)}
-              readOnly
-              hint="El stock cambia con las ventas y las compras; no se edita aquí."
-            />
-          )}
+          <div className="sm:max-w-md">
+            {!product ? (
+              <TextField
+                label="Stock inicial"
+                inputMode="numeric"
+                value={values.quantity}
+                onChange={(event) => change('quantity')(event.target.value)}
+                onBlur={touch('quantity')}
+                error={shown('quantity')}
+                hint="Unidades en bodega hoy. Después cambia con las ventas y las compras."
+                required
+              />
+            ) : (
+              <TextField
+                label="Stock"
+                value={String(product.quantity ?? 0)}
+                readOnly
+                hint="El stock cambia con las ventas y las compras; no se edita aquí."
+              />
+            )}
+          </div>
         </section>
 
         <div className="sticky bottom-0 z-10 flex flex-wrap justify-end gap-3 rounded-surface border border-border bg-surface p-4 shadow-raised">

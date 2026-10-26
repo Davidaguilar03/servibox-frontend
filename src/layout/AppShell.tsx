@@ -106,7 +106,7 @@ export interface AppShellContext {
  */
 export function AppShell() {
   const breadcrumb = useBreadcrumb()
-  const isDashboard = /^\/inicio\/?$/.test(useLocation().pathname)
+  const headerInPage = /^\/(inicio|inventario)\/?$/.test(useLocation().pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
   const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide
@@ -250,7 +250,7 @@ export function AppShell() {
           collapsed ? 'lg:pl-sidebar-collapsed' : 'lg:pl-sidebar'
         }`}
       >
-        {!isDashboard && <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface px-6 lg:px-8">
+        {!headerInPage && <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface px-6 lg:px-8">
           <div className="-ml-3 lg:hidden">{menuButton}</div>
           <nav aria-label="Ruta de navegación" className="min-w-0">
             <ol className="flex items-center gap-2 text-small">
@@ -286,7 +286,7 @@ export function AppShell() {
         </header>}
 
         <main id="contenido" ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-6 py-6 outline-none lg:px-8 lg:py-8">
-          <Outlet context={{ menuButton: isDashboard ? menuButton : null } satisfies AppShellContext} />
+          <Outlet context={{ menuButton: headerInPage ? menuButton : null } satisfies AppShellContext} />
         </main>
       </div>
       <Toaster />

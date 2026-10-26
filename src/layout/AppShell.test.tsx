@@ -131,7 +131,7 @@ describe('shell', () => {
   })
 
   describe('miga de pan', () => {
-    it('solo Inicio omite la barra; navegar a Ventas y volver conserva breadcrumb y titulo', async () => {
+    it('Inicio omite la barra; navegar a Ventas y volver conserva breadcrumb y titulo', async () => {
       stubViewport(true)
       const router = renderRoute('/inicio')
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
@@ -144,6 +144,30 @@ describe('shell', () => {
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
       expect(document.title).toBe('Inicio · ServiBox')
+    })
+
+    it('Productos omite la barra y conserva menu movil; Categorias y formulario mantienen breadcrumb', async () => {
+      stubViewport(false)
+      const user = userEvent.setup()
+      const router = renderRoute('/inventario')
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
+      expect(document.title).toBe('Productos · ServiBox')
+      const button = within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })
+      button.focus()
+      await user.keyboard('{Enter}')
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+      expect(aside()).not.toHaveAttribute('inert')
+      await user.keyboard('{Escape}')
+      await waitFor(() => expect(button).toHaveFocus())
+
+      await act(() => router.navigate('/inventario/categorias'))
+      expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
+      await act(() => router.navigate('/inventario/nuevo'))
+      expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Productos/Nuevo producto')
+      await act(() => router.navigate('/inventario'))
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
     })
 
     it('los tramos previos son enlaces y el ultimo es la pagina actual', async () => {

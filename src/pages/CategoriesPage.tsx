@@ -78,9 +78,9 @@ export function CategoriesPage() {
   const compact = width < CATEGORIES_TABLE_FULL
   const taxes = (c: InventoryCategory) => (c.taxTypes.length ? c.taxTypes.map((tax) => tax.name).sort().join(', ') : EMPTY_VALUE)
   const name = (c: InventoryCategory) => (
-    <span className="flex items-center gap-2 whitespace-nowrap">
+    <span className="flex min-w-0 items-center gap-2">
       <CategoryDot color={c.color} />
-      {c.name}
+      <span className="wrap-anywhere">{c.name}</span>
     </span>
   )
   const allColumns: Column<InventoryCategory>[] = [
@@ -127,7 +127,10 @@ export function CategoriesPage() {
   const categoryCard = (c: InventoryCategory) => (
     <>
       <div className="flex items-center justify-between gap-4">
-        <span className="min-w-0 text-body font-semibold text-text">{name(c)}</span>
+        <span className="flex min-w-0 items-center gap-2 text-body font-semibold text-text">
+          <CategoryDot color={c.color} />
+          <span className="wrap-anywhere">{c.name}</span>
+        </span>
         {cell(c, '')}
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-small">
@@ -396,7 +399,7 @@ function CategoryModal({ category, categories, onClose }: CategoryModalProps) {
           </div>
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <TextField
             label={GLOSSARY.lowStockThreshold}
             inputMode="numeric"
