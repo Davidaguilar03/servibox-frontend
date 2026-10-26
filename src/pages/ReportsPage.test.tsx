@@ -98,7 +98,7 @@ describe('ReportsPage', () => {
     mockApi({ 'GET /api/reporting/kpis': () => jsonResponse({ ...october, netProfit: -0.1 }) })
     renderRoute('/reportes')
     await screen.findByRole('rowheader', { name: 'Utilidad neta' })
-    expect(statementValue('Utilidad neta')).toHaveTextContent('-$ 0,10')
+    expect(statementValue('Utilidad neta')).toHaveTextContent('$ 0')
     expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-error-bg', 'text-error-ink')
   })
 

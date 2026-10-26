@@ -90,9 +90,9 @@ describe('papelera de ventas', () => {
     renderRoute('/ventas/papelera')
 
     expect(await screen.findByRole('heading', { name: 'Papelera de ventas' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Papelera')
-    expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o restaurarlas.')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
+    expect(screen.getByText('Facturas de venta anuladas. Puedes consultarlas o restaurarlas.')).toBeInTheDocument()
     expect(screen.getByLabelText('Período')).toHaveValue('todas')
 
     await waitFor(() => expect(numbers()).toEqual(['FV-0001', 'FV-0002']))

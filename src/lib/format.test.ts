@@ -9,9 +9,11 @@ describe('formatCurrency', () => {
     expect(formatCurrency(0)).toBe('$ 0')
   })
 
-  it('conserva los centavos', () => {
-    expect(formatCurrency(180000.5)).toBe('$ 180.000,50')
-    expect(formatCurrency(119000.4)).toBe('$ 119.000,40')
+  it('redondea solo la presentacion al peso con HALF_UP', () => {
+    expect(formatCurrency(180000.5)).toBe('$ 180.001')
+    expect(formatCurrency(119000.4)).toBe('$ 119.000')
+    expect(formatCurrency(-3500.5)).toBe('-$ 3.501')
+    expect(formatCurrency(-0.4)).toBe('$ 0')
   })
 
   it('pone el signo antes del simbolo en negativos', () => {
@@ -46,6 +48,6 @@ describe('monthToDate', () => {
   })
 })
 
- it.each([[13.5, '$ 13,50'], [0.08, '$ 0,08'], [100.01, '$ 100,01'], [-0.1, '-$ 0,10'], [-0.004, '$ 0'], [-0.005, '-$ 0,01'], [NaN, EMPTY_VALUE], [0.1 + 0.2, '$ 0,30']])('formatea %s como %s', (value, text) => {
+ it.each([[13.5, '$ 14'], [0.08, '$ 0'], [100.01, '$ 100'], [-0.1, '$ 0'], [-0.5, '-$ 1'], [-0.004, '$ 0'], [-0.005, '$ 0'], [NaN, EMPTY_VALUE], [0.1 + 0.2, '$ 0']])('formatea %s como %s', (value, text) => {
    expect(formatCurrency(value as number)).toBe(text)
  })

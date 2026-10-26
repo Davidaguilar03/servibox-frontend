@@ -131,14 +131,15 @@ describe('shell', () => {
   })
 
   describe('miga de pan', () => {
-    it('Inicio omite la barra; navegar a Ventas y volver conserva breadcrumb y titulo', async () => {
+    it('Inicio y Ventas omiten la barra y conservan el titulo de pestana', async () => {
       stubViewport(true)
       const router = renderRoute('/inicio')
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
       expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
       expect(document.title).toBe('Inicio · ServiBox')
       await act(() => router.navigate('/ventas'))
-      expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Facturas de venta')
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Facturas de venta' })).toBeInTheDocument()
       expect(document.title).toBe('Facturas de venta · ServiBox')
       await act(() => router.navigate(-1))
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
@@ -170,18 +171,26 @@ describe('shell', () => {
       expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
     })
 
-    it('los tramos previos son enlaces y el ultimo es la pagina actual', async () => {
+    it('las rutas de Ventas conservan el menu movil en el contenido y Compras conserva su barra', async () => {
+      stubViewport(false)
+      const router = renderRoute('/ventas')
+      for (const path of ['/ventas', '/ventas/nueva', '/ventas/23', '/ventas/papelera', '/ventas/clientes', '/ventas/ingresos']) {
+        await act(() => router.navigate(path))
+        expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+        expect(within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
+      }
+      await act(() => router.navigate('/compras'))
+      expect(screen.getByRole('banner')).toBeInTheDocument()
+      expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
+    })
+
+    it('Nueva venta conserva regreso dentro del contenido y el titulo de pestana', async () => {
       stubViewport(true)
       renderRoute('/ventas/nueva')
 
-      const crumbs = await screen.findByRole('navigation', { name: 'Ruta de navegación' })
-      expect(within(crumbs).getByRole('list')).toBeInTheDocument()
-      expect(within(crumbs).getByRole('link', { name: 'Ventas' })).toHaveAttribute('href', '/ventas')
-      expect(within(crumbs).getByRole('link', { name: 'Facturas de venta' })).toHaveAttribute('href', '/ventas')
-      const current = within(crumbs).getByText('Nueva factura')
-      expect(current).toHaveAttribute('aria-current', 'page')
-      expect(within(crumbs).queryByRole('link', { name: 'Nueva factura' })).not.toBeInTheDocument()
-      expect(within(crumbs).getAllByText('/').every((separator) => separator.getAttribute('aria-hidden') === 'true')).toBe(true)
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
+      expect(document.title).toBe('Nueva factura · ServiBox')
     })
   })
 

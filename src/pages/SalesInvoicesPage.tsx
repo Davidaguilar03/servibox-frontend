@@ -1,7 +1,8 @@
 import { GLOSSARY } from '../copy/glossary'
 import { useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { CreditCard, TrendingUp, Wallet } from 'lucide-react'
 import { buttonClasses } from '../components/buttonStyles'
 import { invoiceColumns } from '../components/invoiceColumns'
 import { DataTable } from '../components/DataTable'
@@ -23,6 +24,7 @@ import { validateRange } from '../reports/reports'
 import { INVOICE_TABLE_MEDIUM, useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { fetchSaleCollections } from '../sales/salesApi'
+import type { AppShellContext } from '../layout/AppShell'
 import {
   CLEARED_FILTERS,
   activeSales,
@@ -51,11 +53,9 @@ const paymentOptions = [
   { value: 'CREDITO', label: 'Crédito' },
 ]
 
-const card = 'rounded-surface border border-border bg-surface'
-
-
 /** Facturas de venta: indicadores, filtros en la URL y listado paginado. */
 export function SalesInvoicesPage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const [today] = useState(() => businessToday())
   const { desde, hasta } = monthRange(today)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -85,6 +85,7 @@ export function SalesInvoicesPage() {
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
+        leading={menuButton}
         title="Facturas de venta"
         subtitle="Ventas de contado y a crédito. Las facturas anuladas están en la papelera."
         primary={
@@ -105,14 +106,20 @@ export function SalesInvoicesPage() {
         ]}
       />
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         <IndicatorCard
+          compact
+          icon={TrendingUp}
+          accent="success"
           label="Ventas del mes"
           value={kpis.data ? formatCurrency(kpis.data.totalSales) : undefined}
           error={kpis.isError}
           onRetry={() => void kpis.refetch()}
         />
         <IndicatorCard
+          compact
+          icon={Wallet}
+          accent="warning"
           label="Por cobrar"
           value={pending ? formatCurrency(pending.amount) : undefined}
           detail={pending && `${pending.count} ${pending.count === 1 ? 'factura pendiente' : 'facturas pendientes'} de abono`}
@@ -120,6 +127,9 @@ export function SalesInvoicesPage() {
           onRetry={() => void sales.refetch()}
         />
         <IndicatorCard
+          compact
+          icon={CreditCard}
+          accent="info"
           label="Abonos del mes"
           value={collections.data && sales.data ? formatCurrency(creditCollections(collections.data, sales.data)) : undefined}
           error={collections.isError || sales.isError}
@@ -130,7 +140,10 @@ export function SalesInvoicesPage() {
         />
       </div>
 
-      <FilterBar active={filtersActive(filters)} onClear={clearFilters}>
+      <p className="text-small text-text-muted">Ventas y abonos corresponden al mes actual. Por cobrar incluye todas las facturas pendientes.</p>
+
+      <div className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface">
+      <FilterBar embedded sales salesCustom={filters.periodo === 'personalizado'} active={filtersActive(filters)} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder="Número de factura o cliente" {...search} />,
           <SelectField
@@ -147,14 +160,16 @@ export function SalesInvoicesPage() {
             value={filters.pago}
             onChange={(event) => updateFilters({ pago: event.target.value as SalesFilters['pago'] })}
           />,
-          <PeriodPicker
-            key="periodo"
-            options={SALES_PERIOD_OPTIONS}
-            value={filters.periodo}
-            onChange={(periodo) => updateFilters(periodo === 'personalizado' ? { periodo, desde: range?.desde ?? '', hasta: range?.hasta ?? '' } : { periodo })}
-            range={rangeValidation.valid ? range : null}
-            custom={{ desde: desdeField, hasta: hastaField, errors: rangeValidation.errors }}
-          />,
+          <div key="periodo" className={filters.periodo === 'personalizado' ? 'min-w-0 2xl:col-span-3' : 'min-w-0'}>
+            <PeriodPicker
+              layout="inline"
+              options={SALES_PERIOD_OPTIONS}
+              value={filters.periodo}
+              onChange={(periodo) => updateFilters(periodo === 'personalizado' ? { periodo, desde: range?.desde ?? '', hasta: range?.hasta ?? '' } : { periodo })}
+              range={rangeValidation.valid ? range : null}
+              custom={{ desde: desdeField, hasta: hastaField, errors: rangeValidation.errors }}
+            />
+          </div>,
         ]}
       </FilterBar>
 
@@ -172,6 +187,7 @@ export function SalesInvoicesPage() {
           onClear={clearFilters}
         />
       )}
+      </div>
     </div>
   )
 }
@@ -229,12 +245,12 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
                   to={`/ventas/${sale.id}`}
                   className="flex flex-wrap items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-ring"
                 >
-                  <span className="flex min-w-20 flex-1 flex-col gap-1">
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="codigo text-small text-text">{sale.invoiceNumber}</span>
-                    <span className="truncate text-body text-text">{customerName(sale)}</span>
+                    <span className="wrap-anywhere text-body text-text">{customerName(sale)}</span>
                   </span>
-                  <span className="ml-auto flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-semibold text-text">{formatCurrency(sale.total)}</span>
+                  <span className="ml-auto flex min-w-0 flex-col items-end gap-1">
+                    <span className="monto wrap-anywhere text-right text-body font-semibold text-text">{formatCurrency(sale.total).replace('$ ', '$\u00a0')}</span>
                     <StatusBadge status={sale.status} />
                     <span className="text-small text-text-muted">
                       Saldo pendiente <PendingBalance invoice={sale} />
@@ -252,7 +268,7 @@ function SalesTable({ sales, loading, error, onRetry, filters, today, onPageChan
   }
 
   return (
-    <section ref={sectionRef} className={`${card} p-4`}>
+    <section ref={sectionRef} className="p-4" aria-label="Listado de ventas">
       {content}
     </section>
   )

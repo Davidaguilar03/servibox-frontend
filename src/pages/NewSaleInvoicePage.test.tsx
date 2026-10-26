@@ -138,7 +138,8 @@ describe('nueva factura de venta', () => {
     // Regla de Guardar: habilitado aunque falten datos; al enviar se muestran los errores.
     expect(screen.getByRole('button', { name: 'Guardar factura' })).toBeEnabled()
     expect(screen.getByText('Agrega al menos un producto.')).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Nueva factura')
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
   })
 
   it('cada linea tiene sus campos accesibles y la rejilla solo desde xl', async () => {

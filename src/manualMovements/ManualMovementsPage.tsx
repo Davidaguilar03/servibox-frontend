@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Coins, Pencil, ReceiptText, Trash2 } from 'lucide-react'
 import { ACCOUNTS_KEY, type TreasuryMovement } from '../accounts/accountsApi'
 import { formatSignedAmount } from '../accounts/accountsView'
 import { Button } from '../components/Button'
@@ -36,6 +36,7 @@ import {
 } from './manualMovements'
 import { fetchManualMovements, type ManualCategory } from './manualMovementsApi'
 import { iconMd } from '../components/icons'
+import type { AppShellContext } from '../layout/AppShell'
 
 /** Lo que distingue Gastos operativos de Otros ingresos. */
 export interface ManualMovementsConfig {
@@ -65,6 +66,8 @@ type Dialog = { kind: 'create' } | { kind: 'edit'; movement: TreasuryMovement } 
 
 /** Gastos operativos u Otros ingresos: indicadores, filtros en la URL, tabla y modales. */
 export function ManualMovementsPage({ config }: { config: ManualMovementsConfig }) {
+  const { menuButton } = useOutletContext<AppShellContext>()
+  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
   const [searchParams, setSearchParams] = useSearchParams()
@@ -179,7 +182,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
             <li key={movement.id} className="flex flex-col gap-2 rounded-surface border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-body text-text">{movement.concept}</span>
+                  <span className="wrap-anywhere text-body text-text">{movement.concept}</span>
                   <span className="text-small text-text-muted">
                     {formatDate(movement.date)} · {movement.accountName ?? EMPTY_VALUE}
                   </span>
@@ -212,6 +215,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
+        leading={isSales ? menuButton : undefined}
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>}
@@ -222,14 +226,20 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         ]}
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className={isSales ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-6 md:grid-cols-2'}>
         <IndicatorCard
+          compact={isSales}
+          icon={isSales ? Coins : undefined}
+          accent={isSales ? 'success' : undefined}
           label="Total del período"
           value={totals ? formatCurrency(totals.amount) : undefined}
           error={movements.isError}
           onRetry={retry}
         />
         <IndicatorCard
+          compact={isSales}
+          icon={isSales ? ReceiptText : undefined}
+          accent={isSales ? 'info' : undefined}
           label="Movimientos"
           value={totals ? String(totals.count) : undefined}
           error={movements.isError}
@@ -237,7 +247,8 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         />
       </div>
 
-      <FilterBar active={!atDefaults} onClear={clearFilters}>
+      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
+      <FilterBar embedded={isSales} active={!atDefaults} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder="Concepto" {...search} />,
           accounts.isError ? (
@@ -275,9 +286,10 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={`${card} p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className={isSales ? 'p-4' : `${card} p-4`} aria-label={config.title}>
         {content}
       </section>
+      </div>
 
       {(dialog?.kind === 'create' || dialog?.kind === 'edit') && (
         <ManualMovementFormModal

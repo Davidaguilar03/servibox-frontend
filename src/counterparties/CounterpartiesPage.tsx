@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
-import { FilePlus, Pencil, TriangleAlert } from 'lucide-react'
+import { FilePlus, HandCoins, Pencil, TriangleAlert, Users, Wallet } from 'lucide-react'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
@@ -33,6 +33,7 @@ import {
 } from './counterpartyList'
 import { NewCounterpartyModal } from './NewCounterpartyModal'
 import { iconMd, iconSm } from '../components/icons'
+import type { AppShellContext } from '../layout/AppShell'
 
 /** Lo que distingue Clientes de Proveedores. */
 export interface CounterpartiesConfig {
@@ -83,6 +84,8 @@ function invoicesText(count: number) {
 
 /** Clientes o Proveedores: indicadores, filtros en la URL, tabla con saldo y el modal de crear y editar. */
 export function CounterpartiesPage({ config }: { config: CounterpartiesConfig }) {
+  const { menuButton } = useOutletContext<AppShellContext>()
+  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = parseCounterpartyFilters(searchParams)
@@ -117,7 +120,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
 
   const nameCell = (counterparty: Counterparty) => (
     <span className="flex flex-wrap items-center gap-2">
-      <span className="text-text">{counterparty.name}</span>
+      <span className="wrap-anywhere text-text">{counterparty.name}</span>
       {isSystemCounterparty(counterparty) ? (
         <span className={tag}>Sistema</span>
       ) : (
@@ -247,6 +250,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
+        leading={isSales ? menuButton : undefined}
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>}
@@ -257,14 +261,20 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         ]}
       />
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className={isSales ? 'grid gap-4 sm:grid-cols-2 2xl:grid-cols-3' : 'grid gap-6 md:grid-cols-3'}>
         <IndicatorCard
+          compact={isSales}
+          icon={isSales ? Users : undefined}
+          accent={isSales ? 'info' : undefined}
           label={`Total de ${config.plural}`}
           value={indicators ? String(indicators.total) : undefined}
           error={counterparties.isError}
           onRetry={retryCounterparties}
         />
         <IndicatorCard
+          compact={isSales}
+          icon={isSales ? Wallet : undefined}
+          accent={isSales ? 'warning' : undefined}
           label="Con saldo pendiente"
           value={indicators && balances ? String(indicators.withBalance) : undefined}
           error={counterparties.isError || invoices.isError}
@@ -274,6 +284,9 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           }}
         />
         <IndicatorCard
+          compact={isSales}
+          icon={isSales ? HandCoins : undefined}
+          accent={isSales ? 'success' : undefined}
           label={`Total ${config.balanceLabel.toLowerCase()}`}
           value={indicators && balances ? formatCurrency(indicators.amount) : undefined}
           error={counterparties.isError || invoices.isError}
@@ -284,7 +297,9 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         />
       </div>
 
+      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
       <FilterBar
+        embedded={isSales}
         active={(['q', 'saldo', 'orden'] as const).some((key) => filters[key] !== DEFAULT_COUNTERPARTY_FILTERS[key])}
         onClear={clearFilters}
       >
@@ -307,7 +322,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={`${card} flex flex-col gap-4 p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className={`${isSales ? '' : card} flex flex-col gap-4 p-4`} aria-label={config.title}>
         {invoices.isError && counterparties.data && (
           <div role="alert" className="flex flex-wrap items-center gap-2 text-small text-text">
             <TriangleAlert {...iconSm} className="text-error" aria-hidden />
@@ -319,6 +334,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         )}
         <div>{content}</div>
       </section>
+      </div>
 
       {dialog && (
         <NewCounterpartyModal

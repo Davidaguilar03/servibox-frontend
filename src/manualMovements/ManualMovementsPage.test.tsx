@@ -346,7 +346,8 @@ describe('Otros ingresos', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Otros ingresos' })).toBeInTheDocument()
     expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success-ink')
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Otros ingresos')
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
     expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
   })
 

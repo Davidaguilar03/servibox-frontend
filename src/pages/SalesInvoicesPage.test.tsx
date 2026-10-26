@@ -197,15 +197,14 @@ describe('facturas de venta', () => {
     renderRoute('/ventas')
 
     expect(await screen.findByRole('heading', { name: 'Facturas de venta' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
-      'Ventas/Facturas de venta',
-    )
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('href', '/ventas/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/ventas/papelera')
 
     expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
     expect(await within(indicator('Por cobrar')).findByText('$ 2.530.000')).toBeInTheDocument()
     expect(within(indicator('Por cobrar')).getByText('2 facturas pendientes de abono')).toBeInTheDocument()
+    expect(screen.getByText('Ventas y abonos corresponden al mes actual. Por cobrar incluye todas las facturas pendientes.')).toBeInTheDocument()
     expect(await within(indicator('Abonos del mes')).findByText('$ 1.200.000')).toBeInTheDocument()
     expect(fetchMock).toHaveBeenCalledWith('/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-18', expect.anything())
     expect(fetchMock).toHaveBeenCalledWith(
@@ -233,6 +232,26 @@ describe('facturas de venta', () => {
 
     const cards = screen.getByRole('list', { name: 'Facturas' })
     expect(within(cards).getAllByRole('link')).toHaveLength(2)
+  })
+
+  it('conserva el importe completo y el alcance de los indicadores al cambiar el periodo', async () => {
+    mockApi({
+      '/api/sales': () => jsonResponse([sale(5, {
+        invoiceDate: '2026-09-01', paymentType: 'CREDITO', status: 'PENDIENTE',
+        total: 111111110.19, pendingBalance: 111111110.19,
+      })]),
+      '/api/reporting/kpis': () => jsonResponse({ totalSales: 111111110.19 }),
+      '/api/treasury/movements': () => jsonResponse([]),
+    })
+    renderRoute('/ventas')
+
+    expect(await within(indicator('Ventas del mes')).findByText(/111\.111\.110/)).toHaveTextContent('$ 111.111.110')
+    expect(within(indicator('Por cobrar')).getByText(/111\.111\.110/)).toHaveTextContent('$ 111.111.110')
+    expect(screen.getByText('No hay facturas con esos filtros.')).toBeInTheDocument()
+    await userEvent.setup().selectOptions(screen.getByLabelText('Período'), 'todas')
+    expect(await within(table()).findByText('FV-0005')).toBeInTheDocument()
+    expect(within(indicator('Ventas del mes')).getByText(/111\.111\.110/)).toBeInTheDocument()
+    expect(within(indicator('Por cobrar')).getByText(/111\.111\.110/)).toBeInTheDocument()
   })
 
   it('lee los filtros de la URL y los escribe al cambiarlos', async () => {

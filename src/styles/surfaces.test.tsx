@@ -43,9 +43,9 @@ describe('superficies', () => {
   })
 
   it.each(['brand', 'success', 'warning', 'info'] as const)('el acento %s conserva etiqueta, signo, detalle y error accesible', (accent) => {
-    const { rerender } = render(<IndicatorCard label="Utilidad neta" value="-$ 0,10" negative detail="Resultado del periodo" accent={accent} icon={Package} />)
+    const { rerender } = render(<IndicatorCard label="Utilidad neta" value="-$ 1" negative detail="Resultado del periodo" accent={accent} icon={Package} />)
     expect(screen.getByText('Utilidad neta')).toBeInTheDocument()
-    expect(screen.getByText('-$ 0,10')).toHaveClass('text-error')
+    expect(screen.getByText('-$ 1')).toHaveClass('text-error')
     expect(screen.getByText('Resultado del periodo')).toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
     rerender(<IndicatorCard label="Utilidad neta" accent={accent} icon={Package} error onRetry={() => {}} />)

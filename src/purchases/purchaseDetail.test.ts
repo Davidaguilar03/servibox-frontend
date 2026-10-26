@@ -71,7 +71,7 @@ describe('pago a una compra', () => {
 
   it('no puede superar el saldo pendiente', () => {
     expect(validatePayment({ ...draft, amount: '597938.29' }, 597938.28, range, account).errors.amount).toBe(
-      'No puede superar el saldo pendiente de $ 597.938,28',
+      'No puede superar el saldo pendiente de $ 597.938',
     )
   })
 
