@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal'
 import { Toaster } from '../components/Toaster'
 import { EmptyState } from '../components/states'
 import { showToast } from '../components/toast'
+import { Package } from 'lucide-react'
 
 // Sombras solo en lo que flota (docs/ai-context/05-DESIGN-SYSTEM.md): las tarjetas, tablas y
 // estados se separan con borde; el modal, el toast y el menu movil si llevan sombra.
@@ -39,6 +40,17 @@ describe('superficies', () => {
     expect(withShadow(container)).toEqual([])
     expect(container.firstElementChild).toHaveClass('rounded-surface', 'border')
     expect(screen.getByText('$ 635.000')).toHaveClass('text-figure', 'text-text')
+  })
+
+  it.each(['brand', 'success', 'warning', 'info'] as const)('el acento %s conserva etiqueta, signo, detalle y error accesible', (accent) => {
+    const { rerender } = render(<IndicatorCard label="Utilidad neta" value="-$ 0,10" negative detail="Resultado del periodo" accent={accent} icon={Package} />)
+    expect(screen.getByText('Utilidad neta')).toBeInTheDocument()
+    expect(screen.getByText('-$ 0,10')).toHaveClass('text-error')
+    expect(screen.getByText('Resultado del periodo')).toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    rerender(<IndicatorCard label="Utilidad neta" accent={accent} icon={Package} error onRetry={() => {}} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('No pudimos cargar este dato.')
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
   })
 
   it('el estado vacio no lleva sombra', () => {

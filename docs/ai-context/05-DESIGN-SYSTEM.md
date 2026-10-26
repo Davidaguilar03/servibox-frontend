@@ -4,7 +4,47 @@ Tokens en `src/styles/tokens.css` (bloque `@theme` de Tailwind v4), roles `monto
 en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 `src/styles/designSystem.test.ts` recorre los `.tsx`, `.ts` y `.css` de `src` y falla si algo
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
-(sin cambio en esta tarea).
+(incluidos los nuevos pares de seleccion lateral).
+
+## Marca provisional y superficies del rediseno (2026-10-26)
+
+* Referencia provisional: logo-reference.png, sin recurso oficial disponible. BrandSymbol
+  usa src/brand/symbol.svg, S blanca inclinada dentro de un cuadrado rojo redondeado.
+  Wordmark agrega ServiBox inclinado con Montserrat existente: Servi carbon sobre claro o
+  blanco sobre oscuro y Box rojo. Proporciones conservadas, sin imagen raster ni fuentes
+  descargadas. El compacto usa el mismo SVG, con nombre accesible ServiBox.
+* Favicon: index.html declara ese mismo SVG con type image/svg+xml y sizes any. Vite
+  procesa el recurso para produccion; no hay manifest, apple-touch-icon ni PWA nuevos.
+  La legibilidad en pestana a 16 y 32 px queda para David.
+  Correccion posterior: la S usa un contorno de Montserrat 700 existente, convertido a
+  coordenadas vectoriales con inclinacion incorporada y centro en 32/32 dentro del viewBox
+  de 64. No depende de fuentes al renderizar, ni usa skew externo, recortes o una variante
+  distinta para favicon. Detalles de huella de llanta pendientes de propuesta grafica
+  aprobada, sin implementar por falta de referencia.
+* Sidebar carbon nav, hover nav-hover y seleccion nav-active (#522b30), texto blanco,
+  borde lateral brand e icono brand. El acento diferencia la ruta activa sin depender solo
+  del fondo; aria-current se conserva. Configuracion va abajo en Administracion; el unico
+  UserMenu va debajo con identidad y rol reales. Nunca se presupone Administrador.
+* Pie sin superposicion sobre enlaces: navegacion operativa desplazable, pie fuera de ese
+  scroll. Panel del usuario hacia arriba con altura limitada al viewport y scroll propio;
+  el compacto conserva acceso a Cerrar sesion. La revision de poco alto y cortes es manual.
+* Se conservan 240/72 px, compacto por defecto entre 1024 y 1279, expandido desde 1280 y
+  eleccion recordada con try/catch. Movil conserva inert, trampa de foco y Escape.
+  Contraer/expandir vive en la cabecera: junto al logo expandido, en una fila propia debajo
+  del simbolo compacto; area de 44, nombre accesible, title, foco visible y aria-expanded.
+  No se duplica en el pie ni se agrega un control de ancho en movil.
+* Superficies: blanco surface sobre canvas, radio surface, borde border. DataTable agrega
+  contorno y borde superior de 2 px border-accent (#f4ccc8), encabezado canvas y separadores
+  border. Estados vacio y error conservan sus mensajes; no se agregan estados ficticios.
+* IndicatorCard: borde superior de 2 px, acentos brand (border-accent), success, warning o
+  info; icono opcional sobre fondo tenue con tinta de contraste. Inicio usa ventas success,
+  costo warning, bruta info y neta brand. Son contextos, no una clasificacion del resultado:
+  el signo y el texto no cambian y una perdida sigue en error aunque el borde sea otro.
+* Sin degradados, glassmorphism, brillos, sombras en tarjetas, iconos repetidos sin utilidad
+  ni movimiento ornamental. No se agregan controles, metricas ni textos para llenar espacio.
+  Se conservan tipografia, espaciado, radios, alturas y una accion primaria por contexto.
+* Revision visual manual de David antes del cierre, ver 02-CONVENTIONS. Ningun resultado
+  automatico equivale a aprobacion visual ni garantiza ausencia de desbordes.
 
 Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` desde el
 2026-10-25. Los tokens de legado (`--text-display` 48, `--text-h1` a `--text-h3`,
@@ -15,7 +55,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 
 | Clase | Tamano | Interlineado | Peso | Uso |
 |-|-|-|-|-|
-| `text-title` | 24 px | 32 px | 600 | Solo el titulo de pantalla (`h1`) y la marca (Wordmark y la "S" de la barra contraida) |
+| `text-title` | 24 px | 32 px | 600 | Solo el titulo de pantalla (`h1`) y el nombre de la marca (Wordmark) |
 | `text-body` | 15 px | 1.6 (24 px) | 400 | Cuerpo, celdas de tabla, campos, textos de modal |
 | `text-section` | 15 px | 1.6 (24 px) | 600 | Titulos de seccion y de modal (`h2`, `h3`). Es body con peso 600: no es un tamano nuevo |
 | `text-small` | 13 px | 1.5 | 400 | Ayudas, subtitulos, pies, metadatos, badges, migas, menu lateral |
@@ -35,7 +75,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 * `text-figure` es una utilidad de `index.css` con los tokens `--figure-*` de `tokens.css`;
   no cuenta como tamano de contenido. Tres tamanos de contenido por pantalla: title 24, body 15
   (con section) y small 13.
-* La guarda solo deja `text-title` en un `h1` (y en Wordmark y AppShell), `text-section` en un
+* La guarda solo deja `text-title` en un `h1` (y en Wordmark), `text-section` en un
   `h2` o `h3`, `text-figure` en la lista `FIGURE_FILES` y `text-display` en el `h1` de
   `LandingPage.tsx` (`DISPLAY_FILES`, mas su definicion en `index.css`).
 * **Excepcion documentada de la landing:** `text-display` (tokens `--display-*`, utilidad en
@@ -269,7 +309,8 @@ Pendientes de decidir o validar con el disenador (detalle en
    modales.
 2. `IndicatorCard` aplica `text-figure` (numeros tabulares) tambien a conteos (productos,
    clientes, movimientos).
-3. Wordmark y la "S" de la barra contraida usan `text-title` con `font-bold` (marca).
+3. Wordmark usa `text-title` con `font-bold italic` como marca provisional; el simbolo es
+   SVG compartido. Pendiente de sustituir por los recursos oficiales cuando existan.
 4. **Resuelto el 2026-10-25:** los enlaces de celda usan `CellLink` (rol small, 600).
 5. **Resuelto el 2026-10-25:** las pestanas de Configuracion y de Productos usan `TabList` en
    `small`; menu lateral y badges siguen en `small`.

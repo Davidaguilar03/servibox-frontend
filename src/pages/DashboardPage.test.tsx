@@ -152,20 +152,20 @@ describe('panel de control', () => {
     expect(salesRows[1]).toContain('Pendiente')
   })
 
-  it('el shell muestra el menu de usuario en la barra superior, la miga de pan y el tenant', async () => {
+  it('el shell muestra usuario lateral, miga de pan superior y la serviteca real', async () => {
     mockApi(fullRoutes())
     saveToken(validToken(), { username: 'laura.gomez', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' })
     renderRoute('/inicio')
 
-    // La barra lateral ya no tiene el bloque de usuario ni Salir.
     const sidebar = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
     expect(within(sidebar).queryByText('laura.gomez')).not.toBeInTheDocument()
-    expect(within(sidebar).queryByText('LG')).not.toBeInTheDocument()
+    expect(within(sidebar).getByText('LG')).toBeInTheDocument()
     expect(within(sidebar).queryByRole('button', { name: 'Salir' })).not.toBeInTheDocument()
 
     const header = screen.getByRole('banner')
     expect(within(header).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inicio')
-    const userButton = within(header).getByRole('button', { name: 'Menú de usuario de laura.gomez' })
+    expect(within(header).queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument()
+    const userButton = within(sidebar).getByRole('button', { name: 'Menú de usuario de laura.gomez' })
     expect(within(userButton).getByText('LG')).toBeInTheDocument()
     expect(within(userButton).getByText('Autollantas A&C')).toBeInTheDocument()
     expect(within(header).queryByRole('searchbox')).not.toBeInTheDocument()

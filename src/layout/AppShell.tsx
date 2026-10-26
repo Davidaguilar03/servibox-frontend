@@ -28,7 +28,6 @@ const navItems = [
   { to: '/compras', label: 'Compras', icon: Truck },
   { to: '/cuentas', label: 'Cuentas', icon: Wallet },
   { to: '/reportes', label: 'Reportes', icon: ChartColumn },
-  { to: '/configuracion', label: 'Configuración', icon: Settings },
 ]
 
 /** Un tramo de la miga de pan; `to` es su destino cuando no es el ultimo. */
@@ -163,35 +162,12 @@ export function AppShell() {
           menuOpen ? 'translate-x-0 shadow-overlay lg:shadow-none' : '-translate-x-full'
         } ${collapsed ? 'lg:w-sidebar-collapsed' : ''}`}
       >
-        <div className={`flex h-topbar shrink-0 items-center px-6 ${collapsed ? 'lg:justify-center lg:px-0' : ''}`}>
-          <span className={collapsed ? 'lg:hidden' : ''}>
-            <Wordmark onDark />
-          </span>
-          {collapsed && <span className="hidden font-display text-title font-bold text-brand lg:inline">S</span>}
-        </div>
-
-        <nav aria-label="Principal" className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-4 lg:gap-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={collapsed ? label : undefined}
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                `flex min-h-touch items-center gap-3 rounded-control px-3 text-small font-semibold transition-colors duration-(--duration-fast) ${focusRing} ${
-                  collapsed ? 'lg:justify-center lg:px-0' : ''
-                } ${isActive ? 'bg-action text-text-inverse ring-1 ring-brand ring-inset' : 'text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
-              }
-            >
-              <Icon {...iconMd} aria-hidden className="shrink-0" />
-              <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Contraer solo existe desde lg: asi no cuenta en el foco atrapado del menu movil. */}
-        {isDesktop && (
-          <div className="hidden px-3 pb-2 lg:block">
+        <div role="group" aria-label="Cabecera del menú lateral" className={`flex h-topbar shrink-0 items-center gap-1 px-3 ${collapsed ? 'lg:h-auto lg:flex-col lg:py-2' : ''}`}>
+          <Link to="/inicio" aria-label="ServiBox, ir a Inicio" title="ServiBox" onClick={() => setMenuOpen(false)} className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-control focus-ring">
+            <Wordmark onDark compact={collapsed && isDesktop} />
+          </Link>
+          {/* Solo escritorio: en compacto ocupa su propia fila bajo el simbolo. */}
+          {isDesktop && (
             <button
               type="button"
               onClick={() => {
@@ -200,13 +176,53 @@ export function AppShell() {
                 saveSidebarChoice(next)
               }}
               aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
-              className={`flex min-h-touch w-full items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing}`}
+              title={collapsed ? 'Expandir menú' : 'Contraer menú'}
+              aria-expanded={!collapsed}
+              className={`ml-auto flex size-touch shrink-0 items-center justify-center rounded-control text-text-subtle transition-colors duration-(--duration-fast) hover:bg-nav-hover hover:text-text-inverse ${focusRing} ${collapsed ? 'lg:ml-0' : ''}`}
             >
-              {collapsed ? <PanelLeftOpen {...iconMd} /> : <PanelLeftClose {...iconMd} />}
+              {collapsed ? <PanelLeftOpen {...iconMd} aria-hidden /> : <PanelLeftClose {...iconMd} aria-hidden />}
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
+        <nav aria-label="Principal" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-4 lg:gap-1">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              title={collapsed ? label : undefined}
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex min-h-touch shrink-0 items-center gap-3 rounded-control border-l-4 px-2 text-small font-semibold transition-colors duration-(--duration-fast) ${focusRing} ${
+                  collapsed ? 'lg:justify-center lg:px-0' : ''
+                } ${isActive ? 'border-brand bg-nav-active text-text-inverse' : 'border-transparent text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
+              }
+            >
+              <Icon {...iconMd} aria-hidden className="shrink-0 [[aria-current=page]_&]:text-brand" />
+              <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="shrink-0 border-t border-nav-hover px-3 pt-2">
+          <nav aria-label="Administración">
+            <NavLink
+              to="/configuracion"
+              title="Configuración"
+              onClick={() => setMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex min-h-touch items-center gap-3 rounded-control border-l-4 px-2 text-small font-semibold focus-ring ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'border-brand bg-nav-active text-text-inverse' : 'border-transparent text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
+              }
+            >
+              <Settings {...iconMd} aria-hidden className="shrink-0 [[aria-current=page]_&]:text-brand" />
+              <span className={collapsed ? 'lg:sr-only' : ''}>Configuración</span>
+            </NavLink>
+          </nav>
+        </div>
+
+        <div className="mx-3 shrink-0 border-t border-nav-hover py-3">
+          <UserMenu compact={collapsed && isDesktop} />
+        </div>
       </aside>
 
       <div
@@ -258,9 +274,6 @@ export function AppShell() {
               })}
             </ol>
           </nav>
-          <div className="ml-auto shrink-0">
-            <UserMenu />
-          </div>
         </header>
 
         <main id="contenido" ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-6 py-6 outline-none lg:px-8 lg:py-8">

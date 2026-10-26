@@ -148,7 +148,9 @@ describe('Datos de la serviteca', () => {
       tenantName: 'Serviteca El Roble',
       tenantSlug: 'demo',
     })
-    expect(within(screen.getByRole('banner')).getByText('Serviteca El Roble')).toBeInTheDocument()
+    const sidebar = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
+    expect(within(sidebar).getByText('Serviteca El Roble')).toBeInTheDocument()
+    expect(within(screen.getByRole('banner')).queryByText('Serviteca El Roble')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
   })
 

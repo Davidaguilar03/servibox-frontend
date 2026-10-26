@@ -12,6 +12,30 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-26: Marca provisional y base visual del shell
+
+* Decision: simbolo S blanco inclinado en cuadrado rojo redondeado, SVG compartido por
+  BrandSymbol y favicon. Wordmark compone simbolo y ServiBox inclinado con Montserrat
+  existente; la variante compacta conserva el mismo simbolo. No es la marca oficial final.
+* Sidebar: carbon, seleccion nav-active con acento lateral brand e icono destacado;
+  Configuracion separada abajo y UserMenu unico en el pie, con datos reales y panel hacia
+  arriba desplazable. Se conservan rutas, acciones, preferencia de ancho y foco movil.
+* Base compartida: IndicatorCard admite acento e icono opcionales. Inicio usa los cuatro
+  indicadores existentes sin cambiar cifras ni formulas. DataTable recibe contorno con
+  acento tenue superior; encabezado y separadores conservan sus tokens y semantica.
+* Reemplaza solo la ubicacion superior del usuario de "Menu de usuario arriba, panel con
+  costo de lo vendido y jerarquia de titulos" y el fondo action del sidebar de "Tokens de
+  contraste y boton primario en brand-ink". Sus demas reglas siguen vigentes.
+* Revision: David hace las comprobaciones visuales manuales antes del cierre. Reemplaza
+  las instrucciones de navegador automatizado del agente, sin cambiar AGENTS.md. Pruebas,
+  build y lint siguen siendo obligatorios. David aprobo la revision tecnica y visual tras
+  corregir la S y mover el control arriba; el prompt de cierre autoriza commit, push y PR.
+* Alternativas consideradas: imagen raster del logo, iconos de marca distintos en compacto,
+  un segundo menu de usuario o nuevos componentes de tarjetas. Se evita duplicar recursos
+  y comportamiento; solo se extienden componentes con uso real.
+* Evidencia y limites: sessions/2026-10-26-brand-shell-refresh.md. Revision visual de esta
+  tarea aprobada por David; no equivale a una auditoria global de desbordes.
+
 ## 2026-10-25: Compatibilidad monetaria con importes definitivos por linea
 
 * Decision: nuevas ventas y compras multiplican precio por cantidad antes de redondear
@@ -186,6 +210,8 @@ Formato de cada entrada:
   diseno.
 
 ## 2026-10-25: Menu de usuario arriba, panel con costo de lo vendido y jerarquia de titulos
+
+* Estado: ubicacion del menu de usuario reemplazada el 2026-10-26 por el pie lateral.
 
 * Decision:
   * Tipografia: `text-title` pasa a 24/32/600 solo en el `h1`; titulos de seccion y de modal
@@ -426,6 +452,9 @@ Formato de cada entrada:
   hace que el boton no cambie de lugar entre el vacio y el listado.
 
 ## 2026-10-24: Tokens de contraste y boton primario en brand-ink
+
+* Estado: fondo y anillo del item activo del sidebar reemplazados el 2026-10-26 por
+  nav-active y acento lateral brand. Contraste y restantes usos conservados.
 
 * Decision: se corrigen los 17 pares que fallaban en la auditoria visual (CON-01 a CON-07 y
   COL-01) solo con tokens y clases, sin cambiar textos, layout ni logica. Valores y razones

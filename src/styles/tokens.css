@@ -18,6 +18,8 @@
   --color-canvas: #f2f3f5;
   --color-nav: #1f2937;
   --color-nav-hover: #2d3748;
+  --color-nav-active: #522b30;
+  --color-border-accent: #f4ccc8;
   --color-text: #1f2937;
   /* Mas oscuro que neutral-500: cumple 4.5 a 1 tambien sobre canvas y neutral-200. */
   --color-text-muted: #5f6673;

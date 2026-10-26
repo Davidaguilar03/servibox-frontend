@@ -27,7 +27,8 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
   (`CategoryDot`) lo aplica con `style`. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * Un valor nuevo se agrega primero al archivo de tokens y despues se usa.
 * `color-action` es el fondo del boton primario y de los estados activos con texto blanco
-  (item de la barra lateral, pagina actual); vale `brand-ink` y se cambia en un solo lugar.
+  (pagina actual); vale `brand-ink` y se cambia en un solo lugar.
+  La barra lateral usa `nav-active` con acento lateral `brand` y texto blanco.
   Hover y activo del primario y del peligro se derivan con `color-mix` en el mismo
   archivo; el oscuro usa `nav-hover`.
 * Texto rojo sobre fondo claro: `brand-ink`, no `brand` (contraste). Nunca `color-brand`
@@ -140,11 +141,11 @@ necesite, no antes.
 
 ## Accesibilidad del shell
 
-* El menu de usuario vive en la barra superior (`layout/UserMenu.tsx`): boton con las
-  iniciales y, desde md, la serviteca; panel con nombre, rol traducido (`roleLabel`), serviteca
+* El menu de usuario vive en el pie de la barra lateral (`layout/UserMenu.tsx`): boton con las
+  iniciales, serviteca y rol real, solo iniciales en compacto; panel hacia arriba con nombre, rol traducido (`roleLabel`), serviteca
   y Cerrar sesion. Patron disclosure (`aria-expanded`, `aria-controls`), no `role=menu`: Esc
-  cierra y devuelve el foco, el clic fuera y el cambio de ruta lo cierran. La barra lateral
-  ya no tiene bloque de usuario ni Salir, y no hay pildora de la serviteca.
+  cierra y devuelve el foco, el clic fuera y el cambio de ruta lo cierran. No se duplica en
+  la barra superior. Configuracion vive separada de la navegacion operativa, sobre el usuario.
 * Barra lateral desde lg: contraida (72 px, solo iconos con `aria-label` y `title`) de 1024 a
   1279 px y expandida (240) desde 1280. El boton Expandir o Contraer menu guarda la eleccion en
   `localStorage` (`servibox.sidebar`, con try/catch) y la eleccion manda sobre el ancho.
@@ -212,9 +213,12 @@ necesite, no antes.
   gana; para ocultar un boton bajo sm se usa `max-sm:hidden`.
 * En los encabezados con varios botones el grupo es `flex flex-wrap gap-3` y el primario va al
   final.
-* Criterio de aceptacion: el script de auditoria de desbordes (cada ruta en 360, 390, 768,
-  1024, 1280 y 1536 px, con datos y con un tenant vacio) no deja desbordes sin justificar. Ver
-  [sessions/2026-10-24-responsive.md](sessions/2026-10-24-responsive.md).
+* Desde el rediseno del 2026-10-26, David realiza la revision visual manual antes del cierre.
+  Reemplaza las instrucciones anteriores de navegador automatizado y auditoria visual del
+  agente: el agente no abre ni automatiza navegadores ni toma capturas. Ejecuta pruebas,
+  build y lint, entrega comandos de arranque, URL y lista de revision. La revision tecnica
+  y la aprobacion visual de David son necesarias para el cierre; no se declara ausencia de
+  desbordes ni aprobacion visual sin esa revision. AGENTS.md no se modifica.
 
 ## Formatos
 
