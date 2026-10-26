@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, ReactNode } from 'react'
 import { rangeLabel, type DateRange, type PeriodKey } from '../lib/period'
 import { SelectField } from './SelectField'
 import { TextField } from './TextField'
@@ -19,6 +19,9 @@ interface PeriodPickerProps<T extends PeriodKey> {
     errors: { desde?: string; hasta?: string }
   }
   label?: string
+  /** Inline reserva una fila horizontal para fechas segun el ancho real del contenedor. */
+  layout?: 'stacked' | 'inline'
+  action?: ReactNode
 }
 
 /**
@@ -26,23 +29,29 @@ interface PeriodPickerProps<T extends PeriodKey> {
  * la pantalla, el rango visible debajo ("1 oct. 2026 al 24 oct. 2026") y, con Personalizado,
  * los campos Desde y Hasta. El calculo del rango (zona del negocio) vive en `lib/period.ts`.
  */
-export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, range, custom, label = 'Período' }: PeriodPickerProps<T>) {
+export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, range, custom, label = 'Período', layout = 'stacked', action }: PeriodPickerProps<T>) {
   const showCustom = value === 'personalizado' && custom
+  const inline = layout === 'inline'
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <SelectField
-        label={label}
-        options={options}
-        value={value}
-        hint={range ? rangeLabel(range) : undefined}
-        onChange={(event) => onChange(event.target.value as T)}
-      />
-      {showCustom && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <TextField label="Desde" type="date" {...custom.desde} error={custom.errors.desde} />
-          <TextField label="Hasta" type="date" {...custom.hasta} error={custom.errors.hasta} />
+    <div className={inline && showCustom ? '@container min-w-0' : 'min-w-0'}>
+      <div className={inline ? 'flex flex-wrap items-start gap-4' : 'flex min-w-0 flex-col gap-4'}>
+        <div className={inline ? 'w-48 max-w-full shrink-0' : ''}>
+          <SelectField
+            label={label}
+            options={options}
+            value={value}
+            hint={range ? rangeLabel(range) : undefined}
+            onChange={(event) => onChange(event.target.value as T)}
+          />
         </div>
-      )}
+        {showCustom && (
+          <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
+            <TextField label="Desde" type="date" {...custom.desde} error={custom.errors.desde} />
+            <TextField label="Hasta" type="date" {...custom.hasta} error={custom.errors.hasta} />
+          </div>
+        )}
+        {action && <div className="order-1 shrink-0 pt-6 @min-[720px]:order-2">{action}</div>}
+      </div>
     </div>
   )
 }

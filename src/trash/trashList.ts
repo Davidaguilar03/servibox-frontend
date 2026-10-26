@@ -1,5 +1,7 @@
 import { normalizeText } from '../lib/text'
-import { periodPrefix, type Period } from '../sales/salesList'
+import { periodPrefix } from '../sales/salesList'
+
+type Period = 'este-mes' | 'mes-anterior' | 'este-ano' | 'todas'
 
 // Logica de las papeleras de ventas y compras. Reglas en docs/ai-context/03-DECISIONS.md.
 

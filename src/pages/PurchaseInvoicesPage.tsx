@@ -52,7 +52,7 @@ export function PurchaseInvoicesPage() {
   const [today] = useState(() => businessToday())
   const { desde, hasta } = monthRange(today)
   const [searchParams, setSearchParams] = useSearchParams()
-  const filters = parseFilters(searchParams)
+  const filters = parseFilters(searchParams, false)
 
   const purchases = useQuery({ queryKey: PURCHASES_KEY, queryFn: fetchPurchaseInvoices })
   const kpis = useQuery({ queryKey: ['kpis', desde, hasta], queryFn: () => fetchKpis(desde, hasta) })
@@ -141,7 +141,7 @@ export function PurchaseInvoicesPage() {
             options={periodOptions}
             value={filters.periodo}
             onChange={(periodo) => updateFilters({ periodo })}
-            range={filters.periodo === 'todas' ? null : periodRange(filters.periodo, today)}
+            range={filters.periodo === 'todas' || filters.periodo === 'personalizado' ? null : periodRange(filters.periodo, today)}
           />,
         ]}
       </FilterBar>

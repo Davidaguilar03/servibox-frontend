@@ -8,6 +8,32 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 
 ## Marca provisional y superficies del rediseno (2026-10-26)
 
+* Correccion de Inicio solicitada por David: sin barra superior ni breadcrumb redundante;
+  conserva h1, titulo de pestana y el boton movil del shell dentro del encabezado de Inicio.
+  PeriodPicker admite layout inline y action, usados solo en Inicio: etiqueta visible,
+  accion alineada al control (24 px de etiqueta y separacion), ayuda debajo. Desde 720 px
+  reales del contenedor, selector, fechas y accion comparten fila; por debajo, las fechas
+  pasan juntas a una segunda fila. Desde/Hasta usan columnas de minimo 144 px y separacion
+  de 16: dos cuando caben (304 px), una en contenedores menores. Default stacked conserva
+  la disposicion previa de las demas pantallas.
+  Los periodos predefinidos de Inicio usan grupo de ancho natural a la derecha; solo
+  Personalizado activa crecimiento y contencion inline. Selector inline de 192 px como
+  maximo disponible; el rango envuelve debajo sin ensanchar el selector ni mover la accion.
+* IndicatorCard agrega acento brand-strong: solo cambia el color del borde superior de
+  border-accent a brand, manteniendo 2 px y la geometria. Inicio lo usa solo en Utilidad
+  neta; valores positivos y negativos mantienen sus colores semanticos. Tablas intactas.
+  Cuentas de Inicio: Landmark para BANCO, Wallet para EFECTIVO y Smartphone para DIGITAL,
+  iconMd sobre canvas, decorativos y elegidos por tipo real, sin logos comerciales.
+
+* Inicio: PeriodPicker existente junto a Registrar venta, una sola accion primaria.
+  Cuatro IndicatorCard con acentos aprobados (neta reforzada con brand-strong), una columna, dos desde sm y cuatro desde
+  2xl. Simbolo monetario y cifra unidos por espacio inseparable.
+  Stock y saldos en proporcion 3:2 desde xl, apilados por debajo; ventas debajo. Aclaracion
+  comun de estado actual para stock y saldos. Total disponible sobre canvas con radio
+  control; encabezados, enlaces, bordes y separadores reutilizan componentes y tokens.
+  No cambian logo, sidebar ni usuario. Revision visual aprobada por David tras las
+  correcciones de encabezado, periodo, iconos, acento y ancho compacto del selector.
+
 * Referencia provisional: logo-reference.png, sin recurso oficial disponible. BrandSymbol
   usa src/brand/symbol.svg, S blanca inclinada dentro de un cuadrado rojo redondeado.
   Wordmark agrega ServiBox inclinado con Montserrat existente: Servi carbon sobre claro o

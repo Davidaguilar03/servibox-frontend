@@ -2,10 +2,12 @@ import { addMoney } from '../lib/money'
 import type { Sale } from '../dashboard/dashboardApi'
 import { normalizeText } from '../lib/text'
 import type { Movement } from './salesApi'
+import { periodRange } from '../lib/period'
+import { validateRange } from '../reports/reports'
 
 // Logica del listado de facturas de venta. Reglas en docs/ai-context/03-DECISIONS.md.
 
-export type Period = 'este-mes' | 'mes-anterior' | 'este-ano' | 'todas'
+export type Period = 'este-mes' | 'mes-anterior' | 'ultimos-30' | 'este-ano' | 'todas' | 'personalizado'
 
 export interface SalesFilters {
   q: string
@@ -13,6 +15,8 @@ export interface SalesFilters {
   estado: Exclude<Sale['status'], 'ANULADA'> | ''
   pago: Sale['paymentType'] | ''
   periodo: Period
+  desde?: string
+  hasta?: string
   pagina: number
 }
 
@@ -28,7 +32,24 @@ export function filtersActive(filters: SalesFilters): boolean {
 
 const statuses: Array<SalesFilters['estado']> = ['PAGADA', 'PENDIENTE']
 const paymentTypes: Array<Sale['paymentType']> = ['CONTADO', 'CREDITO']
-const periods: Period[] = ['este-mes', 'mes-anterior', 'este-ano', 'todas']
+const periods: Period[] = ['este-mes', 'mes-anterior', 'ultimos-30', 'este-ano', 'todas', 'personalizado']
+
+export const SALES_PERIOD_OPTIONS: Array<{ value: Period; label: string }> = [
+  { value: 'este-mes', label: 'Este mes' },
+  { value: 'mes-anterior', label: 'Mes anterior' },
+  { value: 'ultimos-30', label: 'Últimos 30 días' },
+  { value: 'este-ano', label: 'Este año' },
+  { value: 'todas', label: 'Todas' },
+  { value: 'personalizado', label: 'Personalizado' },
+]
+
+/** Rango exacto para Inicio y los nuevos periodos de Ventas; Todas no tiene rango. */
+export function salesRange(filters: Pick<SalesFilters, 'periodo' | 'desde' | 'hasta'>, today: string) {
+  if (filters.periodo === 'todas') return null
+  return filters.periodo === 'personalizado'
+    ? { desde: filters.desde ?? '', hasta: filters.hasta ?? '' }
+    : periodRange(filters.periodo, today)
+}
 
 export const CONSUMIDOR_FINAL = 'Consumidor final'
 
@@ -37,13 +58,15 @@ function pick<T extends string>(value: string | null, allowed: T[], fallback: T)
 }
 
 /** Filtros leidos de la query string; un valor desconocido vale lo de por defecto. */
-export function parseFilters(params: URLSearchParams): SalesFilters {
+export function parseFilters(params: URLSearchParams, extendedPeriods = true): SalesFilters {
   const page = Number(params.get('pagina'))
+  const periodo = pick(params.get('periodo'), extendedPeriods ? periods : periods.filter((p) => p !== 'ultimos-30' && p !== 'personalizado'), DEFAULT_FILTERS.periodo)
   return {
     q: params.get('q') ?? '',
     estado: pick<SalesFilters['estado']>(params.get('estado'), statuses, ''),
     pago: pick<SalesFilters['pago']>(params.get('pago'), paymentTypes, ''),
-    periodo: pick(params.get('periodo'), periods, DEFAULT_FILTERS.periodo),
+    periodo,
+    ...(periodo === 'personalizado' ? { desde: params.get('desde') ?? '', hasta: params.get('hasta') ?? '' } : {}),
     pagina: Number.isInteger(page) && page > 1 ? page : 1,
   }
 }
@@ -55,6 +78,10 @@ export function filtersToParams(filters: SalesFilters): URLSearchParams {
   if (filters.estado) params.set('estado', filters.estado)
   if (filters.pago) params.set('pago', filters.pago)
   if (filters.periodo !== DEFAULT_FILTERS.periodo) params.set('periodo', filters.periodo)
+  if (filters.periodo === 'personalizado') {
+    if (filters.desde) params.set('desde', filters.desde)
+    if (filters.hasta) params.set('hasta', filters.hasta)
+  }
   if (filters.pagina > 1) params.set('pagina', String(filters.pagina))
   return params
 }
@@ -79,6 +106,8 @@ export function periodPrefix(period: Period, today: string): string | null {
     case 'este-ano':
       return today.slice(0, 4)
     case 'todas':
+    case 'ultimos-30':
+    case 'personalizado':
       return null
   }
 }
@@ -104,11 +133,15 @@ export function activeSales(sales: Sale[]): Sale[] {
 /** Aplica busqueda, estado, forma de pago y periodo, y ordena. La pagina va aparte. */
 export function filterSales(sales: Sale[], filters: SalesFilters, today: string): Sale[] {
   const prefix = periodPrefix(filters.periodo, today)
+  const range = salesRange(filters, today)
+  const exact = filters.periodo === 'personalizado' || filters.periodo === 'ultimos-30'
+  if (exact && range && !validateRange(range.desde, range.hasta).valid) return []
   const query = normalizeText(filters.q)
   return sortSales(
     activeSales(sales).filter(
       (sale) =>
         (prefix === null || sale.invoiceDate.startsWith(prefix)) &&
+        (!exact || !range || (sale.invoiceDate >= range.desde && sale.invoiceDate <= range.hasta)) &&
         (!filters.estado || sale.status === filters.estado) &&
         (!filters.pago || sale.paymentType === filters.pago) &&
         (!query ||

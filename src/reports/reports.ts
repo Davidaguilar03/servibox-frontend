@@ -46,7 +46,12 @@ export function validateRange(desde: string, hasta: string) {
   const errors: RangeErrors = {}
   if (!desde) errors.desde = 'Elige la fecha de inicio.'
   if (!hasta) errors.hasta = 'Elige la fecha de fin.'
-  if (desde && hasta) {
+  for (const [field, value] of [['desde', desde], ['hasta', hasta]] as const) {
+    if (value && (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(`${value}T00:00:00Z`)) || new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value)) {
+      errors[field] = 'Escribe una fecha válida.'
+    }
+  }
+  if (desde && hasta && !errors.desde && !errors.hasta) {
     if (desde > hasta) errors.hasta = 'Hasta no puede ser anterior a Desde.'
     else if (rangeDays(desde, hasta) > REPORT_MAX_DAYS) {
       errors.hasta = `El período no puede pasar de ${REPORT_MAX_DAYS} días. Acorta el rango.`

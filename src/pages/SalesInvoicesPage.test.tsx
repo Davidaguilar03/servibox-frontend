@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { EMPTY_VALUE } from '../lib/format'
@@ -91,6 +91,87 @@ describe('facturas de venta', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it.each([
+    ['este-mes', '2026-10-01', '2026-10-18'],
+    ['mes-anterior', '2026-09-01', '2026-09-30'],
+    ['ultimos-30', '2026-09-19', '2026-10-18'],
+    ['este-ano', '2026-01-01', '2026-10-18'],
+    ['personalizado&desde=2026-09-20&hasta=2026-10-05', '2026-09-20', '2026-10-05'],
+  ])('Ver todas traslada exactamente %s a Ventas y conserva indicadores mensuales', async (periodo, desde, hasta) => {
+    const fetchMock = mockApi(fullRoutes())
+    const router = renderRoute(`/inicio?periodo=${periodo}`)
+    const link = await screen.findByRole('link', { name: 'Ver todas' })
+    expect(link).toHaveAttribute('href', `/ventas?periodo=personalizado&desde=${desde}&hasta=${hasta}`)
+    await userEvent.click(link)
+    expect(await screen.findByRole('heading', { name: 'Facturas de venta' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Período')).toHaveValue('personalizado')
+    expect(screen.getByLabelText('Desde')).toHaveValue(desde)
+    expect(screen.getByLabelText('Hasta')).toHaveValue(hasta)
+    const expected = sales.filter((sale) => sale.status !== 'ANULADA' && sale.invoiceDate >= desde && sale.invoiceDate <= hasta).sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate) || b.id - a.id).map((sale) => sale.invoiceNumber)
+    await waitFor(() => expect(invoiceNumbers()).toEqual(expected))
+    expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-18', expect.anything())
+    expect(router.state.location.search).toBe(`?periodo=personalizado&desde=${desde}&hasta=${hasta}`)
+  })
+
+  it('Personalizado conserva fechas al paginar, recargar y navegar atras y adelante', async () => {
+    const many = Array.from({ length: 30 }, (_, index) => sale(index + 1, { invoiceDate: '2026-09-20' }))
+    mockApi({ ...fullRoutes(), '/api/sales': () => jsonResponse(many) })
+    const router = renderRoute('/ventas?periodo=personalizado&desde=2026-09-01&hasta=2026-09-30')
+    await screen.findByText('1 a 25 de 30 facturas')
+    await userEvent.click(screen.getByRole('button', { name: 'Página 2' }))
+    expect(router.state.location.search).toBe('?periodo=personalizado&desde=2026-09-01&hasta=2026-09-30&pagina=2')
+    expect(invoiceNumbers()).toHaveLength(5)
+    await act(() => router.navigate(-1))
+    expect(await screen.findByText('1 a 25 de 30 facturas')).toBeInTheDocument()
+    await act(() => router.navigate(1))
+    expect(await screen.findByText('26 a 30 de 30 facturas')).toBeInTheDocument()
+    const path = router.state.location.pathname + router.state.location.search
+    cleanup()
+    renderRoute(path)
+    expect(await screen.findByText('26 a 30 de 30 facturas')).toBeInTheDocument()
+    expect(screen.getByLabelText('Desde')).toHaveValue('2026-09-01')
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-09-19' } })
+    fireEvent.blur(screen.getByLabelText('Hasta'))
+    expect(await screen.findByText('No hay facturas con esos filtros.')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['desde=2026-10-01', 'Elige la fecha de fin.'],
+    ['hasta=2026-10-18', 'Elige la fecha de inicio.'],
+    ['desde=2026-10-18&hasta=2026-10-01', 'Hasta no puede ser anterior a Desde.'],
+    ['desde=2026-02-30&hasta=2026-03-10', 'Escribe una fecha válida.'],
+    ['desde=2025-01-01&hasta=2026-01-02', 'El período no puede pasar de 366 días. Acorta el rango.'],
+  ])('muestra errores del rango %s sin facturas anteriores y mantiene indicadores mensuales', async (query, message) => {
+    const fetchMock = mockApi(fullRoutes())
+    renderRoute(`/ventas?periodo=personalizado&${query}`)
+    expect(screen.getByText(message)).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([url]) => url.includes('/reporting/kpis'))).toEqual([
+      ['/api/reporting/kpis?desde=2026-10-01&hasta=2026-10-18', expect.anything()],
+    ])
+  })
+
+  it('ofrece los periodos nuevos, permite editar fechas y conserva los otros filtros', async () => {
+    mockApi(fullRoutes())
+    const router = renderRoute('/ventas?estado=PENDIENTE&pago=CREDITO&periodo=todas')
+    await userEvent.selectOptions(screen.getByLabelText('Período'), 'ultimos-30')
+    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0002', 'FV-0003']))
+    await userEvent.selectOptions(screen.getByLabelText('Período'), 'personalizado')
+    expect(screen.getByLabelText('Desde')).toHaveValue('2026-09-19')
+    fireEvent.change(screen.getByLabelText('Hasta'), { target: { value: '2026-09-30' } })
+    fireEvent.blur(screen.getByLabelText('Hasta'))
+    await waitFor(() => expect(invoiceNumbers()).toEqual(['FV-0003']))
+    expect(router.state.location.search).toBe('?estado=PENDIENTE&pago=CREDITO&periodo=personalizado&desde=2026-09-19&hasta=2026-09-30')
+    await act(() => router.navigate(-1))
+    expect(screen.getByLabelText('Período')).toHaveValue('ultimos-30')
+    await act(() => router.navigate(1))
+    expect(screen.getByLabelText('Hasta')).toHaveValue('2026-09-30')
+    await userEvent.selectOptions(screen.getByLabelText('Período'), 'mes-anterior')
+    expect(router.state.location.search).toBe('?estado=PENDIENTE&pago=CREDITO&periodo=mes-anterior')
   })
 
   it('muestra el saldo pendiente de cada factura, coherente con el estado', async () => {

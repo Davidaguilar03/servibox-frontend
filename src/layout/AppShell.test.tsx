@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
@@ -23,7 +23,7 @@ function pendingApi() {
 }
 
 const aside = () => screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
-const content = () => screen.getByRole('banner').parentElement as HTMLElement
+const content = () => screen.getByRole('main').parentElement as HTMLElement
 
 describe('shell', () => {
   beforeEach(() => {
@@ -59,11 +59,13 @@ describe('shell', () => {
       await screen.findByRole('heading', { level: 1, name: 'Inicio' })
 
       const button = screen.getByRole('button', { name: 'Abrir menú' })
+      expect(screen.getByRole('main')).toContainElement(button)
       expect(button).toHaveAttribute('aria-expanded', 'false')
       expect(button).toHaveAttribute('aria-controls', 'menu-lateral')
       expect(aside()).toHaveAttribute('id', 'menu-lateral')
 
-      await user.click(button)
+      button.focus()
+      await user.keyboard('{Enter}')
       expect(button).toHaveAttribute('aria-expanded', 'true')
       expect(aside()).not.toHaveAttribute('inert')
       expect(content()).toHaveAttribute('inert')
@@ -129,6 +131,21 @@ describe('shell', () => {
   })
 
   describe('miga de pan', () => {
+    it('solo Inicio omite la barra; navegar a Ventas y volver conserva breadcrumb y titulo', async () => {
+      stubViewport(true)
+      const router = renderRoute('/inicio')
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+      expect(document.title).toBe('Inicio · ServiBox')
+      await act(() => router.navigate('/ventas'))
+      expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Facturas de venta')
+      expect(document.title).toBe('Facturas de venta · ServiBox')
+      await act(() => router.navigate(-1))
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Inicio' })).toBeInTheDocument()
+      expect(document.title).toBe('Inicio · ServiBox')
+    })
+
     it('los tramos previos son enlaces y el ultimo es la pagina actual', async () => {
       stubViewport(true)
       renderRoute('/ventas/nueva')

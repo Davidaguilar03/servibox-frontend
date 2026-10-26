@@ -11,6 +11,11 @@ import {
 } from './reports'
 
 describe('validateRange', () => {
+  it.each(['2026-02-30', '2026-13-01', '2026-00-01', 'ayer', '2026-1-01'])('rechaza la fecha inexistente o mal formada %s en cualquiera de los extremos', (date) => {
+    expect(validateRange(date, '2026-12-31')).toEqual({ valid: false, errors: { desde: 'Escribe una fecha válida.' } })
+    expect(validateRange('2026-01-01', date)).toEqual({ valid: false, errors: { hasta: 'Escribe una fecha válida.' } })
+  })
+
   it('pide las dos fechas', () => {
     expect(validateRange('', '')).toEqual({
       errors: { desde: 'Elige la fecha de inicio.', hasta: 'Elige la fecha de fin.' },

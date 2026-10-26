@@ -1,8 +1,13 @@
 import { useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ChartPie, Package, TrendingUp, Wallet } from 'lucide-react'
+import { ChartPie, Landmark, Package, Smartphone, TrendingUp, Wallet } from 'lucide-react'
+import type { AppShellContext } from '../layout/AppShell'
+import { iconMd } from '../components/icons'
 import { useSession } from '../auth/session'
+import { useReportedError } from '../api/reportError'
+import { PeriodPicker } from '../components/PeriodPicker'
+import { GLOSSARY } from '../copy/glossary'
 import { CellLink } from '../components/CellLink'
 import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
@@ -20,7 +25,12 @@ import {
   type Product,
   type Sale,
 } from '../dashboard/dashboardApi'
-import { EMPTY_VALUE, formatCurrency, formatDate, formatMonth, monthToDate } from '../lib/format'
+import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
+import { businessToday } from '../lib/businessDate'
+import { rangeLabel, type DateRange } from '../lib/period'
+import { useUrlTextParam } from '../lib/useUrlTextParam'
+import { validateRange } from '../reports/reports'
+import { DEFAULT_FILTERS, filtersToParams, parseFilters, SALES_PERIOD_OPTIONS, salesRange, type Period } from '../sales/salesList'
 import { lowStockProducts, stockAlertCounts, type StockStatus } from '../lib/stock'
 
 const ROW_LIMIT = 5
@@ -31,10 +41,12 @@ const accountTypeLabels: Record<AccountType, string> = {
   DIGITAL: 'Digital',
 }
 
+const accountIcons = { BANCO: Landmark, EFECTIVO: Wallet, DIGITAL: Smartphone }
+
 function Section({ title, link, children }: { title: string; link: { to: string; label: string }; children: ReactNode }) {
   return (
-    <section className="rounded-surface border border-border bg-surface p-6">
-      <div className="mb-4 flex items-center justify-between gap-4">
+    <section className="h-full min-w-0 rounded-surface border border-border bg-surface p-4 sm:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-section text-text">{title}</h2>
         <CellLink to={link.to}>{link.label}</CellLink>
       </div>
@@ -45,52 +57,79 @@ function Section({ title, link, children }: { title: string; link: { to: string;
 
 /** Panel de control: cada bloque tiene su consulta y sus estados de carga, vacio y error. */
 export function DashboardPage() {
-  const [today] = useState(() => new Date())
+  const { menuButton } = useOutletContext<AppShellContext>()
+  const [today] = useState(() => businessToday())
   const tenantName = useSession()?.tenantName
-  const { desde, hasta } = monthToDate(today)
+  const [params, setParams] = useSearchParams()
+  const parsed = parseFilters(params)
+  const filters = { ...parsed, periodo: parsed.periodo === 'todas' ? 'este-mes' as const : parsed.periodo }
+  function update(change: Partial<typeof filters>, replace = false) {
+    setParams(filtersToParams({ ...DEFAULT_FILTERS, periodo: filters.periodo, desde: filters.desde, hasta: filters.hasta, ...change }), { replace })
+  }
+  const desdeField = useUrlTextParam(filters.desde ?? '', (desde) => update({ desde }, true))
+  const hastaField = useUrlTextParam(filters.hasta ?? '', (hasta) => update({ hasta }, true))
+  const range = salesRange({ ...filters, desde: desdeField.value, hasta: hastaField.value }, today)!
+  const { errors, valid } = validateRange(range.desde, range.hasta)
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-title text-text">Inicio</h1>
-          <p className="mt-1 text-small text-text-muted">
-            Resumen {tenantName ? `de ${tenantName} · ` : 'de '}
-            {formatMonth(today)}
-          </p>
+        <div className="flex min-w-0 flex-1 basis-64 items-start gap-3">
+          {menuButton}
+          <div>
+            <h1 className="text-title text-text">Inicio</h1>
+            <p className="mt-1 text-small text-text-muted">
+              Resumen {tenantName ? `de ${tenantName} · ` : 'de '}
+              {valid ? rangeLabel(range) : 'elige un período válido'}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Periodo fijo: el selector de periodo queda fuera de esta version. */}
-          <span className="text-small font-semibold text-text-muted">Este mes</span>
-          <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
-            Registrar venta
-          </Link>
+        <div className={filters.periodo === 'personalizado' ? 'min-w-0 flex-1 basis-[640px]' : 'ml-auto min-w-0 max-w-full'}>
+          <PeriodPicker
+            layout="inline"
+            action={
+              <Link to="/ventas/nueva" className={buttonClasses('primary')} data-variant="primary">
+                {GLOSSARY.registerSale}
+              </Link>
+            }
+            options={SALES_PERIOD_OPTIONS.filter((option) => option.value !== 'todas')}
+            value={filters.periodo}
+            onChange={(periodo: Period) => update(periodo === 'personalizado' ? { periodo, ...range } : { periodo: periodo === 'todas' ? 'este-mes' : periodo })}
+            range={valid ? range : null}
+            custom={{ desde: desdeField, hasta: hastaField, errors }}
+          />
         </div>
       </div>
 
-      <KpiBlock desde={desde} hasta={hasta} />
+      {valid ? <KpiBlock desde={range.desde} hasta={range.hasta} /> : (
+        <p role="alert" className="text-small text-error">Revisa las fechas para ver los indicadores y las ventas del período.</p>
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <LowStockBlock />
-        </div>
-        <div className="lg:col-span-2">
-          <AccountsBlock />
+      <div>
+        <p className="mb-4 text-small text-text-muted">Stock y saldos muestran el estado actual y no dependen del período.</p>
+        <div className="grid gap-6 xl:grid-cols-5">
+          <div className="min-w-0 xl:col-span-3">
+            <LowStockBlock />
+          </div>
+          <div className="min-w-0 xl:col-span-2">
+            <AccountsBlock />
+          </div>
         </div>
       </div>
 
-      <LatestSalesBlock />
+      {valid && <LatestSalesBlock range={range} />}
     </div>
   )
 }
 
 function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
   const kpis = useQuery({ queryKey: ['kpis', desde, hasta], queryFn: () => fetchKpis(desde, hasta) })
+  useReportedError(kpis.error)
 
   if (kpis.isError) {
     return (
       <div className="rounded-surface border border-border bg-surface">
-        <ErrorState message="No pudimos cargar los indicadores del mes." onRetry={() => void kpis.refetch()} />
+        <ErrorState message="No pudimos cargar los indicadores del período." onRetry={() => void kpis.refetch()} />
       </div>
     )
   }
@@ -99,7 +138,7 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
     kpis.data ? formatCurrency(pick(kpis.data)) : undefined
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-6">
+    <div className="grid gap-6 sm:grid-cols-2 2xl:grid-cols-4">
       <IndicatorCard label="Ventas sin IVA" accent="success" icon={TrendingUp} value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
       <IndicatorCard
         label="Costo de lo vendido"
@@ -118,6 +157,7 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
       />
       <IndicatorCard
         label="Utilidad neta"
+        accent="brand-strong"
         icon={Wallet}
         value={value((d) => d.netProfit)}
         negative={kpis.data ? kpis.data.netProfit < 0 : false}
@@ -145,7 +185,7 @@ type LowStockRow = Product & { status: StockStatus }
 
 const lowStockColumns: Column<LowStockRow>[] = [
   { header: 'Código', render: (p) => <span className="codigo">{p.code}</span> },
-  { header: 'Producto', render: (p) => p.description },
+  { header: 'Producto', render: (p) => <span className="wrap-anywhere">{p.description}</span> },
   {
     header: 'Stock',
     align: 'right',
@@ -157,10 +197,10 @@ const lowStockColumns: Column<LowStockRow>[] = [
 /** La misma fila en tarjeta, bajo md. */
 function lowStockCard(p: LowStockRow) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <span className="flex min-w-0 flex-col gap-1">
         <span className="codigo text-small text-text">{p.code}</span>
-        <span className="text-body text-text">{p.description}</span>
+        <span className="text-body wrap-anywhere text-text">{p.description}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
         <span className="tabular text-small text-text">
@@ -176,6 +216,8 @@ function lowStockCard(p: LowStockRow) {
 function LowStockBlock() {
   const products = useQuery({ queryKey: ['inventory', 'products'], queryFn: fetchProducts })
   const categories = useQuery({ queryKey: ['inventory', 'categories'], queryFn: fetchCategories })
+  useReportedError(products.error)
+  useReportedError(categories.error)
   const rows =
     products.data && categories.data ? lowStockProducts(products.data, categories.data, ROW_LIMIT) : undefined
   const alerts = products.data && categories.data ? stockAlertCounts(products.data, categories.data) : undefined
@@ -209,6 +251,8 @@ function LowStockBlock() {
 function AccountsBlock() {
   const accounts = useQuery({ queryKey: ['treasury', 'accounts'], queryFn: fetchAccounts })
   const balance = useQuery({ queryKey: ['treasury', 'balance'], queryFn: fetchBalance })
+  useReportedError(accounts.error)
+  useReportedError(balance.error)
   const retry = () => {
     void accounts.refetch()
     void balance.refetch()
@@ -231,19 +275,27 @@ function AccountsBlock() {
     content = (
       <div>
         <ul>
-          {accounts.data.map((account) => (
-            <li key={account.id} className="flex items-center justify-between gap-4 border-b border-border py-3">
-              <div>
-                <p className="text-body font-semibold text-text">{account.name}</p>
-                <p className="text-small text-text-muted">{accountTypeLabels[account.type] ?? EMPTY_VALUE}</p>
-              </div>
-              <span className="monto text-body text-text">{formatCurrency(account.currentBalance)}</span>
-            </li>
-          ))}
+          {accounts.data.map((account) => {
+            const Icon = accountIcons[account.type]
+            return (
+              <li key={account.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-border py-3">
+                <div className="flex min-w-0 flex-1 basis-40 items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-canvas text-text-muted" aria-hidden>
+                    <Icon {...iconMd} aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-body font-semibold wrap-anywhere text-text">{account.name}</p>
+                    <p className="text-small text-text-muted">{accountTypeLabels[account.type] ?? EMPTY_VALUE}</p>
+                  </div>
+                </div>
+                <span className="monto ml-auto text-body whitespace-nowrap text-text">{formatCurrency(account.currentBalance)}</span>
+              </li>
+            )
+          })}
         </ul>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-4">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-control bg-canvas p-4">
           <span className="text-small text-text-muted">Total disponible</span>
-          <span className="text-figure text-text">{formatCurrency(balance.data.total)}</span>
+          <span className="monto text-figure whitespace-nowrap text-text">{formatCurrency(balance.data.total)}</span>
         </div>
       </div>
     )
@@ -263,26 +315,26 @@ const paymentTypeLabels: Record<Sale['paymentType'], string> = {
 
 const salesColumns: Column<Sale>[] = [
   { header: 'N.º factura', render: (s) => <span className="codigo">{s.invoiceNumber}</span> },
-  { header: 'Cliente', render: (s) => s.customer?.name ?? EMPTY_VALUE },
+  { header: 'Cliente', render: (s) => <span className="wrap-anywhere">{s.customer?.name ?? EMPTY_VALUE}</span> },
   { header: 'Fecha', render: (s) => formatDate(s.invoiceDate) },
   { header: 'Forma de pago', render: (s) => paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE },
-  { header: 'Total', align: 'right', render: (s) => <span className="monto">{formatCurrency(s.total)}</span> },
+  { header: 'Total', align: 'right', render: (s) => <span className="monto whitespace-nowrap">{formatCurrency(s.total)}</span> },
   { header: 'Estado', render: (s) => <StatusBadge status={s.status} /> },
 ]
 
 /** La misma fila en tarjeta, bajo md. */
 function saleCard(s: Sale) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <span className="flex min-w-0 flex-col gap-1">
         <span className="codigo text-small text-text">{s.invoiceNumber}</span>
-        <span className="text-body text-text">{s.customer?.name ?? EMPTY_VALUE}</span>
+        <span className="text-body wrap-anywhere text-text">{s.customer?.name ?? EMPTY_VALUE}</span>
         <span className="text-small text-text-muted">
           {formatDate(s.invoiceDate)} · {paymentTypeLabels[s.paymentType] ?? EMPTY_VALUE}
         </span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <span className="monto text-body font-semibold text-text">{formatCurrency(s.total)}</span>
+        <span className="monto text-body font-semibold whitespace-nowrap text-text">{formatCurrency(s.total)}</span>
         <StatusBadge status={s.status} />
       </span>
     </div>
@@ -290,25 +342,27 @@ function saleCard(s: Sale) {
 }
 
 /** Las mas recientes por fecha de factura; a igual fecha, la de id mayor. */
-function latestSales(sales: Sale[]): Sale[] {
+function latestSales(sales: Sale[], range: DateRange): Sale[] {
   return [...sales]
+    .filter((sale) => sale.status !== 'ANULADA' && sale.invoiceDate >= range.desde && sale.invoiceDate <= range.hasta)
     .sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate) || b.id - a.id)
     .slice(0, ROW_LIMIT)
 }
 
-function LatestSalesBlock() {
+function LatestSalesBlock({ range }: { range: DateRange }) {
   const sales = useQuery({ queryKey: ['sales'], queryFn: fetchSales })
+  useReportedError(sales.error)
 
   return (
-    <Section title="Últimas ventas" link={{ to: '/ventas', label: 'Ver todas' }}>
+    <Section title="Últimas ventas" link={{ to: `/ventas?${filtersToParams({ ...DEFAULT_FILTERS, periodo: 'personalizado', ...range })}`, label: 'Ver todas' }}>
       <DataTable
         columns={salesColumns}
-        rows={sales.data ? latestSales(sales.data) : undefined}
+        rows={sales.data ? latestSales(sales.data, range) : undefined}
         rowKey={(s) => s.id}
         loading={sales.isPending}
         error={sales.isError}
         onRetry={() => void sales.refetch()}
-        emptyMessage="Aún no registras ventas."
+        emptyMessage="No hay ventas en el período elegido."
         card={saleCard}
         cardsLabel="Últimas ventas"
       />
