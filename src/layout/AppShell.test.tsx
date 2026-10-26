@@ -39,6 +39,7 @@ describe('shell', () => {
 
       expect(aside()).toHaveAttribute('inert')
       expect(content()).not.toHaveAttribute('inert')
+      expect(screen.queryByRole('button', { name: /^(Expandir|Contraer) menú$/ })).not.toBeInTheDocument()
     })
 
     it('en escritorio el menu no es inerte ni lo controla el boton', async () => {
@@ -66,7 +67,7 @@ describe('shell', () => {
       expect(button).toHaveAttribute('aria-expanded', 'true')
       expect(aside()).not.toHaveAttribute('inert')
       expect(content()).toHaveAttribute('inert')
-      expect(within(aside()).getByRole('link', { name: 'Inicio' })).toHaveFocus()
+      expect(within(aside()).getByRole('link', { name: 'ServiBox, ir a Inicio' })).toHaveFocus()
       // Abierto flota sobre el contenido: lleva la sombra overlay, que se quita en escritorio.
       expect(aside()).toHaveClass('shadow-overlay', 'lg:shadow-none')
 
@@ -85,8 +86,8 @@ describe('shell', () => {
       await screen.findByRole('heading', { level: 1, name: 'Inicio' })
 
       await user.click(screen.getByRole('button', { name: 'Abrir menú' }))
-      const first = within(aside()).getByRole('link', { name: 'Inicio' })
-      const last = within(aside()).getByRole('link', { name: 'Configuración' })
+      const first = within(aside()).getByRole('link', { name: 'ServiBox, ir a Inicio' })
+      const last = within(aside()).getByRole('button', { name: 'Menú de usuario de admin' })
       last.focus()
       await user.tab()
       expect(first).toHaveFocus()
@@ -141,6 +142,79 @@ describe('shell', () => {
       expect(within(crumbs).queryByRole('link', { name: 'Nueva factura' })).not.toBeInTheDocument()
       expect(within(crumbs).getAllByText('/').every((separator) => separator.getAttribute('aria-hidden') === 'true')).toBe(true)
     })
+  })
+
+  it('Configuracion esta separada de operaciones y conserva su ruta activa', async () => {
+    stubViewport(true)
+    renderRoute('/configuracion?tab=financiera')
+    const operations = screen.getByRole('navigation', { name: 'Principal' })
+    expect(within(operations).queryByRole('link', { name: 'Configuración' })).not.toBeInTheDocument()
+    expect(within(operations).getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Inicio', 'Inventario', 'Ventas', 'Compras', 'Cuentas', 'Reportes',
+    ])
+    const settings = within(screen.getByRole('navigation', { name: 'Administración' })).getByRole('link', { name: 'Configuración' })
+    expect(settings).toHaveAttribute('href', '/configuracion')
+    expect(settings).toHaveAttribute('aria-current', 'page')
+  })
+
+  it.each(['expanded', 'collapsed'])('el control superior en modo %s conserva foco, estado y preferencia', async (choice) => {
+    stubViewport(true)
+    localStorage.setItem('servibox.sidebar', choice)
+    const user = userEvent.setup()
+    renderRoute('/inicio')
+    const header = within(aside()).getByRole('group', { name: 'Cabecera del menú lateral' })
+    const brand = within(header).getByRole('link', { name: 'ServiBox, ir a Inicio' })
+    const name = choice === 'expanded' ? 'Contraer menú' : 'Expandir menú'
+    const toggle = within(header).getByRole('button', { name })
+    expect(toggle).toHaveAttribute('title', name)
+    expect(toggle).toHaveAttribute('aria-expanded', String(choice === 'expanded'))
+    expect(brand.compareDocumentPosition(toggle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const operations = within(aside()).getByRole('navigation', { name: 'Principal' })
+    expect(toggle.compareDocumentPosition(operations) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    toggle.focus()
+    await user.keyboard('{Enter}')
+    expect(toggle).toHaveFocus()
+    expect(toggle).toHaveAttribute('aria-expanded', String(choice !== 'expanded'))
+    expect(localStorage.getItem('servibox.sidebar')).toBe(choice === 'expanded' ? 'collapsed' : 'expanded')
+    expect(within(header).getAllByRole('button')).toHaveLength(1)
+    const settings = within(aside()).getByRole('link', { name: 'Configuración' })
+    const userMenu = within(aside()).getByRole('button', { name: /Menú de usuario/ })
+    expect(settings.compareDocumentPosition(userMenu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it.each([[1024, true], [1279, true], [1280, false]])('a %s px el simbolo compacto respeta el ancho por defecto', async (width, compact) => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: Number(/\d+/.exec(query)?.[0]) <= width,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    }))
+    renderRoute('/inicio')
+    const brand = within(aside()).getByRole('link', { name: 'ServiBox, ir a Inicio' })
+    expect(brand).toHaveAttribute('href', '/inicio')
+    expect(brand.querySelector('img')).not.toBeNull()
+    expect(brand.textContent).toBe(compact ? '' : 'ServiBox')
+    expect(screen.getByRole('button', { name: compact ? 'Expandir menú' : 'Contraer menú' })).toBeInTheDocument()
+  })
+
+  it('si localStorage rechaza la preferencia se puede expandir y contraer sin perder acceso al usuario', async () => {
+    stubViewport(true)
+    const originalGet = Storage.prototype.getItem
+    const get = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, key: string) {
+      if (this === localStorage && key === 'servibox.sidebar') throw new Error('No disponible')
+      return originalGet.call(this, key)
+    })
+    const set = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('No disponible') })
+    try {
+      const user = userEvent.setup()
+      renderRoute('/inicio')
+      await user.click(screen.getByRole('button', { name: 'Contraer menú' }))
+      expect(screen.getByRole('button', { name: 'Expandir menú' })).toBeInTheDocument()
+      expect(within(aside()).getByRole('button', { name: /Menú de usuario/ })).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Expandir menú' }))
+      expect(screen.getByRole('button', { name: 'Contraer menú' })).toBeInTheDocument()
+    } finally {
+      get.mockRestore()
+      set.mockRestore()
+    }
   })
 })
 

@@ -49,7 +49,7 @@ export function DataTable<T>({
   const cellX = dense ? 'px-2' : 'px-3'
 
   const table = (
-    <div className={`overflow-x-auto ${card ? 'hidden md:block' : ''}`}>
+    <div className={`overflow-x-auto rounded-surface border border-t-2 border-border border-t-border-accent bg-surface ${card ? 'hidden md:block' : ''}`}>
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -107,7 +107,7 @@ export function DataTable<T>({
       ) : (
         <ul className="flex flex-col gap-3 md:hidden" aria-label={cardsLabel}>
           {rows?.map((row) => (
-            <li key={rowKey(row)} className="flex flex-col gap-2 rounded-surface border border-border p-4">
+            <li key={rowKey(row)} className="flex flex-col gap-2 rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-4">
               {card(row)}
             </li>
           ))}

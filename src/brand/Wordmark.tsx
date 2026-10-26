@@ -1,12 +1,16 @@
-/**
- * Wordmark provisional de texto. Reemplazar por los archivos oficiales de /brand/logo/
- * cuando existan; no recomponer el logotipo.
- */
-export function Wordmark({ onDark = false }: { onDark?: boolean }) {
+import { BrandSymbol } from './BrandSymbol'
+
+/** Marca provisional basada en la referencia, pendiente del recurso oficial. */
+export function Wordmark({ onDark = false, compact = false }: { onDark?: boolean; compact?: boolean }) {
   return (
-    <span className="font-display text-title font-bold">
-      <span className={onDark ? 'text-text-inverse' : 'text-text'}>Servi</span>
-      <span className="text-brand">Box</span>
+    <span role="img" aria-label="ServiBox" className="inline-flex items-center gap-3 whitespace-nowrap">
+      <BrandSymbol />
+      {!compact && (
+        <span aria-hidden className="font-display text-title font-bold italic">
+          <span className={onDark ? 'text-text-inverse' : 'text-text'}>Servi</span>
+          <span className="text-brand">Box</span>
+        </span>
+      )}
     </span>
   )
 }

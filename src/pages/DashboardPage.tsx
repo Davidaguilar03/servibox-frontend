@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { ChartPie, Package, TrendingUp, Wallet } from 'lucide-react'
 import { useSession } from '../auth/session'
 import { CellLink } from '../components/CellLink'
 import { buttonClasses } from '../components/buttonStyles'
@@ -99,20 +100,25 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-6">
-      <IndicatorCard label="Ventas sin IVA" value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
+      <IndicatorCard label="Ventas sin IVA" accent="success" icon={TrendingUp} value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
       <IndicatorCard
         label="Costo de lo vendido"
+        accent="warning"
+        icon={Package}
         value={value((d) => d.costOfSales)}
         detail="Costo de los productos que vendiste."
       />
       <IndicatorCard
         label="Utilidad bruta"
+        accent="info"
+        icon={ChartPie}
         value={value((d) => d.grossProfit)}
         note={kpis.data ? grossMarginText(kpis.data.grossProfit, kpis.data.netSales) : undefined}
         detail="Ventas menos costo de lo vendido."
       />
       <IndicatorCard
         label="Utilidad neta"
+        icon={Wallet}
         value={value((d) => d.netProfit)}
         negative={kpis.data ? kpis.data.netProfit < 0 : false}
         detail="Utilidad bruta más otros ingresos, menos gastos."

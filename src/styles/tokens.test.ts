@@ -60,6 +60,11 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ['brand-ink', 'surface'],
   ['brand-ink', 'canvas'],
   ['text-subtle', 'nav'],
+  ['text-inverse', 'nav-active'],
+  ['neutral-300', 'nav'],
+  ['neutral-300', 'nav-hover'],
+  ['text-inverse', 'nav-hover'],
+  ['text-muted', 'row-alt'],
 ]
 
 const CONTROL_BORDERS: Array<[string, string]> = [
@@ -76,6 +81,8 @@ const FOCUS_RING: Array<[string, string]> = [
   ['brand', 'surface'],
   ['brand', 'canvas'],
   ['brand', 'nav'],
+  ['brand', 'nav-active'],
+  ['brand', 'nav-hover'],
   ['brand', 'row-alt'],
   ['brand', 'neutral-100'],
   ['brand-ink', 'info-bg'],

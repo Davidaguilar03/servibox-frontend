@@ -55,7 +55,7 @@ src/
                       IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
                       (y su store toast.ts), CategoryDot, UnsavedChangesGuard, estados
   layout/AppShell.tsx barra lateral, barra superior y contenido
-  brand/Wordmark.tsx  wordmark provisional
+  brand/             Wordmark provisional, BrandSymbol y symbol.svg compartido con favicon
   pages/              una pagina por ruta
   test/               setup de Vitest y utilidades de prueba
 ```
@@ -154,11 +154,14 @@ configura CORS; el motivo esta en [03-DECISIONS.md](03-DECISIONS.md).
 `AppShell` arma la barra lateral (240 px, 72 contraida, desde `lg`), la barra superior y
 el area de contenido (ancho maximo 1440 px):
 
-* Barra lateral: wordmark, menu, boton de contraer (desde `lg`) y abajo el bloque de
-  usuario: iniciales en un circulo, nombre completo (o username si no hay), rol y el boton
-  Salir. `displayName` e `initials` viven en `auth/session.ts`.
-* Barra superior (64 px): miga de pan a la izquierda, tomada del `handle` de la ruta, y el
-  nombre del tenant a la derecha. Sin buscador ni campana.
+* Barra lateral: marca enlazada a Inicio y control de contraer en la cabecera (desde `lg`),
+  junto al logo expandido o debajo del simbolo compacto. Navegacion operativa con scroll;
+  abajo, Configuracion separada y UserMenu unico. El control de usuario
+  muestra iniciales, serviteca y rol; en compacto solo iniciales con nombre accesible.
+  Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
+  `displayName` e `initials` viven en `auth/session.ts`.
+* Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
+  buscador ni campana.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 

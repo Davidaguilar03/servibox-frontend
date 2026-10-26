@@ -33,7 +33,7 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'pages/ProductFormPage.tsx': ['shadow-raised'],
   // Panel del menu Más de los encabezados de listado.
   'components/ListHeader.tsx': ['shadow-raised'],
-  // Panel del menu de usuario de la barra superior.
+  // Panel del menu de usuario del pie lateral.
   'layout/UserMenu.tsx': ['shadow-raised'],
 }
 
@@ -42,7 +42,7 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
  * solo en titulos h2 y h3 (secciones y modales), text-figure solo en el valor de indicadores y
  * totales destacados y text-display solo en el h1 de la landing (excepcion documentada).
  */
-const TITLE_BRAND_FILES = ['brand/Wordmark.tsx', 'layout/AppShell.tsx']
+const TITLE_BRAND_FILES = ['brand/Wordmark.tsx']
 const FIGURE_FILES = [
   // Definicion de la utilidad.
   'index.css',
