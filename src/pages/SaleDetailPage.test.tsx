@@ -90,7 +90,7 @@ function summary() {
 }
 
 function summaryValue(label: string) {
-  return within(summary()).getByText(label).nextElementSibling?.textContent
+  return within(summary()).getByText(label).nextElementSibling?.textContent?.replace(/\u00a0/g, ' ')
 }
 
 describe('detalle de factura de venta', () => {
@@ -111,10 +111,10 @@ describe('detalle de factura de venta', () => {
     })) }))
     renderRoute('/ventas/5')
     await screen.findByRole('heading', { name: 'FV-0230' })
-    expect(summaryValue('Total')).toBe('$ 0,07')
-    expect(summaryValue('IVA')).toBe('$ 0,01')
+    expect(summaryValue('Total')).toBe('$ 0')
+    expect(summaryValue('IVA')).toBe('$ 0')
     const table = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
-    expect(within(table).getAllByText('$ 0,01')).toHaveLength(2)
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
   })
 
   it('el titulo del documento pasa al numero de la factura al cargar', async () => {
@@ -130,7 +130,8 @@ describe('detalle de factura de venta', () => {
     renderRoute('/ventas/5')
 
     expect(await screen.findByRole('heading', { name: 'FV-0230' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Ventas/Facturas de venta/FV-0230')
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
     expect(screen.getByText('Transportes Boyacá S.A.S. · Crédito · Vence el 04/11/2026')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Registrar abono' })).toBeInTheDocument()

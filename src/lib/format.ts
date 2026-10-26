@@ -1,17 +1,16 @@
-import { round2 } from './money'
+import { decimal, roundInteger } from './decimal'
 
 /** Lo que se muestra cuando no hay valor: una raya, nunca "N/A". */
 export const EMPTY_VALUE = '\u2014'
 
 const integerFormat = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
-const centsFormat = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** Pesos colombianos: enteros sin decimales, centavos con dos decimales. */
+/** Pesos colombianos para lectura: HALF_UP al peso, sin alterar el valor de origen. */
 export function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return EMPTY_VALUE
-  const rounded = round2(value)
+  const rounded = roundInteger(decimal(value))
   const sign = rounded < 0 ? '-' : ''
-  return `${sign}$ ${(Number.isInteger(rounded) ? integerFormat : centsFormat).format(Math.abs(rounded))}`
+  return `${sign}$ ${integerFormat.format(Math.abs(rounded))}`
 }
 
 /**

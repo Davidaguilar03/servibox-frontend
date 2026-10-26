@@ -6,6 +6,23 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Ventas (2026-10-26)
+
+* Las rutas /ventas muestran un solo encabezado en contenido. ListHeader admite
+  leading para el boton movil del shell; nueva venta y detalle tienen regreso
+  dentro del contenido. Compras conserva la barra superior.
+* IndicatorCard compact se reutiliza en Facturas de venta, Clientes y Otros
+  ingresos: icono de 48 px a la izquierda, titulo, cifra y ayuda alineados a la
+  izquierda, cifra text-kpi tabular y altura segun contenido. Inicio conserva la
+  variante estandar. Las rejillas pasan de una a dos y luego tres columnas antes
+  de comprimir importes.
+* FilterBar sales usa cuatro controles sin columna vacia cuando Limpiar no aparece.
+  Con periodo personalizado, PeriodPicker ocupa una fila amplia en 2xl para que
+  Desde y Hasta compartan linea cuando hay espacio. FilterBar embedded comparte
+  borde y divisor con el listado de Ventas, Clientes, Papelera y Otros ingresos.
+  Esta composicion no se aplica a los listados de Compras.
+* Revision visual pendiente de David; no hay comprobacion de anchos en navegador.
+
 ## Inventario (2026-10-26)
 
 * Correccion visual de David: Productos conserva ListHeader pero no monta barra superior;
@@ -16,7 +33,7 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   nombre. El parametro `categoria` en URL y su comportamiento no cambian. TabList
   compartido permanece para Configuracion y otras pantallas.
 * Cuatro IndicatorCard usan info, success, warning y brand-strong, con iconos de
-  producto, disponibilidad, alerta y bodega. La variante compact solo en Productos
+  producto, disponibilidad, alerta y bodega. La variante compact nace en Productos
   tiene dos columnas: iconLg en fondo tenue de 48 px, centrado verticalmente;
   titulo, cifra y ayuda alineados a la izquierda en el bloque derecho. Usa relleno
   de 16 px y text-kpi de 32/36 con numeros tabulares. La rejilla ocupa el ancho del

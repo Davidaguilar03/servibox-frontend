@@ -1,6 +1,6 @@
 import { GLOSSARY } from '../copy/glossary'
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
@@ -44,6 +44,8 @@ import {
 } from '../sales/newSale'
 import { createSale, fetchCustomers, fetchNextInvoiceNumber, type Counterparty, type SaleRequest } from '../sales/salesApi'
 import { iconMd } from '../components/icons'
+import { buttonClasses } from '../components/buttonStyles'
+import type { AppShellContext } from '../layout/AppShell'
 
 /** Documento del tercero Consumidor final que crea el backend en cada tenant. */
 const CONSUMIDOR_FINAL_DOCUMENT = '222222222222'
@@ -82,6 +84,7 @@ function units(count: number) {
 
 /** Nueva factura de venta: datos generales, lineas con calculo en vivo y resumen. */
 export function NewSaleInvoicePage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
@@ -261,6 +264,7 @@ export function NewSaleInvoicePage() {
   } else {
     generalContent = (
       <div className="grid gap-4 sm:grid-cols-2">
+        <h3 className="border-b border-border pb-2 text-section text-text sm:col-span-2">Cliente y documento</h3>
         <TextField
           label="Número"
           readOnly
@@ -289,6 +293,7 @@ export function NewSaleInvoicePage() {
           value={customer ? `${customer.documentType} ${customer.documentNumber}` : EMPTY_VALUE}
         />
         <TextField label="Correo del cliente" readOnly value={customer?.email || EMPTY_VALUE} />
+        <h3 className="border-b border-border pb-2 text-section text-text sm:col-span-2">Pago y fechas</h3>
         <TextField
           label="Fecha de factura"
           type="date"
@@ -386,11 +391,15 @@ export function NewSaleInvoicePage() {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-title text-text">Nueva factura de venta</h1>
-        <p className="mt-1 text-small text-text-muted">
-          Al guardar se descuenta el inventario y se acredita la cuenta en una sola operación.
-        </p>
+      <div className="flex min-w-0 items-start gap-3">
+        {menuButton}
+        <div className="min-w-0">
+          <Link to="/ventas" className={`${buttonClasses('text')} mb-1`}>Volver a Facturas de venta</Link>
+          <h1 className="text-title text-text">Nueva factura de venta</h1>
+          <p className="mt-1 text-small text-text-muted">
+            Al guardar se descuenta el inventario y se acredita la cuenta en una sola operación.
+          </p>
+        </div>
       </div>
 
       {saveError && save.isError && (
@@ -399,7 +408,7 @@ export function NewSaleInvoicePage() {
         </Alert>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className={card} aria-labelledby="general-title">
           <h2 id="general-title" className="mb-4 text-section text-text">
             Datos generales

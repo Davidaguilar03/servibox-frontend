@@ -228,8 +228,12 @@ necesite, no antes.
 
 En `src/lib/format.ts`, nunca a mano en un componente:
 
-* Moneda: formatCurrency, enteros sin decimales y centavos con dos, punto de miles y coma
-  decimal: $ 1.500, $ 13,50, $ 0,08, -$ 0,10. HALF_UP a centavos y sin cero negativo.
+* Moneda de lectura: formatCurrency muestra pesos enteros con punto de miles,
+  HALF_UP al peso: $ 1.500; 13,50 a $ 14; -0,10 a $ 0; -0,50 a -$ 1.
+  El dato de API y el exportado conservan centavos; los redondeos separados
+  pueden producir diferencias visuales entre filas y totales. No se corrigen
+  importes para forzar una suma visual. Los campos editables precargan el
+  valor original y conservan su precision al enviar.
 * Facturas nuevas: producto decimal de precio por cantidad, luego base e IVA definitivos
   por linea (HALF_UP a dos decimales); resumen suma esas lineas. lib/money.ts comparte
   aritmetica con el racional de Inventario sin cambiar su redondeo a pesos enteros.

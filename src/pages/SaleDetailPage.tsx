@@ -1,6 +1,6 @@
 import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileQuestion } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
@@ -37,6 +37,7 @@ import {
 } from '../sales/saleDetail'
 import { annulSale, createCollection, fetchSale, fetchSaleMovements, type SaleDetail } from '../sales/salesApi'
 import { iconLg } from '../components/icons'
+import type { AppShellContext } from '../layout/AppShell'
 
 const card = 'rounded-surface border border-border bg-surface p-6'
 
@@ -47,7 +48,7 @@ type SaleMovement = Awaited<ReturnType<typeof fetchSaleMovements>>[number]
 
 const lineColumns: Column<Line>[] = [
   { header: 'Código', render: (line) => <span className="codigo">{line.productCode ?? EMPTY_VALUE}</span> },
-  { header: 'Descripción', render: (line) => line.productDescription ?? EMPTY_VALUE },
+  { header: 'Descripción', render: (line) => <span className="wrap-anywhere">{line.productDescription ?? EMPTY_VALUE}</span> },
   { header: 'Cant.', align: 'right', render: (line) => line.quantity },
   { header: 'Precio', align: 'right', render: (line) => <span className="monto">{formatCurrency(line.price)}</span> },
   { header: 'IVA', align: 'right', render: (line) => <span className="monto">{formatCurrency(line.ivaAmount)}</span> },
@@ -67,9 +68,17 @@ function methodLabel(method: string | null) {
 
 /** Detalle de factura de venta: datos, productos, abonos y resumen, con abonar y anular. */
 export function SaleDetailPage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const saleId = parseSaleId(useParams().id)
-  if (saleId === null) return <NotFound />
-  return <SaleDetailContent saleId={saleId} />
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        {menuButton}
+        <Link to="/ventas" className={buttonClasses('text')}>Volver a Facturas de venta</Link>
+      </div>
+      {saleId === null ? <NotFound /> : <SaleDetailContent saleId={saleId} />}
+    </div>
+  )
 }
 
 function NotFound() {
@@ -78,9 +87,6 @@ function NotFound() {
       <FileQuestion {...iconLg} className="text-text-subtle" aria-hidden />
       <h1 className="text-title text-text">Factura no encontrada</h1>
       <p className="text-small text-text-muted">Revisa el número o búscala en el listado.</p>
-      <Link to="/ventas" className={buttonClasses('secondary')} data-variant="secondary">
-        Volver a Facturas de venta
-      </Link>
     </div>
   )
 }
@@ -200,7 +206,7 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
               {data.details.map((line) => (
                 <li key={line.id} className="rounded-surface border border-border p-4">
                   <p className="codigo text-small text-text-muted">{line.productCode}</p>
-                  <p className="text-body text-text">{line.productDescription}</p>
+                  <p className="wrap-anywhere text-body text-text">{line.productDescription}</p>
                   <p className="monto mt-2 flex justify-between gap-3 text-small text-text-muted">
                     <span>
                       {line.quantity} × {formatCurrency(line.price)} · IVA {formatCurrency(line.ivaAmount)}
@@ -235,8 +241,8 @@ function SaleDetailContent({ saleId }: { saleId: number }) {
             />
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
               <dt className="font-semibold text-text">Saldo pendiente</dt>
-              <dd className="text-figure text-text">
-                {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending)}
+              <dd className="monto wrap-anywhere text-right text-figure text-text">
+                {summary.pending === null ? EMPTY_VALUE : formatCurrency(summary.pending).replace('$ ', '$\u00a0')}
               </dd>
             </div>
           </dl>
@@ -275,7 +281,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
       <dt className="text-small text-text-muted">{label}</dt>
-      <dd className="text-body text-text">{children}</dd>
+      <dd className="wrap-anywhere text-body text-text">{children}</dd>
     </div>
   )
 }
@@ -284,7 +290,7 @@ function SummaryRow({ label, value, tone }: { label: string; value: string; tone
   return (
     <div className="flex flex-wrap justify-between gap-x-4">
       <dt className="text-text-muted">{label}</dt>
-      <dd className={`monto font-semibold ${tone ?? 'text-text'}`}>{value}</dd>
+      <dd className={`monto wrap-anywhere text-right font-semibold ${tone ?? 'text-text'}`}>{value.replace('$ ', '$\u00a0')}</dd>
     </div>
   )
 }

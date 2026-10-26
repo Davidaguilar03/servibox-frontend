@@ -159,10 +159,10 @@ describe('nueva factura de compra', () => {
     await user.type(screen.getByLabelText('N.º factura del proveedor'), 'CENT-2')
     await addProduct(user, 'LL-004', '1', '0.01')
     await addProduct(user, 'BAT-004', '1', '0.01')
-    expect(summaryValue('Total')).toHaveTextContent('$ 0,02')
+    expect(summaryValue('Total')).toHaveTextContent('$ 0')
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
     await waitFor(() => expect(posts(fetchMock, '/api/purchases')).toHaveLength(balance === 0.02 ? 1 : 0))
-    if (balance === 0.01) expect(screen.getByText(/Disponible \$ 0,01, necesitas \$ 0,02/)).toBeInTheDocument()
+    if (balance === 0.01) expect(screen.getByText(/Disponible \$ 0, necesitas \$ 0/)).toBeInTheDocument()
   })
 
   it('arranca sin proveedor, con la fecha de hoy en Bogota y la caja de efectivo propuesta', async () => {

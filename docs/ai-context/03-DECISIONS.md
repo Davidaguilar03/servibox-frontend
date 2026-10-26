@@ -12,6 +12,33 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-26: Importes de lectura en pesos enteros
+
+* Decision: formatCurrency redondea visualmente HALF_UP al peso en toda la
+  aplicacion, con separadores colombianos, signo en negativos y sin cero
+  negativo. Los errores con montos formateados se normalizan por la misma ruta.
+* Motivo: correccion visual solicitada por David. Datos de API, calculos,
+  campos editables, cuerpos enviados, tolerancias y exportaciones conservan
+  centavos. Puede haber diferencias visibles al redondear importes por
+  separado; no se alteran cifras para forzar sumas visuales.
+* Reemplaza la decision de presentacion con centavos del 2026-10-25 y las
+  menciones posteriores de centavos en pantalla. Revision visual pendiente.
+
+## 2026-10-26: Acabado de Ventas sin barra superior
+
+* Decision: las rutas bajo /ventas omiten la barra superior; cada encabezado incluye
+  el acceso al menu movil y cada subpantalla conserva un regreso visible a Ventas.
+  El titulo de pestana y SkipLink siguen en AppShell.
+* Decision: los indicadores de Facturas de venta usan IndicatorCard compact con el
+  contrato de Productos. Ventas y Abonos del mes siguen siendo mensuales; Por cobrar
+  toma todas las facturas pendientes. Los filtros conservan URL y paginacion, y el
+  periodo personalizado da espacio a Desde y Hasta. No cambian formulas ni cuerpos.
+* Decision: Clientes, Papelera y Otros ingresos comparten superficie de filtro y
+  listado solo bajo Ventas. Proveedores, Papelera de compras y Gastos conservan su
+  distribucion. Se mantienen modales, acciones, validaciones y permisos existentes.
+* Motivo: leer la jerarquia y los importes con claridad sin cambiar el dominio ni
+  el alcance de consultas. Revision visual pendiente de David.
+
 ## 2026-10-26: Correcciones visuales de Productos solicitadas por David
 
 * Decision: el listado de Productos omite la barra superior como Inicio y recibe el

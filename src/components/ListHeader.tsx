@@ -8,6 +8,8 @@ import { iconSm } from './icons'
 interface ListHeaderProps {
   title: ReactNode
   subtitle?: ReactNode
+  /** Acceso al menu movil cuando el shell no monta barra superior. */
+  leading?: ReactNode
   /** La unica accion primaria del listado (boton o enlace con `data-variant="primary"`). */
   primary?: ReactNode
   /** Acciones secundarias (botones o enlaces secundarios o de texto), en orden. */
@@ -22,16 +24,19 @@ interface ListHeaderProps {
  * disclosure, como UserMenu: Esc lo cierra y devuelve el foco, clic fuera tambien); desde lg
  * van en linea. Sin `matchMedia` (pruebas) se comporta como escritorio.
  */
-export function ListHeader({ title, subtitle, primary, secondary = [], note }: ListHeaderProps) {
+export function ListHeader({ title, subtitle, leading, primary, secondary = [], note }: ListHeaderProps) {
   const isDesktop = useMediaQuery(DESKTOP_QUERY, true)
   const actions = Children.toArray(secondary)
   const grouped = !isDesktop && actions.length >= 2
 
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-title text-text">{title}</h1>
-        {subtitle && <p className="mt-1 text-small text-text-muted">{subtitle}</p>}
+      <div className="flex min-w-0 items-start gap-3">
+        {leading}
+        <div className="min-w-0">
+          <h1 className="text-title text-text">{title}</h1>
+          {subtitle && <p className="mt-1 text-small text-text-muted">{subtitle}</p>}
+        </div>
       </div>
       {(primary || actions.length > 0) && (
         <div className="flex flex-col items-start gap-2 sm:items-end">

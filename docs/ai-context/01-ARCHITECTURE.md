@@ -161,10 +161,10 @@ el area de contenido (ancho maximo 1440 px):
   Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
   `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
-  buscador ni campana. Inicio y el listado de Productos no montan la barra; el boton
-  de menu movil se entrega por contexto de Outlet a sus encabezados. Conserva estado,
-  referencia, foco, SkipLink y titulo de pestana del shell. Categorias, formularios y
-  las demas rutas conservan su barra y breadcrumb.
+  buscador ni campana. Inicio, el listado de Productos y las rutas bajo /ventas no
+  montan la barra; el boton de menu movil se entrega por contexto de Outlet a sus
+  encabezados. Conserva estado, referencia, foco, SkipLink y titulo de pestana del
+  shell. Categorias, formularios de Inventario y las demas rutas conservan la barra.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 

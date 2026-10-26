@@ -30,8 +30,10 @@ const NOUNS: Record<string, string> = {
 
 /** Monto crudo del backend ("50000.0", "3706375.9000000004") con formato de pesos. */
 const money = (raw: string) => formatCurrency(Number(raw))
-/** Ya con formato ("$ 300.000") se deja; crudo ("100.0") se formatea. */
-const pesos = (raw: string) => (raw.includes('$') ? raw : money(raw))
+/** El backend puede enviar un monto crudo o ya escrito con separadores colombianos. */
+const pesos = (raw: string) => raw.includes('$')
+  ? formatCurrency(Number(raw.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')))
+  : money(raw)
 const units = (raw: string) => `${Number(raw)} ${Math.abs(Number(raw)) === 1 ? 'unidad' : 'unidades'}`
 const thousands = (raw: string) => Number(raw).toLocaleString('es-CO')
 

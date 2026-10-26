@@ -109,11 +109,11 @@ describe('productos', () => {
     expect(within(mobileCard).getByRole('link', { name: 'Editar LL-004' })).toHaveAttribute('href', '/inventario/1/editar')
   })
 
-  it('muestra completo el valor de inventario con centavos y mantiene los conteos', async () => {
+  it('muestra completo el valor de inventario redondeado solo al leer y mantiene los conteos', async () => {
     mockApi(fullRoutes([product(1, { quantity: 9, purchaseCost: 12345678.91 })]))
     renderRoute('/inventario')
 
-    expect(await within(indicator('Valor en inventario')).findByText('$ 111.111.110,19')).toBeInTheDocument()
+    expect(await within(indicator('Valor en inventario')).findByText('$ 111.111.110')).toBeInTheDocument()
     expect(within(indicator('Total de productos')).getByText('1')).toBeInTheDocument()
     expect(within(indicator('En stock')).getByText('1')).toBeInTheDocument()
   })

@@ -99,7 +99,7 @@ describe('panel de control', () => {
   it('muestra una perdida de diez centavos en tono negativo', async () => {
     mockApi({ ...fullRoutes(), '/api/reporting/kpis': () => jsonResponse({ ...kpis, netProfit: -0.1 }) })
     renderRoute('/inicio')
-    expect(await screen.findByText('-$ 0,10')).toHaveClass('text-error')
+    expect(await screen.findByText('$ 0')).toHaveClass('text-error')
   })
 
   it('muestra los cuatro bloques con datos', async () => {
@@ -191,11 +191,11 @@ describe('panel de control', () => {
     const name = await within(block).findByText('Cuenta con nombre de otro medio y descripcion extensa')
     const row = name.closest('li')!
     expect(within(row).getByText(label)).toBeInTheDocument()
-    expect(within(row).getByText('$ 1.234.567,89')).toBeInTheDocument()
+    expect(within(row).getByText('$ 1.234.568')).toBeInTheDocument()
     expect(row.querySelector('svg')).toHaveClass(icon)
     expect(row.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     expect(within(row).queryByRole('img')).not.toBeInTheDocument()
-    expect(within(block).getAllByText('$ 1.234.567,89')).toHaveLength(2)
+    expect(within(block).getAllByText('$ 1.234.568')).toHaveLength(2)
     expect(within(block).getByRole('link', { name: 'Ver cuentas' })).toHaveAttribute('href', '/cuentas')
   })
 
@@ -319,7 +319,7 @@ describe('panel de control', () => {
     expect(screen.queryByText('$ 20.781.907')).not.toBeInTheDocument()
     expect(screen.getByText('Caja General')).toBeInTheDocument()
     await act(async () => { resolvePrevious(jsonResponse({ ...kpis, netSales: 123.45 })) })
-    expect(await screen.findByText('$ 123,45')).toBeInTheDocument()
+    expect(await screen.findByText('$ 123')).toBeInTheDocument()
     for (const path of ['/api/inventory/products', '/api/inventory/categories', '/api/treasury/accounts', '/api/treasury/balance', '/api/sales']) {
       expect(fetchMock.mock.calls.filter(([url]) => url === path)).toHaveLength(1)
     }
@@ -328,7 +328,7 @@ describe('panel de control', () => {
     expect(await screen.findByText('$ 20.781.907')).toBeInTheDocument()
     await act(() => router.navigate(1))
     expect(screen.getByLabelText('Período')).toHaveValue('mes-anterior')
-    expect(await screen.findByText('$ 123,45')).toBeInTheDocument()
+    expect(await screen.findByText('$ 123')).toBeInTheDocument()
   })
 
   it.each([
@@ -393,7 +393,7 @@ describe('panel de control', () => {
     await waitFor(() => expect(alert).not.toBeInTheDocument())
   })
 
-  it('mantiene carga independiente y conserva centavos y nombres largos de las respuestas', async () => {
+  it('mantiene carga independiente, datos de API y nombres largos de las respuestas', async () => {
     let resolveKpis!: (response: Response) => void
     const fetchMock = mockApi({ ...fullRoutes(), '/api/treasury/accounts': () => jsonResponse([{ ...accounts[0], name: 'Cuenta de recaudos de la serviteca con un nombre muy largo', currentBalance: 123.45 }]), '/api/treasury/balance': () => jsonResponse({ total: 123.45 }) })
     const base = fetchMock.getMockImplementation()!
@@ -401,11 +401,11 @@ describe('panel de control', () => {
     renderRoute('/inicio')
     expect(screen.queryByText('$ 20.781.907')).not.toBeInTheDocument()
     expect(await screen.findByText('Cuenta de recaudos de la serviteca con un nombre muy largo')).toBeInTheDocument()
-    expect(screen.getAllByText('$ 123,45')).toHaveLength(2)
+    expect(screen.getAllByText('$ 123')).toHaveLength(2)
     await waitFor(() => expect(bodyRows(section('Últimas ventas'))).toHaveLength(5))
     await act(async () => { resolveKpis(jsonResponse({ ...kpis, netSales: 20781907.45, netProfit: -0.1 })) })
-    expect(await screen.findByText('$ 20.781.907,45')).toBeInTheDocument()
-    expect(screen.getByText('-$ 0,10')).toHaveClass('text-error')
+    expect(await screen.findByText('$ 20.781.907')).toBeInTheDocument()
+    expect(screen.getByText('$ 0')).toHaveClass('text-error')
   })
 
   it.each(['/api/inventory/products', '/api/inventory/categories', '/api/treasury/accounts', '/api/treasury/balance', '/api/sales'])('mantiene la carga de %s independiente de los indicadores sanos', async (path) => {
@@ -447,7 +447,7 @@ describe('panel de control', () => {
     const recent = section('Últimas ventas')
     expect(await within(stock).findAllByText(productName)).toHaveLength(2)
     expect(await within(recent).findAllByText(customerName)).toHaveLength(2)
-    expect(within(recent).getAllByText('$ 2.180.323,95')).toHaveLength(2)
+    expect(within(recent).getAllByText('$ 2.180.324')).toHaveLength(2)
   })
 
   it('utilidad neta negativa va en el tono de error y el margen negativo con coma', async () => {

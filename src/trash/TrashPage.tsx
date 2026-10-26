@@ -1,6 +1,6 @@
 import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
@@ -24,6 +24,7 @@ import { paginate } from '../lib/pagination'
 import { periodRange } from '../lib/period'
 import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
+import type { AppShellContext } from '../layout/AppShell'
 import {
   DEFAULT_TRASH_FILTERS,
   annulledInvoices,
@@ -74,6 +75,8 @@ const card = 'rounded-surface border border-border bg-surface'
 
 /** Papelera: las facturas anuladas del modulo, con filtros en la URL y Restaurar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {
+  const { menuButton } = useOutletContext<AppShellContext>()
+  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
   const [searchParams, setSearchParams] = useSearchParams()
@@ -168,13 +171,13 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
                     <CellLink to={detailPath(invoice)} className="codigo">
                       {invoice.invoiceNumber}
                     </CellLink>
-                    <span className="truncate text-body text-text">{config.partyName(invoice)}</span>
+                    <span className={isSales ? 'wrap-anywhere text-body text-text' : 'truncate text-body text-text'}>{config.partyName(invoice)}</span>
                     <span className="text-small text-text-muted">
                       {formatDate(invoice.invoiceDate)} · {paymentTypeLabels[invoice.paymentType]}
                     </span>
                   </span>
-                  <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-semibold text-text">{formatCurrency(invoice.total)}</span>
+                  <span className="flex min-w-0 flex-col items-end gap-1">
+                    <span className="monto wrap-anywhere text-right text-body font-semibold text-text">{formatCurrency(invoice.total).replace('$ ', '$\u00a0')}</span>
                     <StatusBadge status={invoice.status} />
                   </span>
                 </div>
@@ -194,6 +197,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
+        leading={isSales ? menuButton : undefined}
         title={config.title}
         subtitle={config.subtitle}
         secondary={[
@@ -203,7 +207,8 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         ]}
       />
 
-      <FilterBar active={trashFiltersActive(filters)} onClear={clearFilters}>
+      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
+      <FilterBar embedded={isSales} active={trashFiltersActive(filters)} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder={`Número de factura o ${config.partyLabel.toLowerCase()}`} {...search} />,
           <SelectField
@@ -223,9 +228,10 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={`${card} p-4`} aria-label="Facturas anuladas">
+      <section ref={sectionRef} className={isSales ? 'p-4' : `${card} p-4`} aria-label="Facturas anuladas">
         {content}
       </section>
+      </div>
 
       {restoring && (
         <RestoreModal

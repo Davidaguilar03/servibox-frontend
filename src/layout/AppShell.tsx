@@ -106,7 +106,8 @@ export interface AppShellContext {
  */
 export function AppShell() {
   const breadcrumb = useBreadcrumb()
-  const headerInPage = /^\/(inicio|inventario)\/?$/.test(useLocation().pathname)
+  const { pathname } = useLocation()
+  const headerInPage = /^\/(inicio|inventario)\/?$/.test(pathname) || /^\/ventas(?:\/|$)/.test(pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
   const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide
