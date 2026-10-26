@@ -161,9 +161,10 @@ el area de contenido (ancho maximo 1440 px):
   Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
   `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
-  buscador ni campana. Excepcion Inicio: no se monta la barra; el boton de menu movil
-  se entrega por contexto de Outlet a su encabezado. Conserva estado, referencia, foco,
-  SkipLink y titulo de pestana del shell; las demas rutas conservan su barra y breadcrumb.
+  buscador ni campana. Inicio y el listado de Productos no montan la barra; el boton
+  de menu movil se entrega por contexto de Outlet a sus encabezados. Conserva estado,
+  referencia, foco, SkipLink y titulo de pestana del shell. Categorias, formularios y
+  las demas rutas conservan su barra y breadcrumb.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 
@@ -283,7 +284,7 @@ variacion, titulo del periodo, ruta de exportacion y filas del estado de resulta
 ## Inventario
 
 Logica pura en `src/inventory/`: `productList.ts` (filtros, query string, estado de stock,
-orden, pestanas e indicadores), `productForm.ts` (valores, validacion, cuerpos del POST y
+orden, categorias e indicadores), `productForm.ts` (valores, validacion, cuerpos del POST y
 del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas en
 [03-DECISIONS.md](03-DECISIONS.md).
 
@@ -302,8 +303,8 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
   defecto.
 * Los enlaces al formulario llevan en `state` la query string del listado (`listSearch`);
   al guardar o cancelar se vuelve a `/inventario` con ella. Sin `state` se vuelve sin filtros.
-* Indicadores y conteos de pestanas no dependen de la pestana ni de los filtros. Cada
-  bloque (indicadores, pestanas, tabla) carga y falla por separado: los indicadores que solo
+* Indicadores no dependen del selector de categoria ni de los filtros. Cada
+  bloque (indicadores, categoria, tabla) carga y falla por separado: los indicadores que solo
   usan productos siguen visibles si fallan las categorias.
 * Bajo `md` la tabla pasa a tarjetas apiladas que enlazan al formulario.
 * Cambios sin guardar en el formulario de producto: el mismo patron de Nueva factura

@@ -12,6 +12,38 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-26: Correcciones visuales de Productos solicitadas por David
+
+* Decision: el listado de Productos omite la barra superior como Inicio y recibe el
+  boton movil del shell en su encabezado. Categorias y formularios conservan la barra.
+  IndicatorCard tiene variante compact solo para sus cuatro KPIs: icono a la izquierda
+  centrado verticalmente; titulo, cifra y ayuda alineados a la izquierda del bloque
+  derecho. La rejilla usa tres columnas iguales y una de 1,35 para dinero desde 2xl;
+  dos o una columna cuando no cabe. Reemplaza los anchos naturales y el centrado
+  anteriores, segun la referencia aprobada por David. Inicio conserva su variante.
+* Categoria pasa de TabList a SelectField junto a Buscar; Todas las categorias es la
+  opcion inicial. Usa los mismos ids y parametro `categoria`, con los filtros, pagina,
+  historial y alcance de KPIs anteriores. FilterBar acomoda cuatro filtros en dos
+  columnas hasta 2xl, luego una fila. No cambia tablas ni dominio.
+* Reemplaza la pestana de categoria de "Productos: filtros en la URL y formulario sin
+  formulas" y el uso de TabList en Productos de las decisiones de controles. La
+  implementacion compartida de TabList sigue para las demas pantallas.
+* Motivo: dar mas espacio a contenido y evitar una fila de categorias larga sin
+  alterar la URL ni los datos. Revision visual pendiente de David.
+
+## 2026-10-26: Acabado de Inventario y formularios de producto
+
+* Decision: Productos usa los cuatro IndicatorCard con acentos e iconos del sistema,
+  sin cambiar conteos, valor al costo ni alertas. FilterBar y listado comparten una
+  superficie; solo Productos usa la variante embedded. DataTable conserva sus columnas
+  por prioridad y las tarjetas moviles muestran tambien costo, precio y Editar.
+* Categorias conserva datos, acciones y modal; nombres largos pueden envolver y los
+  umbrales del modal se apilan para dejar legibles sus rotulos y ayudas. El formulario
+  de producto agrupa codigo y categoria, acota campos de costo y stock y mantiene
+  PricePanel a la derecha cuando cabe. El panel conserva la formula y el cuerpo enviado.
+* Motivo: mejorar la lectura en los anchos disponibles con componentes y tokens
+  existentes. Revision visual pendiente de David; sin navegador del agente.
+
 ## 2026-10-26: Correcciones visuales de Inicio solicitadas por David
 
 * Decision: omitir el header del shell solo en Inicio, sin reservar su altura. El mismo

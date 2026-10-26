@@ -38,6 +38,15 @@
   }
 }
 
+/* Solo la cifra de los indicadores compactos de Productos: tamano display, peso figure. */
+@utility text-kpi {
+  font-family: var(--font-body);
+  font-size: var(--display-size);
+  line-height: var(--display-line-height);
+  font-weight: var(--figure-font-weight);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Rol display: solo el titular (h1) de la landing. 32/36 bajo md y 40/44 desde md. */
 @utility text-display {
   font-size: var(--display-size);

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { TriangleAlert, type LucideIcon } from 'lucide-react'
 import { Button } from './Button'
 import { Skeleton } from './states'
-import { iconSm } from './icons'
+import { iconLg, iconSm } from './icons'
 
 interface IndicatorCardProps {
   label: string
@@ -22,6 +22,8 @@ interface IndicatorCardProps {
   /** El acento identifica el contexto; no cambia el significado ni el signo del valor. */
   accent?: 'brand' | 'brand-strong' | 'success' | 'warning' | 'info'
   icon?: LucideIcon
+  /** Variante de Productos: icono a la izquierda y texto alineado en un bloque. */
+  compact?: boolean
 }
 
 const accents = {
@@ -33,31 +35,45 @@ const accents = {
 }
 
 /** Tarjeta de indicador: etiqueta, valor y, si la hay, la variacion contra el periodo anterior. */
-export function IndicatorCard({ label, value, negative, note, detail, trend, error, onRetry, accent = 'brand', icon: Icon }: IndicatorCardProps) {
+export function IndicatorCard({ label, value, negative, note, detail, trend, error, onRetry, accent = 'brand', icon: Icon, compact }: IndicatorCardProps) {
+  const body = error ? (
+    <div role="alert" className="mt-2 flex flex-wrap items-center gap-2">
+      <TriangleAlert {...iconSm} className="text-error" aria-hidden />
+      <span className="text-small text-text">No pudimos cargar este dato.</span>
+      {onRetry && (
+        <Button variant="text" onClick={onRetry}>
+          Reintentar
+        </Button>
+      )}
+    </div>
+  ) : value === undefined ? (
+    <Skeleton className="mt-3 h-8 w-3/4" />
+  ) : (
+    <>
+      <p className={`monto wrap-anywhere ${compact ? 'text-kpi mt-1' : 'text-figure mt-2'} ${negative ? 'text-error' : 'text-text'}`}>{value.replace('$ ', '$\u00a0')}</p>
+      {note && <p className="text-small text-text">{note}</p>}
+      {detail && <p className={`text-small text-text-muted ${compact ? '' : 'mt-1'}`}>{detail}</p>}
+      {trend && <div className="mt-1 text-small">{trend}</div>}
+    </>
+  )
+
   return (
-    <div className={`min-w-0 rounded-surface border border-t-2 border-border bg-surface p-6 ${accents[accent].border}`}>
-      <p className="flex items-center gap-3 text-small text-text-muted">
-        {Icon && <span className={`flex size-8 shrink-0 items-center justify-center rounded-control ${accents[accent].icon}`} aria-hidden><Icon {...iconSm} /></span>}
-        {label}
-      </p>
-      {error ? (
-        <div role="alert" className="mt-2 flex flex-wrap items-center gap-2">
-          <TriangleAlert {...iconSm} className="text-error" aria-hidden />
-          <span className="text-small text-text">No pudimos cargar este dato.</span>
-          {onRetry && (
-            <Button variant="text" onClick={onRetry}>
-              Reintentar
-            </Button>
-          )}
+    <div className={`min-w-0 rounded-surface border border-t-2 border-border bg-surface ${compact ? 'flex items-center p-4' : 'p-6'} ${accents[accent].border}`}>
+      {compact ? (
+        <div className="flex w-full items-center gap-3">
+          {Icon && <span className={`flex size-12 shrink-0 items-center justify-center rounded-control ${accents[accent].icon}`} aria-hidden><Icon {...iconLg} /></span>}
+          <div className="min-w-0 flex-1 text-left">
+            <p className="text-small text-text-muted">{label}</p>
+            {body}
+          </div>
         </div>
-      ) : value === undefined ? (
-        <Skeleton className="mt-3 h-8 w-3/4" />
       ) : (
         <>
-          <p className={`mt-2 text-figure ${negative ? 'text-error' : 'text-text'}`}>{value.replace('$ ', '$\u00a0')}</p>
-          {note && <p className="text-small text-text">{note}</p>}
-          {detail && <p className="mt-1 text-small text-text-muted">{detail}</p>}
-          {trend && <div className="mt-1 text-small">{trend}</div>}
+          <p className="flex items-center gap-3 text-small text-text-muted">
+            {Icon && <span className={`flex size-8 shrink-0 items-center justify-center rounded-control ${accents[accent].icon}`} aria-hidden><Icon {...iconSm} /></span>}
+            {label}
+          </p>
+          {body}
         </>
       )}
     </div>

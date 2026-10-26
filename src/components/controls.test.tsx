@@ -250,6 +250,7 @@ describe('un solo segmentado', () => {
     for (const file of ['pages/NewSaleInvoicePage.tsx', 'pages/NewPurchaseInvoicePage.tsx', 'pages/ReportsPage.tsx']) {
       expect(source(file)).toContain('<SegmentedControl')
     }
-    for (const file of ['settings/SettingsPage.tsx', 'pages/ProductsPage.tsx']) expect(source(file)).toContain('<TabList')
+    expect(source('settings/SettingsPage.tsx')).toContain('<TabList')
+    expect(source('pages/ProductsPage.tsx')).toContain('<SelectField')
   })
 })

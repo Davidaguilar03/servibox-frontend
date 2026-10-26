@@ -30,7 +30,7 @@ export function PricePanel({ cost, category, settings }: PricePanelProps) {
   const margin = category?.targetMargin ?? null
 
   return (
-    <aside className="rounded-surface border border-border bg-surface p-6" aria-labelledby="price-panel-title">
+    <aside className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-6" aria-labelledby="price-panel-title">
       <h2 id="price-panel-title" className="text-section text-text">
         Cómo se calcula el precio
       </h2>
@@ -49,7 +49,7 @@ export function PricePanel({ cost, category, settings }: PricePanelProps) {
         </div>
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
           <dt className="font-semibold text-text">Precio sugerido sin IVA</dt>
-          <dd className="text-figure text-text">{result ? formatCurrency(result.suggestedPrice) : EMPTY_VALUE}</dd>
+          <dd className="monto text-figure wrap-anywhere text-text">{result ? formatCurrency(result.suggestedPrice).replace('$ ', '$\u00a0') : EMPTY_VALUE}</dd>
         </div>
       </dl>
       {!ready && (
