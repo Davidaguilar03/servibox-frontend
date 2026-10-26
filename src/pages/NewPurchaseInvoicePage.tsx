@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import { GLOSSARY } from '../copy/glossary'
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
@@ -138,7 +139,7 @@ export function NewPurchaseInvoicePage() {
       rate: rateOf(line.productId === null ? undefined : productsById.get(line.productId)),
     })),
   )
-  const shortBalance = account !== undefined && insufficientBalance(account.currentBalance, totals.exactTotal)
+  const shortBalance = account !== undefined && insufficientBalance(account.currentBalance, totals.total)
 
   const save = useMutation({
     mutationFn: createPurchase,
@@ -452,7 +453,7 @@ export function NewPurchaseInvoicePage() {
                 <div className="flex justify-between gap-4">
                   <dt className="text-text-muted">Saldo después de la compra</dt>
                   <dd className={`monto font-semibold whitespace-nowrap ${shortBalance ? 'text-error' : 'text-text'}`}>
-                    {formatCurrency(account.currentBalance - totals.total)}
+                    {formatCurrency(addMoney(account.currentBalance, -totals.total))}
                   </dd>
                 </div>
               </>

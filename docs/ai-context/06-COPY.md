@@ -89,6 +89,13 @@ Si una pantalla compara el mensaje del backend para saber que campo marcar (nume
 factura repetido, documento repetido), la comparacion va contra el texto del backend y el
 texto que se muestra sale de `userMessage`.
 
+Mensaje de precision de precio unitario, HTTP 400:
+
+* Backend exacto: `El precio unitario admite como maximo dos decimales`
+* Interfaz: mismo texto con tilde en maximo y punto final; se muestra bajo el campo en la
+  validacion local. La respuesta del servidor sigue pasando por reportError/userMessage.
+* No aplica a pagos, abonos, transferencias ni saldos iniciales.
+
 ### Donde: `reportError(error)`
 
 Mensajes de edicion de cuentas agregados al mapa (TreasuryService.editarCuenta):

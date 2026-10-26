@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import { formatCurrency, formatDate } from '../lib/format'
 import { round2 } from './newSale'
 import type { Movement, SaleDetail } from './salesApi'
@@ -26,9 +27,9 @@ export function saleSummary(sale: Pick<SaleDetail, 'subtotal' | 'total' | 'pendi
   const annulled = sale.status === 'ANULADA'
   return {
     subtotal: sale.subtotal,
-    iva: round2(sale.total - sale.subtotal),
+    iva: addMoney(sale.total, -sale.subtotal),
     total: sale.total,
-    paid: annulled ? null : round2(sale.total - sale.pendingBalance),
+    paid: annulled ? null : addMoney(sale.total, -sale.pendingBalance),
     pending: annulled ? null : sale.pendingBalance,
   }
 }
@@ -63,7 +64,7 @@ export interface CollectionErrors {
 export function validateCollection(draft: CollectionDraft, pending: number, range: { min: string; max: string }) {
   const errors: CollectionErrors = {}
   if (draft.accountId === null) errors.account = 'Elige la cuenta donde entra el dinero.'
-  const amount = Number(draft.amount)
+  const amount = round2(Number(draft.amount))
   if (draft.amount.trim() === '' || !Number.isFinite(amount) || amount <= 0) {
     errors.amount = 'El valor debe ser mayor que cero.'
   } else if (round2(amount) > round2(pending)) {

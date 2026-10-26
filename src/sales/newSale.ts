@@ -1,6 +1,8 @@
 import type { AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
 import { accountPaymentMethods } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
+import { addMoney, moneyProduct, unitPriceError } from '../lib/money'
+export { round2 } from '../lib/money'
 import { stockStatus } from '../lib/stock'
 import type { SaleRequest } from './salesApi'
 
@@ -26,17 +28,6 @@ export interface SaleForm {
   lines: SaleLine[]
 }
 
-/**
- * Redondeo a 2 decimales, mitad hacia arriba, sobre la representacion decimal del numero:
- * lo que hace la base al guardar un double en una columna NUMERIC(14,2).
- */
-export function round2(value: number): number {
-  const [digits = '0', exponent = '0'] = String(value).split('e')
-  const shifted = Math.round(Number(`${digits}e${Number(exponent) + 2}`))
-  const [rDigits = '0', rExponent = '0'] = String(shifted).split('e')
-  return Number(`${rDigits}e${Number(rExponent) - 2}`)
-}
-
 /** Tasa de IVA de la categoria: suma de las tasas de sus impuestos marcados como IVA. */
 export function vatRate(category: Pick<Category, 'taxTypes'> | undefined): number {
   return (category?.taxTypes ?? []).reduce((sum, tax) => (tax.isVat && tax.rate !== null ? sum + tax.rate : sum), 0)
@@ -48,28 +39,21 @@ export interface PricedLine {
   rate: number
 }
 
-/** Base e IVA de una linea, como los guarda el backend (`precio * cantidad` y `base * tasa`). */
+/** Cantidad antes del redondeo definitivo de cada importe de linea. */
 export function lineAmounts({ quantity, price, rate }: PricedLine) {
-  const base = price * quantity
-  return { base: round2(base), iva: round2(base * rate) }
+  return { base: moneyProduct(price, quantity), iva: moneyProduct(price, quantity, rate) }
 }
 
-/**
- * Espejo de `SalesService.crearFactura`: suma las bases y los IVA en doubles, en el orden
- * de las lineas, y redondea solo al final como la columna NUMERIC(14,2). El IVA que se
- * muestra es total menos subtotal.
- */
+/** Suma los importes definitivos de las lineas, igual que el backend. */
 export function invoiceTotals(lines: PricedLine[]) {
   let subtotal = 0
-  let ivaGenerado = 0
+  let iva = 0
   for (const line of lines) {
-    const base = line.price * line.quantity
-    subtotal += base
-    ivaGenerado += base * line.rate
+    const amounts = lineAmounts(line)
+    subtotal = addMoney(subtotal, amounts.base)
+    iva = addMoney(iva, amounts.iva)
   }
-  const roundedSubtotal = round2(subtotal)
-  const total = round2(subtotal + ivaGenerado)
-  return { subtotal: roundedSubtotal, iva: round2(total - roundedSubtotal), total }
+  return { subtotal, iva, total: addMoney(subtotal, iva) }
 }
 
 /** Valores de `medio_pago_venta` en el diccionario de datos del backend. */
@@ -126,8 +110,7 @@ export function validateSale(form: SaleForm, productsById: Map<number, Product>)
     } else if (product && quantity > (product.quantity ?? 0)) {
       errors.quantity = `Solo hay ${product.quantity ?? 0} unidades disponibles.`
     }
-    const price = Number(line.price)
-    if (line.price.trim() === '' || !Number.isFinite(price) || price <= 0) errors.price = 'El precio debe ser mayor que cero.'
+    errors.price = unitPriceError(line.price)
     if (errors.product || errors.quantity || errors.price) lines[line.key] = errors
   }
 

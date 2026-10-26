@@ -40,7 +40,7 @@ export function validatePayment(
 ) {
   const errors: PaymentErrors = {}
   if (draft.accountId === null) errors.account = 'Elige la cuenta de la que sale el dinero.'
-  const amount = Number(draft.amount)
+  const amount = round2(Number(draft.amount))
   const validAmount = draft.amount.trim() !== '' && Number.isFinite(amount) && amount > 0
   if (!validAmount) {
     errors.amount = 'El valor debe ser mayor que cero.'
@@ -50,6 +50,6 @@ export function validatePayment(
   if (!draft.date || draft.date < range.min || draft.date > range.max) {
     errors.date = `La fecha debe estar entre el ${formatDate(range.min)} y el ${formatDate(range.max)}.`
   }
-  const insufficient = validAmount && account !== undefined && account.currentBalance < amount
+  const insufficient = validAmount && account !== undefined && round2(account.currentBalance) < amount
   return { errors, insufficient, valid: Object.keys(errors).length === 0 && !insufficient }
 }

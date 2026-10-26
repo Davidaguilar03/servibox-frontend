@@ -104,6 +104,19 @@ describe('detalle de factura de venta', () => {
     vi.useRealTimers()
   })
 
+  it('conserva total historico e IVA guardado aunque difieran de un calculo nuevo', async () => {
+    mockApi(routes({ 'GET /api/sales/5': () => jsonResponse(sale(5, {
+      subtotal: 0.06, total: 0.07, pendingBalance: 0, status: 'PAGADA',
+      details: [1, 2].map((id) => ({ id, productId: id, productCode: 'H-' + id, productDescription: 'Historico ' + id, quantity: 1, price: 0.03, ivaAmount: 0.01 })),
+    })) }))
+    renderRoute('/ventas/5')
+    await screen.findByRole('heading', { name: 'FV-0230' })
+    expect(summaryValue('Total')).toBe('$ 0,07')
+    expect(summaryValue('IVA')).toBe('$ 0,01')
+    const table = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
+    expect(within(table).getAllByText('$ 0,01')).toHaveLength(2)
+  })
+
   it('el titulo del documento pasa al numero de la factura al cargar', async () => {
     mockApi(routes())
     renderRoute('/ventas/5')

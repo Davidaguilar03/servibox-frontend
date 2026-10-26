@@ -1,3 +1,4 @@
+import { round2 } from '../lib/money'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { parseAmount } from '../inventory/productForm'
 import type { AccountRequest, AccountUpdateRequest, TransferRequest } from './accountsApi'
@@ -58,8 +59,7 @@ export type TransferErrors = Partial<Record<keyof TransferFormValues, string>>
 
 /**
  * Cuentas distintas y monto mayor que cero y no mayor que el saldo actual del origen. El
- * backend no revisa el saldo de una transferencia (si lo hace en las compras), asi que el
- * cliente lo exige para no dejar una cuenta en negativo.
+ * servidor vuelve a comprobar los fondos al guardar, con su saldo vigente.
  */
 export function validateTransfer(values: TransferFormValues, accounts: Account[]): TransferErrors {
   const errors: TransferErrors = {}
@@ -68,10 +68,10 @@ export function validateTransfer(values: TransferFormValues, accounts: Account[]
   if (!values.destinationAccountId) errors.destinationAccountId = 'Elige la cuenta de destino.'
   else if (values.destinationAccountId === values.originAccountId)
     errors.destinationAccountId = 'La cuenta de destino tiene que ser distinta de la de origen.'
-  const amount = parseAmount(values.amount)
+  const amount = round2(parseAmount(values.amount))
   if (!values.amount.trim()) errors.amount = 'Escribe el monto.'
   else if (!(amount > 0)) errors.amount = 'El monto debe ser mayor que cero.'
-  else if (origin && amount > origin.currentBalance) errors.amount = `Fondos insuficientes en ${origin.name}.`
+  else if (origin && amount > round2(origin.currentBalance)) errors.amount = `Fondos insuficientes en ${origin.name}.`
   return errors
 }
 

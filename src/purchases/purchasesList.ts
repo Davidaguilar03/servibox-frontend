@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import type { TreasuryMovement } from '../accounts/accountsApi'
 import { normalizeText } from '../lib/text'
 import { periodPrefix, type SalesFilters } from '../sales/salesList'
@@ -36,7 +37,7 @@ export function filterPurchases(purchases: Purchase[], filters: SalesFilters, to
 /** Por pagar: saldo pendiente de las facturas PENDIENTE y cuantas son. */
 export function payable(purchases: Purchase[]) {
   const pending = purchases.filter((purchase) => purchase.status === 'PENDIENTE')
-  return { amount: pending.reduce((sum, purchase) => sum + purchase.pendingBalance, 0), count: pending.length }
+  return { amount: pending.reduce((sum, purchase) => addMoney(sum, purchase.pendingBalance), 0), count: pending.length }
 }
 
 /**
@@ -50,5 +51,5 @@ export function creditPayments(movements: TreasuryMovement[], purchases: Purchas
       (movement) =>
         movement.category === 'PAGO_COMPRA' && movement.purchaseId !== null && creditIds.has(movement.purchaseId),
     )
-    .reduce((sum, movement) => sum + movement.amount, 0)
+    .reduce((sum, movement) => addMoney(sum, movement.amount), 0)
 }

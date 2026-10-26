@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import type { Sale } from '../dashboard/dashboardApi'
 import { normalizeText } from '../lib/text'
 import type { Movement } from './salesApi'
@@ -120,7 +121,7 @@ export function filterSales(sales: Sale[], filters: SalesFilters, today: string)
 /** Por cobrar: saldo pendiente de las facturas PENDIENTE y cuantas son. */
 export function receivable(sales: Sale[]) {
   const pending = sales.filter((sale) => sale.status === 'PENDIENTE')
-  return { amount: pending.reduce((sum, sale) => sum + sale.pendingBalance, 0), count: pending.length }
+  return { amount: pending.reduce((sum, sale) => addMoney(sum, sale.pendingBalance), 0), count: pending.length }
 }
 
 /**
@@ -134,5 +135,5 @@ export function creditCollections(movements: Movement[], sales: Sale[]): number 
       (movement) =>
         movement.category === 'RECAUDO_VENTA' && movement.saleId !== null && creditSaleIds.has(movement.saleId),
     )
-    .reduce((sum, movement) => sum + movement.amount, 0)
+    .reduce((sum, movement) => addMoney(sum, movement.amount), 0)
 }

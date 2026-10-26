@@ -276,7 +276,7 @@ function IncomeStatementPreview({ desde, hasta }: { desde: string; hasta: string
         <ErrorState message="No pudimos cargar la vista previa." onRetry={() => void current.refetch()} />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-4">
             <IndicatorCard
               label="Ventas sin IVA"
               value={current.data ? formatCurrency(current.data.netSales) : undefined}
@@ -344,7 +344,7 @@ function StatementTable({ kpis }: { kpis: Kpis }) {
       </thead>
       <tbody>
         {incomeStatementRows(kpis).map((row) => {
-          const negative = Math.round(row.value) < 0
+          const negative = row.value < 0
           const rowClass = row.total
             ? negative
               ? 'bg-error-bg font-semibold text-error-ink'

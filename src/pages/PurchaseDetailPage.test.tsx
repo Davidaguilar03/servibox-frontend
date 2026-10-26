@@ -103,6 +103,19 @@ describe('detalle de factura de compra', () => {
     vi.useRealTimers()
   })
 
+  it('conserva total historico e IVA guardado aunque difieran de un calculo nuevo', async () => {
+    mockApi(routes({ 'GET /api/purchases/5': () => jsonResponse(purchase(5, {
+      subtotal: 0.06, total: 0.07, pendingBalance: 0, status: 'PAGADA',
+      details: [1, 2].map((id) => ({ id, productId: id, productCode: 'H-' + id, productDescription: 'Historico ' + id, quantity: 1, price: 0.03, ivaAmount: 0.01 })),
+    })) }))
+    renderRoute('/compras/5')
+    await screen.findByRole('heading', { name: 'IA-777' })
+    expect(summaryValue('Total')).toBe('$ 0,07')
+    expect(summaryValue('IVA')).toBe('$ 0,01')
+    const table = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
+    expect(within(table).getAllByText('$ 0,01')).toHaveLength(2)
+  })
+
   it('credito con pagos: datos, productos, pagos y resumen', async () => {
     const fetchMock = mockApi(routes())
     renderRoute('/compras/5')
@@ -126,19 +139,19 @@ describe('detalle de factura de compra', () => {
 
     const products = within(screen.getByRole('region', { name: 'Productos' })).getByRole('table')
     expect(within(products).getAllByRole('columnheader').map((cell) => cell.textContent)).toContain('Precio sin IVA')
-    expect(within(products).getAllByRole('row')[1]).toHaveTextContent('DEMO-003Bateria 12V2$ 251.235$ 95.469$ 502.469')
+    expect(within(products).getAllByRole('row')[1]).toHaveTextContent('DEMO-003Bateria 12V2$ 251.234,57$ 95.469,14$ 502.469,14')
 
     const payments = screen.getByRole('region', { name: 'Pagos registrados' })
     const rows = within(within(payments).getByRole('table')).getAllByRole('row').slice(1)
     expect(rows.map((row) => row.textContent)).toEqual(['12/10/2026Caja General$ 50.000', '08/10/2026Bancolombia$ 150.000'])
     expect(within(payments).queryByText(/Método/)).not.toBeInTheDocument()
 
-    expect(summaryValue('Subtotal')).toBe('$ 502.469')
-    expect(summaryValue('IVA')).toBe('$ 95.469')
-    expect(summaryValue('Total')).toBe('$ 597.938')
+    expect(summaryValue('Subtotal')).toBe('$ 502.469,14')
+    expect(summaryValue('IVA')).toBe('$ 95.469,14')
+    expect(summaryValue('Total')).toBe('$ 597.938,28')
     // Pagado (total menos saldo) coincide con la suma de los pagos: 150.000 + 50.000.
     expect(summaryValue('Pagado')).toBe('$ 200.000')
-    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938')
+    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938,28')
     expect(calls(fetchMock, 'GET', '/api/treasury/movements')[0]?.[0]).toBe(
       '/api/treasury/movements?purchaseId=5&category=PAGO_COMPRA',
     )
@@ -161,8 +174,8 @@ describe('detalle de factura de compra', () => {
     expect(within(data).getByText('Cheque')).toBeInTheDocument()
     expect(within(data).getByText('Vence').nextElementSibling).toHaveTextContent(EMPTY_VALUE)
     const paid = screen.getByRole('region', { name: 'Pago realizado' })
-    expect(await within(paid).findAllByText('$ 597.938')).not.toHaveLength(0)
-    expect(summaryValue('Pagado')).toBe('$ 597.938')
+    expect(await within(paid).findAllByText('$ 597.938,28')).not.toHaveLength(0)
+    expect(summaryValue('Pagado')).toBe('$ 597.938,28')
     expect(summaryValue('Saldo pendiente')).toBe('$ 0')
   })
 
@@ -229,7 +242,7 @@ describe('detalle de factura de compra', () => {
     const payments = screen.getByRole('region', { name: 'Pagos registrados' })
     await user.click(await within(payments).findByRole('button', { name: 'Reintentar' }))
     expect(await within(payments).findByText(/Aún no hay pagos/)).toBeInTheDocument()
-    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938')
+    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938,28')
   })
 
   it('registra un pago: valores por defecto en Bogota, validaciones, saldo de la cuenta y cuerpo exacto', async () => {
@@ -251,7 +264,7 @@ describe('detalle de factura de compra', () => {
     await user.click(await screen.findByRole('button', { name: 'Registrar pago' }))
     const dialog = screen.getByRole('dialog', { name: 'Registrar pago' })
     expect(within(dialog).getByText('IA-777 · Importadora Andina SAS')).toBeInTheDocument()
-    expect(within(dialog).getByText('$ 397.938')).toBeInTheDocument()
+    expect(within(dialog).getByText('$ 397.938,28')).toBeInTheDocument()
     const account = await within(dialog).findByLabelText('Cuenta')
     expect(account).toHaveValue('2')
     expect(within(account).getByRole('option', { name: 'Caja General · $ 300.000' })).toBeInTheDocument()
@@ -266,7 +279,7 @@ describe('detalle de factura de compra', () => {
 
     // El saldo pendiente (397.938) supera los 300.000 de Caja General.
     expect(within(dialog).getByRole('alert')).toHaveTextContent(
-      'Saldo insuficiente en Caja General: disponible $ 300.000, necesitas $ 397.938',
+      'Saldo insuficiente en Caja General: disponible $ 300.000, necesitas $ 397.938,28',
     )
     // Sin saldo no se envia: Registrar sigue habilitado y lleva el foco a la cuenta.
     expect(save).toBeEnabled()
@@ -280,7 +293,7 @@ describe('detalle de factura de compra', () => {
     expect(within(dialog).getByText('El valor debe ser mayor que cero.')).toBeInTheDocument()
     await user.clear(amount)
     await user.type(amount, '400000')
-    expect(within(dialog).getByText('No puede superar el saldo pendiente de $ 397.938')).toBeInTheDocument()
+    expect(within(dialog).getByText('No puede superar el saldo pendiente de $ 397.938,28')).toBeInTheDocument()
     await user.clear(amount)
     await user.type(amount, '300001')
     expect(within(dialog).getByText(/Saldo insuficiente en Caja General/)).toBeInTheDocument()
@@ -300,7 +313,7 @@ describe('detalle de factura de compra', () => {
     expect(posts).toHaveLength(1)
     expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ accountId: 2, amount: 300000, date: '2026-10-18' })
     expect(await screen.findByText('Pago registrado')).toBeInTheDocument()
-    await waitFor(() => expect(summaryValue('Saldo pendiente')).toBe('$ 97.938'))
+    await waitFor(() => expect(summaryValue('Saldo pendiente')).toBe('$ 97.938,28'))
   })
 
   it('un 409 de saldo queda en el modal sin perder lo digitado y refresca cuentas y factura', async () => {

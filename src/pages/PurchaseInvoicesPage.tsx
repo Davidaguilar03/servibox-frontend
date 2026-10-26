@@ -211,13 +211,13 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
               <li key={purchase.id}>
                 <Link
                   to={`/compras/${purchase.id}`}
-                  className="flex items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-ring"
+                  className="flex flex-wrap items-start justify-between gap-4 rounded-surface border border-border p-4 transition-colors duration-(--duration-fast) hover:bg-neutral-100 focus-ring"
                 >
-                  <span className="flex min-w-0 flex-col gap-1">
+                  <span className="flex min-w-20 flex-1 flex-col gap-1">
                     <span className="codigo text-small text-text">{purchase.invoiceNumber}</span>
                     <span className="truncate text-body text-text">{purchase.supplier.name}</span>
                   </span>
-                  <span className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="ml-auto flex shrink-0 flex-col items-end gap-1">
                     <span className="monto text-body font-semibold text-text">{formatCurrency(purchase.total)}</span>
                     <StatusBadge status={purchase.status} />
                     <span className="text-small text-text-muted">

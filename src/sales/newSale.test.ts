@@ -88,15 +88,9 @@ describe('calculo de la factura', () => {
     expect(invoiceTotals([{ quantity: 2, price: 200000, rate: 0.19 }])).toEqual({ subtotal: 400000, iva: 76000, total: 476000 })
   })
 
-  it('redondea solo al final, como la columna NUMERIC(14,2)', () => {
-    // 3 x 0.1 con IVA del 19 % en doubles: 0.30000000000000004 y 0.357...
-    const totals = invoiceTotals([
-      { quantity: 3, price: 0.1, rate: 0.19 },
-      { quantity: 1, price: 1234.565, rate: 0.19 },
-    ])
-    expect(totals.subtotal).toBe(round2(0.1 * 3 + 1234.565))
-    expect(totals.total).toBe(round2((0.1 * 3 + 1234.565) + (0.1 * 3 * 0.19 + 1234.565 * 0.19)))
-    expect(totals.iva).toBe(round2(totals.total - totals.subtotal))
+  it('redondea despues de multiplicar la cantidad y suma los importes de linea', () => {
+    const lines = [{ quantity: 3, price: 0.1, rate: 0.19 }, { quantity: 1, price: 1234.56, rate: 0.19 }]
+    expect(invoiceTotals(lines)).toEqual({ subtotal: 1234.86, iva: 234.63, total: 1469.49 })
   })
 
   it('sin lineas todo es cero', () => {
@@ -237,5 +231,29 @@ describe('isDuplicateNumberError', () => {
     expect(isDuplicateNumberError(new ApiError('Stock insuficiente para Llanta: hay 4 y se piden 5', 409))).toBe(false)
     expect(isDuplicateNumberError(new ApiError('Ya existe una factura con el numero FV-0002', 400))).toBe(false)
     expect(isDuplicateNumberError(new Error('x'))).toBe(false)
+  })
+})
+
+ describe('contrato monetario por linea', () => {
+  it.each([
+    [0.03, 1, 2, 0.06, 0.02, 0.08],
+    [5.67, 1, 2, 11.34, 2.16, 13.5],
+    [0.01, 3, 1, 0.03, 0.01, 0.04],
+    [0.03, 2, 1, 0.06, 0.01, 0.07],
+  ])('precio %s cantidad %s en %s lineas', (price, quantity, count, subtotal, iva, total) => {
+    const lines = Array.from({ length: count! }, () => ({ price: price!, quantity: quantity!, rate: 0.19 }))
+    expect(invoiceTotals(lines)).toEqual({ subtotal, iva, total })
+  })
+
+  it.each(['0.005', '0.0100000000000000000001', '1e-3', '1.2340'])('rechaza precio %s desde el texto', (price) => {
+    const result = validateSale(form({ lines: [line(1, 1, '1', price)] }), productsById)
+    expect(result.valid).toBe(false)
+    expect(result.lines[1]?.price).toBe('El precio unitario admite como máximo dos decimales.')
+  })
+
+  it.each(['0.01', '0.0100', '1.000', '1e-2'])('acepta precio equivalente %s y envia el mismo valor', (price) => {
+    const values = form({ lines: [line(1, 1, '3', price)] })
+    expect(validateSale(values, productsById).valid).toBe(true)
+    expect(buildSaleRequest(values).details[0]?.price).toBe(Number(price))
   })
 })

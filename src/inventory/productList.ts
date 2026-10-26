@@ -1,3 +1,4 @@
+import { addMoney, moneyProduct } from '../lib/money'
 import { stockStatus, type StockStatus } from '../lib/stock'
 import { normalizeText } from '../lib/text'
 import type { InventoryCategory, InventoryProduct } from './inventoryApi'
@@ -125,7 +126,7 @@ export function productIndicators(products: InventoryProduct[]) {
     inStock: products.filter((product) => (product.quantity ?? 0) > 0).length,
     /** Cantidad por costo de compra (sin IVA); una cantidad nula o negativa no suma. */
     inventoryValue: products.reduce(
-      (sum, product) => sum + Math.max(0, product.quantity ?? 0) * (product.purchaseCost ?? 0),
+      (sum, product) => addMoney(sum, moneyProduct(Math.max(0, product.quantity ?? 0), product.purchaseCost ?? 0)),
       0,
     ),
   }

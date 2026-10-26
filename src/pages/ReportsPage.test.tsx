@@ -94,6 +94,14 @@ describe('ReportsPage', () => {
     vi.restoreAllMocks()
   })
 
+  it('clasifica una perdida de diez centavos como negativa', async () => {
+    mockApi({ 'GET /api/reporting/kpis': () => jsonResponse({ ...october, netProfit: -0.1 }) })
+    renderRoute('/reportes')
+    await screen.findByRole('rowheader', { name: 'Utilidad neta' })
+    expect(statementValue('Utilidad neta')).toHaveTextContent('-$ 0,10')
+    expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-error-bg', 'text-error-ink')
+  })
+
   it('muestra el periodo por defecto, la vista previa y la variacion', async () => {
     const fetchMock = mockApi()
     renderRoute('/reportes')

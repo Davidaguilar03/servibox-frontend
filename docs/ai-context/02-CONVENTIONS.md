@@ -220,7 +220,16 @@ necesite, no antes.
 
 En `src/lib/format.ts`, nunca a mano en un componente:
 
-* Moneda: `formatCurrency`, pesos sin decimales con punto de miles (`$ 180.000`, `-$ 3.500`).
+* Moneda: formatCurrency, enteros sin decimales y centavos con dos, punto de miles y coma
+  decimal: $ 1.500, $ 13,50, $ 0,08, -$ 0,10. HALF_UP a centavos y sin cero negativo.
+* Facturas nuevas: producto decimal de precio por cantidad, luego base e IVA definitivos
+  por linea (HALF_UP a dos decimales); resumen suma esas lineas. lib/money.ts comparte
+  aritmetica con el racional de Inventario sin cambiar su redondeo a pesos enteros.
+* Precios de linea: input numerico con punto decimal, maximo dos decimales significativos
+  comprobados desde el texto; 0.005 invalido, 0.01 y 0.0100 validos. Otros montos conservan
+  sus separadores y normalizacion HALF_UP del servidor, sin ese rechazo de precision.
+* No recalcular documentos historicos: detalles y listados usan cifras guardadas de API.
+  Las sumas y restas monetarias derivadas usan centavos definitivos, sin EPSILON.
 * Fecha en tablas: `formatDate`, dd/mm/aaaa a partir de la fecha ISO del backend, sin pasar
   por `Date` para que la zona horaria no corra el dia.
 * Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". Se define una sola vez con el escape

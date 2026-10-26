@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { formatCurrency, formatDate } from '../lib/format'
@@ -119,8 +120,8 @@ export function periodTotals(movements: TreasuryMovement[]) {
   return movements.reduce(
     (totals, movement) =>
       movement.type === 'INGRESO'
-        ? { ...totals, income: totals.income + movement.amount }
-        : { ...totals, expense: totals.expense + movement.amount },
+        ? { ...totals, income: addMoney(totals.income, movement.amount) }
+        : { ...totals, expense: addMoney(totals.expense, movement.amount) },
     { income: 0, expense: 0 },
   )
 }
