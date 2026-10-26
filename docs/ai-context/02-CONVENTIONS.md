@@ -193,7 +193,11 @@ necesite, no antes.
   `aria-current="page"` y los separadores son `aria-hidden`. Una pagina cambia el ultimo
   tramo con `useBreadcrumbTail(valor)` (reemplaza) o `useBreadcrumbTail(valor, 'append')`
   (se agrega despues, como la cuenta elegida en Cuentas).
-* Un texto informativo no lleva estilo de boton (el "Este mes" del panel es una etiqueta).
+* Un texto informativo no lleva estilo de boton. Inicio usa PeriodPicker funcional:
+  Este mes, Mes anterior, Ultimos 30 dias, Este ano y Personalizado. URL con periodo y,
+  solo en Personalizado, desde/hasta; fechas en America/Bogota y limite de Reportes.
+  Ver todas lleva a Ventas con las fechas exactas como Personalizado. Ventas admite esos
+  periodos y Todas; sus indicadores rotulados del mes siguen siendo mensuales.
 
 ## Responsive
 
@@ -239,7 +243,9 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". Se define una sola vez con el escape
   unicode de la raya (`\u2014`) para respetar la regla 1 de [00-RULES.md](00-RULES.md);
   ningun otro archivo escribe la raya.
-* Fechas para la API (`desde`, `hasta`): `toIsoDate`, `AAAA-MM-DD` en hora local.
+* Fechas de periodos para la API (`desde`, `hasta`): `AAAA-MM-DD`, calculadas con
+  businessToday y lib/period en America/Bogota. Personalizado valida fecha ISO real,
+  ambos extremos, orden y hasta 366 dias inclusivos con validateRange de Reportes.
 
 ## Textos de la interfaz
 

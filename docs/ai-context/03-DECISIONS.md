@@ -12,6 +12,52 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-26: Correcciones visuales de Inicio solicitadas por David
+
+* Decision: omitir el header del shell solo en Inicio, sin reservar su altura. El mismo
+  boton de menu movil se entrega por contexto de Outlet al encabezado de Inicio; conserva
+  referencia, foco, estado y navegacion. El titulo de pestana sigue usando la miga interna.
+* PeriodPicker recibe variante inline y accion opcional, solo usadas en Inicio. Consulta
+  el ancho real de su contenedor: desde 720 px, selector, Desde/Hasta y accion en fila;
+  por debajo, fechas juntas en segunda fila, dos columnas cuando caben. Ver contrato en 05.
+* Cuentas muestran iconos Lucide por tipo real, con texto accesible y fondo canvas. Solo
+  el KPI neta usa brand-strong (borde brand de 2 px); tablas y demas acentos no cambian.
+* Correccion puntual: el grupo de periodos predefinidos de Inicio tiene ancho natural y
+  queda a la derecha; solo Personalizado activa la base ampliada y contencion inline.
+  Selector inline de 192 px limitado al ancho disponible, con ayuda que envuelve debajo.
+* Reemplaza la barra superior de Inicio y su disposicion anterior, no las de otras rutas.
+  Las indicaciones escritas son la fuente de las correcciones; las dos capturas adjuntas
+  no se leyeron. inicio.png se inspecciono como referencia local autorizada de iconos.
+* Revision tecnica y visual aprobadas por David, incluida la correccion del ancho del
+  selector. Cierre autorizado con commit, push y PR; sin navegador ni capturas del agente.
+
+## 2026-10-26: Inicio por periodo y traslado exacto a Ventas
+
+* Decision: Inicio usa PeriodPicker con Este mes, Mes anterior, Ultimos 30 dias, Este ano
+  y Personalizado. businessToday y lib/period fijan America/Bogota; periodo, desde y hasta
+  sobreviven en URL. Personalizado reutiliza validateRange de Reportes, hasta 366 dias
+  inclusivos; se agrega validacion de fecha ISO real para parametros escritos a mano.
+* Alcance: los cuatro KPIs conservan campos y formulas de API, con clave kpis, desde,
+  hasta. No se mantienen cifras del rango previo mientras carga uno nuevo. Las ventas
+  recientes usan sales sin cambiar fetchSales: fecha inclusiva, sin anuladas, orden por
+  invoiceDate e id descendentes, cinco primeras. Stock y cuentas siguen siendo actuales,
+  con aclaracion visible y claves independientes del periodo.
+* Ajuste autorizado por David: SalesFilters y Ventas agregan Ultimos 30 dias y Personalizado,
+  con desde/hasta solo en este ultimo. Ver todas siempre envia el rango exacto como
+  Personalizado, editable y conservado al paginar. Los indicadores del mes de Ventas
+  siguen siendo mensuales. Se conservan filtros y periodos anteriores, incluido su
+  filtrado por prefijo. Compras y Papeleras conservan sus periodos previos explicitamente.
+* Composicion: cuatro IndicatorCard existentes con acentos aprobados; stock y saldos en
+  proporcion 3:2 desde xl, apilados por debajo, ventas debajo. Total disponible sobre
+  canvas. Cifras con centavos via formatCurrency; IndicatorCard une simbolo y cifra con
+  espacio inseparable, sin cambiar el formateador ni el valor numerico.
+* Reemplaza "Periodo del panel fijo en Este mes", la exclusion del selector en "Lo que
+  queda fuera del panel de control" y la etiqueta fija citada en 02-CONVENTIONS.
+* Alternativas: enlazar un periodo aproximado perderia fechas; pedir stock historico o
+  crear endpoints cambiaria el dominio. Se conserva la API y la cache compartida.
+* Revision tecnica y visual aprobadas por David tras las correcciones; cierre autorizado.
+  Pruebas y limites en sessions/2026-10-26-dashboard-refresh.md; sin navegador del agente.
+
 ## 2026-10-26: Marca provisional y base visual del shell
 
 * Decision: simbolo S blanco inclinado en cuadrado rojo redondeado, SVG compartido por
@@ -1692,6 +1738,8 @@ Formato de cada entrada:
 
 ## 2026-10-18: Lo que queda fuera del panel de control
 
+* Estado: exclusion del selector reemplazada el 2026-10-26 por Inicio por periodo.
+
 * Decision: el panel no tiene variacion contra el mes anterior, buscador global, campana
   de notificaciones ni selector de periodo, aunque la captura del manual los muestra.
 * Alternativas consideradas: implementarlos con lo que hay en la API.
@@ -1701,6 +1749,8 @@ Formato de cada entrada:
   de inventar comportamiento.
 
 ## 2026-10-18: Periodo del panel fijo en "Este mes"
+
+* Estado: reemplazado el 2026-10-26 por Inicio por periodo y traslado exacto a Ventas.
 
 * Decision: los indicadores del panel cubren del primer dia del mes en curso a hoy, en
   fechas locales del navegador, pedidos a `GET /api/reporting/kpis?desde=AAAA-MM-DD&hasta=AAAA-MM-DD`.

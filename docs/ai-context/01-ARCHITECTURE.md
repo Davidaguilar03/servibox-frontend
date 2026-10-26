@@ -161,7 +161,9 @@ el area de contenido (ancho maximo 1440 px):
   Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
   `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
-  buscador ni campana.
+  buscador ni campana. Excepcion Inicio: no se monta la barra; el boton de menu movil
+  se entrega por contexto de Outlet a su encabezado. Conserva estado, referencia, foco,
+  SkipLink y titulo de pestana del shell; las demas rutas conservan su barra y breadcrumb.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 
@@ -172,13 +174,17 @@ de TanStack Query y sus estados de carga, vacio y error:
 
 | Bloque | Endpoints | Calculo en el cliente |
 |-|-|-|
-| Indicadores del mes | `GET /api/reporting/kpis?desde&hasta` | `desde` primer dia del mes, `hasta` hoy (`monthToDate`) |
+| Indicadores del periodo | `GET /api/reporting/kpis?desde&hasta` | rango de PeriodPicker en Bogota; clave `['kpis', desde, hasta]` |
 | Productos con stock bajo | `GET /api/inventory/products`, `GET /api/inventory/categories` | `lowStockProducts`: sin stock, criticos y bajos, de menor a mayor stock, hasta 5 |
 | Saldos de cuentas | `GET /api/treasury/accounts`, `GET /api/treasury/balance` | ninguno; el total es el del backend |
-| Ultimas ventas | `GET /api/sales` | orden por `invoiceDate` descendente (a igual fecha, id mayor), hasta 5 |
+| Ultimas ventas | `GET /api/sales` | rango inclusivo por invoiceDate, sin anuladas, fecha e id descendentes, hasta 5 |
 
 Las consultas viven en `src/dashboard/dashboardApi.ts` con solo los campos que usa el
 panel, nombrados como en los DTO del backend.
+
+Inicio usa periodo en URL (Este mes por defecto); desde/hasta solo en Personalizado.
+Ver todas envia el rango exacto a Ventas como Personalizado. Stock y cuentas son actuales,
+no dependen del periodo; cambiarlo no cambia sus claves ni vuelve a pedirlos.
 
 ## Facturas de venta
 
@@ -197,7 +203,10 @@ la query string) vive en `src/sales/salesList.ts`; la paginacion en
 
 * Query string: `q`, `estado` (`PAGADA`, `PENDIENTE`, `ANULADA`), `pago` (`CONTADO`,
   `CREDITO`), `periodo` (`mes-anterior`, `este-ano`, `todas`; sin el parametro es Este mes)
-  y `pagina`. Solo se escriben los valores distintos de los de por defecto.
+  y `pagina`. Ventas agrega `ultimos-30` y `personalizado`, este ultimo con `desde` y `hasta`
+  inclusivos y validacion compartida de Reportes. Conserva las fechas al paginar y editar
+  otros filtros; los indicadores del mes no cambian de alcance. Compras usa el parser
+  compartido con periodos extendidos desactivados. Solo se escriben valores no predeterminados.
 * Bajo `md` (768 px) la tabla se reemplaza por tarjetas apiladas con numero, cliente,
   total y estado, que enlazan al detalle.
 * Las facturas ANULADAS no salen en el listado ni en el filtro de estado; la Papelera las

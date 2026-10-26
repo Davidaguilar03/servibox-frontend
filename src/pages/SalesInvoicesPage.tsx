@@ -19,7 +19,7 @@ import { fetchKpis, fetchSales, type Sale } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import { formatCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
-import { periodRange } from '../lib/period'
+import { validateRange } from '../reports/reports'
 import { INVOICE_TABLE_MEDIUM, useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
 import { fetchSaleCollections } from '../sales/salesApi'
@@ -34,6 +34,8 @@ import {
   monthRange,
   parseFilters,
   receivable,
+  SALES_PERIOD_OPTIONS,
+  salesRange,
   type SalesFilters,
 } from '../sales/salesList'
 
@@ -47,13 +49,6 @@ const paymentOptions = [
   { value: '', label: 'Todas' },
   { value: 'CONTADO', label: 'Contado' },
   { value: 'CREDITO', label: 'Crédito' },
-]
-
-const periodOptions: Array<{ value: SalesFilters['periodo']; label: string }> = [
-  { value: 'este-mes', label: 'Este mes' },
-  { value: 'mes-anterior', label: 'Mes anterior' },
-  { value: 'este-ano', label: 'Este año' },
-  { value: 'todas', label: 'Todas' },
 ]
 
 const card = 'rounded-surface border border-border bg-surface'
@@ -80,6 +75,10 @@ export function SalesInvoicesPage() {
   }
   const clearFilters = () => updateFilters(CLEARED_FILTERS)
   const search = useUrlTextParam(filters.q, (q) => updateFilters({ q }, true))
+  const desdeField = useUrlTextParam(filters.desde ?? '', (desde) => updateFilters({ desde }, true))
+  const hastaField = useUrlTextParam(filters.hasta ?? '', (hasta) => updateFilters({ hasta }, true))
+  const range = salesRange({ ...filters, desde: desdeField.value, hasta: hastaField.value }, today)
+  const rangeValidation = range ? validateRange(range.desde, range.hasta) : { valid: true, errors: {} }
 
   const pending = sales.data ? receivable(sales.data) : undefined
 
@@ -150,24 +149,29 @@ export function SalesInvoicesPage() {
           />,
           <PeriodPicker
             key="periodo"
-            options={periodOptions}
+            options={SALES_PERIOD_OPTIONS}
             value={filters.periodo}
-            onChange={(periodo) => updateFilters({ periodo })}
-            range={filters.periodo === 'todas' ? null : periodRange(filters.periodo, today)}
+            onChange={(periodo) => updateFilters(periodo === 'personalizado' ? { periodo, desde: range?.desde ?? '', hasta: range?.hasta ?? '' } : { periodo })}
+            range={rangeValidation.valid ? range : null}
+            custom={{ desde: desdeField, hasta: hastaField, errors: rangeValidation.errors }}
           />,
         ]}
       </FilterBar>
 
-      <SalesTable
-        sales={sales.data}
-        loading={sales.isPending}
-        error={sales.isError}
-        onRetry={() => void sales.refetch()}
-        filters={filters}
-        today={today}
-        onPageChange={(pagina) => setSearchParams(filtersToParams({ ...filters, pagina }))}
-        onClear={clearFilters}
-      />
+      {!rangeValidation.valid ? (
+        <p role="alert" className="text-small text-error">Revisa las fechas para ver las ventas del período.</p>
+      ) : (
+        <SalesTable
+          sales={sales.data}
+          loading={sales.isPending}
+          error={sales.isError}
+          onRetry={() => void sales.refetch()}
+          filters={filters.periodo === 'personalizado' ? { ...filters, desde: desdeField.value, hasta: hastaField.value } : filters}
+          today={today}
+          onPageChange={(pagina) => setSearchParams(filtersToParams({ ...filters, pagina }))}
+          onClear={clearFilters}
+        />
+      )}
     </div>
   )
 }

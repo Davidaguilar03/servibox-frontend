@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { Link, NavLink, Outlet, useMatches } from 'react-router'
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router'
 import {
   ChartColumn,
   House,
@@ -96,12 +96,17 @@ function useDocumentTitle(label: string | undefined) {
 
 const focusableSelector = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
+export interface AppShellContext {
+  menuButton: ReactNode
+}
+
 /**
  * Barra lateral, barra superior y area de contenido. Desde lg la barra lateral es fija y
  * se puede contraer; por debajo se abre como menu sobre el contenido.
  */
 export function AppShell() {
   const breadcrumb = useBreadcrumb()
+  const isDashboard = /^\/inicio\/?$/.test(useLocation().pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
   const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide
@@ -144,6 +149,20 @@ export function AppShell() {
       first?.focus()
     }
   }
+
+  const menuButton = (
+    <button
+      ref={menuButtonRef}
+      type="button"
+      onClick={() => setMenuOpen(true)}
+      aria-label="Abrir menú"
+      aria-expanded={mobileMenuOpen}
+      aria-controls="menu-lateral"
+      className={`flex size-touch shrink-0 items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
+    >
+      <Menu {...iconMd} aria-hidden />
+    </button>
+  )
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -231,18 +250,8 @@ export function AppShell() {
           collapsed ? 'lg:pl-sidebar-collapsed' : 'lg:pl-sidebar'
         }`}
       >
-        <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface px-6 lg:px-8">
-          <button
-            ref={menuButtonRef}
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            aria-label="Abrir menú"
-            aria-expanded={mobileMenuOpen}
-            aria-controls="menu-lateral"
-            className={`-ml-3 flex size-touch shrink-0 items-center justify-center rounded-control text-text hover:bg-neutral-100 lg:hidden ${focusRing}`}
-          >
-            <Menu {...iconMd} />
-          </button>
+        {!isDashboard && <header className="sticky top-0 z-20 flex h-topbar shrink-0 items-center gap-3 border-b border-border bg-surface px-6 lg:px-8">
+          <div className="-ml-3 lg:hidden">{menuButton}</div>
           <nav aria-label="Ruta de navegación" className="min-w-0">
             <ol className="flex items-center gap-2 text-small">
               {breadcrumb.map((crumb, index) => {
@@ -274,10 +283,10 @@ export function AppShell() {
               })}
             </ol>
           </nav>
-        </header>
+        </header>}
 
         <main id="contenido" ref={mainRef} tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-6 py-6 outline-none lg:px-8 lg:py-8">
-          <Outlet />
+          <Outlet context={{ menuButton: isDashboard ? menuButton : null } satisfies AppShellContext} />
         </main>
       </div>
       <Toaster />

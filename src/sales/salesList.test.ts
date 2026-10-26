@@ -12,6 +12,7 @@ import {
   parseFilters,
   periodPrefix,
   receivable,
+  salesRange,
 } from './salesList'
 
 function sale(id: number, fields: Partial<Sale>): Sale {
@@ -42,6 +43,21 @@ const ids = (rows: Sale[]) => rows.map((row) => row.id)
 const today = '2026-10-18'
 
 describe('filtros en la URL', () => {
+  it('conserva fechas y pagina de Personalizado sin alterar otros filtros', () => {
+    const filters = { ...DEFAULT_FILTERS, q: 'pérez', estado: 'PAGADA', pago: 'CONTADO', periodo: 'personalizado', desde: '2026-09-20', hasta: '2026-10-05', pagina: 2 } as const
+    expect(parseFilters(filtersToParams(filters))).toEqual(filters)
+    expect(filtersToParams({ ...filters, periodo: 'ultimos-30' }).toString()).not.toMatch(/desde|hasta/)
+  })
+
+  it('mantiene periodos anteriores y aisla los nuevos de Compras', () => {
+    for (const periodo of ['este-mes', 'mes-anterior', 'este-ano', 'todas'] as const) {
+      const filters = { ...DEFAULT_FILTERS, periodo }
+      expect(parseFilters(filtersToParams(filters))).toEqual(filters)
+      expect(parseFilters(filtersToParams(filters), false)).toEqual(filters)
+    }
+    expect(parseFilters(new URLSearchParams('periodo=personalizado&desde=2026-10-01&hasta=2026-10-18'), false)).toEqual(DEFAULT_FILTERS)
+    expect(parseFilters(new URLSearchParams('periodo=ultimos-30'), false)).toEqual(DEFAULT_FILTERS)
+  })
   it('sin parametros son los de por defecto: Este mes, pagina 1', () => {
     expect(parseFilters(new URLSearchParams())).toEqual(DEFAULT_FILTERS)
     expect(filtersToParams(DEFAULT_FILTERS).toString()).toBe('')
@@ -87,6 +103,24 @@ describe('periodos', () => {
 })
 
 describe('filterSales', () => {
+  it('Ultimos 30 dias usa el rango compartido e incluye los extremos', () => {
+    const filters = { ...DEFAULT_FILTERS, periodo: 'ultimos-30' } as const
+    expect(salesRange(filters, today)).toEqual({ desde: '2026-09-19', hasta: today })
+    expect(ids(filterSales([...sales, sale(50, { invoiceDate: '2026-09-19' }), sale(51, { invoiceDate: today }), sale(52, { invoiceDate: '2026-10-19' })], filters, today))).toEqual([51, 10, 2, 1, 3, 50])
+  })
+
+  it('Personalizado filtra exactamente las fechas y mantiene busqueda, estado y pago', () => {
+    const filters = { ...DEFAULT_FILTERS, periodo: 'personalizado', desde: '2026-09-20', hasta: '2026-10-05' } as const
+    expect(ids(filterSales(sales, filters, today))).toEqual([1, 3])
+    expect(ids(filterSales(sales, { ...filters, q: 'MARIA', estado: 'PENDIENTE', pago: 'CREDITO' }, today))).toEqual([3])
+  })
+
+  it.each([
+    ['', '2026-10-18'], ['2026-10-01', ''], ['2026-10-18', '2026-10-01'],
+    ['2026-02-30', '2026-03-10'], ['ayer', '2026-03-10'], ['2025-01-01', '2026-01-02'],
+  ])('un rango invalido %s a %s no devuelve facturas', (desde, hasta) => {
+    expect(filterSales(sales, { ...DEFAULT_FILTERS, periodo: 'personalizado', desde, hasta }, today)).toEqual([])
+  })
   it('ordena por fecha descendente y luego por numero descendente', () => {
     expect(ids(filterSales(sales, CLEARED_FILTERS, today))).toEqual([10, 2, 1, 3, 5])
   })

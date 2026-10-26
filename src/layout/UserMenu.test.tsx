@@ -37,8 +37,9 @@ describe('menu de usuario', () => {
 
   it('vive al pie del sidebar con identidad real y no se duplica en la barra superior', async () => {
     await setup()
-    const header = screen.getByRole('banner')
-    expect(within(header).queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument()
+    const content = screen.getByRole('main')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(within(content).queryByRole('button', { name: /Menú de usuario/ })).not.toBeInTheDocument()
     const aside = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
     const button = within(aside).getByRole('button', { name: 'Menú de usuario de Laura María Gómez' })
     expect(within(button).getByText('LG')).toBeInTheDocument()
@@ -52,7 +53,7 @@ describe('menu de usuario', () => {
 
     const settings = within(aside).getByRole('link', { name: 'Configuración' })
     expect(settings.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(within(header).queryByText('Serviteca El Roble')).not.toBeInTheDocument()
+    expect(within(content).getByText(/Resumen de Serviteca El Roble/)).toBeInTheDocument()
   })
 
   it('abre con clic, lleva el foco al panel y muestra nombre, rol traducido y serviteca; otro clic lo cierra', async () => {
