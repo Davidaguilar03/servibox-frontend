@@ -10,6 +10,7 @@ const api = (message: string, status: number) => new ApiError(message, status)
  * de ejemplo en los parametricos. Cada uno debe pasar por el mapa con su texto final.
  */
 const BACKEND: Array<[string, string]> = [
+  ['El precio unitario admite como maximo dos decimales', 'El precio unitario admite como máximo dos decimales.'],
   // treasury/TreasuryService.editarCuenta
   ['El tipo de una cuenta no se puede cambiar', 'El tipo de una cuenta no se puede cambiar.'],
   ['Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial', 'Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial.'],
@@ -71,7 +72,7 @@ const BACKEND: Array<[string, string]> = [
   ['Stock insuficiente para Llanta Michelin 175/70 R13: hay 4 y se piden 5', 'No hay stock suficiente de Llanta Michelin 175/70 R13: hay 4 unidades y se piden 5 unidades.'],
   ['Stock insuficiente para Aceite 20W50: hay 1 y se piden 2', 'No hay stock suficiente de Aceite 20W50: hay 1 unidad y se piden 2 unidades.'],
   ['El abono de 50000.0 excede el saldo pendiente de 30000.0', 'El abono de $ 50.000 supera el saldo pendiente de $ 30.000.'],
-  ['El abono de 4000000.0 excede el saldo pendiente de 3706375.9000000004', 'El abono de $ 4.000.000 supera el saldo pendiente de $ 3.706.376.'],
+  ['El abono de 4000000.0 excede el saldo pendiente de 3706375.9000000004', 'El abono de $ 4.000.000 supera el saldo pendiente de $ 3.706.375,90.'],
   ['El monto del abono debe ser mayor a cero', 'El valor del abono debe ser mayor que cero.'],
   ['La factura FV-0045 ya esta anulada', 'La factura FV-0045 ya está anulada.'],
   ['La factura necesita un numero', 'La factura necesita un número.'],
@@ -89,7 +90,7 @@ const BACKEND: Array<[string, string]> = [
   ['Ya existe una factura de compra DO-4788 del proveedor Distrillantas del Oriente SAS', 'Ya existe la factura de compra DO-4788 de Distrillantas del Oriente SAS.'],
   ['Saldo insuficiente en Caja General: hay $ 300.000 y se requieren $ 397.938', 'Saldo insuficiente en Caja General: hay $ 300.000 y se necesitan $ 397.938.'],
   ['El monto del pago debe ser mayor a cero', 'El valor del pago debe ser mayor que cero.'],
-  ['El pago de 400000.0 excede el saldo pendiente de 397938.28', 'El pago de $ 400.000 supera el saldo pendiente de $ 397.938.'],
+  ['El pago de 400000.0 excede el saldo pendiente de 397938.28', 'El pago de $ 400.000 supera el saldo pendiente de $ 397.938,28.'],
   ['La compra DO-4788 ya esta anulada', 'La compra DO-4788 ya está anulada.'],
   ['La factura de compra necesita un numero', 'Escribe el número de la factura de compra.'],
   ['La fecha del pago (2026-10-26) no puede ser posterior a hoy (2026-10-25)', 'La fecha del pago (26/10/2026) no puede ser posterior a hoy (25/10/2026).'],

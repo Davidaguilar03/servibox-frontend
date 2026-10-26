@@ -2,7 +2,8 @@ import type { AccountType } from '../dashboard/dashboardApi'
 import type { InventoryProduct } from '../inventory/inventoryApi'
 import { accountPaymentMethods } from '../lib/accountPayment'
 import { ApiError } from '../lib/api'
-import { round2, type PricedLine } from '../sales/newSale'
+import { round2, unitPriceError } from '../lib/money'
+import { invoiceTotals } from '../sales/newSale'
 import type { Purchase, PurchaseRequest } from './purchasesApi'
 
 // Logica de la pantalla Nueva factura de compra. Reglas en docs/ai-context/03-DECISIONS.md.
@@ -31,26 +32,12 @@ export interface PurchaseForm {
   lines: PurchaseLine[]
 }
 
-/**
- * Espejo de `PurchasesService.crearFactura`: por linea `base = precio * cantidad` e
- * `iva = base * tasa`, sumados en doubles en el orden de las lineas, y `total = subtotal +
- * iva`. Cada uno se redondea como su columna NUMERIC(14,2). `exactTotal`, sin redondear, es
- * lo que el backend compara con el saldo de la cuenta.
- */
-export function purchaseTotals(lines: PricedLine[]) {
-  let subtotal = 0
-  let iva = 0
-  for (const line of lines) {
-    const base = line.price * line.quantity
-    subtotal += base
-    iva += base * line.rate
-  }
-  return { subtotal: round2(subtotal), iva: round2(iva), total: round2(subtotal + iva), exactTotal: subtotal + iva }
-}
+/** Venta y compra comparten el calculo decimal por linea. */
+export const purchaseTotals = invoiceTotals
 
 /** La regla de `exigirSaldoSuficiente`: no alcanza si el saldo es menor que el total. */
 export function insufficientBalance(balance: number, total: number): boolean {
-  return balance < total
+  return round2(balance) < round2(total)
 }
 
 /** Valores de `medio_pago_compra` en el diccionario de datos del backend. */
@@ -102,8 +89,7 @@ export function validatePurchase(form: PurchaseForm, productsById: Map<number, I
     if (line.quantity.trim() === '' || !Number.isInteger(quantity) || quantity <= 0) {
       errors.quantity = 'Escribe una cantidad entera mayor que cero.'
     }
-    const price = Number(line.price)
-    if (line.price.trim() === '' || !Number.isFinite(price) || price <= 0) errors.price = 'El precio debe ser mayor que cero.'
+    errors.price = unitPriceError(line.price)
     if (errors.product || errors.quantity || errors.price) lines[line.key] = errors
   }
 

@@ -12,6 +12,32 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-25: Compatibilidad monetaria con importes definitivos por linea
+
+* Decision: nuevas ventas y compras multiplican precio por cantidad antes de redondear
+  base e IVA de cada linea con aritmetica decimal HALF_UP a dos decimales. El resumen suma
+  esos importes definitivos. Compra compara fondos con ese total, sin exactTotal crudo.
+* Compartido: se reutiliza el racional del panel de precio en lib/decimal.ts; lib/money.ts
+  concentra productos, sumas y normalizacion de centavos. Sugerido e IVA del costo siguen
+  en pesos enteros; costo editado del producto conserva su validacion existente.
+* Precio unitario: se valida el texto original antes de perder precision al convertirlo;
+  maximo dos decimales significativos, ceros finales equivalentes permitidos. Error
+  accesible en el campo; el servidor sigue pasando por reportError/userMessage.
+* Presentacion: enteros sin decimales, importes con centavos con dos, separadores de
+  Colombia, signo antes de pesos, sin cero negativo. Dashboard y Reportes usan el signo
+  real para perdidas pequenas. Los historicos conservan total, subtotal e IVA guardados.
+* Fondos: compras, pagos y transferencias comparan importes normalizados, sin tolerancias
+  nuevas. Pagos, abonos, movimientos y saldos siguen delegando su normalizacion al
+  servidor. La validacion local nunca garantiza el saldo vigente del servidor.
+* Dominio: no cambia la tolerancia de pendientes, el limite local de abono/pago, los gastos
+  que permiten negativo ni la proteccion del saldo al editar cuentas. El formulario de
+  movimiento precarga coma decimal para no reinterpretar centavos como miles al editar.
+* Reemplaza las reglas de redondeo global y formato entero de las entradas "Calculo del IVA
+  espejo del backend y etiqueta IVA", "IVA descontable espejo del backend" y la
+  comparacion contra total sin redondear de "Saldo insuficiente validado en el cliente".
+* Numeracion: tarea 15 de 19, optimizacion de carga, usara perf/32-route-splitting-fonts.
+* Evidencia, limites y pruebas: sessions/2026-10-25-monetary-compatibility.md.
+
 ## 2026-10-25: Editar cuenta con tipo inmutable y saldo inicial decimal
 
 * Decision: accion secundaria con IconButton hermano del selector de cada tarjeta, incluida
@@ -987,6 +1013,8 @@ Formato de cada entrada:
 
 ## 2026-10-22: IVA descontable espejo del backend
 
+* Estado: regla monetaria reemplazada por "Compatibilidad monetaria con importes definitivos por linea" (2026-10-25).
+
 * Decision: `purchaseTotals` replica `PurchasesService.crearFactura`: por linea
   `base = precio * cantidad` e `iva = base * tasa`, sumados en doubles en el orden de las
   lineas, y `total = subtotal + iva`. La tasa es la suma de las `rate` con `isVat` de la
@@ -1001,6 +1029,8 @@ Formato de cada entrada:
   decimales (subtotal, IVA, total e IVA por linea iguales al centavo).
 
 ## 2026-10-22: Saldo insuficiente validado en el cliente
+
+* Estado: regla monetaria reemplazada por "Compatibilidad monetaria con importes definitivos por linea" (2026-10-25).
 
 * Decision: en contado, si el saldo actual de la cuenta es menor que el total sin redondear
   (la comparacion de `exigirSaldoSuficiente`: `saldo < requerido`), se muestra un Alert de
@@ -1502,6 +1532,8 @@ Formato de cada entrada:
   cuenta".
 
 ## 2026-10-18: Calculo del IVA espejo del backend y etiqueta IVA
+
+* Estado: regla monetaria reemplazada por "Compatibilidad monetaria con importes definitivos por linea" (2026-10-25).
 
 * Decision: `invoiceTotals` replica `SalesService.crearFactura`: por linea `base = precio *
   cantidad` e `iva = base * tasa`, sumados en doubles en el orden de las lineas;

@@ -107,6 +107,24 @@ describe('nueva factura de venta', () => {
     vi.useRealTimers()
   })
 
+  it('muestra precision invalida en el campo sin crear y acepta ceros finales', async () => {
+    const { user, fetchMock } = await setup()
+
+    await addProduct(user, 'michelin')
+    const price = screen.getByLabelText('Precio')
+    for (const value of ['0.005', '0.0100000000000000000001']) {
+      fireEvent.change(price, { target: { value } })
+      await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
+      expect(price).toHaveAttribute('aria-invalid', 'true')
+      expect(price).toHaveAccessibleDescription('El precio unitario admite como máximo dos decimales.')
+      expect(posts(fetchMock, '/api/sales')).toHaveLength(0)
+    }
+    fireEvent.change(price, { target: { value: '0.0100' } })
+    await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
+    await waitFor(() => expect(posts(fetchMock, '/api/sales')).toHaveLength(1))
+    expect(posts(fetchMock, '/api/sales')[0]?.details).toEqual([{ productId: 1, quantity: 1, price: 0.01 }])
+  })
+
   it('arranca con el numero sugerido, Consumidor final y la fecha de hoy en Bogota', async () => {
     vi.setSystemTime(new Date('2026-10-19T03:00:00Z'))
     saveToken(validToken())

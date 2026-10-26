@@ -1,3 +1,4 @@
+import { addMoney, round2 } from '../lib/money'
 import type { TreasuryMovement } from '../accounts/accountsApi'
 import { accountMovements, periodRange } from '../accounts/accountsView'
 import type { Account } from '../dashboard/dashboardApi'
@@ -95,7 +96,7 @@ export function filterManualMovements(movements: TreasuryMovement[], filters: Ma
 
 /** Total del periodo y Movimientos: suma de los montos y cantidad de los filtrados. */
 export function manualTotals(movements: TreasuryMovement[]) {
-  return { amount: movements.reduce((sum, movement) => sum + movement.amount, 0), count: movements.length }
+  return { amount: movements.reduce((sum, movement) => addMoney(sum, movement.amount), 0), count: movements.length }
 }
 
 // Formulario.
@@ -126,7 +127,7 @@ export function formFromMovement(movement: TreasuryMovement): ManualFormValues {
     concept: movement.concept,
     date: movement.date,
     accountId: movement.accountId === null ? '' : String(movement.accountId),
-    amount: String(movement.amount),
+    amount: String(movement.amount).replace('.', ','),
     notes: movement.notes ?? '',
   }
 }
@@ -140,7 +141,7 @@ export function validateManualForm(values: ManualFormValues, today: string): Man
   else if (values.date > today) errors.date = 'La fecha no puede ser posterior a hoy.'
   if (!values.accountId) errors.accountId = 'Elige la cuenta.'
   if (!values.amount.trim()) errors.amount = 'Escribe el monto.'
-  else if (!(parseAmount(values.amount) > 0)) errors.amount = 'El monto debe ser mayor que cero.'
+  else if (!(round2(parseAmount(values.amount)) > 0)) errors.amount = 'El monto debe ser mayor que cero.'
   if (values.notes.trim().length > NOTES_MAX) errors.notes = `Usa máximo ${NOTES_MAX} caracteres.`
   return errors
 }
@@ -182,15 +183,15 @@ function shortfalls(effects: Effect[], accounts: Account[] | undefined): Balance
   for (const { accountId, amount, sign } of effects) {
     if (accountId === null || !(amount > 0)) continue
     const entry = byAccount.get(accountId) ?? { credits: 0, debits: 0 }
-    if (sign > 0) entry.credits += amount
-    else entry.debits += amount
+    if (sign > 0) entry.credits = addMoney(entry.credits, amount)
+    else entry.debits = addMoney(entry.debits, amount)
     byAccount.set(accountId, entry)
   }
   const result: BalanceShortfall[] = []
   byAccount.forEach(({ credits, debits }, accountId) => {
     const account = accounts?.find((item) => item.id === accountId)
     if (!account) return
-    const available = account.currentBalance + credits
+    const available = addMoney(account.currentBalance, credits)
     // Una cuenta a la que esta operacion solo le suma no avisa, aunque ya este en negativo.
     if (debits > 0 && debits > available) result.push({ account, available, needed: debits })
   })
@@ -222,7 +223,7 @@ export function deleteEffectText(movement: TreasuryMovement, accounts: Account[]
   const isIncome = movement.category === 'INGRESO_OCASIONAL'
   const action = isIncome ? `Se descuentan ${amount} de ${name}` : `Vuelven ${amount} a ${name}`
   if (!account) return `${action}.`
-  const after = account.currentBalance + (isIncome ? -movement.amount : movement.amount)
+  const after = addMoney(account.currentBalance, isIncome ? -movement.amount : movement.amount)
   const negative = after < 0 ? ' La cuenta queda en negativo.' : ''
   return `${action}: su saldo pasa de ${formatCurrency(account.currentBalance)} a ${formatCurrency(after)}.${negative}`
 }

@@ -98,7 +98,7 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
     kpis.data ? formatCurrency(pick(kpis.data)) : undefined
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-6">
       <IndicatorCard label="Ventas sin IVA" value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
       <IndicatorCard
         label="Costo de lo vendido"
@@ -114,7 +114,7 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
       <IndicatorCard
         label="Utilidad neta"
         value={value((d) => d.netProfit)}
-        negative={kpis.data ? Math.round(kpis.data.netProfit) < 0 : false}
+        negative={kpis.data ? kpis.data.netProfit < 0 : false}
         detail="Utilidad bruta más otros ingresos, menos gastos."
       />
     </div>

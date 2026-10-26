@@ -1,14 +1,17 @@
+import { round2 } from './money'
+
 /** Lo que se muestra cuando no hay valor: una raya, nunca "N/A". */
 export const EMPTY_VALUE = '\u2014'
 
 const integerFormat = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
+const centsFormat = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** Moneda colombiana sin decimales: 180000 es "$ 180.000" y -3500 es "-$ 3.500". */
+/** Pesos colombianos: enteros sin decimales, centavos con dos decimales. */
 export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return EMPTY_VALUE
-  const rounded = Math.round(value)
+  if (value === null || value === undefined || !Number.isFinite(value)) return EMPTY_VALUE
+  const rounded = round2(value)
   const sign = rounded < 0 ? '-' : ''
-  return `${sign}$ ${integerFormat.format(Math.abs(rounded))}`
+  return `${sign}$ ${(Number.isInteger(rounded) ? integerFormat : centsFormat).format(Math.abs(rounded))}`
 }
 
 /**

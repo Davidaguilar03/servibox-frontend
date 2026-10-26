@@ -96,6 +96,12 @@ describe('panel de control', () => {
     vi.useRealTimers()
   })
 
+  it('muestra una perdida de diez centavos en tono negativo', async () => {
+    mockApi({ ...fullRoutes(), '/api/reporting/kpis': () => jsonResponse({ ...kpis, netProfit: -0.1 }) })
+    renderRoute('/inicio')
+    expect(await screen.findByText('-$ 0,10')).toHaveClass('text-error')
+  })
+
   it('muestra los cuatro bloques con datos', async () => {
     const fetchMock = mockApi(fullRoutes())
     renderRoute('/inicio')

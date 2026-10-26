@@ -218,3 +218,18 @@ describe('texto de eliminar', () => {
     expect(deleteEffectText(expense(1, { amount: 30000 }), undefined)).toBe('Vuelven $ 30.000 a Caja General.')
   })
 })
+
+ it('editar un movimiento con centavos conserva el valor y el separador del formulario', () => {
+   const values = formFromMovement(expense(1, { amount: 100.11 }))
+   expect(values.amount).toBe('100,11')
+   expect(buildManualRequest(values, 'GASTO_OPERATIVO').amount).toBe(100.11)
+   expect(validateManualForm({ ...values, amount: '0,004' }, today).amount).toBeDefined()
+   expect(validateManualForm({ ...values, amount: '0,105' }, today).amount).toBeUndefined()
+ })
+
+ it('un gasto con saldo exacto no avisa y un sobregiro real avisa sin bloquear', () => {
+   const exact = [{ ...accounts[0]!, id: 1, currentBalance: 0.11 }]
+   expect(saveShortfalls('GASTO_OPERATIVO', form({ amount: '0,105' }), exact)).toEqual([])
+   expect(saveShortfalls('GASTO_OPERATIVO', form({ amount: '0,115' }), exact)).toHaveLength(1)
+   expect(validateManualForm(form({ amount: '0,115' }), today)).toEqual({})
+ })

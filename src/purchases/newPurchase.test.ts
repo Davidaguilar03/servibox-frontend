@@ -57,7 +57,7 @@ describe('calculo de la compra', () => {
         { quantity: 6, price: 210000, rate: 0.19 },
         { quantity: 12, price: 22000, rate: 0.19 },
       ]),
-    ).toEqual({ subtotal: 3540000, iva: 672600, total: 4212600, exactTotal: 4212600 })
+    ).toEqual({ subtotal: 3540000, iva: 672600, total: 4212600 })
   })
 
   it('suma productos con tasas distintas y un producto sin IVA aporta solo su base', () => {
@@ -79,25 +79,18 @@ describe('calculo de la compra', () => {
     })
   })
 
-  it('redondea el IVA sobre la suma, no linea por linea', () => {
-    // Cada linea tiene 0,004 de IVA: redondeadas por separado darian 0.
-    expect(purchaseTotals([
-      { quantity: 1, price: 0.02, rate: 0.2 },
-      { quantity: 1, price: 0.02, rate: 0.2 },
-    ]).iva).toBe(0.01)
+  it('suma el IVA definitivo de cada linea', () => {
+    expect(purchaseTotals([{ quantity: 1, price: 0.02, rate: 0.2 }, { quantity: 1, price: 0.02, rate: 0.2 }]))
+      .toEqual({ subtotal: 0.04, iva: 0, total: 0.04 })
   })
 
-  it('subtotal, IVA y total se redondean cada uno como su columna', () => {
-    // 0,025 + 0,005: las columnas guardan 0,03, 0,01 y 0,03, aunque 0,03 + 0,01 no sea 0,03.
-    expect(purchaseTotals([{ quantity: 1, price: 0.025, rate: 0.2 }])).toMatchObject({
-      subtotal: 0.03,
-      iva: 0.01,
-      total: 0.03,
-    })
+  it('multiplica cantidad antes de redondear el IVA de linea', () => {
+    expect(purchaseTotals([{ quantity: 3, price: 0.01, rate: 0.19 }]))
+      .toEqual({ subtotal: 0.03, iva: 0.01, total: 0.04 })
   })
 
   it('sin lineas todo es cero', () => {
-    expect(purchaseTotals([])).toEqual({ subtotal: 0, iva: 0, total: 0, exactTotal: 0 })
+    expect(purchaseTotals([])).toEqual({ subtotal: 0, iva: 0, total: 0 })
   })
 })
 
@@ -218,5 +211,29 @@ describe('errores del backend', () => {
     expect(isInsufficientBalanceError(balance)).toBe(true)
     expect(isDuplicatePurchaseNumberError(balance)).toBe(false)
     expect(isDuplicatePurchaseNumberError(new ApiError('Ya existe una factura de compra con el numero DB-1', 400))).toBe(false)
+  })
+})
+
+ describe('contrato monetario por linea', () => {
+  it.each([
+    [0.03, 1, 2, 0.06, 0.02, 0.08],
+    [5.67, 1, 2, 11.34, 2.16, 13.5],
+    [0.01, 3, 1, 0.03, 0.01, 0.04],
+    [0.03, 2, 1, 0.06, 0.01, 0.07],
+  ])('precio %s cantidad %s en %s lineas', (price, quantity, count, subtotal, iva, total) => {
+    const lines = Array.from({ length: count! }, () => ({ price: price!, quantity: quantity!, rate: 0.19 }))
+    expect(purchaseTotals(lines)).toEqual({ subtotal, iva, total })
+  })
+
+  it.each(['0.005', '0.0100000000000000000001', '1e-3', '1.2340'])('rechaza precio %s desde el texto', (price) => {
+    const result = validatePurchase(form({ lines: [line(1, 1, '1', price)] }), productsById)
+    expect(result.valid).toBe(false)
+    expect(result.lines[1]?.price).toBe('El precio unitario admite como máximo dos decimales.')
+  })
+
+  it.each(['0.01', '0.0100', '1.000', '1e-2'])('acepta precio equivalente %s y envia el mismo valor', (price) => {
+    const values = form({ lines: [line(1, 1, '3', price)] })
+    expect(validatePurchase(values, productsById).valid).toBe(true)
+    expect(buildPurchaseRequest(values).details[0]?.price).toBe(Number(price))
   })
 })

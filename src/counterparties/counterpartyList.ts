@@ -1,3 +1,4 @@
+import { addMoney } from '../lib/money'
 import { normalizeText } from '../lib/text'
 import type { Counterparty } from '../sales/salesApi'
 import type { BalanceInvoice } from './counterpartiesApi'
@@ -31,7 +32,7 @@ export function balancesByCounterparty(invoices: BalanceInvoice[]): Map<number, 
     const id = invoice.customer?.id ?? invoice.supplier?.id
     if (invoice.status !== 'PENDIENTE' || id === undefined) continue
     const current = balances.get(id) ?? ZERO_BALANCE
-    balances.set(id, { amount: current.amount + invoice.pendingBalance, count: current.count + 1 })
+    balances.set(id, { amount: addMoney(current.amount, invoice.pendingBalance), count: current.count + 1 })
   }
   return balances
 }
@@ -54,7 +55,7 @@ export function counterpartyIndicators(
   return {
     total: counterparties.filter((counterparty) => !isSystemCounterparty(counterparty)).length,
     withBalance: listed.filter((balance) => balance.amount > 0).length,
-    amount: listed.reduce((sum, balance) => sum + balance.amount, 0),
+    amount: listed.reduce((sum, balance) => addMoney(sum, balance.amount), 0),
   }
 }
 

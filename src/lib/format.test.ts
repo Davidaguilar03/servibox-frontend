@@ -9,9 +9,9 @@ describe('formatCurrency', () => {
     expect(formatCurrency(0)).toBe('$ 0')
   })
 
-  it('redondea los decimales', () => {
-    expect(formatCurrency(180000.5)).toBe('$ 180.001')
-    expect(formatCurrency(119000.4)).toBe('$ 119.000')
+  it('conserva los centavos', () => {
+    expect(formatCurrency(180000.5)).toBe('$ 180.000,50')
+    expect(formatCurrency(119000.4)).toBe('$ 119.000,40')
   })
 
   it('pone el signo antes del simbolo en negativos', () => {
@@ -45,3 +45,7 @@ describe('monthToDate', () => {
     expect(monthToDate(new Date(2026, 0, 1))).toEqual({ desde: '2026-01-01', hasta: '2026-01-01' })
   })
 })
+
+ it.each([[13.5, '$ 13,50'], [0.08, '$ 0,08'], [100.01, '$ 100,01'], [-0.1, '-$ 0,10'], [-0.004, '$ 0'], [-0.005, '-$ 0,01'], [NaN, EMPTY_VALUE], [0.1 + 0.2, '$ 0,30']])('formatea %s como %s', (value, text) => {
+   expect(formatCurrency(value as number)).toBe(text)
+ })
