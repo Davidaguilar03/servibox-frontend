@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { CreditCard, Truck, Wallet } from 'lucide-react'
 import { buttonClasses } from '../components/buttonStyles'
 import { invoiceColumns } from '../components/invoiceColumns'
 import { DataTable } from '../components/DataTable'
@@ -21,6 +22,7 @@ import { paginate } from '../lib/pagination'
 import { periodRange } from '../lib/period'
 import { INVOICE_TABLE_MEDIUM, useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
+import type { AppShellContext } from '../layout/AppShell'
 import { PURCHASES_KEY, fetchPurchaseInvoices, fetchPurchasePayments, type Purchase } from '../purchases/purchasesApi'
 import { activePurchases, creditPayments, filterPurchases, payable } from '../purchases/purchasesList'
 import { CLEARED_FILTERS, filtersActive, filtersToParams, monthRange, parseFilters, type SalesFilters } from '../sales/salesList'
@@ -44,11 +46,9 @@ const periodOptions: Array<{ value: SalesFilters['periodo']; label: string }> = 
   { value: 'todas', label: 'Todas' },
 ]
 
-const card = 'rounded-surface border border-border bg-surface'
-
-
 /** Facturas de compra: indicadores, filtros en la URL y listado paginado. */
 export function PurchaseInvoicesPage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const [today] = useState(() => businessToday())
   const { desde, hasta } = monthRange(today)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -74,6 +74,7 @@ export function PurchaseInvoicesPage() {
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
+        leading={menuButton}
         title="Facturas de compra"
         subtitle="Compras de contado y a crédito. Las facturas anuladas están en la papelera."
         primary={
@@ -94,14 +95,20 @@ export function PurchaseInvoicesPage() {
         ]}
       />
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         <IndicatorCard
+          compact
+          icon={Truck}
+          accent="info"
           label="Compras del mes"
           value={kpis.data ? formatCurrency(kpis.data.totalPurchases) : undefined}
           error={kpis.isError}
           onRetry={() => void kpis.refetch()}
         />
         <IndicatorCard
+          compact
+          icon={Wallet}
+          accent="warning"
           label="Por pagar"
           value={pending ? formatCurrency(pending.amount) : undefined}
           detail={pending && `${pending.count} ${pending.count === 1 ? 'factura pendiente' : 'facturas pendientes'} de pago`}
@@ -109,6 +116,9 @@ export function PurchaseInvoicesPage() {
           onRetry={() => void purchases.refetch()}
         />
         <IndicatorCard
+          compact
+          icon={CreditCard}
+          accent="success"
           label="Pagos del mes"
           value={payments.data && purchases.data ? formatCurrency(creditPayments(payments.data, purchases.data)) : undefined}
           error={payments.isError || purchases.isError}
@@ -119,7 +129,10 @@ export function PurchaseInvoicesPage() {
         />
       </div>
 
-      <FilterBar active={filtersActive(filters)} onClear={clearFilters}>
+      <p className="text-small text-text-muted">Compras y pagos corresponden al mes actual. Por pagar incluye todas las facturas pendientes.</p>
+
+      <div className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface">
+      <FilterBar embedded sales active={filtersActive(filters)} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder="Número de factura o proveedor" {...search} />,
           <SelectField
@@ -138,6 +151,7 @@ export function PurchaseInvoicesPage() {
           />,
           <PeriodPicker
             key="periodo"
+            layout="inline"
             options={periodOptions}
             value={filters.periodo}
             onChange={(periodo) => updateFilters({ periodo })}
@@ -156,6 +170,7 @@ export function PurchaseInvoicesPage() {
         onPageChange={(pagina) => setSearchParams(filtersToParams({ ...filters, pagina }))}
         onClear={clearFilters}
       />
+      </div>
     </div>
   )
 }
@@ -215,10 +230,10 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
                 >
                   <span className="flex min-w-20 flex-1 flex-col gap-1">
                     <span className="codigo text-small text-text">{purchase.invoiceNumber}</span>
-                    <span className="truncate text-body text-text">{purchase.supplier.name}</span>
+                    <span className="wrap-anywhere text-body text-text">{purchase.supplier.name}</span>
                   </span>
-                  <span className="ml-auto flex shrink-0 flex-col items-end gap-1">
-                    <span className="monto text-body font-semibold text-text">{formatCurrency(purchase.total)}</span>
+                  <span className="ml-auto flex min-w-0 flex-col items-end gap-1">
+                    <span className="monto wrap-anywhere text-right text-body font-semibold text-text">{formatCurrency(purchase.total).replace('$ ', '$\u00a0')}</span>
                     <StatusBadge status={purchase.status} />
                     <span className="text-small text-text-muted">
                       Saldo pendiente <PendingBalance invoice={purchase} />
@@ -236,7 +251,7 @@ function PurchasesTable({ purchases, loading, error, onRetry, filters, today, on
   }
 
   return (
-    <section ref={sectionRef} className={`${card} p-4`}>
+    <section ref={sectionRef} className="p-4" aria-label="Listado de compras">
       {content}
     </section>
   )

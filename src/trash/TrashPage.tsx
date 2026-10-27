@@ -71,12 +71,10 @@ const periodOptions: Array<{ value: TrashFilters['periodo']; label: string }> = 
   { value: 'todas', label: 'Todas' },
 ]
 
-const card = 'rounded-surface border border-border bg-surface'
 
 /** Papelera: las facturas anuladas del modulo, con filtros en la URL y Restaurar. */
 export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashConfig<T> }) {
   const { menuButton } = useOutletContext<AppShellContext>()
-  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
   const [searchParams, setSearchParams] = useSearchParams()
@@ -171,7 +169,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
                     <CellLink to={detailPath(invoice)} className="codigo">
                       {invoice.invoiceNumber}
                     </CellLink>
-                    <span className={isSales ? 'wrap-anywhere text-body text-text' : 'truncate text-body text-text'}>{config.partyName(invoice)}</span>
+                    <span className="wrap-anywhere text-body text-text">{config.partyName(invoice)}</span>
                     <span className="text-small text-text-muted">
                       {formatDate(invoice.invoiceDate)} · {paymentTypeLabels[invoice.paymentType]}
                     </span>
@@ -197,7 +195,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
-        leading={isSales ? menuButton : undefined}
+        leading={menuButton}
         title={config.title}
         subtitle={config.subtitle}
         secondary={[
@@ -207,8 +205,8 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         ]}
       />
 
-      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
-      <FilterBar embedded={isSales} active={trashFiltersActive(filters)} onClear={clearFilters}>
+      <div className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface">
+      <FilterBar embedded active={trashFiltersActive(filters)} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder={`Número de factura o ${config.partyLabel.toLowerCase()}`} {...search} />,
           <SelectField
@@ -228,7 +226,7 @@ export function TrashPage<T extends TrashInvoice>({ config }: { config: TrashCon
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={isSales ? 'p-4' : `${card} p-4`} aria-label="Facturas anuladas">
+      <section ref={sectionRef} className="p-4" aria-label="Facturas anuladas">
         {content}
       </section>
       </div>

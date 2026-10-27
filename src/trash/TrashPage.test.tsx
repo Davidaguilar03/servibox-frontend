@@ -303,7 +303,7 @@ describe('papelera de compras', () => {
     renderRoute('/compras/papelera')
 
     expect(await screen.findByRole('heading', { name: 'Papelera de compras' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Papelera')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
     await waitFor(() => expect(numbers()).toEqual(['FC-7', 'FC-6']))
     expect(screen.getByRole('columnheader', { name: 'Proveedor' })).toBeInTheDocument()

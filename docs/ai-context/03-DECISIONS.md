@@ -12,6 +12,21 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-26: Acabado de Compras con el patron de Ventas
+
+* Decision: las rutas /compras omiten la barra superior. Listado, nueva compra,
+  detalle, Papelera, Proveedores y Gastos muestran el menu movil en el contenido
+  y conservan el regreso a Facturas de compra en las subpantallas.
+* Decision: Facturas de compra usa IndicatorCard compact y una superficie comun
+  para filtros y tabla. Compras y Pagos del mes conservan alcance mensual;
+  Por pagar incluye todas las pendientes. Los periodos de Compras no incorporan
+  fechas personalizadas. Proveedores y Gastos adoptan el acabado que ya usa
+  el componente compartido en Ventas, sin cambiar sus consultas ni contratos.
+* Motivo: extender la composicion aprobada de Ventas a Compras sin alterar
+  importes, pagos, fondos, permisos ni cuerpos enviados. La unicidad del numero
+  de compra sigue siendo por tenant segun el contrato vigente.
+* Revision tecnica y visual aprobadas por David; no se uso navegador del agente.
+
 ## 2026-10-26: Importes de lectura en pesos enteros
 
 * Decision: formatCurrency redondea visualmente HALF_UP al peso en toda la
