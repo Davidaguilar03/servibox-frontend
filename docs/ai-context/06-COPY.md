@@ -29,6 +29,7 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 | `annul` | Anular | accion de factura | |
 | `restore` | Restaurar | accion de la Papelera | Recuperar |
 | `trash` | Papelera | | |
+| `accountColor` | Color de la cuenta | Nueva y Editar cuenta | |
 
 Un concepto nuevo con mas de un sinonimo posible se agrega aqui antes de usarlo en pantalla.
 
@@ -101,6 +102,8 @@ Mensaje de precision de precio unitario, HTTP 400:
 Mensajes de edicion de cuentas agregados al mapa (TreasuryService.editarCuenta):
 
 * `El tipo de una cuenta no se puede cambiar`: 400, alerta del formulario.
+* `El color debe tener el formato #RRGGBB`: 400, alerta del formulario de alta
+  o edicion; la interfaz agrega punto final y conserva todos los campos.
 * `Saldo insuficiente en {cuenta}: faltan {monto} para cambiar el saldo inicial`: 409,
   bajo Saldo inicial. Conserva nombre y monto ya formateado (por ejemplo `$ 10.000`).
   El nombre duplicado se distingue por su mensaje exacto y va bajo Nombre.

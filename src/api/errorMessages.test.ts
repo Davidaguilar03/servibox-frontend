@@ -10,6 +10,8 @@ const api = (message: string, status: number) => new ApiError(message, status)
  * de ejemplo en los parametricos. Cada uno debe pasar por el mapa con su texto final.
  */
 const BACKEND: Array<[string, string]> = [
+  // treasury/TreasuryService, validacion de color.
+  ['El color debe tener el formato #RRGGBB', 'El color debe tener el formato #RRGGBB.'],
   ['El precio unitario admite como maximo dos decimales', 'El precio unitario admite como máximo dos decimales.'],
   // treasury/TreasuryService.editarCuenta
   ['El tipo de una cuenta no se puede cambiar', 'El tipo de una cuenta no se puede cambiar.'],

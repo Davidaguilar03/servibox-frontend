@@ -46,7 +46,7 @@ describe('normalizacion monetaria', () => {
   })
 
   it('transferencias normalizan para comparar fondos y conservan el envio al servidor', () => {
-    const accounts = [{ id: 1, name: 'Caja', type: 'EFECTIVO' as const, initialBalance: 0, currentBalance: 0.11 }]
+    const accounts = [{ id: 1, name: 'Caja', type: 'EFECTIVO' as const, initialBalance: 0, currentBalance: 0.11, color: null }]
     const values = { originAccountId: '1', destinationAccountId: '2', amount: '0,105', concept: '' }
     expect(validateTransfer(values, accounts)).toEqual({})
     expect(buildTransferRequest(values).amount).toBe(0.105)
@@ -55,7 +55,7 @@ describe('normalizacion monetaria', () => {
   })
 
   it('alta y edicion de cuenta delegan HALF_UP al servidor sin limitar precision', () => {
-    const values = { name: 'Caja', type: 'EFECTIVO' as const, initialBalance: '100,105' }
+    const values = { name: 'Caja', type: 'EFECTIVO' as const, initialBalance: '100,105', color: '#4B5563' }
     expect(buildAccountRequest(values).initialBalance).toBe(100.105)
     expect(buildAccountUpdateRequest(values).initialBalance).toBe(100.105)
   })

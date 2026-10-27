@@ -2,6 +2,7 @@
 // estos conceptos. Tabla y reglas en docs/ai-context/06-COPY.md.
 
 export const GLOSSARY = {
+  accountColor: 'Color de la cuenta',
   /** Contado o Crédito. */
   paymentType: 'Forma de pago',
   /** Efectivo, Transferencia, Tarjeta, Cheque... */

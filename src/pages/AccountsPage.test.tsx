@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
 import { URL_TEXT_DEBOUNCE_MS } from '../lib/useUrlTextParam'
@@ -9,8 +9,8 @@ type Handler = (url: URL, body: unknown) => Response | Promise<Response>
 type Routes = Record<string, Handler>
 
 const accounts = [
-  { id: 2, name: 'Bancolombia', type: 'BANCO', currentBalance: 2230650, initialBalance: 0 },
-  { id: 1, name: 'Caja General', type: 'EFECTIVO', currentBalance: 1946250, initialBalance: 0 },
+  { id: 2, name: 'Bancolombia', type: 'BANCO', currentBalance: 2230650, initialBalance: 0, color: null },
+  { id: 1, name: 'Caja General', type: 'EFECTIVO', currentBalance: 1946250, initialBalance: 0, color: null },
 ]
 
 const movement = (id: number, fields: Record<string, unknown>) => ({
@@ -101,6 +101,99 @@ async function setup(path = '/cuentas', routes: Routes = fullRoutes()) {
 }
 
 describe('cuentas', () => {
+  it('alta con color personalizado, respuesta normalizada y recarga desde datos del servidor', async () => {
+    let list: Array<Record<string, unknown>> = [...accounts]
+    const { user, fetchMock } = await setup('/cuentas', {
+      ...fullRoutes(),
+      'GET /api/treasury/accounts': () => jsonResponse(list),
+      'POST /api/treasury/accounts': (_, body) => {
+        const request = body as { name: string; type: string; initialBalance: number; color: string }
+        const created = { ...request, id: 9, currentBalance: request.initialBalance, color: request.color.toUpperCase() }
+        list = [...list, created]
+        return jsonResponse(created, 201)
+      },
+    })
+    await screen.findByRole('button', { name: /^Caja General/ })
+    await user.click(screen.getByRole('button', { name: 'Nueva cuenta' }))
+    expect(screen.getByRole('button', { name: 'Azul' })).toHaveAttribute('aria-pressed', 'true')
+    await user.type(screen.getByLabelText('Nombre'), 'Cuenta color')
+    fireEvent.change(screen.getByLabelText('Saldo inicial'), { target: { value: '100,105' } })
+    fireEvent.change(screen.getByLabelText('Otro color'), { target: { value: '#abcdef' } })
+    await user.click(screen.getByRole('button', { name: 'Guardar cuenta' }))
+    const tile = await screen.findByRole('button', { name: /^Cuenta color/ })
+    expect(tile.parentElement).toHaveAttribute('data-accent', '#ABCDEF')
+    await waitFor(() => expect(tile).toHaveAttribute('aria-pressed', 'true'))
+    expect(posts(fetchMock, '/api/treasury/accounts')).toEqual([
+      { name: 'Cuenta color', type: 'EFECTIVO', initialBalance: 100.105, color: '#abcdef' },
+    ])
+    expect(calls(fetchMock, '/api/treasury/accounts').length).toBeGreaterThan(1)
+    cleanup()
+    renderRoute('/cuentas?cuenta=9')
+    const reloaded = await screen.findByRole('button', { name: /^Cuenta color/ })
+    expect(reloaded.parentElement).toHaveAttribute('data-accent', '#ABCDEF')
+    await user.click(screen.getByRole('button', { name: 'Editar cuenta Cuenta color' }))
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#abcdef')
+    expect(screen.getByLabelText('Saldo inicial')).toHaveValue('100,105')
+  })
+
+  it('editar solo color refresca cache, conserva seleccion agregada y persiste al remontar', async () => {
+    let list = accounts.map((account) => ({ ...account, color: account.id === 1 ? '#FFFFFF' : '#000000' }))
+    const { user, fetchMock } = await setup('/cuentas?cuenta=todas', {
+      ...fullRoutes(),
+      'GET /api/treasury/accounts': () => jsonResponse(list),
+      'PUT /api/treasury/accounts/1': (_, body) => {
+        const request = body as { name: string; initialBalance: number; color: string }
+        list = list.map((account) => account.id === 1 ? { ...account, ...request, color: request.color.toUpperCase() } : account)
+        return jsonResponse(list.find((account) => account.id === 1))
+      },
+    })
+    const tile = await screen.findByRole('button', { name: /^Caja General/ })
+    expect(tile.parentElement).toHaveAttribute('data-accent', '#FFFFFF')
+    await user.click(screen.getByRole('button', { name: 'Editar cuenta Caja General' }))
+    fireEvent.change(screen.getByLabelText('Otro color'), { target: { value: '#123abc' } })
+    expect(tile.parentElement).toHaveAttribute('data-accent', '#FFFFFF')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(tile.parentElement).toHaveAttribute('data-accent', '#123ABC'))
+    const bank = screen.getByRole('button', { name: /^Bancolombia/ })
+    expect(bank.parentElement).toHaveAttribute('data-accent', '#000000')
+    expect(within(tile).getByText('Incluida en Todas las cuentas')).toBeInTheDocument()
+    expect(within(bank).getByText('Incluida en Todas las cuentas')).toBeInTheDocument()
+    await user.click(bank)
+    expect(bank).toHaveAttribute('aria-pressed', 'true')
+    expect(tile).toHaveAttribute('aria-pressed', 'false')
+    expect(within(tile).queryByText('Incluida en Todas las cuentas')).not.toBeInTheDocument()
+    expect(calls(fetchMock, '/api/treasury/accounts').length).toBeGreaterThan(1)
+    cleanup()
+    renderRoute('/cuentas?cuenta=1')
+    expect((await screen.findByRole('button', { name: /^Caja General/ })).parentElement).toHaveAttribute('data-accent', '#123ABC')
+  })
+
+  it('cancelar solo color mantiene la tarjeta heredada y no envia PUT', async () => {
+    const { user, fetchMock } = await setup()
+    const tile = await screen.findByRole('button', { name: /^Caja General/ })
+    expect(tile.parentElement).toHaveAttribute('data-accent', '#B45309')
+    await user.click(screen.getByRole('button', { name: 'Editar cuenta Caja General' }))
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#b45309')
+    await user.click(screen.getByRole('button', { name: 'Violeta' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    expect(tile.parentElement).toHaveAttribute('data-accent', '#B45309')
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false)
+  })
+
+  it('cambiar solo color en alta pide descarte y no crea una cuenta', async () => {
+    const { user, fetchMock } = await setup()
+    await screen.findByRole('button', { name: /^Caja General/ })
+    await user.click(screen.getByRole('button', { name: 'Nueva cuenta' }))
+    await user.click(screen.getByRole('button', { name: 'Violeta' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#7c3aed')
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    expect(posts(fetchMock, '/api/treasury/accounts')).toEqual([])
+  })
+
   it('edita la cuenta indicada, cierra y refresca datos conservando seleccion, periodo y pagina', async () => {
     let list = accounts.map((account) => ({ ...account }))
     const many = Array.from({ length: 30 }, (_, index) => movement(index + 1, { accountId: 2 }))
@@ -510,9 +603,11 @@ describe('cuentas', () => {
     expect(within(dialog).getByText('Escribe el nombre de la cuenta.')).toBeInTheDocument()
 
     await user.type(within(dialog).getByLabelText('Nombre'), 'Bancolombia')
+    await user.click(within(dialog).getByRole('button', { name: 'Violeta' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cuenta' }))
     const name = within(dialog).getByLabelText('Nombre')
     await waitFor(() => expect(name).toHaveAccessibleDescription('Ya existe una cuenta con el nombre Bancolombia.'))
+    expect(within(dialog).getByLabelText('Otro color')).toHaveValue('#7c3aed')
 
     await user.clear(name)
     await user.type(name, 'Nequi')
@@ -523,8 +618,8 @@ describe('cuentas', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(posts(fetchMock, '/api/treasury/accounts')).toEqual([
-      { name: 'Bancolombia', type: 'EFECTIVO', initialBalance: 0 },
-      { name: 'Nequi', type: 'DIGITAL', initialBalance: 150000 },
+      { name: 'Bancolombia', type: 'EFECTIVO', initialBalance: 0, color: '#7C3AED' },
+      { name: 'Nequi', type: 'DIGITAL', initialBalance: 150000, color: '#7C3AED' },
     ])
     expect(router.state.location.search).toBe('?cuenta=9')
     expect(await screen.findByText('Cuenta creada')).toBeInTheDocument()

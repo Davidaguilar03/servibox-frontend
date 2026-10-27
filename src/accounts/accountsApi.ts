@@ -37,6 +37,7 @@ export interface AccountRequest {
   name: string
   type: AccountType
   initialBalance: number
+  color?: string | null
 }
 
 /** `POST /api/treasury/transfers`. No lleva fecha: el backend la fecha hoy (Bogota). */
@@ -56,7 +57,7 @@ export const fetchPurchases = () => apiFetch<PurchaseSummary[]>('/purchases')
 export const createAccount = (body: AccountRequest) =>
   apiFetch<Account>('/treasury/accounts', { method: 'POST', body })
 
-export type AccountUpdateRequest = Pick<AccountRequest, 'name' | 'initialBalance'>
+export type AccountUpdateRequest = Pick<AccountRequest, 'name' | 'initialBalance' | 'color'>
 
 export const updateAccount = (id: number, body: AccountUpdateRequest) =>
   apiFetch<Account>(`/treasury/accounts/${id}`, { method: 'PUT', body })

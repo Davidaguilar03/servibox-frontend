@@ -322,14 +322,27 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 | Totales y movimientos del periodo | `GET /api/treasury/movements?desde&hasta`, una sola vez para todas las cuentas |
 | Origen con numero de factura | `GET /api/sales` y `GET /api/purchases`, solo si el periodo tiene movimientos con `saleId` o `purchaseId` |
 | Nueva cuenta | `POST /api/treasury/accounts` |
+| Editar cuenta | `PUT /api/treasury/accounts/{id}` |
 | Nueva transferencia | `POST /api/treasury/transfers` |
 | Exportar a Excel | `apiDownload` de `GET /api/reporting/export?type=MOVIMIENTOS&format=XLSX&desde&hasta[&accountId]` |
 
 * Query string: `cuenta` (id o `todas`; sin el parametro, la primera EFECTIVO por id),
   `periodo` (`hoy`, `esta-semana`, `mes-anterior`, `este-ano`, `personalizado`; sin el
   parametro es Este mes), `desde` y `hasta` (solo con Personalizado) y `pagina`.
-* Claves de TanStack Query bajo `['treasury']`; crear una cuenta o una transferencia
+* AccountResponse incluye `color: string | null`. POST admite `color` opcional o null;
+  PUT admite `color` opcional o null para conservar el anterior. Un string debe ser
+  exactamente #RRGGBB; el servidor devuelve letras mayusculas. No existe borrado.
+  Formato invalido: HTTP 400, `El color debe tener el formato #RRGGBB`.
+* Nueva cuenta envia name, type, initialBalance y color; Editar envia name,
+  initialBalance y color, sin type. El saldo editable conserva todos sus decimales.
+  Ambos modales siempre envian el color elegido. En una cuenta null, Editar propone
+  el fallback estable por id y lo persiste al confirmar Guardar, aunque nada cambie.
+  Cancelar esa propuesta intacta no escribe ni exige descarte.
+* Claves de TanStack Query bajo `['treasury']`; crear o editar una cuenta o una transferencia
   invalida `['treasury']` (cuentas, balance y movimientos).
+* accountColors define la paleta de datos persistidos y el fallback de tres colores
+  por id solo para cuentas null. AccountColorField comparte valor entre paleta y
+  selector nativo. No se persiste color en localStorage.
 * La miga de pan termina en la cuenta seleccionada (`useBreadcrumbTail`).
 * Bajo `md` la tabla de movimientos pasa a tarjetas apiladas; las tarjetas de cuentas se
   desplazan en horizontal.
