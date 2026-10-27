@@ -50,6 +50,8 @@
   --color-error-bg: #fee2e2;
   --color-info: #2563eb;
   --color-info-bg: #dbeafe;
+  --color-violet: #7c3aed;
+  --color-violet-bg: #f3e8ff;
 
   /*
    * Texto semantico: success, warning, error e info no llegan a 4.5 a 1 sobre su fondo -bg.
@@ -59,6 +61,7 @@
   --color-warning-ink: #b45309;
   --color-error-ink: #b91c1c;
   --color-info-ink: #1d4ed8;
+  --color-violet-ink: #6b21a8;
 
   /*
    * Fondo del boton primario y de los estados activos con texto blanco. Es brand-ink: blanco
@@ -110,6 +113,9 @@
   --text-button: 14px;
   --text-button--line-height: 1;
   --text-button--font-weight: 600;
+  --text-summary: 20px;
+  --text-summary--line-height: 24px;
+  --text-summary--font-weight: 600;
 
   /*
    * figure: valor de indicadores y totales destacados, con numeros tabulares (rol monto).

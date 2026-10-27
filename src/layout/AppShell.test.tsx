@@ -276,7 +276,7 @@ describe('Cuentas conserva su miga con una cuenta elegida', () => {
     stubViewport(true)
   })
 
-  it('Cuentas / Movimientos / la cuenta', async () => {
+  it('Cuentas conserva titulo, menu movil y cuenta seleccionada sin barra superior', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) => {
@@ -289,11 +289,10 @@ describe('Cuentas conserva su miga con una cuenta elegida', () => {
     )
     renderRoute('/cuentas')
 
-    const crumbs = screen.getByRole('navigation', { name: 'Ruta de navegación' })
-    await within(crumbs).findByText('Caja General')
-    expect(within(crumbs).getByRole('link', { name: 'Cuentas' })).toHaveAttribute('href', '/cuentas')
-    expect(within(crumbs).getByRole('link', { name: 'Movimientos' })).toHaveAttribute('href', '/cuentas')
-    expect(within(crumbs).getByText('Caja General')).toHaveAttribute('aria-current', 'page')
+    await screen.findByRole('button', { name: /^Caja General/ })
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Cuentas' })).toBeInTheDocument()
     expect(document.title).toBe('Caja General · ServiBox')
+    expect(within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
   })
 })

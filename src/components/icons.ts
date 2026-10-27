@@ -1,5 +1,5 @@
 /**
- * Tamanos de icono Lucide del sistema (tokens --icon-sm, --icon-md e --icon-lg de tokens.css)
+ * Tamanos de icono Lucide del sistema (tokens icon-sm, icon-md e icon-lg de tokens.css)
  * con un solo grosor de trazo. Se esparcen en el icono: `<X {...iconSm} aria-hidden />`.
  * Ningun icono lleva tamano en px suelto. Ver docs/ai-context/05-DESIGN-SYSTEM.md.
  */

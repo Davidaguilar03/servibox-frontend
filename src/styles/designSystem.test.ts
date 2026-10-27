@@ -274,6 +274,9 @@ describe('tokens del sistema de diseno', () => {
     ['text-label--font-weight', '600'],
     ['text-button', '14px'],
     ['text-button--font-weight', '600'],
+    ['text-summary', '20px'],
+    ['text-summary--line-height', '24px'],
+    ['text-summary--font-weight', '600'],
     // Alturas de control, areas tactiles y foco.
     ['control-height', '40px'],
     ['control-height-touch', '44px'],

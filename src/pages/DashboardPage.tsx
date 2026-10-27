@@ -139,8 +139,9 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 2xl:grid-cols-4">
-      <IndicatorCard label="Ventas sin IVA" accent="success" icon={TrendingUp} value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
+      <IndicatorCard dense label="Ventas sin IVA" accent="success" icon={TrendingUp} value={value((d) => d.netSales)} detail="Sin IVA y sin facturas anuladas." />
       <IndicatorCard
+        dense
         label="Costo de lo vendido"
         accent="warning"
         icon={Package}
@@ -148,14 +149,15 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
         detail="Costo de los productos que vendiste."
       />
       <IndicatorCard
+        dense
         label="Utilidad bruta"
         accent="info"
         icon={ChartPie}
         value={value((d) => d.grossProfit)}
-        note={kpis.data ? grossMarginText(kpis.data.grossProfit, kpis.data.netSales) : undefined}
         detail="Ventas menos costo de lo vendido."
       />
       <IndicatorCard
+        dense
         label="Utilidad neta"
         accent="brand-strong"
         icon={Wallet}
@@ -165,14 +167,6 @@ function KpiBlock({ desde, hasta }: { desde: string; hasta: string }) {
       />
     </div>
   )
-}
-
-const marginFormat = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-
-/** Margen bruto sobre las ventas sin IVA: "32,4 % de las ventas". Sin ventas no hay margen. */
-function grossMarginText(grossProfit: number, netSales: number): string | undefined {
-  if (netSales === 0) return undefined
-  return `${marginFormat.format((grossProfit / netSales) * 100)} % de las ventas`
 }
 
 const stockBadge: Record<Exclude<StockStatus, 'NORMAL'>, 'BAJO_STOCK' | 'STOCK_CRITICO' | 'SIN_STOCK'> = {

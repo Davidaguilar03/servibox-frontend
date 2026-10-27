@@ -7,19 +7,20 @@ interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>,
   options: Array<{ value: string; label: string }>
   hint?: string
   error?: string
+  inline?: boolean
 }
 
 /** Selector nativo con etiqueta, con el aspecto de los campos del manual. */
-export function SelectField({ label, options, hint, error, ...props }: SelectFieldProps) {
+export function SelectField({ label, options, hint, error, inline = false, ...props }: SelectFieldProps) {
   const id = useId()
   const message = error ?? hint
   const hintId = message ? `${id}-hint` : undefined
   return (
-    <div className="flex flex-col gap-2">
+    <div className={inline ? 'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2' : 'flex flex-col gap-2'}>
       <label htmlFor={id} className="text-label text-text">
         {label}
       </label>
-      <div className="relative">
+      <div className={inline ? 'relative w-40 max-w-full' : 'relative'}>
         <select
           id={id}
           aria-describedby={hintId}

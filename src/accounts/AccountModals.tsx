@@ -134,6 +134,7 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
         <TextField
           label="Saldo inicial"
           inputMode="decimal"
+          valueRole="monto"
           value={values.initialBalance}
           onChange={(event) => change('initialBalance')(event.target.value)}
           onBlur={touch('initialBalance')}
@@ -362,6 +363,7 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
         <TextField
           label="Monto"
           inputMode="decimal"
+          valueRole="monto"
           value={values.amount}
           onChange={(event) => change('amount')(event.target.value)}
           onBlur={touch('amount')}

@@ -25,6 +25,14 @@ export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   DIGITAL: 'Digital',
 }
 
+/** Reparto de saldos vivos por tipo real; los negativos conservan su signo. */
+export function balancesByType(accounts: Account[]): Record<AccountType, number> {
+  return accounts.reduce<Record<AccountType, number>>((totals, account) => ({
+    ...totals,
+    [account.type]: addMoney(totals[account.type], account.currentBalance),
+  }), { EFECTIVO: 0, BANCO: 0, DIGITAL: 0 })
+}
+
 /** Valor de `cuenta` en la URL para Todas las cuentas. */
 export const ALL_ACCOUNTS = 'todas'
 
