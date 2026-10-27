@@ -20,7 +20,7 @@ interface PeriodPickerProps<T extends PeriodKey> {
   }
   label?: string
   /** Inline reserva una fila horizontal para fechas segun el ancho real del contenedor. */
-  layout?: 'stacked' | 'inline'
+  layout?: 'stacked' | 'inline' | 'toolbar'
   action?: ReactNode
 }
 
@@ -32,11 +32,13 @@ interface PeriodPickerProps<T extends PeriodKey> {
 export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, range, custom, label = 'Período', layout = 'stacked', action }: PeriodPickerProps<T>) {
   const showCustom = value === 'personalizado' && custom
   const inline = layout === 'inline'
+  const toolbar = layout === 'toolbar'
   return (
     <div className={inline && showCustom ? '@container min-w-0' : 'min-w-0'}>
-      <div className={inline ? 'flex flex-wrap items-start gap-4' : 'flex min-w-0 flex-col gap-4'}>
-        <div className={inline ? 'w-48 max-w-full shrink-0' : ''}>
+      <div className={inline || toolbar ? 'flex flex-wrap items-start gap-4' : 'flex min-w-0 flex-col gap-4'}>
+        <div className={inline ? 'w-48 max-w-full shrink-0' : toolbar ? 'min-w-0' : ''}>
           <SelectField
+            inline={toolbar}
             label={label}
             options={options}
             value={value}
@@ -45,7 +47,7 @@ export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, ra
           />
         </div>
         {showCustom && (
-          <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
+          <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : toolbar ? 'grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
             <TextField label="Desde" type="date" {...custom.desde} error={custom.errors.desde} />
             <TextField label="Hasta" type="date" {...custom.hasta} error={custom.errors.hasta} />
           </div>

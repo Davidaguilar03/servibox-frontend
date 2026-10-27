@@ -89,7 +89,7 @@ function rows() {
 }
 
 function total(label: string) {
-  return screen.getByText(label).nextElementSibling?.textContent
+  return screen.getByText(label).nextElementSibling?.textContent?.replace(/\u00a0/g, ' ')
 }
 
 async function setup(path = '/cuentas', routes: Routes = fullRoutes()) {
@@ -108,10 +108,11 @@ describe('cuentas', () => {
       ...fullRoutes(many),
       'GET /api/treasury/accounts': () => jsonResponse(list),
       'PUT /api/treasury/accounts/1': (_, body) => {
-        list = list.map((account) => account.id === 1 ? { ...account, ...(body as object) } : account)
+        list = list.map((account) => account.id === 1 ? { ...account, ...(body as object) } : account).reverse()
         return jsonResponse(list.find((account) => account.id === 1))
       },
     })
+    const originalAccent = (await screen.findByRole('button', { name: /^Caja General/ })).parentElement?.getAttribute('data-accent')
     await user.click(await screen.findByRole('button', { name: 'Editar cuenta Caja General' }))
     const dialog = await screen.findByRole('dialog', { name: 'Editar cuenta' })
     expect(within(dialog).getByLabelText('Nombre')).toHaveValue('Caja General')
@@ -122,6 +123,7 @@ describe('cuentas', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByRole('button', { name: /^Caja nueva/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Caja nueva/ }).parentElement).toHaveAttribute('data-accent', originalAccent)
     expect(screen.getByRole('button', { name: /^Bancolombia/ })).toHaveAttribute('aria-pressed', 'true')
     expect(router.state.location.search).toBe('?cuenta=2&periodo=este-ano&pagina=2')
     expect(screen.getByText('26 a 30 de 30 movimientos')).toBeInTheDocument()
@@ -158,13 +160,16 @@ describe('cuentas', () => {
 
     const group = await screen.findByRole('group', { name: 'Cuentas' })
     expect(await within(group).findByRole('button', { name: /^Caja General/ })).toHaveAttribute('aria-pressed', 'true')
-    expect(within(group).getByRole('button', { name: /Todas las cuentas/ })).toHaveTextContent('$ 4.176.900')
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Cuentas/Movimientos/Caja General')
-    expect(screen.getByRole('heading', { name: 'Caja General · Este mes' })).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Saldos actuales' })).getByText('Todas las cuentas').parentElement).toHaveTextContent('$ 4.176.900')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(document.title).toBe('Caja General · ServiBox')
+    expect(screen.getByRole('heading', { name: 'Caja General · Movimientos del período' })).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Período')).toHaveLength(1)
     expect(calls(fetchMock, '/api/treasury/movements')).toEqual(['/api/treasury/movements?desde=2026-10-01&hasta=2026-10-18'])
 
-    await waitFor(() => expect(total('Ingresos del período')).toBe('$ 160.650'))
-    expect(total('Egresos del período')).toBe('$ 750.000')
+    await waitFor(() => expect(total('Ingresos del período')).toBe('$ 460.650'))
+    expect(total('Egresos del período')).toBe('$ 1.107.000')
+    expect(screen.getByRole('heading', { name: 'Caja General · Movimientos del período' }).closest('section')).toHaveTextContent('$ 160.650')
     await waitFor(() =>
       expect(rows()).toEqual([
         ['09/10/2026', 'Egreso', 'Transferencia a Bancolombia', 'TRANSFERENCIA a Bancolombia', '-$ 300.000'],
@@ -180,22 +185,146 @@ describe('cuentas', () => {
 
   it('Todas las cuentas suma todo y agrega la columna Cuenta; la cuenta va en la URL', async () => {
     const { user, router } = await setup()
-    await user.click(await screen.findByRole('button', { name: /Todas las cuentas/ }))
+    await user.click(await screen.findByRole('button', { name: 'Ver todas las cuentas' }))
 
     expect(router.state.location.search).toBe('?cuenta=todas')
+    const group = screen.getByRole('group', { name: 'Cuentas' })
+    for (const name of ['Caja General', 'Bancolombia']) {
+      const card = within(group).getByRole('button', { name: new RegExp(`^${name}`) })
+      expect(card).toHaveAttribute('aria-pressed', 'false')
+      expect(card).toHaveTextContent('Incluida en Todas las cuentas')
+    }
     expect(total('Ingresos del período')).toBe('$ 460.650')
     expect(total('Egresos del período')).toBe('$ 1.107.000')
     await waitFor(() => expect(rows()[0]).toEqual(['12/10/2026', 'Bancolombia', 'Egreso', 'Compra', 'COMPRA PROV-1001', '-$ 357.000']))
     expect(rows()[1]).toEqual(['09/10/2026', 'Bancolombia', 'Ingreso', 'Transferencia desde Caja General', 'TRANSFERENCIA desde Caja General', '+$ 300.000'])
 
-    await user.click(screen.getByRole('button', { name: /^Bancolombia/ }))
+    const bankButton = within(group).getByRole('button', { name: /^Bancolombia/ })
+    bankButton.focus()
+    await user.keyboard('{Enter}')
     expect(router.state.location.search).toBe('?cuenta=2')
-    expect(screen.getByRole('heading', { name: 'Bancolombia · Este mes' })).toBeInTheDocument()
+    expect(bankButton).toHaveFocus()
+    expect(within(group).getByRole('button', { name: /^Bancolombia/ })).toHaveTextContent('Seleccionada')
+    expect(within(group).getByRole('button', { name: /^Caja General/ })).not.toHaveTextContent('Incluida en Todas las cuentas')
+    expect(screen.getByRole('heading', { name: 'Bancolombia · Movimientos del período' })).toBeInTheDocument()
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?cuenta=todas')
+    expect(within(group).getByRole('button', { name: /^Caja General/ })).toHaveTextContent('Incluida en Todas las cuentas')
+    expect(within(group).getByRole('button', { name: /^Bancolombia/ })).toHaveTextContent('Incluida en Todas las cuentas')
+  })
+
+  it('Ver todas desde Tus cuentas conserva el rango y se puede activar con teclado', async () => {
+    const { user, router } = await setup('/cuentas?cuenta=1&periodo=personalizado&desde=2026-10-01&hasta=2026-10-18')
+    const button = await screen.findByRole('button', { name: 'Ver todas las cuentas' })
+    expect(screen.getByRole('heading', { name: 'Tus cuentas' }).parentElement).toContainElement(button)
+    button.focus()
+    await user.keyboard('{Enter}')
+    expect(router.state.location.search).toBe('?cuenta=todas&periodo=personalizado&desde=2026-10-01&hasta=2026-10-18')
+    expect(screen.getByRole('button', { name: 'Todas las cuentas seleccionadas' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Todas las cuentas seleccionadas' })).toHaveFocus()
+    expect(screen.getByRole('heading', { name: 'Todas las cuentas · Movimientos del período' })).toBeInTheDocument()
+  })
+
+  it('muestra saldos actuales completos e iconos por tipo, y editar no cambia la seleccion', async () => {
+    const longName = 'Cuenta principal de recaudos digitales de la serviteca'
+    const list = [
+      { ...accounts[0], name: longName, currentBalance: 123456789012.51 },
+      { ...accounts[1], currentBalance: 2500000.49 },
+      { id: 3, name: 'Caja virtual', type: 'DIGITAL', currentBalance: 6807530.08, initialBalance: 600000 },
+    ]
+    const { user, router, fetchMock } = await setup('/cuentas?cuenta=1', {
+      ...fullRoutes(),
+      'GET /api/treasury/accounts': () => jsonResponse(list),
+      'GET /api/treasury/balance': () => jsonResponse({ total: 123466096543.08 }),
+    })
+    const group = await screen.findByRole('group', { name: 'Cuentas' })
+    const bank = within(group).getByRole('button', { name: new RegExp(`^${longName}`) })
+    const cash = within(group).getByRole('button', { name: /^Caja General/ })
+    const digital = within(group).getByRole('button', { name: /^Caja virtual/ })
+    expect(bank).toHaveTextContent('$ 123.456.789.013')
+    expect(cash).toHaveTextContent('$ 2.500.000')
+    expect(digital).toHaveTextContent('$ 6.807.530')
+    expect(bank.querySelector('.lucide-landmark')).toBeInTheDocument()
+    expect(cash.querySelector('.lucide-wallet')).toBeInTheDocument()
+    expect(digital.querySelector('.lucide-smartphone')).toBeInTheDocument()
+    expect(cash).toHaveAttribute('aria-pressed', 'true')
+    expect(cash).toHaveTextContent('Seleccionada')
+    expect(bank).not.toHaveTextContent('Seleccionada')
+    expect(within(screen.getByRole('region', { name: 'Saldos actuales' })).getByText('Todas las cuentas').parentElement).toHaveTextContent('$ 123.466.096.543')
+    expect(within(group).queryByRole('button', { name: 'Editar cuenta Todas las cuentas' })).not.toBeInTheDocument()
+
+    await user.click(within(group).getByRole('button', { name: `Editar cuenta ${longName}` }))
+    expect(bank).toHaveAttribute('aria-pressed', 'false')
+    expect(cash).toHaveAttribute('aria-pressed', 'true')
+    expect(router.state.location.search).toBe('?cuenta=1')
+    expect(screen.getByRole('dialog', { name: 'Editar cuenta' })).toBeInTheDocument()
+    expect(calls(fetchMock, '/api/treasury/movements')).toEqual(['/api/treasury/movements?desde=2026-10-01&hasta=2026-10-18'])
+  })
+
+  it('reparte saldos por tipo real, suma cuentas del mismo tipo y conserva negativos', async () => {
+    await setup('/cuentas?cuenta=2', {
+      ...fullRoutes([]),
+      'GET /api/treasury/accounts': () => jsonResponse([
+        { id: 1, name: 'Caja', type: 'EFECTIVO', currentBalance: 100, initialBalance: 0 },
+        { id: 2, name: 'Otro efectivo', type: 'EFECTIVO', currentBalance: -30.25, initialBalance: 0 },
+        { id: 3, name: 'Banco', type: 'BANCO', currentBalance: -50, initialBalance: 0 },
+        { id: 4, name: 'Billetera', type: 'DIGITAL', currentBalance: 10, initialBalance: 0 },
+      ]),
+      'GET /api/treasury/balance': () => jsonResponse({ total: 29.75 }),
+    })
+    const types = screen.getByRole('region', { name: 'Saldos actuales' })
+    expect(within(types).queryByText(/Saldo actual en \d+ cuentas?/)).not.toBeInTheDocument()
+    await waitFor(() => expect(within(types).getByText('Efectivo').parentElement).toHaveTextContent('$ 70'))
+    expect(within(types).getByText('Efectivo').parentElement?.parentElement?.querySelector('.lucide-wallet')).toBeInTheDocument()
+    expect(within(types).getByText('Bancos').parentElement).toHaveTextContent('-$ 50')
+    expect(within(types).getByText('Bancos').parentElement?.parentElement?.querySelector('.lucide-landmark')).toBeInTheDocument()
+    expect(within(types).getByText('Digital').parentElement).toHaveTextContent('$ 10')
+    expect(within(types).getByText('Digital').parentElement?.parentElement?.querySelector('.lucide-smartphone')).toBeInTheDocument()
+    expect(within(types).getByText('Todas las cuentas').parentElement).toHaveTextContent('$ 30')
+    expect(within(types).getByText('Todas las cuentas').parentElement?.parentElement?.querySelector('.lucide-layers')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Otro efectivo/ })).toHaveTextContent('-$ 30')
+  })
+
+  it('el grafico expone grupos completos, fechas vacias y resumen accesible con empates', async () => {
+    const list = [
+      movement(1, { amount: 10.25, date: '2026-10-01' }),
+      movement(2, { amount: 10.25, date: '2026-10-03' }),
+    ]
+    const { user } = await setup('/cuentas?periodo=personalizado&desde=2026-10-01&hasta=2026-10-04', fullRoutes(list))
+    expect(await screen.findByRole('img', { name: /Gráfico de ingresos y egresos por día/ })).toBeInTheDocument()
+    expect(screen.getByText(/Mayor ingreso: empate en 2 días/)).toHaveTextContent('$ 10')
+    expect(screen.getByText('No hubo egreso en el período.')).toBeInTheDocument()
+    expect(screen.getByText('2 días sin movimientos.')).toBeInTheDocument()
+    await user.click(screen.getByText('Ver importes por fecha'))
+    const detail = screen.getByRole('list', { name: 'Importes por día' })
+    expect(within(detail).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(detail).getAllByText(/Ingresos:/)).toHaveLength(4)
+  })
+
+  it('cambiar periodo conserva los saldos actuales y el historial restaura la cuenta', async () => {
+    const { user, router, fetchMock } = await setup()
+    const group = await screen.findByRole('group', { name: 'Cuentas' })
+    await user.click(await screen.findByRole('button', { name: 'Ver todas las cuentas' }))
+    await user.selectOptions(screen.getByLabelText('Período'), 'mes-anterior')
+    expect(router.state.location.search).toBe('?cuenta=todas&periodo=mes-anterior')
+    expect(within(group).getByRole('button', { name: /^Caja General/ })).toHaveTextContent('$ 1.946.250')
+    expect(within(group).getByRole('button', { name: /^Bancolombia/ })).toHaveTextContent('$ 2.230.650')
+    expect(calls(fetchMock, '/api/treasury/accounts')).toHaveLength(1)
+    expect(calls(fetchMock, '/api/treasury/balance')).toHaveLength(1)
+    await act(() => router.navigate(-1))
+    expect(router.state.location.search).toBe('?cuenta=todas')
+    await act(() => router.navigate(-1))
+    expect(within(group).getByRole('button', { name: /^Caja General/ })).toHaveAttribute('aria-pressed', 'true')
+    await act(() => router.navigate(1))
+    expect(screen.getByRole('button', { name: 'Todas las cuentas seleccionadas' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('cambiar el periodo cambia la consulta y la URL; personalizado invalido no consulta', async () => {
     const { fetchMock, user, router } = await setup()
     await screen.findByRole('table')
+
+    const period = screen.getByLabelText('Período')
+    expect(period.closest('div.flex')).toContainElement(document.getElementById(period.getAttribute('aria-describedby') ?? ''))
 
     await user.selectOptions(screen.getByLabelText('Período'), 'esta-semana')
     expect(router.state.location.search).toBe('?periodo=esta-semana')
@@ -203,6 +332,7 @@ describe('cuentas', () => {
 
     await user.selectOptions(screen.getByLabelText('Período'), 'personalizado')
     expect(router.state.location.search).toBe('?periodo=personalizado&desde=2026-10-12&hasta=2026-10-18')
+    expect(screen.getByLabelText('Desde').parentElement?.parentElement?.parentElement).toContainElement(screen.getByLabelText('Hasta'))
 
     const before = calls(fetchMock, '/api/treasury/movements').length
     await router.navigate('/cuentas?periodo=personalizado&desde=2026-10-15&hasta=2026-10-01')
@@ -233,10 +363,13 @@ describe('cuentas', () => {
     const { user, router } = await setup('/cuentas', fullRoutes(many))
 
     expect(await screen.findByText('1 a 25 de 30 movimientos')).toBeInTheDocument()
+    expect(total('Ingresos del período')).toBe('$ 30.000')
+    expect(screen.getByRole('heading', { name: 'Caja General · Movimientos del período' }).closest('section')).toHaveTextContent('$ 30.000')
     await user.click(screen.getByRole('button', { name: 'Página 2' }))
     expect(router.state.location.search).toBe('?pagina=2')
     expect(screen.getByText('26 a 30 de 30 movimientos')).toBeInTheDocument()
     expect(rows()).toHaveLength(5)
+    expect(screen.getByRole('heading', { name: 'Caja General · Movimientos del período' }).closest('section')).toHaveTextContent('$ 30.000')
   })
 
   it('si fallan las ventas, Origen queda en VENTA sin numero con un aviso', async () => {
@@ -244,7 +377,7 @@ describe('cuentas', () => {
 
     expect(await screen.findByText(/No pudimos cargar los números de factura/)).toBeInTheDocument()
     expect(rows()[2]?.[3]).toBe('VENTA')
-    expect(total('Ingresos del período')).toBe('$ 160.650')
+    expect(total('Ingresos del período')).toBe('$ 460.650')
   })
 
   it('sin movimientos ofrece cambiar el periodo; un error de movimientos no tumba las cuentas', async () => {
@@ -258,11 +391,25 @@ describe('cuentas', () => {
     })
 
     expect(await screen.findByText('No pudimos cargar los movimientos.')).toBeInTheDocument()
+    expect(total('Ingresos del período')).toBe('No disponible')
+    expect(screen.queryByText(/días sin movimientos/)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Caja General/ })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('No hay movimientos en este período.')).toBeInTheDocument()
+    expect(screen.getByText('18 días sin movimientos.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cambiar el período' }))
     expect(screen.getByLabelText('Período')).toHaveFocus()
+  })
+
+  it('la carga del rango no presenta ceros hasta recibir todos los movimientos', async () => {
+    let respond!: (response: Response) => void
+    const pending = new Promise<Response>((resolve) => { respond = resolve })
+    await setup('/cuentas', { ...fullRoutes(), 'GET /api/treasury/movements': () => pending })
+    await screen.findByRole('button', { name: /^Caja General/ })
+    expect(screen.queryByRole('img', { name: /Gráfico de ingresos y egresos/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/días sin movimientos/)).not.toBeInTheDocument()
+    await act(async () => { respond(jsonResponse(october)) })
+    expect(await screen.findByRole('img', { name: /Gráfico de ingresos y egresos/ })).toBeInTheDocument()
   })
 
   it('sin cuentas muestra el vacio y deshabilita la transferencia', async () => {
@@ -323,7 +470,7 @@ describe('cuentas', () => {
     await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
     expect(await screen.findByText('Reporte generado: movimientos-cuentas_2026-10-01_2026-10-18.xlsx')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Todas las cuentas/ }))
+    await user.click(screen.getByRole('button', { name: 'Ver todas las cuentas' }))
     await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
     await waitFor(() => expect(calls(fetchMock, '/api/reporting/export')).toHaveLength(2))
     expect(calls(fetchMock, '/api/reporting/export')).toEqual([

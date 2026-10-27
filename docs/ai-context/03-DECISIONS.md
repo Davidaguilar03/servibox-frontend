@@ -12,6 +12,63 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-27: Seleccion agregada y grupos de saldo en Cuentas
+
+* Decision: el resumen presenta cuatro grupos informativos con igual escala;
+  el total usa acento neutral y los tipos conservan sus acentos semanticos.
+  La seleccion agregada marca visualmente todas las tarjetas como incluidas,
+  con texto distinto de Seleccionada y sin alterar el id unico en la URL.
+* Decision: cola obligatoria: cerrar y mergear esta rama tras aprobacion
+  visual; tarea backend para persistir color y ampliar contratos de alta,
+  edicion y respuesta; tarea frontend para seleccionar color en Nueva/Editar
+  y usar el color persistido; despues continuar con Reportes.
+* Motivo: aclarar el alcance agregado y mantener los cuatro saldos legibles.
+  Revision visual de Cuentas y del ajuste de KPI de Inicio aprobada por David.
+
+## 2026-10-27: Resumen global y serie temporal de Cuentas
+
+* Decision: el saldo global de /treasury/balance y el reparto de los saldos
+  actuales de /treasury/accounts se muestran juntos, sin aplicar periodo.
+  El reparto agrupa por type real y conserva saldos negativos.
+* Decision: un solo PeriodPicker gobierna el resumen global y el desglose de
+  la cuenta seleccionada. El resumen global usa todos los movimientos activos
+  del rango, incluso cuando se selecciona una cuenta; el desglose y la tabla
+  filtran por id. La API entrega el rango completo antes de paginar la tabla.
+* Decision: el grafico usa dias hasta 45, semanas de lunes a domingo hasta
+  120 y meses despues. Incluye dias sin movimientos solo tras resolver la
+  consulta; conserva sumas exactas con addMoney y muestra empates diarios.
+  El detalle por grupo se abre con teclado y la tabla sigue como alternativa.
+* Decision: las transferencias internas conservan sus dos patas en totales,
+  grafico y tabla. Se explican como movimientos entre cuentas, no como
+  ingresos o gastos del negocio. El backend omite movimientos de facturas
+  anuladas; el frontend no inventa un filtro adicional.
+* Decision: cada id recibe un acento provisional estable de una paleta de
+  tres tokens; el color no expresa signo ni estado. La seleccion tambien
+  muestra marca y texto. La personalizacion solicitada en Nueva y Editar
+  requiere que POST /api/treasury/accounts admita color, que PUT
+  /api/treasury/accounts/{id} permita cambiarlo y que las respuestas de alta,
+  edicion y GET /api/treasury/accounts lo incluyan. El backend debe persistir
+  y validar ese valor por tenant antes de conectar los formularios del
+  frontend. No se implementa en esta rama; queda pendiente antes de Reportes.
+* Motivo: aplicar la ampliacion visual aprobada por David con los datos
+  existentes. Reemplaza la ubicacion anterior de Todas las cuentas en la
+  rejilla y los totales por cuenta como unica franja destacada. Revision
+  visual pendiente de David.
+
+## 2026-10-27: Cuentas con tarjetas y resumen del periodo
+
+* Decision: /cuentas omite la barra superior y muestra el menu movil junto al
+  titulo en ListHeader. AppShell conserva titulo de pestana, main y SkipLink.
+* Actualizado por Resumen global y serie temporal de Cuentas: Todas las
+  cuentas pasa al resumen superior. Las cuentas individuales conservan icono
+  por tipo real y lapiz separado. Los saldos son actuales; el periodo filtra
+  ingresos, egresos y movimientos. Personalizado da ancho a Desde y Hasta.
+* Decision: los movimientos conservan columnas por prioridad, tarjetas moviles
+  y paginacion. Los modales mantienen los valores precisos, validaciones,
+  descarte e invalidacion. Exportar mantiene cuenta y rango efectivos.
+* Motivo: aplicar la jerarquia de la referencia de Cuentas sin cambiar datos,
+  contratos ni reglas de transferencia. Revision visual pendiente de David.
+
 ## 2026-10-26: Acabado de Compras con el patron de Ventas
 
 * Decision: las rutas /compras omiten la barra superior. Listado, nueva compra,

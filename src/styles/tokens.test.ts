@@ -49,10 +49,12 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ['warning-ink', 'warning-bg'],
   ['error-ink', 'error-bg'],
   ['info-ink', 'info-bg'],
+  ['violet-ink', 'violet-bg'],
   ['success-ink', 'surface'],
   ['success-ink', 'row-alt'],
   ['success-ink', 'neutral-100'],
   ['error', 'surface'],
+  ['violet', 'surface'],
   ['text-muted', 'surface'],
   ['text-muted', 'canvas'],
   ['text-muted', 'neutral-200'],
@@ -68,6 +70,8 @@ const TEXT_PAIRS: Array<[string, string]> = [
 ]
 
 const CONTROL_BORDERS: Array<[string, string]> = [
+  ['info', 'info-bg'],
+  ['neutral-600', 'neutral-100'],
   ['border-control', 'surface'],
   ['border-control', 'canvas'],
   ['border-control', 'row-alt'],

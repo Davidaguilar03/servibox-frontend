@@ -6,6 +6,48 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Cuentas (2026-10-27)
+
+* Cuentas reutiliza ListHeader con menu movil en contenido y omite la barra
+  superior. Una tarjeta de ancho completo combina saldo global, reparto por
+  tipo, periodo y flujos globales. El acceso a Todas las cuentas es un boton
+  secundario junto a Tus cuentas, separado del selector de periodo.
+* Correccion visual de David: PeriodPicker usa layout toolbar solo en Cuentas.
+  Etiqueta, selector compacto y rango auxiliar comparten fila cuando caben;
+  Personalizado agrega Desde y Hasta en una rejilla horizontal adaptable;
+  desde lg el grupo ocupa la mitad derecha y se apila si falta espacio.
+  Los demas usos de PeriodPicker y SelectField conservan su layout habitual.
+  El reparto por tipo usa warning-bg/ink para Efectivo, info-bg/ink para
+  Bancos y violet-bg/ink para Digital. Violet es un token nuevo con contraste
+  comprobado; los iconos siguen el type real.
+* El resumen usa cuatro grupos informativos iguales: Todas las cuentas,
+  Efectivo, Bancos y Digital. Cada uno tiene icono de 24 px en fondo tenue de
+  48 px, etiqueta small semibold e importe summary de 20 px. El total usa
+  acento neutral y Layers; los tipos conservan warning, info y violet.
+  Los cuatro grupos tienen solo etiqueta e importe junto al icono, sin
+  ayuda adicional bajo el total.
+  La rejilla pasa de una a dos y cuatro columnas segun el espacio. El
+  importe completo puede ocupar otra linea sin separar simbolo y cifra.
+* AccountTile dentro de AccountsPage muestra las cuentas individuales en
+  rejilla de una, dos o tres columnas. Icono de 48 px a la izquierda, nombre,
+  importe y tipo; lapiz independiente. El acento superior depende del id y
+  usa info, warning o neutral. Son identificadores provisionales, no estados.
+  Icono, fondo, borde superior y punto comparten ese acento. El contorno de
+  2 px tiene ancho fijo en todos los estados: al seleccionar, lados y base
+  toman el acento sin superponer un anillo al borde superior. La seleccion
+  conserva fondo tenue, marca, texto y foco independiente. En Todas las
+  cuentas, cada tarjeta usa su propio acento y muestra Incluida en Todas las
+  cuentas; `aria-pressed` sigue reservado a la cuenta individual elegida.
+* Los importes envuelven si es necesario y conservan juntos simbolo y primer
+  digito. PeriodPicker es compacto en periodos fijos y amplio en Personalizado.
+  Los flujos globales mantienen acentos semanticos y etiquetas explicitas.
+* MovementChart usa SVG sin animacion y tres etiquetas de eje como maximo.
+  Se agrupa por dia, semana o mes segun longitud del rango, con unidad visible.
+  Un detalle nativo accesible por teclado lista importes completos por grupo;
+  DataTable y tarjetas moviles conservan movimientos y paginacion.
+  Los tres modales usan DiscardableModal y campos comunes.
+* Revision visual de Cuentas aprobada por David. Estas reglas no verifican anchos reales.
+
 ## Ventas (2026-10-26)
 
 * Las rutas /ventas muestran un solo encabezado en contenido. ListHeader admite
@@ -96,6 +138,10 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 * Inicio: PeriodPicker existente junto a Registrar venta, una sola accion primaria.
   Cuatro IndicatorCard con acentos aprobados (neta reforzada con brand-strong), una columna, dos desde sm y cuatro desde
   2xl. Simbolo monetario y cifra unidos por espacio inseparable.
+  Solo en Inicio, la variante dense reduce el relleno vertical a 16 px y
+  mantiene el horizontal de 24 px; Utilidad bruta muestra importe y
+  explicacion sin porcentaje auxiliar. Los otros indicadores conservan
+  sus ayudas y los KPI de otras pantallas no usan esta variante.
   Stock y saldos en proporcion 3:2 desde xl, apilados por debajo; ventas debajo. Aclaracion
   comun de estado actual para stock y saldos. Total disponible sobre canvas con radio
   control; encabezados, enlaces, bordes y separadores reutilizan componentes y tokens.
@@ -155,6 +201,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 | `text-small` | 13 px | 1.5 | 400 | Ayudas, subtitulos, pies, metadatos, badges, migas, menu lateral |
 | `text-label` | 12 px | 16 px | 600 | Rotulos de campo, leyendas de grupo, encabezados de columna (estos en mayusculas) |
 | `text-button` | 14 px | 1 | 600 | Botones, paginacion, segmentos y chips que actuan como boton |
+| `text-summary` | 20 px | 24 px | 600 | Cifras de los cuatro grupos del resumen superior de Cuentas |
 | `text-figure` | 24/28 bajo md, 28/32 desde md | | 600 | Componente: valor de indicadores y totales destacados (total de factura, saldo pendiente, saldos y totales de Cuentas, total disponible). Inter con numeros tabulares (rol monto) |
 | `text-kpi` | 32/36 con tokens display de tamano y figure de peso | | 600 | Solo cifra de la variante compact de IndicatorCard en Productos; Inter con numeros tabulares |
 | `text-display` | 32/36 bajo md, 40/44 desde md | | 700 | Componente con excepcion unica: solo el titular (`h1`) de la landing. Montserrat |

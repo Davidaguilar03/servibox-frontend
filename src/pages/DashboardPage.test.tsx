@@ -110,7 +110,7 @@ describe('panel de control', () => {
     expect(indicators()).toEqual([
       ['Ventas sin IVA', '$ 20.781.907', 'Sin IVA y sin facturas anuladas.'],
       ['Costo de lo vendido', '$ 14.055.000', 'Costo de los productos que vendiste.'],
-      ['Utilidad bruta', '$ 6.726.907', '32,4 % de las ventas', 'Ventas menos costo de lo vendido.'],
+      ['Utilidad bruta', '$ 6.726.907', 'Ventas menos costo de lo vendido.'],
       ['Utilidad neta', '$ 1.534.707', 'Utilidad bruta más otros ingresos, menos gastos.'],
     ])
     // Compras (y las ventas con IVA) salen del panel: siguen en Facturas de compra.
@@ -450,7 +450,7 @@ describe('panel de control', () => {
     expect(within(recent).getAllByText('$ 2.180.324')).toHaveLength(2)
   })
 
-  it('utilidad neta negativa va en el tono de error y el margen negativo con coma', async () => {
+  it('utilidad neta negativa va en el tono de error sin margen auxiliar', async () => {
     mockApi({
       ...fullRoutes(),
       '/api/reporting/kpis': () =>
@@ -459,6 +459,6 @@ describe('panel de control', () => {
     renderRoute('/inicio')
 
     expect(await screen.findByText('-$ 323.000')).toHaveClass('text-error')
-    expect(screen.getByText('-12,3 % de las ventas')).toBeInTheDocument()
+    expect(screen.queryByText(/% de las ventas/)).not.toBeInTheDocument()
   })
 })
