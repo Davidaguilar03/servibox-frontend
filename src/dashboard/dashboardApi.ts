@@ -28,6 +28,7 @@ export interface Account {
   initialBalance: number
   currentBalance: number
   type: AccountType
+  color: string | null
 }
 
 export interface Sale {

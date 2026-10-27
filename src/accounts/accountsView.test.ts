@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Account } from '../dashboard/dashboardApi'
 import { businessToday } from '../lib/businessDate'
 import type { TreasuryMovement } from './accountsApi'
+import { accountColor } from './accountColors'
 import {
   accountMovements,
   accountsFiltersToParams,
@@ -17,7 +18,15 @@ import {
   selectedAccountId,
 } from './accountsView'
 
-const account = (id: number, name: string, type: Account['type'], currentBalance = 0): Account => ({ id, name, type, initialBalance: 0, currentBalance })
+const account = (id: number, name: string, type: Account['type'], currentBalance = 0): Account => ({ id, name, type, initialBalance: 0, currentBalance, color: null })
+
+it('prioriza el color persistido y mantiene el fallback estable por id para null', () => {
+  expect([1, 2, 3].map((id) => accountColor(account(id, 'Caja', 'EFECTIVO'))))
+    .toEqual(['#B45309', '#4B5563', '#2563EB'])
+  expect(accountColor(account(1, 'Renombrada', 'BANCO', 100.57))).toBe('#B45309')
+  expect(accountColor({ id: 1, color: '#FFFFFF' })).toBe('#FFFFFF')
+  expect(accountColor({ id: 3, color: '#000000' })).toBe('#000000')
+})
 
 const movement = (id: number, fields: Partial<TreasuryMovement>): TreasuryMovement => ({
   id,

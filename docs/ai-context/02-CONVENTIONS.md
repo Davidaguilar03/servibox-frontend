@@ -21,10 +21,13 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
 * Los componentes consumen tokens por medio de las utilidades (`bg-brand`, `text-text-muted`,
   `rounded-control`, `shadow-raised`, `h-control`). **Nunca un hexadecimal literal** ni un valor
   arbitrario de color en un componente.
-* Unica excepcion: la paleta de colores de categoria (`CATEGORY_COLORS` en
+* Excepciones de datos persistidos: la paleta de colores de categoria (`CATEGORY_COLORS` en
   `src/inventory/categoryForm.ts`), 8 hexadecimales definidos en ese solo lugar. No es un
   estilo de la interfaz sino el dato `color` que guarda el backend; por eso el punto de color
   (`CategoryDot`) lo aplica con `style`. Ver [03-DECISIONS.md](03-DECISIONS.md).
+  Tambien `ACCOUNT_COLORS` en `src/accounts/accountColors.ts`, con valores basados en
+  info, warning-ink, neutral-600 y violet. El color libre de cuenta viene de la API
+  y se aplica con style solo a sus acentos; texto e importes usan tokens legibles.
 * Un valor nuevo se agrega primero al archivo de tokens y despues se usa.
 * `color-action` es el fondo del boton primario y de los estados activos con texto blanco
   (pagina actual); vale `brand-ink` y se cambia en un solo lugar.

@@ -45,6 +45,7 @@ type Rule = [RegExp, string | ((...groups: string[]) => string)]
  * (errorMessages.test.ts) tienen la lista de origen.
  */
 const RULES: Rule[] = [
+  [/^El color debe tener el formato #RRGGBB$/, 'El color debe tener el formato #RRGGBB.'],
   [/^El precio unitario admite como maximo dos decimales$/, 'El precio unitario admite como máximo dos decimales.'],
   // Registro y sesion.
   [/^Debe aceptar los terminos y condiciones$/, 'Acepta los términos de uso y el tratamiento de datos para continuar.'],

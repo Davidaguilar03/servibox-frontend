@@ -12,13 +12,35 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-27: Selector persistente de color de cuentas
+
+* Decision: feat/38-account-colors ocupa el extra frontend del rediseno. Backend
+  PR 42 ya mergeado segun David. Reportes sigue como siguiente tarea; actualizar
+  la numeracion de sus ramas y las posteriores del plan antes de iniciarlas.
+* Decision: paleta breve y selector nativo comparten un valor en Nueva/Editar.
+  Nueva envia azul inicial; Editar precarga color persistido o propone el acento
+  estable anterior por id si es null. Confirmar Guardar persiste la propuesta;
+  cancelar sin tocarla no requiere descarte ni escribe. Los cambios de color
+  participan del descarte y permiten guardar por si solos.
+* Decision: POST y PUT envian color #RRGGBB y el saldo inicial preciso. PUT no
+  envia type. Ambos invalidan tesoreria y la tarjeta toma la respuesta del listado
+  del servidor. Null u omision conservan color en PUT; no se ofrece quitarlo.
+* Decision: color propio para borde, icono, punto y seleccion. Superficie con
+  mezcla del 8% del color y surface; texto e importes conservan sus tokens.
+  Icono mezcla 35% del color y text. Contorno de ancho fijo y foco independiente.
+  El resumen por tipo conserva sus colores semanticos, ajenos al color de cuenta.
+* Motivo: persistencia por tenant sin almacenamiento local y legibilidad de
+  colores claros/oscuros. Reemplaza solo las menciones de colores provisionales
+  y de personalizacion pendiente en las dos entradas siguientes; la seleccion
+  agregada, calculos, precision y resto del rediseno conservan sus contratos.
+
 ## 2026-10-27: Seleccion agregada y grupos de saldo en Cuentas
 
 * Decision: el resumen presenta cuatro grupos informativos con igual escala;
   el total usa acento neutral y los tipos conservan sus acentos semanticos.
   La seleccion agregada marca visualmente todas las tarjetas como incluidas,
   con texto distinto de Seleccionada y sin alterar el id unico en la URL.
-* Decision: cola obligatoria: cerrar y mergear esta rama tras aprobacion
+* Reemplazado por Selector persistente de color de cuentas: cola obligatoria: cerrar y mergear esta rama tras aprobacion
   visual; tarea backend para persistir color y ampliar contratos de alta,
   edicion y respuesta; tarea frontend para seleccionar color en Nueva/Editar
   y usar el color persistido; despues continuar con Reportes.
@@ -42,7 +64,7 @@ Formato de cada entrada:
   grafico y tabla. Se explican como movimientos entre cuentas, no como
   ingresos o gastos del negocio. El backend omite movimientos de facturas
   anuladas; el frontend no inventa un filtro adicional.
-* Decision: cada id recibe un acento provisional estable de una paleta de
+* Reemplazado por Selector persistente de color de cuentas: cada id recibe un acento provisional estable de una paleta de
   tres tokens; el color no expresa signo ni estado. La seleccion tambien
   muestra marca y texto. La personalizacion solicitada en Nueva y Editar
   requiere que POST /api/treasury/accounts admita color, que PUT

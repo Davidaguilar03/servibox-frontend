@@ -30,14 +30,26 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   importe completo puede ocupar otra linea sin separar simbolo y cifra.
 * AccountTile dentro de AccountsPage muestra las cuentas individuales en
   rejilla de una, dos o tres columnas. Icono de 48 px a la izquierda, nombre,
-  importe y tipo; lapiz independiente. El acento superior depende del id y
-  usa info, warning o neutral. Son identificadores provisionales, no estados.
+  importe y tipo; lapiz independiente. El acento prioriza color persistido.
+  Solo con null usa el fallback estable por id: info, warning-ink o neutral-600.
+  Son identificadores de cuenta, sin significado financiero.
   Icono, fondo, borde superior y punto comparten ese acento. El contorno de
   2 px tiene ancho fijo en todos los estados: al seleccionar, lados y base
   toman el acento sin superponer un anillo al borde superior. La seleccion
   conserva fondo tenue, marca, texto y foco independiente. En Todas las
   cuentas, cada tarjeta usa su propio acento y muestra Incluida en Todas las
   cuentas; `aria-pressed` sigue reservado a la cuenta individual elegida.
+* AccountColorField en Nueva/Editar ofrece Azul, Ambar, Gris y Violeta, mas
+  selector nativo Otro color. El fieldset tiene leyenda Color de la cuenta;
+  botones con nombre, marca y aria-pressed; el codigo elegido tambien es texto.
+  controls.test registra esta paleta como excepcion puntual al segmentado unico.
+  El control nativo y los botones comparten el valor y foco visible independiente.
+  Se admiten colores libres como dato persistido, no como nuevos tokens.
+* Fondo seleccionado e icono mezclan 8% del color con surface; el trazo del
+  icono mezcla 35% con text para mantener contraste incluso con blanco. Nombre,
+  importe y seleccion usan text, ayuda text-muted. Bordes por lado evitan
+  conflictos de propiedades al cambiar seleccion y no superponen anillos.
+  David aprobo visualmente la nueva integracion el 2026-10-27, sin navegador del agente.
 * Los importes envuelven si es necesario y conservan juntos simbolo y primer
   digito. PeriodPicker es compacto en periodos fijos y amplio en Personalizado.
   Los flujos globales mantienen acentos semanticos y etiquetas explicitas.

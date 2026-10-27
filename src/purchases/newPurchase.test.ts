@@ -121,9 +121,9 @@ describe('medio de pago de compra por tipo de cuenta', () => {
   it('propone la primera cuenta de efectivo por id', () => {
     expect(
       defaultCashAccount([
-        { id: 12, name: 'Caja Norte', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0 },
-        { id: 3, name: 'Banco', type: 'BANCO', initialBalance: 0, currentBalance: 0 },
-        { id: 10, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0 },
+        { id: 12, name: 'Caja Norte', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0, color: null },
+        { id: 3, name: 'Banco', type: 'BANCO', initialBalance: 0, currentBalance: 0, color: null },
+        { id: 10, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0, color: null },
       ])?.id,
     ).toBe(10)
   })

@@ -96,6 +96,19 @@ const FOCUS_RING: Array<[string, string]> = [
 ]
 
 describe('contraste de los tokens', () => {
+  it.each(['#FFFFFF', '#000000', '#FFFF00', '#000080'])('texto e icono de cuenta legibles con color personalizado %s', (hex) => {
+    const custom = [0, 2, 4].map((index) => parseInt(hex.slice(index + 1, index + 3), 16)) as Rgb
+    const tint = color('surface').map((channel, index) => channel * 0.92 + custom[index]! * 0.08) as Rgb
+    const ink = color('text').map((channel, index) => channel * 0.65 + custom[index]! * 0.35) as Rgb
+    const ratio = (foreground: Rgb) => {
+      const [light, dark] = [luminance(foreground), luminance(tint)].sort((a, b) => b - a)
+      return (light! + 0.05) / (dark! + 0.05)
+    }
+    expect(ratio(color('text'))).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(color('text-muted'))).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(ink)).toBeGreaterThanOrEqual(3)
+  })
+
   it.each(FOCUS_RING)('anillo de foco %s sobre %s llega a 3 a 1', (foreground, background) => {
     expect(contrast(foreground, background)).toBeGreaterThanOrEqual(3)
   })

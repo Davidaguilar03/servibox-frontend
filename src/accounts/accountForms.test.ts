@@ -3,8 +3,8 @@ import type { Account } from '../dashboard/dashboardApi'
 import { EMPTY_ACCOUNT_FORM, buildAccountRequest, buildTransferRequest, validateAccount, validateTransfer } from './accountForms'
 
 const accounts: Account[] = [
-  { id: 1, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 1946250 },
-  { id: 2, name: 'Bancolombia', type: 'BANCO', initialBalance: 0, currentBalance: 2230650 },
+  { id: 1, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 1946250, color: null },
+  { id: 2, name: 'Bancolombia', type: 'BANCO', initialBalance: 0, currentBalance: 2230650, color: null },
 ]
 
 describe('nueva cuenta', () => {
@@ -17,12 +17,13 @@ describe('nueva cuenta', () => {
   })
 
   it('arma el cuerpo con el nombre sin espacios y el saldo en pesos', () => {
-    expect(buildAccountRequest({ name: ' Nequi ', type: 'DIGITAL', initialBalance: '150.000' })).toEqual({
+    expect(buildAccountRequest({ ...EMPTY_ACCOUNT_FORM, name: ' Nequi ', type: 'DIGITAL', initialBalance: '150.000' })).toEqual({
       name: 'Nequi',
       type: 'DIGITAL',
       initialBalance: 150000,
+      color: EMPTY_ACCOUNT_FORM.color,
     })
-    expect(buildAccountRequest({ name: 'Caja menor', type: 'EFECTIVO', initialBalance: '' }).initialBalance).toBe(0)
+    expect(buildAccountRequest({ ...EMPTY_ACCOUNT_FORM, name: 'Caja menor', type: 'EFECTIVO', initialBalance: '' }).initialBalance).toBe(0)
   })
 })
 

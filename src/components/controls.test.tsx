@@ -225,10 +225,11 @@ function source(file: string) {
 
 /**
  * Excepciones con comportamiento propio (no son segmentados de texto): las tarjetas de cuenta
- * con su saldo (aria-pressed), las muestras de color de categoria y las tarjetas de tipo de
+ * con su saldo (aria-pressed), las paletas de cuenta/categoria y las tarjetas de tipo de
  * reporte con descripcion (radios nativos).
  */
 const OWN_SELECTION: Record<string, string[]> = {
+  'accounts/AccountColorField.tsx': ['aria-pressed'],
   'pages/AccountsPage.tsx': ['aria-pressed', 'aria-pressed'],
   'pages/CategoriesPage.tsx': ['type="radio"'],
   'pages/ReportsPage.tsx': ['type="radio"'],

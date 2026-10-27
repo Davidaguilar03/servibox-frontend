@@ -53,6 +53,7 @@ import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
 import { iconLg, iconSm } from '../components/icons'
 import { MovementChart } from '../accounts/MovementChart'
 import { rangeLabel } from '../lib/period'
+import { accountColor } from '../accounts/accountColors'
 
 /** Ancho del recuadro desde el que caben todas las columnas de movimientos. */
 const MOVEMENTS_TABLE_FULL = 800
@@ -351,17 +352,6 @@ function SummaryGroup({ label, icon: Icon, tone, value, error }: {
   </div>
 }
 
-const ACCOUNT_ACCENTS = [
-  { name: 'blue', border: 'border-t-info', outline: 'border-x-info border-b-info', icon: 'bg-info-bg text-info-ink', dot: 'bg-info', selected: 'bg-info-bg', selectedText: 'text-info-ink' },
-  { name: 'amber', border: 'border-t-warning-ink', outline: 'border-x-warning-ink border-b-warning-ink', icon: 'bg-warning-bg text-warning-ink', dot: 'bg-warning', selected: 'bg-warning-bg', selectedText: 'text-warning-ink' },
-  { name: 'slate', border: 'border-t-neutral-600', outline: 'border-x-neutral-600 border-b-neutral-600', icon: 'bg-neutral-200 text-text', dot: 'bg-neutral-600', selected: 'bg-neutral-100', selectedText: 'text-text' },
-] as const
-
-/** Los acentos provisionales dependen solo del id y no expresan estados financieros. */
-function accountAccent(id: number) {
-  return ACCOUNT_ACCENTS[Math.abs(id) % ACCOUNT_ACCENTS.length]!
-}
-
 function AccountCards({ accounts, selectedId, allSelected, onSelect, onNewAccount, onEdit }: AccountCardsProps) {
   if (accounts.isError) {
     return (
@@ -412,7 +402,7 @@ function AccountCards({ accounts, selectedId, allSelected, onSelect, onNewAccoun
                   value={formatCurrency(account.currentBalance)}
                   active={active}
                   included={allSelected}
-                  accent={accountAccent(account.id)}
+                  accent={accountColor(account)}
                   icon={account.type === 'BANCO' ? Landmark : account.type === 'DIGITAL' ? Smartphone : Wallet}
                   onSelect={() => onSelect(account.id)}
                   onEdit={() => onEdit(account)}
@@ -431,24 +421,27 @@ function AccountTile({ name, detail, value, active, included, accent, icon: Icon
   value: string | undefined
   active: boolean
   included: boolean
-  accent: (typeof ACCOUNT_ACCENTS)[number]
+  accent: string
   icon: typeof Wallet
   onSelect: () => void
   onEdit: () => void
 }) {
   const marked = active || included
+  const tint = `color-mix(in srgb, ${accent} 8%, var(--color-surface))`
   return (
-    <div data-accent={accent.name} className={`relative h-full min-w-0 rounded-surface border-2 transition-colors duration-(--duration-fast) ${accent.border} ${marked ? `${accent.outline} ${accent.selected}` : 'border-x-border border-b-border bg-surface hover:bg-neutral-100'}`}>
+    <div data-accent={accent} style={{ borderTopColor: accent, ...(marked ? { borderLeftColor: accent, borderRightColor: accent, borderBottomColor: accent, backgroundColor: tint } : {}) }}
+      className="relative h-full min-w-0 rounded-surface border-2 border-border bg-surface transition-colors duration-(--duration-fast) hover:bg-neutral-100">
       <button type="button" aria-pressed={active} onClick={onSelect} className={`flex h-full w-full min-w-0 items-start gap-3 rounded-surface p-4 text-left ${focusRing}`}>
-        <span className={`flex size-12 shrink-0 items-center justify-center rounded-control ${accent.icon}`} aria-hidden><Icon {...iconLg} /></span>
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-control"
+          style={{ backgroundColor: tint, color: `color-mix(in srgb, ${accent} 35%, var(--color-text))` }} aria-hidden><Icon {...iconLg} /></span>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="break-words pr-10 text-small font-semibold text-text">{name}</span>
           <span className="monto text-figure wrap-anywhere text-text">{value?.replace('$ ', '$\u00a0') ?? <Skeleton className="h-7 w-32" />}</span>
           <span className="text-small text-text-muted">{detail}</span>
-          {marked && <span className={`flex items-center gap-1 text-small font-semibold ${accent.selectedText}`}><Check {...iconSm} aria-hidden />{active ? 'Seleccionada' : 'Incluida en Todas las cuentas'}</span>}
+          {marked && <span className="flex items-center gap-1 text-small font-semibold text-text"><Check {...iconSm} aria-hidden />{active ? 'Seleccionada' : 'Incluida en Todas las cuentas'}</span>}
         </span>
       </button>
-      <span className={`absolute top-5 right-14 size-3 rounded-pill ${accent.dot}`} aria-hidden />
+      <span className="absolute top-5 right-14 size-3 rounded-pill" style={{ backgroundColor: accent }} aria-hidden />
       <div className="absolute top-2 right-2">
         <IconButton aria-label={`Editar cuenta ${name}`} onClick={onEdit}>
           <Pencil {...iconSm} aria-hidden />

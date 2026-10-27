@@ -27,6 +27,8 @@ import {
 } from './accountForms'
 import { createAccount, createTransfer, updateAccount } from './accountsApi'
 import { ACCOUNT_TYPE_LABELS } from './accountsView'
+import { AccountColorField } from './AccountColorField'
+import { accountColor } from './accountColors'
 
 const typeOptions = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]).map((value) => ({
   value,
@@ -35,7 +37,7 @@ const typeOptions = (Object.keys(ACCOUNT_TYPE_LABELS) as AccountType[]).map((val
 
 /** Enter en un campo de texto envia el formulario del modal. */
 function isEnterInInput(event: KeyboardEvent) {
-  return event.key === 'Enter' && event.target instanceof HTMLInputElement
+  return event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.type !== 'color'
 }
 
 export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; onCreated: (account: Account) => void }) {
@@ -131,6 +133,7 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
           value={values.type}
           onChange={(event) => change('type')(event.target.value)}
         />
+        <AccountColorField value={values.color} onChange={change('color')} />
         <TextField
           label="Saldo inicial"
           inputMode="decimal"
@@ -152,6 +155,7 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
   const [initial] = useState<AccountEditValues>(() => ({
     name: account.name,
     initialBalance: String(account.initialBalance).replace('.', ','),
+    color: accountColor(account),
   }))
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<keyof AccountEditValues>>(() => new Set())
@@ -161,7 +165,8 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
   const alertRef = useRef<HTMLDivElement>(null)
   const sending = useRef(false)
   const errors = validateAccountEdit(values)
-  const dirty = values.name !== initial.name || values.initialBalance !== initial.initialBalance
+  const dirty = values.name !== initial.name || values.initialBalance !== initial.initialBalance || values.color.toUpperCase() !== initial.color.toUpperCase()
+  const canSave = dirty || account.color === null
   const shown = (field: keyof AccountEditValues) =>
     (serverError?.field === field ? serverError.message : undefined) ?? (touched.has(field) ? errors[field] : undefined)
 
@@ -194,7 +199,7 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
   }
 
   function submit() {
-    if (sending.current || !dirty) return
+    if (sending.current || !canSave) return
     if (Object.keys(errors).length > 0) {
       revealErrors(() => {
         setSubmitted(true)
@@ -217,7 +222,7 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
       footer={(requestClose) => (
         <>
           <Button variant="secondary" onClick={requestClose}>Cancelar</Button>
-          <Button onClick={submit} disabled={save.isPending || !dirty} aria-busy={save.isPending || undefined}>
+          <Button onClick={submit} disabled={save.isPending || !canSave} aria-busy={save.isPending || undefined}>
             {save.isPending ? 'Guardando…' : 'Guardar cambios'}
           </Button>
         </>
@@ -239,6 +244,7 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
           onChange={(event) => change('name', event.target.value)}
           onBlur={() => setTouched((current) => new Set(current).add('name'))} error={shown('name')} />
         <TextField label="Tipo" value={ACCOUNT_TYPE_LABELS[account.type]} readOnly />
+        <AccountColorField value={values.color} onChange={(color) => change('color', color)} />
         <TextField label="Saldo inicial" inputMode="decimal" valueRole="monto" value={values.initialBalance} required
           onChange={(event) => change('initialBalance', event.target.value)}
           onBlur={() => setTouched((current) => new Set(current).add('initialBalance'))} error={shown('initialBalance')}

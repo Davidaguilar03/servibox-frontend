@@ -10,7 +10,7 @@ import { MESSAGES } from '../api/errorMessages'
 import { EditAccountModal } from './AccountModals'
 import { validateAccountEdit } from './accountForms'
 
-const account: Account = { id: 2, name: 'Banco prueba', type: 'BANCO', initialBalance: 100000.57, currentBalance: 40000.57 }
+const account: Account = { id: 2, name: 'Banco prueba', type: 'BANCO', initialBalance: 100000.57, currentBalance: 40000.57, color: '#4B5563' }
 
 function setup(response: () => Response | Promise<Response> = () => jsonResponse(account), selected = account) {
   const fetchMock = vi.fn(response)
@@ -32,6 +32,87 @@ const save = () => screen.getByRole('button', { name: 'Guardar cambios' })
 
 describe('editar cuenta', () => {
   beforeEach(() => saveToken(validToken()))
+
+  it('precarga el color persistido y permite guardar solo color sin redondear el saldo', async () => {
+    const { user, fetchMock, onClose } = setup(undefined, { ...account, color: '#123ABC' })
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#123abc')
+    expect(screen.getByText('Color elegido: #123ABC')).toBeInTheDocument()
+    expect(save()).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Violeta' }))
+    expect(screen.getByRole('button', { name: 'Violeta' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#7c3aed')
+    await user.click(save())
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+    expect(fetchMock).toHaveBeenCalledWith('/api/treasury/accounts/2', expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ name: account.name, initialBalance: 100000.57, color: '#7C3AED' }),
+    }))
+  })
+
+  it('propone el fallback de una cuenta null y lo guarda al confirmar sin otros cambios', async () => {
+    const { user, fetchMock, onClose } = setup(undefined, { ...account, color: null })
+    expect(screen.getByRole('button', { name: 'Gris' })).toHaveAttribute('aria-pressed', 'true')
+    expect(save()).toBeEnabled()
+    await user.click(save())
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+    expect(fetchMock).toHaveBeenCalledWith('/api/treasury/accounts/2', expect.objectContaining({
+      method: 'PUT', body: JSON.stringify({ name: account.name, initialBalance: 100000.57, color: '#4B5563' }),
+    }))
+  })
+
+  it('cancelar una propuesta heredada intacta no envia ni pide descartar', async () => {
+    const { user, fetchMock, onClose } = setup(undefined, { ...account, color: null })
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog', { name: '¿Descartar los cambios?' })).not.toBeInTheDocument()
+  })
+
+  it('sincroniza teclado, paleta y selector nativo y recupera el estado sin cambios', async () => {
+    const { user, fetchMock } = setup()
+    const blue = screen.getByRole('button', { name: 'Azul' })
+    blue.focus()
+    await user.keyboard(' ')
+    expect(blue).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#2563eb')
+    expect(save()).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Otro color'), { target: { value: '#ffffff' } })
+    expect(screen.getByText('Color elegido: #FFFFFF')).toBeInTheDocument()
+    expect(screen.queryAllByRole('button', { pressed: true })).toHaveLength(0)
+    await user.click(screen.getByRole('button', { name: 'Gris' }))
+    expect(save()).toBeDisabled()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('descartar solo el color no persiste y seguir editando conserva la eleccion', async () => {
+    const { user, fetchMock, onClose } = setup()
+    await user.click(screen.getByRole('button', { name: 'Azul' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
+    expect(screen.getByRole('button', { name: 'Azul' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(account.color).toBe('#4B5563')
+  })
+
+  it('un rechazo de color conserva todos los campos y permite reintentar', async () => {
+    let attempts = 0
+    const { user, onClose } = setup(() => ++attempts === 1
+      ? jsonResponse({ error: 'El color debe tener el formato #RRGGBB', status: 400 }, 400)
+      : jsonResponse({ ...account, color: '#FFFFFF' }))
+    fireEvent.change(screen.getByLabelText('Otro color'), { target: { value: '#ffffff' } })
+    fireEvent.change(name(), { target: { value: 'Banco nuevo' } })
+    fireEvent.change(balance(), { target: { value: '100,105' } })
+    await user.click(save())
+    expect(await screen.findByRole('alert')).toHaveTextContent('El color debe tener el formato #RRGGBB.')
+    expect(name()).toHaveValue('Banco nuevo')
+    expect(balance()).toHaveValue('100,105')
+    expect(screen.getByLabelText('Otro color')).toHaveValue('#ffffff')
+    expect(onClose).not.toHaveBeenCalled()
+    await user.click(save())
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+  })
 
   it('precarga nombre, decimales y tipo de solo lectura; volver al original deshabilita guardar', async () => {
     const { user, fetchMock } = setup()
@@ -76,7 +157,7 @@ describe('editar cuenta', () => {
     await user.click(save())
     await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
     expect(fetchMock).toHaveBeenCalledWith('/api/treasury/accounts/2', expect.objectContaining({
-      method: 'PUT', body: JSON.stringify({ name: 'Banco nuevo', initialBalance: Number(amount.replace(',', '.')) }),
+      method: 'PUT', body: JSON.stringify({ name: 'Banco nuevo', initialBalance: Number(amount.replace(',', '.')), color: account.color }),
     }))
     expect(await screen.findByText('Cuenta actualizada')).toBeInTheDocument()
     keys.slice(0, 4).forEach((key) => expect(client.getQueryState(key)?.isInvalidated).toBe(true))
@@ -192,7 +273,7 @@ describe('editar cuenta', () => {
 })
 
 it('valida saldo vacio distinto de cero en edicion y conserva decimales admitidos', () => {
-  expect(validateAccountEdit({ name: 'Banco', initialBalance: '' })).toHaveProperty('initialBalance')
-  expect(validateAccountEdit({ name: 'Banco', initialBalance: '0' })).toEqual({})
-  expect(validateAccountEdit({ name: 'Banco', initialBalance: '100.000,57' })).toEqual({})
+  expect(validateAccountEdit({ name: 'Banco', initialBalance: '', color: '#4B5563' })).toHaveProperty('initialBalance')
+  expect(validateAccountEdit({ name: 'Banco', initialBalance: '0', color: '#4B5563' })).toEqual({})
+  expect(validateAccountEdit({ name: 'Banco', initialBalance: '100.000,57', color: '#4B5563' })).toEqual({})
 })

@@ -2,6 +2,7 @@ import { round2 } from '../lib/money'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { parseAmount } from '../inventory/productForm'
 import type { AccountRequest, AccountUpdateRequest, TransferRequest } from './accountsApi'
+import { ACCOUNT_COLORS } from './accountColors'
 
 // Formularios de Nueva cuenta y Nueva transferencia. Reglas en docs/ai-context/03-DECISIONS.md.
 
@@ -10,9 +11,10 @@ export interface AccountFormValues {
   type: AccountType
   /** Vacio cuenta como 0. */
   initialBalance: string
+  color: string
 }
 
-export const EMPTY_ACCOUNT_FORM: AccountFormValues = { name: '', type: 'EFECTIVO', initialBalance: '0' }
+export const EMPTY_ACCOUNT_FORM: AccountFormValues = { name: '', type: 'EFECTIVO', initialBalance: '0', color: ACCOUNT_COLORS[0].value }
 
 export type AccountErrors = Partial<Record<keyof AccountFormValues, string>>
 
@@ -26,10 +28,10 @@ export function validateAccount(values: AccountFormValues): AccountErrors {
 }
 
 export function buildAccountRequest(values: AccountFormValues): AccountRequest {
-  return { name: values.name.trim(), type: values.type, initialBalance: amountOf(values.initialBalance) }
+  return { name: values.name.trim(), type: values.type, initialBalance: amountOf(values.initialBalance), color: values.color }
 }
 
-export type AccountEditValues = Pick<AccountFormValues, 'name' | 'initialBalance'>
+export type AccountEditValues = Pick<AccountFormValues, 'name' | 'initialBalance' | 'color'>
 
 export function validateAccountEdit(values: AccountEditValues): Partial<Record<keyof AccountEditValues, string>> {
   const errors: Partial<Record<keyof AccountEditValues, string>> = {}
@@ -44,7 +46,7 @@ export function validateAccountEdit(values: AccountEditValues): Partial<Record<k
 }
 
 export function buildAccountUpdateRequest(values: AccountEditValues): AccountUpdateRequest {
-  return { name: values.name.trim(), initialBalance: parseAmount(values.initialBalance) }
+  return { name: values.name.trim(), initialBalance: parseAmount(values.initialBalance), color: values.color }
 }
 
 export interface TransferFormValues {
