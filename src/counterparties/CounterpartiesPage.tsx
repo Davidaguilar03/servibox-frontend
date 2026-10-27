@@ -63,7 +63,6 @@ export interface CounterpartiesConfig {
 /** Ancho del recuadro desde el que caben todas las columnas de clientes y proveedores. */
 const COUNTERPARTIES_TABLE_FULL = 820
 
-const card = 'rounded-surface border border-border bg-surface'
 const tag = 'inline-flex items-center whitespace-nowrap rounded-pill bg-neutral-200 px-2 py-1 text-small font-semibold text-text-muted'
 
 const balanceOptions = [
@@ -85,7 +84,6 @@ function invoicesText(count: number) {
 /** Clientes o Proveedores: indicadores, filtros en la URL, tabla con saldo y el modal de crear y editar. */
 export function CounterpartiesPage({ config }: { config: CounterpartiesConfig }) {
   const { menuButton } = useOutletContext<AppShellContext>()
-  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = parseCounterpartyFilters(searchParams)
@@ -250,7 +248,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
-        leading={isSales ? menuButton : undefined}
+        leading={menuButton}
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>}
@@ -261,20 +259,20 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         ]}
       />
 
-      <div className={isSales ? 'grid gap-4 sm:grid-cols-2 2xl:grid-cols-3' : 'grid gap-6 md:grid-cols-3'}>
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
         <IndicatorCard
-          compact={isSales}
-          icon={isSales ? Users : undefined}
-          accent={isSales ? 'info' : undefined}
+          compact
+          icon={Users}
+          accent="info"
           label={`Total de ${config.plural}`}
           value={indicators ? String(indicators.total) : undefined}
           error={counterparties.isError}
           onRetry={retryCounterparties}
         />
         <IndicatorCard
-          compact={isSales}
-          icon={isSales ? Wallet : undefined}
-          accent={isSales ? 'warning' : undefined}
+          compact
+          icon={Wallet}
+          accent="warning"
           label="Con saldo pendiente"
           value={indicators && balances ? String(indicators.withBalance) : undefined}
           error={counterparties.isError || invoices.isError}
@@ -284,9 +282,9 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
           }}
         />
         <IndicatorCard
-          compact={isSales}
-          icon={isSales ? HandCoins : undefined}
-          accent={isSales ? 'success' : undefined}
+          compact
+          icon={HandCoins}
+          accent="success"
           label={`Total ${config.balanceLabel.toLowerCase()}`}
           value={indicators && balances ? formatCurrency(indicators.amount) : undefined}
           error={counterparties.isError || invoices.isError}
@@ -297,9 +295,9 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         />
       </div>
 
-      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
+      <div className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface">
       <FilterBar
-        embedded={isSales}
+        embedded
         active={(['q', 'saldo', 'orden'] as const).some((key) => filters[key] !== DEFAULT_COUNTERPARTY_FILTERS[key])}
         onClear={clearFilters}
       >
@@ -322,7 +320,7 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={`${isSales ? '' : card} flex flex-col gap-4 p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className="flex flex-col gap-4 p-4" aria-label={config.title}>
         {invoices.isError && counterparties.data && (
           <div role="alert" className="flex flex-wrap items-center gap-2 text-small text-text">
             <TriangleAlert {...iconSm} className="text-error" aria-hidden />

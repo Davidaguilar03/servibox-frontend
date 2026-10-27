@@ -1,7 +1,7 @@
 import { addMoney } from '../lib/money'
 import { GLOSSARY } from '../copy/glossary'
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Trash2 } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
@@ -9,6 +9,7 @@ import { userMessage } from '../api/errorMessages'
 import { ACCOUNTS_KEY } from '../accounts/accountsApi'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
+import { buttonClasses } from '../components/buttonStyles'
 import { ComboboxField, type ComboboxOption } from '../components/ComboboxField'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { IconButton } from '../components/IconButton'
@@ -50,6 +51,7 @@ import { PURCHASES_KEY, SUPPLIERS_KEY, createPurchase, fetchSuppliers } from '..
 import { lineAmounts, vatRate } from '../sales/newSale'
 import type { Counterparty } from '../sales/salesApi'
 import { iconMd } from '../components/icons'
+import type { AppShellContext } from '../layout/AppShell'
 
 const card = 'rounded-surface border border-border bg-surface p-6'
 /** Boton Agregar producto: recibe el foco al enviar una factura sin lineas. */
@@ -80,6 +82,7 @@ function initialForm(today: string): PurchaseForm {
 
 /** Nueva factura de compra: datos generales, lineas con calculo en vivo, saldo y resumen. */
 export function NewPurchaseInvoicePage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
@@ -397,11 +400,15 @@ export function NewPurchaseInvoicePage() {
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-title text-text">Nueva factura de compra</h1>
-        <p className="mt-1 text-small text-text-muted">
-          Al guardar se suma al inventario y, si es de contado, se descuenta de la cuenta.
-        </p>
+      <div className="flex items-start gap-3">
+        {menuButton}
+        <div className="min-w-0">
+          <Link to="/compras" className={`${buttonClasses('text')} mb-1`}>Volver a Facturas de compra</Link>
+          <h1 className="text-title text-text">Nueva factura de compra</h1>
+          <p className="mt-1 text-small text-text-muted">
+            Al guardar se suma al inventario y, si es de contado, se descuenta de la cuenta.
+          </p>
+        </div>
       </div>
 
       {account && shortBalance && (
@@ -417,7 +424,7 @@ export function NewPurchaseInvoicePage() {
         </Alert>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className={card} aria-labelledby="general-title">
           <h2 id="general-title" className="mb-4 text-section text-text">
             Datos generales
@@ -438,9 +445,9 @@ export function NewPurchaseInvoicePage() {
               <dt className="text-text-muted">IVA descontable</dt>
               <dd className="monto font-semibold text-text">{formatCurrency(totals.iva)}</dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 border-t border-border pt-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
               <dt className="font-semibold text-text">Total</dt>
-              <dd className="text-figure text-text">{formatCurrency(totals.total)}</dd>
+              <dd className="monto wrap-anywhere text-right text-figure text-text">{formatCurrency(totals.total).replace('$ ', '$\u00a0')}</dd>
             </div>
             {account && (
               <>

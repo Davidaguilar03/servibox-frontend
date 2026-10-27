@@ -111,9 +111,8 @@ describe('facturas de compra', () => {
 
     expect(await screen.findByRole('heading', { name: 'Facturas de compra' })).toBeInTheDocument()
     expect(screen.getByText('Compras de contado y a crédito. Las facturas anuladas están en la papelera.')).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent(
-      'Compras/Facturas de compra',
-    )
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar compra' })).toHaveAttribute('href', '/compras/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/compras/papelera')
 
@@ -146,6 +145,26 @@ describe('facturas de compra', () => {
 
     const cards = screen.getByRole('list', { name: 'Facturas' })
     expect(within(cards).getAllByRole('link')).toHaveLength(2)
+  })
+
+  it('mantiene el alcance mensual de los indicadores y muestra importes largos completos con Todas', async () => {
+    const longPurchase = purchase(9, 'Proveedor con nombre extenso para revisar el contenido', {
+      invoiceDate: '2026-09-20', total: 111111110.19, pendingBalance: 111111110.19,
+      paymentType: 'CREDITO', status: 'PENDIENTE',
+    })
+    mockApi({
+      ...fullRoutes(),
+      '/api/purchases': () => jsonResponse([longPurchase]),
+      '/api/reporting/kpis': () => jsonResponse({ totalPurchases: 7450000.49 }),
+      '/api/treasury/movements': () => jsonResponse([]),
+    })
+    renderRoute('/compras?periodo=todas')
+
+    expect(await within(indicator('Compras del mes')).findByText(/\$\s7\.450\.000/)).toBeInTheDocument()
+    expect(await within(indicator('Por pagar')).findByText(/\$\s111\.111\.110/)).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getByText('Proveedor con nombre extenso para revisar el contenido')).toBeInTheDocument()
+    expect(within(screen.getByRole('table')).getAllByText('$ 111.111.110').length).toBeGreaterThan(0)
+    expect(screen.getByRole('list', { name: 'Facturas' })).toHaveTextContent('Proveedor con nombre extenso para revisar el contenido')
   })
 
   it('lee los filtros de la URL, busca sin tildes ni mayusculas y escribe los cambios', async () => {

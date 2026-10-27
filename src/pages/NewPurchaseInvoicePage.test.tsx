@@ -181,7 +181,8 @@ describe('nueva factura de compra', () => {
     expect(screen.getByRole('button', { name: 'Guardar compra' })).toBeEnabled()
     expect(screen.getByText('Elige el proveedor.')).toBeInTheDocument()
     expect(screen.getByText('Escribe el número de factura del proveedor.')).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/Nueva factura')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
   })
 
   it('cada linea tiene sus campos accesibles y la rejilla solo desde xl', async () => {

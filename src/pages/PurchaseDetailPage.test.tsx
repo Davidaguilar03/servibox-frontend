@@ -121,7 +121,8 @@ describe('detalle de factura de compra', () => {
     renderRoute('/compras/5')
 
     expect(await screen.findByRole('heading', { name: 'IA-777' })).toBeInTheDocument()
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Facturas de compra/IA-777')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
     expect(screen.getByText('Pendiente')).toBeInTheDocument()
     expect(screen.getByText('Importadora Andina SAS · Crédito · Vence el 04/12/2026')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Registrar pago' })).toHaveClass('bg-action')
@@ -151,7 +152,7 @@ describe('detalle de factura de compra', () => {
     expect(summaryValue('Total')).toBe('$ 597.938')
     // Pagado (total menos saldo) coincide con la suma de los pagos: 150.000 + 50.000.
     expect(summaryValue('Pagado')).toBe('$ 200.000')
-    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938')
+    expect(summaryValue('Saldo pendiente')).toBe('$\u00a0397.938')
     expect(calls(fetchMock, 'GET', '/api/treasury/movements')[0]?.[0]).toBe(
       '/api/treasury/movements?purchaseId=5&category=PAGO_COMPRA',
     )
@@ -176,7 +177,7 @@ describe('detalle de factura de compra', () => {
     const paid = screen.getByRole('region', { name: 'Pago realizado' })
     expect(await within(paid).findAllByText('$ 597.938')).not.toHaveLength(0)
     expect(summaryValue('Pagado')).toBe('$ 597.938')
-    expect(summaryValue('Saldo pendiente')).toBe('$ 0')
+    expect(summaryValue('Saldo pendiente')).toBe('$\u00a00')
   })
 
   it('anulada: solo lectura, sin botones', async () => {
@@ -242,7 +243,7 @@ describe('detalle de factura de compra', () => {
     const payments = screen.getByRole('region', { name: 'Pagos registrados' })
     await user.click(await within(payments).findByRole('button', { name: 'Reintentar' }))
     expect(await within(payments).findByText(/Aún no hay pagos/)).toBeInTheDocument()
-    expect(summaryValue('Saldo pendiente')).toBe('$ 397.938')
+    expect(summaryValue('Saldo pendiente')).toBe('$\u00a0397.938')
   })
 
   it('registra un pago: valores por defecto en Bogota, validaciones, saldo de la cuenta y cuerpo exacto', async () => {
@@ -313,7 +314,7 @@ describe('detalle de factura de compra', () => {
     expect(posts).toHaveLength(1)
     expect(JSON.parse(String(posts[0]?.[1]?.body))).toEqual({ accountId: 2, amount: 300000, date: '2026-10-18' })
     expect(await screen.findByText('Pago registrado')).toBeInTheDocument()
-    await waitFor(() => expect(summaryValue('Saldo pendiente')).toBe('$ 97.938'))
+    await waitFor(() => expect(summaryValue('Saldo pendiente')).toBe('$\u00a097.938'))
   })
 
   it('un 409 de saldo queda en el modal sin perder lo digitado y refresca cuentas y factura', async () => {

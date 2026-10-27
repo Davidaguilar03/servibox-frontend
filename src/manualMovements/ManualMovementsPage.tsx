@@ -60,7 +60,6 @@ export interface ManualMovementsConfig {
 /** Ancho del recuadro desde el que caben todas las columnas de gastos y otros ingresos. */
 const MANUAL_TABLE_FULL = 760
 
-const card = 'rounded-surface border border-border bg-surface'
 
 type Dialog = { kind: 'create' } | { kind: 'edit'; movement: TreasuryMovement } | { kind: 'delete'; movement: TreasuryMovement }
 
@@ -215,7 +214,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
   return (
     <div className="flex flex-col gap-6">
       <ListHeader
-        leading={isSales ? menuButton : undefined}
+        leading={menuButton}
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>}
@@ -226,20 +225,20 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         ]}
       />
 
-      <div className={isSales ? 'grid gap-4 sm:grid-cols-2' : 'grid gap-6 md:grid-cols-2'}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <IndicatorCard
-          compact={isSales}
-          icon={isSales ? Coins : undefined}
-          accent={isSales ? 'success' : undefined}
+          compact
+          icon={Coins}
+          accent={isSales ? 'success' : 'warning'}
           label="Total del período"
           value={totals ? formatCurrency(totals.amount) : undefined}
           error={movements.isError}
           onRetry={retry}
         />
         <IndicatorCard
-          compact={isSales}
-          icon={isSales ? ReceiptText : undefined}
-          accent={isSales ? 'info' : undefined}
+          compact
+          icon={ReceiptText}
+          accent="info"
           label="Movimientos"
           value={totals ? String(totals.count) : undefined}
           error={movements.isError}
@@ -247,8 +246,8 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         />
       </div>
 
-      <div className={isSales ? 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface' : 'contents'}>
-      <FilterBar embedded={isSales} active={!atDefaults} onClear={clearFilters}>
+      <div className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface">
+      <FilterBar embedded active={!atDefaults} onClear={clearFilters}>
         {[
           <SearchField key="q" label="Buscar" placeholder="Concepto" {...search} />,
           accounts.isError ? (
@@ -286,7 +285,7 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         ]}
       </FilterBar>
 
-      <section ref={sectionRef} className={isSales ? 'p-4' : `${card} p-4`} aria-label={config.title}>
+      <section ref={sectionRef} className="p-4" aria-label={config.title}>
         {content}
       </section>
       </div>

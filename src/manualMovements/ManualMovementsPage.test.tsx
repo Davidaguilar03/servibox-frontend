@@ -94,7 +94,7 @@ describe('Gastos operativos', () => {
     expect(rowsText()[1]).toContain('Factura de octubre')
     expect(screen.getByText('Total del período').parentElement).toHaveTextContent('$ 530.000')
     expect(screen.getByText('Movimientos').parentElement).toHaveTextContent('2')
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Compras/Gastos operativos')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
   })
 

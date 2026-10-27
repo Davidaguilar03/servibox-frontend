@@ -10,7 +10,7 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 
 * Las rutas /ventas muestran un solo encabezado en contenido. ListHeader admite
   leading para el boton movil del shell; nueva venta y detalle tienen regreso
-  dentro del contenido. Compras conserva la barra superior.
+  dentro del contenido. Compras adopta el mismo patron en esta tarea.
 * IndicatorCard compact se reutiliza en Facturas de venta, Clientes y Otros
   ingresos: icono de 48 px a la izquierda, titulo, cifra y ayuda alineados a la
   izquierda, cifra text-kpi tabular y altura segun contenido. Inicio conserva la
@@ -20,8 +20,25 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   Con periodo personalizado, PeriodPicker ocupa una fila amplia en 2xl para que
   Desde y Hasta compartan linea cuando hay espacio. FilterBar embedded comparte
   borde y divisor con el listado de Ventas, Clientes, Papelera y Otros ingresos.
-  Esta composicion no se aplica a los listados de Compras.
-* Revision visual pendiente de David; no hay comprobacion de anchos en navegador.
+  Compras reutiliza la superficie integrada y el layout sales de FilterBar
+  para sus cuatro filtros, con los periodos predefinidos existentes.
+* Revision visual aprobada por David; no hay comprobacion de anchos en navegador del agente.
+
+## Compras (2026-10-26)
+
+* Todas las rutas /compras omiten la barra superior. El menu movil se integra
+  en ListHeader o junto al regreso al listado en los formularios y detalles.
+  SkipLink, main y titulos de pestana siguen en AppShell.
+* Facturas de compra, Proveedores y Gastos reutilizan IndicatorCard compact
+  con icono a la izquierda y texto alineado. Rejillas de una, dos o tres
+  columnas dejan espacio para importes largos. Inicio y Ventas no cambian.
+* FilterBar embedded integra filtros y DataTable o tarjetas en Facturas de
+  compra, Papelera, Proveedores y Gastos. Los periodos y filtros URL mantienen
+  su contrato; no se agregan fechas personalizadas a Facturas de compra.
+* Nueva compra conserva la rejilla de lineas desde xl y situa el resumen
+  lateral solo desde 2xl. El detalle apila el resumen antes de xl. Las cifras
+  grandes pueden envolver sin separar el simbolo del primer digito.
+* Revision visual aprobada por David; no hay comprobacion de anchos en navegador del agente.
 
 ## Inventario (2026-10-26)
 

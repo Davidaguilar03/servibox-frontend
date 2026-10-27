@@ -171,7 +171,7 @@ describe('shell', () => {
       expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
     })
 
-    it('las rutas de Ventas conservan el menu movil en el contenido y Compras conserva su barra', async () => {
+    it('las rutas de Ventas y Compras conservan el menu movil en el contenido', async () => {
       stubViewport(false)
       const router = renderRoute('/ventas')
       for (const path of ['/ventas', '/ventas/nueva', '/ventas/23', '/ventas/papelera', '/ventas/clientes', '/ventas/ingresos']) {
@@ -179,9 +179,11 @@ describe('shell', () => {
         expect(screen.queryByRole('banner')).not.toBeInTheDocument()
         expect(within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
       }
-      await act(() => router.navigate('/compras'))
-      expect(screen.getByRole('banner')).toBeInTheDocument()
-      expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
+      for (const path of ['/compras', '/compras/nueva', '/compras/23', '/compras/papelera', '/compras/proveedores', '/compras/gastos']) {
+        await act(() => router.navigate(path))
+        expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+        expect(within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
+      }
     })
 
     it('Nueva venta conserva regreso dentro del contenido y el titulo de pestana', async () => {
