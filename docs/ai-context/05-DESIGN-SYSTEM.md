@@ -6,6 +6,33 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Login (2026-10-28)
+
+* LoginPage.css acota todas las reglas bajo #login. Desde lg dos columnas
+  iguales, foto ambiental a sangre con cover y posicion 50%/35%; degradado
+  overlay arriba y abajo para logo y mensaje blanco, centro sin velo.
+  WordmarkLink onDark existente arriba a la izquierda; favicon intacto.
+  Reglas de cobertura solo para el hijo directo login-photo: el simbolo
+  compartido tambien es un img y debe quedar fuera de esas reglas. Marca
+  local con simbolo 48x48, palabra 32/40 y ancho max-content. Foto en capa
+  0, velo en 1, marca y texto en 2; sin oscurecer el contenido.
+* Superficie neutral-100, formulario integrado max480 px, sin tarjeta;
+  controles y boton 52 px, etiquetas 14/20. Titulo local 32/40 y 44/52 desde
+  lg; mensaje ambiental 36/44 con Montserrat. Son variantes locales de
+  presentacion, sin nuevos tokens, colores ni cambios a componentes comunes.
+* Bajo lg foto y mensaje se ocultan, marca y regreso quedan sobre el
+  formulario. Panel con min-height 100svh, contenido en flujo natural y
+  padding vertical; sin height fija ni overflow que recorte campos o errores.
+* Boton conserva estados y foco compartidos, flecha decorativa, aria-busy
+  en formulario y status de carga. TextField conserva mostrar/ocultar por
+  teclado y autocompletado. Errores en Alert, sesion vencida en status.
+* Crear cuenta y Terminos enlazan rutas existentes. Ayuda WhatsApp omitida
+  hasta configurar contacto real; no se publica el numero demostrativo en
+  Login. La fotografia generada es decorativa y no representa un cliente real.
+* Sin navegador ni auditoria visual automatizada. David aprueba visualmente
+  el Login el 2026-10-28, incluida la correccion de logo. La ayuda permanece
+  omitida por falta de numero real; no se afirma un enlace funcional.
+
 ## Landing (2026-10-27)
 
 * Contenedor util fluido maximo 1760 px: ventana menos 32 px bajo lg

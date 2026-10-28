@@ -234,7 +234,7 @@ describe('landing', () => {
   })
 
   it.each([
-    ['Iniciar sesión', 'Iniciar sesión'],
+    ['Iniciar sesión', 'Inicia sesión'],
     ['Crear cuenta', 'Crea tu serviteca'],
   ])('la accion %s abre su pagina publica', async (action, heading) => {
     const user = userEvent.setup()

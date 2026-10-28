@@ -138,7 +138,7 @@ describe('menu de usuario', () => {
     await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     expect(getToken()).toBeNull()
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 
@@ -153,7 +153,7 @@ describe('menu de usuario', () => {
     await user.tab()
     await user.keyboard('{Enter}')
     expect(getToken()).toBeNull()
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 

@@ -95,7 +95,7 @@ describe('sesion vencida', () => {
 
   it('al entrar sin sesion previa no avisa', async () => {
     renderRoute('/ventas')
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(screen.queryByText('Tu sesión venció. Inicia sesión de nuevo.')).not.toBeInTheDocument()
   })
 })
