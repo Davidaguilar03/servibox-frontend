@@ -110,7 +110,8 @@ necesite, no antes.
   `src/test/utils.tsx`.
 * Landing (`/`): un primario por tramo visible. La barra superior lleva `Crear cuenta`
   (primario) e `Iniciar sesion` (variante `text`); la portada y el cierre llevan
-  `Crear mi serviteca`. Ver [03-DECISIONS.md](03-DECISIONS.md).
+  `Crear mi serviteca`. El cierre rojo usa la variante secundaria clara como
+  unica llamada a la accion, con foco inverso. Ver [03-DECISIONS.md](03-DECISIONS.md).
 * `StatusBadge` siempre lleva texto; el color solo acompana. `STOCK_CRITICO` ("Stock
   critico", tono de error) no esta en el manual: pendiente de validar con el disenador.
   `INGRESO` y `EGRESO` (tonos de exito y de error) marcan el tipo de un movimiento.
@@ -267,14 +268,22 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   integral", "solucion", "optimiza", "potencia", "revoluciona" y "todo en uno". Sin lemas en
   login ni registro. `LandingPage.test.tsx` busca estas frases (y "Proximamente", "Vista de
   ejemplo" y "Cliente 1") en `/`, `/login`, `/registro` y `/terminos`.
-* La landing solo promete lo que existe hoy y lo muestra con capturas reales del panel
-  (`src/assets/landing/`, tenant demo). Nada de mockups dibujados, testimonios, cifras ni logos
+* La landing solo promete lo que existe hoy. David autoriza seis representaciones
+  graficas de funciones existentes en `src/assets/landing/product-visuals-v2/` para
+  sustituir los recortes pequenos. No son capturas reales; documentacion y alt no
+  deben llamarlas asi. Por solicitud de David no llevan rotulos de referencia,
+  captura o ilustracion visibles. Los controles dibujados no son acciones HTML.
+  Stock usa un solo archivo tanto en los pasos como en funciones. Reportes tiene
+  alt breve y descripcion accesible HTML con las seis filas y formatos existentes.
+  Las imagenes ambientales generadas no representan clientes reales. Las fuentes
+  y recortes anteriores quedan documentados como historicos, eliminados del
+  repositorio cuando no tienen uso. Nada de testimonios, cifras comerciales ni logos
   inventados. Lo que no existe (facturacion electronica DIAN, recuperar contrasena, roles,
   precio publicado) no se menciona como funcion.
 * Contactos: `src/config/contact.ts` (`WHATSAPP_DISPLAY`, `WHATSAPP_URL`, `SUPPORT_EMAIL`) es
   la unica fuente; la interfaz los importa de ahi y ningun archivo repite el numero ni el
   correo (lo comprueba `LandingPage.test.tsx`). Hoy son demostrativos: reemplazar antes de
-  publicar.
+  publicar. La landing omite estos contactos y cualquier accion que dependa de ellos.
 * Un concepto, un rotulo: los de `src/copy/glossary.ts` (Forma de pago, Medio de pago, Otros
   ingresos, Codigo de tu serviteca, Stock bajo, Restaurar...). Tabla, guarda de tildes y jerga
   (`src/copy/copy.test.ts`) y mensajes de error en [06-COPY.md](06-COPY.md).

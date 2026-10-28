@@ -446,11 +446,40 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
 
 ## Landing y registro
 
-* `LandingPage`: encabezado con anclas (menu desplegable bajo `lg`), portada con la vista de
-  ejemplo armada con `IndicatorCard`, `StatusBadge` y `DataTable` (`aria-hidden`, `inert`),
-  El problema, Modulos, Como funciona, llamado final y pie (`#contacto`) con los valores de
-  marca. El desplazamiento suave lo da `index.css` solo con `#landing` montada y sin
-  movimiento reducido.
+* `LandingPage`: navegacion con anclas a Como funciona, Funciones y Preguntas
+  frecuentes, siempre accesible y con salto de linea en movil, sin menu desplegable.
+  Banner exterior compartido por navbar y portada, con foto ambiental desde
+  arriba hasta el final de la introduccion. Barra blanca en grupo Navegacion
+  y acceso sobre foto y contenido. Main comienza en el flujo de trabajo;
+  SkipLink sigue apuntando a main#contenido, omitiendo la introduccion.
+  El contenedor interior limita solo texto y producto. Tres pasos con
+  representaciones de venta, stock y resumen. Beneficios reutilizan
+  el mismo stock-panel y muestran saldos. Las seis imagenes product-visuals-v2
+  son representaciones generadas de funciones existentes, no capturas reales,
+  y no llevan rotulos visibles. Reportes conserva su descripcion accesible HTML.
+  FAQ y cierre comparten un contexto ambiental con fotografia absoluta de
+  llantas a la izquierda con panorama 1942x809, ancho completo desde lg y
+  minimo visual 840 px debajo, altura natural independiente del acordeon.
+  Fundido hacia la derecha del 27 al 44% y ultimo 10% inferior desde lg;
+  en movil horizontal del 28 al 60% y vertical del 60 al 82%. Velo radial
+  amplio solo en la escena decorativa z0, sin pseudo-elementos en el texto.
+  Texto, acordeon y panel rojo en z10; accion final con variante
+  local de 56 px y flecha. Cierre con rueda transparente y pie.
+  Recursos WebP locales, sin acciones HTML para los
+  controles dibujados dentro de las imagenes.
+  LandingPage.css contiene escala, mascaras y contenedor fluido maximo de
+  1760 px limitados a #landing: margen minimo de 16 px, 24 desde lg.
+  Recursos con limites propios: pasos 440/320 px, funciones 580/460,
+  reporte 520. Funciones sobre canvas a ancho de ventana, sin cambiar
+  el fondo de pasos; sus pistas de recursos tienen gap de 32 px desde lg.
+  La barra conserva su capa
+  superior independiente, sin recorte. Recursos de producto
+  en WebP lossless con marcos de recorte propios a 20 px. Sin mencion al piloto.
+  No cambia el tamano raiz ni otras pantallas.
+  Sin capturas antiguas ni contactos de demostracion. Con sesion las acciones de
+  cuenta llevan a Inicio. `index.css` aplica desplazamiento suave solo con
+  `#landing` montada y sin movimiento reducido. Recursos pendientes y secuencia
+  restante del rediseno en la decision de Landing del 2026-10-27.
 * `RegisterPage`: reglas, sugerencia y normalizacion del identificador y cuerpo del POST en
   `auth/registerForm.ts`. Errores del servidor segun
   [03-DECISIONS.md](03-DECISIONS.md).

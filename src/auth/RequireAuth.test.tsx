@@ -31,7 +31,7 @@ describe('guard de rutas privadas', () => {
     saveToken(validToken())
     const router = renderRoute('/')
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Una venta. Inventario y caja al día.' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /Tu serviteca,/ })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/')
   })
 
