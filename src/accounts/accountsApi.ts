@@ -49,8 +49,8 @@ export interface TransferRequest {
 }
 
 /** Movimientos activos de todas las cuentas entre desde y hasta, los dos incluidos. */
-export const fetchPeriodMovements = (desde: string, hasta: string) =>
-  apiFetch<TreasuryMovement[]>(`/treasury/movements?desde=${desde}&hasta=${hasta}`)
+export const fetchPeriodMovements = (desde: string, hasta: string, accountId?: number | null) =>
+  apiFetch<TreasuryMovement[]>(`/treasury/movements?desde=${desde}&hasta=${hasta}${accountId == null ? '' : `&accountId=${accountId}`}`)
 
 export const fetchPurchases = () => apiFetch<PurchaseSummary[]>('/purchases')
 

@@ -12,6 +12,44 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-28: Correccion de paginacion de Movimientos a diez filas
+
+* David aprueba presentacion general y solicita diez movimientos por pagina, tanto
+  global como individual. Reemplaza el tamano inicial de 25 filas, sin scroll interno.
+* Se reutilizan paginate con tamano explicito 10 y Pagination con separador de rango
+  opcional, solo Reportes usa el rango compacto. Los demas listados siguen iguales.
+* Cambiar el periodo reinicia pagina aunque no cambien las fechas; cuenta y tipo ya
+  desmontaban la vista. El ajuste de pagina de paginate cubre conjuntos reducidos.
+* Totales sobre el conjunto completo antes del corte y exportaciones sin paginacion.
+  Verificacion con 35 filas, pagina parcial, teclado, filtros y recarga de 35 a 12.
+  David aprueba visualmente tambien altura y controles el 2026-10-28 y autoriza
+  commit, push y PR. Sin navegador en el cierre; tras confirmar merge sigue Configuracion.
+
+## 2026-10-28: Reportes y ampliacion autorizada de Movimientos
+
+* Tarea 10 de 11. Referencia reports-proposal-v2 solo de composicion, sin copiar cifras,
+  sidebar ni logo. Encabezado en contenido y menu movil del shell. Configuracion 37,5%
+  y vista previa 62,5% desde 960 px disponibles; apiladas debajo. Sin colores nuevos.
+  PeriodPicker form permite fechas horizontales cuando caben, sin comprimirlas.
+* Estado de resultados conserva KPI y comparativos, seis filas y precision. IndicatorCard
+  compact compartido, utilidad bruta sobria y utilidad neta semantica segun signo real.
+  La espera de 400 ms deja de mostrar cifras anteriores bajo un filtro nuevo.
+* David autoriza expresamente ampliar la tarea: Movimientos antes no tenia vista previa.
+  Reemplaza esa limitacion historica. Se inspeccionan solo contratos relevantes del backend,
+  sin modificarlo: TreasuryController, TreasuryService, ReportExportService y orden del
+  repositorio confirman conjunto activo completo y orden fecha/id ascendente del archivo.
+* Se reutilizan endpoint de movimientos, periodTotals, DataTable, StatusBadge y Pagination.
+  accountId opcional en fetchPeriodMovements, misma seleccion y fechas que la descarga.
+  Totales calculados con precision monetaria sobre todas las filas antes de paginar a 25
+  (tamano reemplazado por 10 en la correccion de paginacion de esta fecha).
+  Transferencias son ingreso/egreso, sin calificarlas como utilidad o actividad comercial.
+  Origen muestra categoria real junto al concepto; no agrega numeros ni consultas a facturas.
+* Sin saldos iniciales/finales/acumulados: el rango por si solo no permite reconstruirlos.
+  El JSON completo no tiene limite local, por tanto el volumen consume memoria. Exportacion
+  conserva su limite configurado, formatos, rutas, nombres y errores. Sin cambios financieros.
+* Verificacion de API y exportaciones reales por HTTP, ademas de pruebas simuladas. Sin
+  navegador ni auditoria visual automatizada. David aprueba visualmente el 2026-10-28.
+
 ## 2026-10-28: Registro con fotografia propia y formulario integrado
 
 * Tarea 9 de 11: RegisterPage reutiliza patrones del Login aprobado con CSS
@@ -1858,6 +1896,9 @@ Formato de cada entrada:
   el tope de filas y la cuenta.
 
 ## 2026-10-19: Vista previa del Estado de resultados desde /kpis
+
+Presentacion y limitacion a un solo tipo reemplazadas el 2026-10-28 por Reportes y
+ampliacion autorizada de Movimientos. Los contratos financieros posteriores siguen vigentes.
 
 * Decision: la vista previa (solo con Estado de resultados y un rango valido) pide
   `GET /api/reporting/kpis` del rango con una espera de 400 ms al cambiar las fechas, y

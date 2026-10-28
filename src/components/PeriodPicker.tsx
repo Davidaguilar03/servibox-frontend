@@ -20,7 +20,7 @@ interface PeriodPickerProps<T extends PeriodKey> {
   }
   label?: string
   /** Inline reserva una fila horizontal para fechas segun el ancho real del contenedor. */
-  layout?: 'stacked' | 'inline' | 'toolbar'
+  layout?: 'stacked' | 'inline' | 'toolbar' | 'form'
   action?: ReactNode
 }
 
@@ -47,7 +47,7 @@ export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, ra
           />
         </div>
         {showCustom && (
-          <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : toolbar ? 'grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
+          <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : toolbar || layout === 'form' ? 'grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
             <TextField label="Desde" type="date" {...custom.desde} error={custom.errors.desde} />
             <TextField label="Hasta" type="date" {...custom.hasta} error={custom.errors.hasta} />
           </div>
