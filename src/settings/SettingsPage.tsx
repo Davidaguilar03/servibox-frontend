@@ -1,66 +1,54 @@
-import { useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useOutletContext, useSearchParams } from 'react-router'
 import { useSession } from '../auth/session'
-import { DiscardChangesModal } from '../components/DiscardChangesModal'
-import { TabList } from '../components/SegmentedControl'
+import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
+import { ListHeader } from '../components/ListHeader'
+import type { AppShellContext } from '../layout/AppShell'
 import { FinancialSettingsTab } from './FinancialSettingsTab'
-import { SETTINGS_TABS, parseSettingsTab, type SettingsTab } from './settingsForms'
 import { TenantProfileTab } from './TenantProfileTab'
 
-const tabId = (tab: SettingsTab) => `configuracion-tab-${tab}`
-const panelId = (tab: SettingsTab) => `configuracion-panel-${tab}`
-
-/** Configuracion: pestanas en `?tab=`, con aviso si la pestana actual tiene cambios sin guardar. */
+/** Dos formularios independientes; los enlaces financieros conservan su destino. */
 export function SettingsPage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const session = useSession()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const active = parseSettingsTab(searchParams.get('tab'))
-  const [dirty, setDirty] = useState(false)
-  const [pending, setPending] = useState<SettingsTab | null>(null)
+  const [searchParams] = useSearchParams()
+  const { key } = useLocation()
+  const [profileDirty, setProfileDirty] = useState(false)
+  const [financialDirty, setFinancialDirty] = useState(false)
+  const [profileReady, setProfileReady] = useState(false)
+  const [financialReady, setFinancialReady] = useState(false)
+  const financialSection = useRef<HTMLDivElement>(null)
+  const focusedLink = useRef<string | null>(null)
+  const allowLeave = useRef(false)
   const readOnly = session?.role !== 'ADMIN'
+  const financialLink = searchParams.get('tab') === 'financiera'
 
-  function go(tab: SettingsTab) {
-    setDirty(false)
-    setPending(null)
-    setSearchParams(tab === 'datos' ? {} : { tab })
-  }
-
-  function select(tab: SettingsTab) {
-    if (tab === active) return
-    if (dirty) setPending(tab)
-    else go(tab)
-  }
+  useEffect(() => {
+    if (!financialLink || !profileReady || !financialReady || focusedLink.current === key) return
+    focusedLink.current = key
+    financialSection.current?.scrollIntoView?.({ block: 'start' })
+    financialSection.current?.focus({ preventScroll: true })
+  }, [financialLink, profileReady, financialReady, key])
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-title text-text">Configuración</h1>
-        <p className="mt-1 text-small text-text-muted">Datos de la serviteca y parámetros financieros.</p>
-      </div>
-
-      {/* Pestanas de ARIA con activacion automatica: flechas, Inicio y Fin. */}
-      <TabList
-        aria-label="Secciones de configuración"
-        options={SETTINGS_TABS}
-        value={active}
-        onChange={select}
-        tabId={tabId}
-        panelId={panelId}
-        fill
+    <div className="@container flex flex-col gap-6">
+      <ListHeader
+        title="Configuración"
+        subtitle="Datos de la serviteca y parámetros financieros."
+        leading={menuButton}
       />
 
-      <div role="tabpanel" id={panelId(active)} aria-labelledby={tabId(active)}>
-        {active === 'datos' && <TenantProfileTab readOnly={readOnly} onDirtyChange={setDirty} />}
-        {active === 'financiera' && <FinancialSettingsTab readOnly={readOnly} onDirtyChange={setDirty} />}
+      <div className="grid items-start gap-4 @min-[1000px]:grid-cols-[minmax(0,3fr)_minmax(0,4fr)]">
+        <TenantProfileTab readOnly={readOnly} onDirtyChange={setProfileDirty} onReadyChange={setProfileReady} />
+        <div id="seccion-financiera" ref={financialSection} tabIndex={-1} className="min-w-0 scroll-mt-6 rounded-surface focus-ring">
+          <FinancialSettingsTab readOnly={readOnly} onDirtyChange={setFinancialDirty} onReadyChange={setFinancialReady} />
+        </div>
       </div>
-
-      {pending && (
-        <DiscardChangesModal
-          message="Si cambias de pestaña, se pierde lo que digitaste y no guardaste."
-          onKeepEditing={() => setPending(null)}
-          onDiscard={() => go(pending)}
-        />
-      )}
+      <UnsavedChangesGuard
+        dirty={profileDirty || financialDirty}
+        allowLeave={allowLeave}
+        message="Si sales ahora, se pierden los cambios que no guardaste en Configuración."
+      />
     </div>
   )
 }

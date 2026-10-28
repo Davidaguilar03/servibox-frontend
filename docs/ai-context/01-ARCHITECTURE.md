@@ -45,6 +45,7 @@ src/
   trash/              papelera compartida de ventas y compras (TrashPage.tsx) y su logica
                       de filtros (trashList.ts)
   reports/            logica pura de Reportes (reports.ts)
+  settings/           Configuracion: pagina unificada, formularios de datos y finanzas y consultas
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
                       de nueva cuenta, editar cuenta y transferencia (AccountModals.tsx)
@@ -88,7 +89,7 @@ src/
 | `/compras/papelera` | privada | `PurchasesTrashPage`, Papelera de compras (`TrashPage` con la configuracion de compras) |
 | `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
 | `/compras/proveedores` | privada | `SuppliersPage`, Proveedores (`CounterpartiesPage` con el rol PROVEEDOR) |
-| `/configuracion` | privada | `SettingsPage`, Configuracion: pestanas Datos de la serviteca y Configuracion financiera en `?tab=` |
+| `/configuracion` | privada | `SettingsPage`, Configuracion: Datos de la serviteca y Configuracion financiera visibles; `?tab=financiera` enfoca la segunda seccion |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las
@@ -162,11 +163,37 @@ el area de contenido (ancho maximo 1440 px):
   `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
   buscador ni campana. Inicio, el listado de Productos y las rutas bajo /ventas y /compras no
-  montan la barra; Reportes tampoco la monta. El boton de menu movil se entrega por contexto de Outlet a sus
+  montan la barra; Reportes y Configuracion tampoco la montan. El boton de menu movil se entrega por contexto de Outlet a sus
   encabezados. Conserva estado, referencia, foco, SkipLink y titulo de pestana del
   shell. Categorias, formularios de Inventario y las demas rutas conservan la barra.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
+
+## Configuracion
+
+`SettingsPage` (`/configuracion`) monta los dos formularios a la vez, con estados y guardados
+independientes. ListHeader recibe el menu movil de AppShell; sin barra superior.
+Aprovecha el ancho del shell: desde 1000 px disponibles, rejilla 3fr/4fr (43/57 por ciento)
+con separacion de 16 px, alineada arriba y sin igualar alturas; debajo apila Datos y Finanzas.
+TenantProfileTab y FinancialSettingsTab conservan superficies compartidas. NIT/telefono
+pasan a dos columnas desde 400 px dentro de Datos; Gastos/Renta desde 480 px en Finanzas.
+Nombre, codigo e ICA ocupan todo el ancho. Finanzas separa Precio sugerido de Pagos con
+tarjeta, sin agregar calculos ni ejemplos guardados.
+
+* GET/PUT `/api/tenant`: name, nit normalizado y phone recortado, sin slug editable.
+  NIT y telefono obligatorios; clave `['tenant']`, nombre de sesion y KPIs actualizados.
+* GET/PUT `/api/inventory/financial-settings`: mismas cuatro fracciones, precision y unidades.
+  Clave `['inventory', 'financial-settings']`; guardar invalida productos y categorias.
+  Advertencia de divisor por categorias y aviso de recalculo conservados.
+* Solo ADMIN edita en la interfaz; un 403 al guardar bloquea el formulario. Sin cambios
+  o durante envio Guardar queda deshabilitado; los errores se revelan al intentar guardar.
+* Un solo UnsavedChangesGuard en SettingsPage protege salida y beforeunload cuando
+  cualquiera tiene cambios. Guardar uno no valida, envia ni reinicia el otro.
+* Enlaces anteriores con `?tab=financiera` esperan ambas cargas iniciales (o error),
+  desplazan y enfocan el contenedor financiero una vez por entrada de historial.
+  No ocultan Datos ni provocan salto en entradas normales o despues de guardar.
+  Parser y tipos de pestanas retirados; API, reglas de formularios y reportError intactos.
+  Pantalla unificada aprobada visualmente por David el 2026-10-28.
 
 ## Panel de control
 

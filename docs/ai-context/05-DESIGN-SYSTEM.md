@@ -6,6 +6,27 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Configuracion (2026-10-28)
+
+* ListHeader con descripcion y acceso al menu movil dentro del contenido. Solo esta
+  ruta deja de montar la barra superior; sidebar y marca actuales conservados.
+* Correccion aprobada por David: pantalla unificada sin pestanas, a todo el ancho
+  del shell. Desde 1000 px disponibles, Datos 3fr y Finanzas 4fr (43/57 por ciento),
+  separacion 16 px, alineacion superior y alturas naturales. Debajo apila Datos y Finanzas.
+* Tarjetas con borde superior border-accent, superficie blanca, radio surface,
+  relleno 16/24 px y separadores border. Nombre y codigo a ancho completo.
+  NIT y telefono pasan a dos columnas desde 400 px disponibles en la tarjeta,
+  con consultas de contenedor locales; una columna por debajo. Sin alturas fijas.
+* Finanzas usa fieldsets Precio sugerido y Pagos con tarjeta; las tres tasas del
+  primero muestran Gastos/Renta en dos columnas desde 480 px, e ICA a todo el ancho. Ayudas y errores junto al campo,
+  aviso de recalculo en canvas. Guardar separado por borde, ancho completo en movil.
+  Sin iconos, indicadores ni controles nuevos, ni cambios de tokens o estilos globales.
+* Dos botones primarios, uno por formulario independiente; guardado, errores y estado
+  propios. Un solo guardian protege cambios en cualquiera. El enlace financiero previo
+  enfoca la seccion sin ocultar Datos; entrada normal sin salto.
+* David aprueba visualmente la pantalla unificada el 2026-10-28 y autoriza su cierre.
+  La aprobacion reemplaza los pendientes de distribucion, alturas, enlace, movil y teclado.
+
 ## Reportes (2026-10-28)
 
 * ListHeader con menu movil dentro del contenido, sin barra superior redundante. Logo y
@@ -542,7 +563,7 @@ Categorias):
 * Facturas: columnas en el orden N.o factura, Fecha, Tercero, Vence, Forma de pago, Estado,
   Total, Saldo pendiente y acciones. Encabezados en rol label (los pone `DataTable`), dinero
   en rol monto a la derecha y sin partir, estados con `StatusBadge`.
-* `TabList` con `fill` (Configuracion): las pestanas se reparten el ancho y la etiqueta pasa a
+* `TabList` con `fill`: las pestanas se reparten el ancho y la etiqueta pasa a
   dos lineas. Sin `fill`, las pestanas se desplazan horizontalmente y la seleccionada
   se lleva a la vista (`scrollIntoView`). Productos usa SelectField desde esta correccion.
 * Tablas por prioridad (misma tecnica que las facturas: `useElementWidth` sobre el recuadro y
@@ -613,8 +634,8 @@ Pendientes de decidir o validar con el disenador (detalle en
 3. Wordmark usa `text-title` con `font-bold italic` como marca provisional; el simbolo es
    SVG compartido. Pendiente de sustituir por los recursos oficiales cuando existan.
 4. **Resuelto el 2026-10-25:** los enlaces de celda usan `CellLink` (rol small, 600).
-5. **Actualizado el 2026-10-26:** Configuracion usa `TabList` en `small`; Productos
-   paso a SelectField de categoria. Menu lateral y badges siguen en `small`.
+5. **Actualizado el 2026-10-28:** Configuracion ya no usa pestanas; Productos
+   usa SelectField de categoria. Menu lateral y badges siguen en `small`.
 6. **Resuelto el 2026-10-25:** sin `font-medium`; los 55 usos pasaron a 600.
 7. **Resuelto el 2026-10-25:** tokens de legado eliminados; landing, login y registro usan la
    escala (excepcion `text-display` en el `h1` de la landing).

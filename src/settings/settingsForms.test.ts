@@ -8,7 +8,6 @@ import {
   formatDecimal,
   isUnconfigured,
   parseDecimal,
-  parseSettingsTab,
   validateFinancialForm,
   validateTenantForm,
   type FinancialFormValues,
@@ -30,15 +29,6 @@ const financial = (fields: Partial<FinancialFormValues> = {}): FinancialFormValu
   icaRate: '8,2',
   cardCommissionRate: '3',
   ...fields,
-})
-
-describe('pestanas', () => {
-  it('lee la pestana de la URL y cae en datos con un valor desconocido', () => {
-    expect(parseSettingsTab('financiera')).toBe('financiera')
-    expect(parseSettingsTab('usuarios')).toBe('datos')
-    expect(parseSettingsTab('otra')).toBe('datos')
-    expect(parseSettingsTab(null)).toBe('datos')
-  })
 })
 
 describe('datos de la serviteca', () => {

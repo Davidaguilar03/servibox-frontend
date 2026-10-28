@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient } from '@tanstack/react-query'
 import { saveToken } from '../auth/session'
@@ -54,45 +54,199 @@ function login(role = 'ADMIN') {
 
 beforeEach(() => login())
 
-describe('pestanas', () => {
-  it('Datos por defecto, un valor desconocido cae en Datos y las flechas cambian la URL', async () => {
+describe('estados compartidos de Configuración', () => {
+  it.each([
+    ['/configuracion', '/api/tenant', 'Nombre comercial', profile],
+    ['/configuracion?tab=financiera', '/api/inventory/financial-settings', 'Gastos (%)', zeros],
+  ] as const)('carga en %s sin campos editables hasta recibir los datos', async (path, endpoint, label, data) => {
+    let resolve!: (response: Response) => void
+    mockApi(routes({ [`GET ${endpoint}`]: () => new Promise<Response>((done) => { resolve = done }) }))
+    renderRoute(path)
+
+    const panel = label === 'Nombre comercial' ? screen.getByRole('main') : document.getElementById('seccion-financiera')!
+    const loading = panel.querySelector('[aria-busy="true"]')
+    expect(loading).toBeInTheDocument()
+    expect(screen.queryByLabelText(label)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: label === 'Nombre comercial' ? 'Guardar cambios' : 'Guardar configuración' })).not.toBeInTheDocument()
+    await act(async () => resolve(jsonResponse(data)))
+    expect(await screen.findByLabelText(label)).toBeEnabled()
+    expect(loading).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ['/configuracion', '/api/tenant', 'Nombre comercial', 'Serviteca Nueva', 'Guardar cambios', profile,
+      { name: 'Serviteca Nueva', nit: profile.nit, phone: profile.phone }],
+    ['/configuracion?tab=financiera', '/api/inventory/financial-settings', 'Gastos (%)', '34,3333', 'Guardar configuración', zeros,
+      { ...zeros, expensesRate: 0.343333 }],
+  ] as const)('en %s revertir desactiva Guardar y un envio pendiente no se duplica', async (path, endpoint, label, value, action, data, payload) => {
     const user = userEvent.setup()
+    let resolve!: (response: Response) => void
+    const fetchMock = mockApi(routes({ [`PUT ${endpoint}`]: () => new Promise<Response>((done) => { resolve = done }) }))
+    renderRoute(path)
+    const input = await screen.findByLabelText(label)
+    const initial = (input as HTMLInputElement).value
+    const button = screen.getByRole('button', { name: action })
+    expect(button).toBeDisabled()
+    await user.clear(input)
+    await user.type(input, value)
+    expect(button).toBeEnabled()
+    await user.clear(input)
+    await user.type(input, initial)
+    expect(button).toBeDisabled()
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true)
+    await user.clear(input)
+    await user.type(input, value)
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false)
+    await user.click(button)
+    expect(button).toHaveAccessibleName('Guardando…')
+    expect(button).toHaveAttribute('aria-busy', 'true')
+    expect(button).toBeDisabled()
+    await user.click(button)
+    expect(requests(fetchMock, 'PUT', endpoint)).toEqual([payload])
+    await act(async () => resolve(jsonResponse({ ...data, ...payload })))
+    expect(await screen.findByRole('button', { name: action })).toBeDisabled()
+    expect(await screen.findByText(action === 'Guardar cambios' ? 'Datos guardados' : 'Configuración guardada. Se recalcularon los precios sugeridos.')).toBeInTheDocument()
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true)
+  })
+})
+
+describe('pantalla unificada', () => {
+  it.each(['/configuracion', '/configuracion?tab=financiera'])('en %s solo el enlace financiero enfoca y desplaza, despues de ambas cargas y una sola vez', async (path) => {
+    const user = userEvent.setup()
+    let tenantReady!: (response: Response) => void
+    let financeReady!: (response: Response) => void
+    mockApi(routes({
+      'GET /api/tenant': () => new Promise<Response>((resolve) => { tenantReady = resolve }),
+      'GET /api/inventory/financial-settings': () => new Promise<Response>((resolve) => { financeReady = resolve }),
+    }))
+    renderRoute(path)
+    const target = document.getElementById('seccion-financiera')!
+    const scroll = vi.fn()
+    target.scrollIntoView = scroll
+    await act(async () => financeReady(jsonResponse(zeros)))
+    expect(await screen.findByLabelText('Gastos (%)')).toBeInTheDocument()
+    expect(scroll).not.toHaveBeenCalled()
+    await act(async () => tenantReady(jsonResponse(profile)))
+    const phone = await screen.findByLabelText('Teléfono')
+    if (path.includes('financiera')) {
+      await waitFor(() => expect(target).toHaveFocus())
+      expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: 'start' })
+    } else {
+      expect(scroll).not.toHaveBeenCalled()
+      expect(target).not.toHaveFocus()
+    }
+    await user.type(phone, '1')
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText('Datos guardados')).toBeInTheDocument()
+    expect(scroll).toHaveBeenCalledTimes(path.includes('financiera') ? 1 : 0)
+    expect(screen.getByRole('form', { name: 'Datos de la serviteca' })).toBeVisible()
+    expect(screen.getByRole('form', { name: 'Configuración financiera' })).toBeVisible()
+  })
+
+  it.each(['datos', 'financiera'])('con cambios simultaneos guarda primero %s sin liberar los cambios del otro', async (first) => {
+    const user = userEvent.setup()
+    const fetchMock = mockApi(routes())
+    const router = renderRoute('/configuracion')
+    await user.type(await screen.findByLabelText('Teléfono'), '1')
+    const expenses = await screen.findByLabelText('Gastos (%)')
+    await user.clear(expenses)
+    await user.type(expenses, '10')
+    const dataSave = screen.getByRole('button', { name: 'Guardar cambios' })
+    const financeSave = screen.getByRole('button', { name: 'Guardar configuración' })
+    const firstSave = first === 'datos' ? dataSave : financeSave
+    const otherSave = first === 'datos' ? financeSave : dataSave
+    await user.click(firstSave)
+    await waitFor(() => expect(firstSave).toBeDisabled())
+    expect(otherSave).toBeEnabled()
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 45671')
+    expect(expenses).toHaveValue('10')
+    expect(requests(fetchMock, 'PUT', first === 'datos' ? '/api/inventory/financial-settings' : '/api/tenant')).toEqual([])
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false)
+    await user.click(screen.getByRole('link', { name: 'Inicio' }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Seguir editando' })).toHaveFocus()
+    await user.keyboard('{Escape}')
+    expect(router.state.location.pathname).toBe('/configuracion')
+    await user.click(otherSave)
+    await waitFor(() => expect(otherSave).toBeDisabled())
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true)
+    expect(requests(fetchMock, 'PUT', '/api/tenant')).toEqual([{ name: profile.name, nit: profile.nit, phone: '300 123 45671' }])
+    expect(requests(fetchMock, 'PUT', '/api/inventory/financial-settings')).toEqual([{ ...zeros, expensesRate: 0.1 }])
+  })
+
+  it('descarta cambios simultaneos con un solo dialogo sin enviar ninguno de los formularios', async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockApi(routes())
+    const router = renderRoute('/configuracion')
+    await user.type(await screen.findByLabelText('Teléfono'), '1')
+    await user.type(await screen.findByLabelText('Gastos (%)'), '1')
+    await user.click(screen.getByRole('link', { name: 'Inicio' }))
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 45671')
+    expect(screen.getByLabelText('Gastos (%)')).toHaveValue('01')
+    await user.click(screen.getByRole('link', { name: 'Inicio' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/inicio'))
+    expect(requests(fetchMock, 'PUT', '/api/tenant')).toEqual([])
+    expect(requests(fetchMock, 'PUT', '/api/inventory/financial-settings')).toEqual([])
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true)
+  })
+
+  it('el enlace financiero funciona aunque fallen los datos de la serviteca', async () => {
+    mockApi(routes({ 'GET /api/tenant': () => jsonResponse({ error: 'x', status: 500 }, 500) }))
+    renderRoute('/configuracion?tab=financiera')
+    const target = document.getElementById('seccion-financiera')!
+    target.scrollIntoView = vi.fn()
+    expect(await screen.findByText('No pudimos cargar los datos de la serviteca.')).toBeInTheDocument()
+    await waitFor(() => expect(target).toHaveFocus())
+    expect(await screen.findByLabelText('Gastos (%)')).toBeEnabled()
+  })
+
+  it('seguir un enlace financiero dentro de la pantalla conserva ambos cambios sin abrir descarte', async () => {
+    const user = userEvent.setup()
+    mockApi(routes())
+    const router = renderRoute('/configuracion')
+    await user.type(await screen.findByLabelText('Teléfono'), '1')
+    await user.type(await screen.findByLabelText('Gastos (%)'), '1')
+    const target = document.getElementById('seccion-financiera')!
+    target.scrollIntoView = vi.fn()
+    await act(async () => { await router.navigate('/configuracion?tab=financiera') })
+    await waitFor(() => expect(target).toHaveFocus())
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 45671')
+    expect(screen.getByLabelText('Gastos (%)')).toHaveValue('01')
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false)
+  })
+
+  it('muestra ambos formularios sin pestanas, tambien con un parametro desconocido', async () => {
     mockApi(routes())
     const router = renderRoute('/configuracion?tab=otra')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Configuración' })).toBeInTheDocument()
-    const datos = screen.getByRole('tab', { name: 'Datos de la serviteca' })
-    expect(datos).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', datos.id)
-    expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Configuración')
-
-    datos.focus()
-    await user.keyboard('{ArrowRight}')
-    expect(screen.getByRole('tab', { name: 'Configuración financiera' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByRole('tab', { name: 'Configuración financiera' })).toHaveFocus()
-    expect(router.state.location.search).toBe('?tab=financiera')
-
-    await user.keyboard('{Home}')
-    expect(router.state.location.search).toBe('')
-    await user.keyboard('{End}')
-    expect(router.state.location.search).toBe('?tab=financiera')
-    await user.keyboard('{ArrowRight}')
-    expect(router.state.location.search).toBe('')
-    await user.keyboard('{ArrowLeft}')
-    expect(router.state.location.search).toBe('?tab=financiera')
+    expect(await screen.findByLabelText('Nombre comercial')).toHaveValue(profile.name)
+    expect(await screen.findByLabelText('Gastos (%)')).toHaveValue('0')
+    expect(screen.getByRole('region', { name: 'Datos de la serviteca' })).toBeVisible()
+    expect(screen.getByRole('region', { name: 'Configuración financiera' })).toBeVisible()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(screen.getByRole('main').querySelectorAll('form')).toHaveLength(2)
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(document.title).toBe('Configuración · ServiBox')
+    expect(router.state.location.search).toBe('?tab=otra')
   })
 })
 
 describe('sin funciones que no existen', () => {
-  it('no hay pestana Usuarios y ?tab=usuarios cae en Datos', async () => {
+  it('no hay Usuarios ni pestanas y ?tab=usuarios muestra los dos formularios', async () => {
     mockApi(routes())
     renderRoute('/configuracion?tab=usuarios')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Configuración' })).toBeInTheDocument()
-    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Datos de la serviteca', 'Configuración financiera'])
-    expect(screen.queryByRole('tab', { name: /Usuarios/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
     expect(screen.queryByText(/Próximamente/)).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Datos de la serviteca' })).toHaveAttribute('aria-selected', 'true')
+    expect(await screen.findByLabelText('Nombre comercial')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Gastos (%)')).toBeInTheDocument()
   })
 
   it('rotula Impuesto de renta deducible y no menciona DIAN', async () => {
@@ -119,6 +273,7 @@ describe('Datos de la serviteca', () => {
     const name = await screen.findByLabelText('Nombre comercial')
     expect(screen.getByLabelText('Código de tu serviteca')).toHaveValue('demo')
     expect(screen.getByLabelText('Código de tu serviteca')).toHaveAttribute('readonly')
+    await screen.findByLabelText('Gastos (%)')
     expect(screen.getByText(/Es lo que tu equipo escribe en “Serviteca” para iniciar sesión/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
 
@@ -150,7 +305,7 @@ describe('Datos de la serviteca', () => {
     })
     const sidebar = screen.getByRole('navigation', { name: 'Principal' }).closest('aside') as HTMLElement
     expect(within(sidebar).getByText('Serviteca El Roble')).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).queryByText('Serviteca El Roble')).not.toBeInTheDocument()
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
   })
 
@@ -209,18 +364,23 @@ describe('Datos de la serviteca', () => {
     expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
   })
 
-  it('sin rol ADMIN todo queda en solo lectura', async () => {
-    login('CAJERO')
+  it.each(['CAJERO', 'MECANICO'])('con rol %s todo queda en solo lectura', async (role) => {
+    login(role)
     mockApi(routes())
     renderRoute('/configuracion')
 
     expect(await screen.findByLabelText('Nombre comercial')).toBeDisabled()
-    expect(screen.getByText('Solo un administrador puede editar estos datos.')).toBeInTheDocument()
+    expect(screen.getByLabelText('NIT')).toBeDisabled()
+    expect(screen.getByLabelText('Teléfono')).toBeDisabled()
+    expect(screen.getByLabelText('Código de tu serviteca')).toHaveAttribute('readonly')
+    expect(screen.getAllByText('Solo un administrador puede editar estos datos.')).toHaveLength(2)
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
     expect(await screen.findByLabelText('Gastos (%)')).toBeDisabled()
-    expect(screen.getByText('Solo un administrador puede editar estos datos.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Impuesto de renta deducible (%)')).toBeDisabled()
+    expect(screen.getByLabelText('ICA (por mil)')).toBeDisabled()
+    expect(screen.getByLabelText('Comisión de tarjeta (%)')).toBeDisabled()
+    expect(screen.getAllByText('Solo un administrador puede editar estos datos.')).toHaveLength(2)
     expect(screen.queryByRole('button', { name: 'Guardar configuración' })).not.toBeInTheDocument()
   })
 
@@ -243,22 +403,24 @@ describe('Datos de la serviteca', () => {
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).not.toBeInTheDocument()
   })
 
-  it('cambiar de pestana con cambios pide descartar', async () => {
+  it('guardar datos no valida ni descarta cambios financieros invalidos', async () => {
     const user = userEvent.setup()
-    mockApi(routes())
-    const router = renderRoute('/configuracion')
+    const fetchMock = mockApi(routes())
+    renderRoute('/configuracion')
     await user.type(await screen.findByLabelText('Teléfono'), '300')
-
-    await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
-    expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
-    expect(router.state.location.search).toBe('')
-    expect(screen.getByLabelText('Teléfono')).toHaveValue('300 123 4567300')
-
-    await user.click(screen.getByRole('tab', { name: 'Configuración financiera' }))
-    await user.click(screen.getByRole('button', { name: 'Descartar' }))
-    expect(router.state.location.search).toBe('?tab=financiera')
-    expect(await screen.findByLabelText('Gastos (%)')).toBeInTheDocument()
+    const expenses = await screen.findByLabelText('Gastos (%)')
+    await user.clear(expenses)
+    await user.type(expenses, '150')
+    // Submit sin desenfocar el otro campo ni revelar sus errores pendientes.
+    const form = screen.getByRole('button', { name: 'Guardar cambios' }).closest('form')!
+    await act(async () => { form.requestSubmit() })
+    expect(await screen.findByText('Datos guardados')).toBeInTheDocument()
+    expect(requests(fetchMock, 'PUT', '/api/tenant')).toEqual([{ name: profile.name, nit: profile.nit, phone: '300 123 4567300' }])
+    expect(requests(fetchMock, 'PUT', '/api/inventory/financial-settings')).toEqual([])
+    expect(expenses).toHaveValue('150')
+    expect(expenses).not.toHaveAttribute('aria-invalid')
+    expect(screen.getByRole('button', { name: 'Guardar configuración' })).toBeEnabled()
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false)
   })
 
   it('salir a otra pagina con cambios pide descartar', async () => {
@@ -269,7 +431,7 @@ describe('Datos de la serviteca', () => {
 
     await user.click(screen.getByRole('link', { name: 'Inicio' }))
     expect(screen.getByRole('dialog', { name: '¿Descartar los cambios?' })).toHaveTextContent(
-      'Si sales ahora, se pierden los cambios que no guardaste en los datos de la serviteca.',
+      'Si sales ahora, se pierden los cambios que no guardaste en Configuración.',
     )
     expect(router.state.location.pathname).toBe('/configuracion')
   })
@@ -285,6 +447,93 @@ describe('Datos de la serviteca', () => {
 })
 
 describe('Configuración financiera', () => {
+  it('agrupa las tasas del precio y mantiene separada la comision con su ayuda', async () => {
+    mockApi(routes())
+    renderRoute('/configuracion?tab=financiera')
+    const price = await screen.findByRole('group', { name: 'Precio sugerido' })
+    expect(within(price).getAllByRole('textbox')).toHaveLength(3)
+    expect(within(price).getByLabelText('Gastos (%)')).toHaveAccessibleDescription('Gastos del negocio sobre la venta. Por ejemplo, 34,3.')
+    expect(within(price).getByLabelText('ICA (por mil)')).toHaveAccessibleDescription('Industria y comercio, en por mil. Por ejemplo, 8,2.')
+    const commission = screen.getByRole('group', { name: 'Pagos con tarjeta' })
+    expect(within(commission).getAllByRole('textbox')).toHaveLength(1)
+    expect(within(commission).getByLabelText('Comisión de tarjeta (%)')).toHaveAccessibleDescription(/todavía no se aplica a las ventas ni a los reportes/)
+  })
+
+  it('error de carga permite reintentar y recuperar valores', async () => {
+    let failed = true
+    const fetchMock = mockApi(routes({
+      'GET /api/inventory/financial-settings': () => failed
+        ? jsonResponse({ error: 'x', status: 500 }, 500)
+        : jsonResponse({ ...zeros, icaRate: 0.009966 }),
+    }))
+    renderRoute('/configuracion?tab=financiera')
+    expect(await screen.findByText('No pudimos cargar la configuración financiera.')).toBeInTheDocument()
+    failed = false
+    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByLabelText('ICA (por mil)')).toHaveValue('9,966')
+    expect(requests(fetchMock, 'GET', '/api/inventory/financial-settings')).toHaveLength(2)
+  })
+
+  it.each([403, 500])('un %s al guardar anuncia el error y conserva valores', async (status) => {
+    const user = userEvent.setup()
+    const fetchMock = mockApi(routes({
+      'PUT /api/inventory/financial-settings': () => jsonResponse({ error: 'x', status }, status),
+    }))
+    renderRoute('/configuracion?tab=financiera')
+    const expenses = await screen.findByLabelText('Gastos (%)')
+    await user.clear(expenses)
+    await user.type(expenses, '12,3456')
+    await user.click(screen.getByRole('button', { name: 'Guardar configuración' }))
+    const alerts = await screen.findAllByRole('alert')
+    expect(alerts.map((alert) => alert.textContent).join(' ')).toContain(status === 403 ? 'No tienes permiso' : 'No pudimos completar')
+    expect(expenses).toHaveValue('12,3456')
+    expect(requests(fetchMock, 'PUT', '/api/inventory/financial-settings')).toEqual([{ ...zeros, expensesRate: 0.123456 }])
+    if (status === 403) {
+      expect(expenses).toBeDisabled()
+      expect(screen.getByLabelText('Comisión de tarjeta (%)')).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Guardar configuración' })).not.toBeInTheDocument()
+    } else {
+      expect(expenses).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Guardar configuración' })).toBeEnabled()
+    }
+  })
+
+  it('guardar finanzas no valida ni descarta los datos invalidos del otro formulario', async () => {
+    const user = userEvent.setup()
+    const fetchMock = mockApi(routes())
+    renderRoute('/configuracion?tab=financiera')
+    const expenses = await screen.findByLabelText('Gastos (%)')
+    await user.clear(expenses)
+    await user.type(expenses, '10')
+    const nit = await screen.findByLabelText('NIT')
+    await user.clear(nit)
+    const form = screen.getByRole('button', { name: 'Guardar configuración' }).closest('form')!
+    await act(async () => { form.requestSubmit() })
+    expect(await screen.findByText('Configuración guardada. Se recalcularon los precios sugeridos.')).toBeInTheDocument()
+    expect(requests(fetchMock, 'PUT', '/api/inventory/financial-settings')).toEqual([{ ...zeros, expensesRate: 0.1 }])
+    expect(requests(fetchMock, 'PUT', '/api/tenant')).toEqual([])
+    expect(nit).toHaveValue('')
+    expect(nit).not.toHaveAttribute('aria-invalid')
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled()
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(false)
+  })
+
+  it('salir con cambios permite cancelar o descartar y libera la proteccion', async () => {
+    const user = userEvent.setup()
+    mockApi(routes())
+    const router = renderRoute('/configuracion?tab=financiera')
+    await user.type(await screen.findByLabelText('Gastos (%)'), '1')
+    await user.click(screen.getByRole('link', { name: 'Inicio' }))
+    expect(screen.getByRole('dialog')).toHaveTextContent('Si sales ahora, se pierden los cambios que no guardaste en Configuración.')
+    await user.click(screen.getByRole('button', { name: 'Seguir editando' }))
+    expect(router.state.location.pathname).toBe('/configuracion')
+    expect(screen.getByLabelText('Gastos (%)')).toHaveValue('01')
+    await user.click(screen.getByRole('link', { name: 'Inicio' }))
+    await user.click(screen.getByRole('button', { name: 'Descartar' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/inicio'))
+    expect(window.dispatchEvent(new Event('beforeunload', { cancelable: true }))).toBe(true)
+  })
+
   it('sin configuracion muestra ceros y la nota; envia las fracciones exactas e invalida productos y categorias', async () => {
     const user = userEvent.setup()
     const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
