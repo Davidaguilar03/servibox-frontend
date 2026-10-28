@@ -12,6 +12,52 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-28: Cierre visual de Configuracion autorizado por David
+
+* David aprueba visualmente la pantalla unificada de Configuracion y autoriza commit,
+  push y PR de feat/43-settings-refresh hacia main. Reemplaza los pendientes visuales
+  historicos de esta tarea. Sin navegador en el cierre ni cambios de contratos.
+* Tras el merge de David se completa el bloque de once tareas de rediseno.
+  Los pendientes de integracion y entrega del MVP continuan. No se realiza merge
+  ni checkout desde esta tarea.
+* Verificacion y limitaciones finales en sessions/2026-10-28-settings-refresh.md.
+
+## 2026-10-28: Configuracion unificada segun direccion aprobada por David
+
+* Decision: reemplaza la composicion y navegacion por pestanas de las entradas anteriores
+  de Configuracion. Ambos formularios permanecen visibles y montados, con guardados,
+  validacion y estados independientes. Sin selector ni modal para cambiar de pestana.
+* Rejilla por ancho disponible: desde 1000 px, Datos 3fr y Finanzas 4fr, aproximadamente
+  43/57 por ciento, separados 16 px. items-start conserva alturas naturales. Por debajo
+  se apilan en ese orden. Se usa todo el ancho del shell, sin modificar sidebar ni marca.
+* Un solo guardian en la pagina agrega los dos indicadores de cambios, evitando dos
+  bloqueadores de React Router. Guardar uno conserva la proteccion del otro.
+* Compatibilidad: `?tab=financiera` enfoca y desplaza a Finanzas despues de resolver
+  ambas cargas iniciales, incluidos errores; una vez por entrada de historial. La ruta
+  normal no desplaza y los guardados no repiten el salto. Ambos formularios siguen visibles.
+* Se retiran parser y tipos de pestanas sin uso. Reglas financieras, precision, payloads,
+  permisos, consultas, cache, mensajes y reportError conservados; dos acciones primarias,
+  una por formulario independiente. Sin cambios de componentes o estilos compartidos.
+* Motivo: David aprueba la direccion settings-unified-proposal-v1.png como composicion.
+  La implementacion queda pendiente de su revision visual, sin navegador ni publicacion.
+
+## 2026-10-28: Configuracion, composicion con pestanas reemplazada
+
+* Decision: reemplaza la composicion visual anterior de Configuracion con ListHeader
+  dentro del contenido y menu movil del shell, sin barra superior solo en esta ruta.
+  Conserva las dos pestanas y su navegacion accesible, seleccion y descarte existentes.
+* Superficies del sistema, borde superior border-accent, separadores y ancho maximo
+  1024 px. Nombre comercial y codigo a ancho completo; NIT/telefono en dos columnas
+  cuando la tarjeta tiene 576 px disponibles. Bajo ese ancho se apilan.
+* Finanzas agrupa las tres tasas del precio sugerido y separa la comision de tarjeta
+  mediante fieldsets con leyendas. Ayudas, advertencia de categorias y aviso de recalculo
+  conservados. Sin calculos nuevos, datos de muestra persistidos ni controles decorativos.
+* Contratos, permisos, precision, validaciones, deteccion de cambios, Guardar y errores
+  intactos. Sin cambios globales de estilos ni de componentes compartidos.
+* Motivo: seguir configuracion.png y las pantallas aprobadas con campos y contratos reales.
+* Sin navegador ni auditoria visual automatizada. Pendiente de aprobacion visual de David;
+  no se declara completado el rediseno. Sin commit, push ni PR en esta entrega.
+
 ## 2026-10-28: Correccion de paginacion de Movimientos a diez filas
 
 * David aprueba presentacion general y solicita diez movimientos por pagina, tanto
@@ -1133,7 +1179,7 @@ Formato de cada entrada:
 * Borrar o desactivar terceros, historial de facturas por tercero, estado de cuenta,
   importar o exportar, cambiar el rol y un consecutivo de terceros.
 
-## 2026-10-22: Configuracion con pestanas en la URL
+## 2026-10-22: Configuracion con pestanas en la URL (reemplazada por pantalla unificada)
 
 * Decision: `/configuracion` (`src/settings/SettingsPage.tsx`) reemplaza el placeholder con
   tres pestanas: Datos de la serviteca, Usuarios y Configuracion financiera. La activa vive en

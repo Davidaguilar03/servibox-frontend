@@ -5,18 +5,6 @@ import type { FinancialSettings, TenantProfile, TenantProfileRequest } from './s
 
 // Formularios de Configuracion. Reglas en docs/ai-context/03-DECISIONS.md.
 
-export type SettingsTab = 'datos' | 'financiera'
-
-export const SETTINGS_TABS: Array<{ value: SettingsTab; label: string }> = [
-  { value: 'datos', label: 'Datos de la serviteca' },
-  { value: 'financiera', label: 'Configuración financiera' },
-]
-
-/** La pestana de `?tab=`; un valor desconocido o ausente es Datos de la serviteca. */
-export function parseSettingsTab(value: string | null): SettingsTab {
-  return SETTINGS_TABS.some((tab) => tab.value === value) ? (value as SettingsTab) : 'datos'
-}
-
 // Datos de la serviteca.
 
 export interface TenantFormValues {

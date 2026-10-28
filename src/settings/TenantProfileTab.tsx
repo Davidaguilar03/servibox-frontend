@@ -8,7 +8,6 @@ import { Alert } from '../components/Alert'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { revealErrors } from '../lib/formErrors'
@@ -23,16 +22,18 @@ import {
 
 export const READ_ONLY_NOTICE = 'Solo un administrador puede editar estos datos.'
 
-const card = 'rounded-surface border border-border bg-surface p-6'
+const card = '@container rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-4 sm:p-6'
 
 interface TabProps {
   readOnly: boolean
   onDirtyChange: (dirty: boolean) => void
+  onReadyChange: (ready: boolean) => void
 }
 
 /** Datos de la serviteca: carga el perfil y monta el formulario con esos valores. */
-export function TenantProfileTab({ readOnly, onDirtyChange }: TabProps) {
+export function TenantProfileTab({ readOnly, onDirtyChange, onReadyChange }: TabProps) {
   const profile = useQuery({ queryKey: TENANT_KEY, queryFn: fetchTenantProfile })
+  useEffect(() => onReadyChange(!profile.isPending), [profile.isPending, onReadyChange])
 
   if (profile.isError) {
     return (
@@ -53,7 +54,7 @@ export function TenantProfileTab({ readOnly, onDirtyChange }: TabProps) {
   return <TenantForm profile={profile.data} readOnly={readOnly} onDirtyChange={onDirtyChange} />
 }
 
-function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: TenantProfile }) {
+function TenantForm({ profile, readOnly, onDirtyChange }: Omit<TabProps, 'onReadyChange'> & { profile: TenantProfile }) {
   const queryClient = useQueryClient()
   const [initial, setInitial] = useState(() => tenantFormFrom(profile))
   const [values, setValues] = useState(initial)
@@ -61,7 +62,6 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
   const [submitted, setSubmitted] = useState(false)
   const [forbidden, setForbidden] = useState(false)
   const sending = useRef(false)
-  const allowLeave = useRef(false)
 
   const locked = readOnly || forbidden
   const errors = validateTenantForm(values)
@@ -112,13 +112,14 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
 
   return (
     <section className={card} aria-labelledby="datos-titulo">
-      <h2 id="datos-titulo" className="text-section text-text">
+      <h2 id="datos-titulo" className="border-b border-border pb-4 text-section text-text">
         Datos de la serviteca
       </h2>
       <form
         id="perfil-serviteca"
+        aria-labelledby="datos-titulo"
         noValidate
-        className="mt-4 flex flex-col gap-4"
+        className="mt-6 flex flex-col gap-6"
         onSubmit={(event) => {
           event.preventDefault()
           submit()
@@ -140,7 +141,7 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
           autoComplete="organization"
           required
         />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 @min-[400px]:grid-cols-2">
           <TextField
             label="NIT"
             valueRole="codigo"
@@ -176,20 +177,15 @@ function TenantForm({ profile, readOnly, onDirtyChange }: TabProps & { profile: 
           hint="Es lo que tu equipo escribe en “Serviteca” para iniciar sesión. No se puede cambiar."
         />
         {!locked && (
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t border-border pt-6">
             <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
             {/* Edicion: sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
-            <Button type="submit" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar cambios'}
             </Button>
           </div>
         )}
       </form>
-      <UnsavedChangesGuard
-        dirty={dirty}
-        allowLeave={allowLeave}
-        message="Si sales ahora, se pierden los cambios que no guardaste en los datos de la serviteca."
-      />
     </section>
   )
 }

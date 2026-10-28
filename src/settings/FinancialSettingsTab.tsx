@@ -6,7 +6,6 @@ import { Alert } from '../components/Alert'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
-import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { CATEGORIES_KEY, PRODUCTS_KEY, fetchInventoryCategories } from '../inventory/inventoryApi'
@@ -24,7 +23,7 @@ import {
 } from './settingsForms'
 import { READ_ONLY_NOTICE } from './TenantProfileTab'
 
-const card = 'rounded-surface border border-border bg-surface p-6'
+const card = '@container rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-4 sm:p-6'
 
 // Rotulos y ejemplos de la seccion Deducibles de Autollantas.
 const fieldTexts: Record<FinancialField, { label: string; hint: string }> = {
@@ -43,11 +42,13 @@ const fieldTexts: Record<FinancialField, { label: string; hint: string }> = {
 interface TabProps {
   readOnly: boolean
   onDirtyChange: (dirty: boolean) => void
+  onReadyChange: (ready: boolean) => void
 }
 
 /** Configuracion financiera: carga la configuracion y monta el formulario con esos valores. */
-export function FinancialSettingsTab({ readOnly, onDirtyChange }: TabProps) {
+export function FinancialSettingsTab({ readOnly, onDirtyChange, onReadyChange }: TabProps) {
   const settings = useQuery({ queryKey: FINANCIAL_SETTINGS_KEY, queryFn: fetchFinancialSettings })
+  useEffect(() => onReadyChange(!settings.isPending), [settings.isPending, onReadyChange])
 
   if (settings.isError) {
     return (
@@ -68,7 +69,7 @@ export function FinancialSettingsTab({ readOnly, onDirtyChange }: TabProps) {
   return <FinancialForm settings={settings.data} readOnly={readOnly} onDirtyChange={onDirtyChange} />
 }
 
-function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { settings: FinancialSettings }) {
+function FinancialForm({ settings, readOnly, onDirtyChange }: Omit<TabProps, 'onReadyChange'> & { settings: FinancialSettings }) {
   const queryClient = useQueryClient()
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   const [initial, setInitial] = useState(() => financialFormFrom(settings))
@@ -77,7 +78,6 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
   const [submitted, setSubmitted] = useState(false)
   const [forbidden, setForbidden] = useState<string | null>(null)
   const sending = useRef(false)
-  const allowLeave = useRef(false)
 
   const locked = readOnly || forbidden !== null
   const errors = validateFinancialForm(values)
@@ -132,13 +132,14 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
       <h2 id="financiera-titulo" className="text-section text-text">
         Configuración financiera
       </h2>
-      <p className="mt-1 text-small text-text-muted">
+      <p className="mt-1 border-b border-border pb-4 text-small text-text-muted">
         Estos valores calculan el precio sugerido de cada producto junto con el margen de su categoría.
       </p>
       <form
         id="configuracion-financiera"
+        aria-labelledby="financiera-titulo"
         noValidate
-        className="mt-4 flex flex-col gap-4"
+        className="mt-6 flex flex-col gap-6"
         onSubmit={(event) => {
           event.preventDefault()
           submit()
@@ -156,43 +157,55 @@ function FinancialForm({ settings, readOnly, onDirtyChange }: TabProps & { setti
             {saveError}
           </Alert>
         )}
-        <div className="grid gap-4 md:grid-cols-2">
-          {fields.map((field) => (
-            <TextField
-              key={field}
-              label={fieldTexts[field].label}
-              inputMode="decimal"
-              value={values[field]}
-              onChange={(event) => change(field)(event.target.value)}
-              onBlur={touch(field)}
-              error={shown(field)}
-              hint={fieldTexts[field].hint}
-              disabled={locked}
-            />
-          ))}
-        </div>
+        <fieldset className="min-w-0">
+          <legend className="mb-4 text-label text-text">Precio sugerido</legend>
+          <div className="grid gap-4 @min-[480px]:grid-cols-2">
+            {fields.filter((field) => field !== 'cardCommissionRate').map((field) => (
+              <div key={field} className={field === 'icaRate' ? 'col-span-full' : undefined}>
+                <TextField
+                  label={fieldTexts[field].label}
+                  inputMode="decimal"
+                  value={values[field]}
+                  onChange={(event) => change(field)(event.target.value)}
+                  onBlur={touch(field)}
+                  error={shown(field)}
+                  hint={fieldTexts[field].hint}
+                  disabled={locked}
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
+        <fieldset className="min-w-0 border-t border-border pt-4">
+          <legend className="pr-3 text-label text-text">Pagos con tarjeta</legend>
+          <TextField
+            label={fieldTexts.cardCommissionRate.label}
+            inputMode="decimal"
+            value={values.cardCommissionRate}
+            onChange={(event) => change('cardCommissionRate')(event.target.value)}
+            onBlur={touch('cardCommissionRate')}
+            error={shown('cardCommissionRate')}
+            hint={fieldTexts.cardCommissionRate.hint}
+            disabled={locked}
+          />
+        </fieldset>
         {atCost.length > 0 && (
           <Alert tone="warning" title="Con estos valores el precio sugerido de algunas categorías queda igual al costo">
             Gastos, impuesto de renta deducible, ICA y el margen de la categoría no dejan espacio para un precio mayor:{' '}
             {atCost.map((category) => category.name).join(', ')}.
           </Alert>
         )}
-        <p className="text-small text-text">Al guardar se recalcula el precio sugerido de todos los productos.</p>
+        <p className="rounded-control bg-canvas p-4 text-small text-text">Al guardar se recalcula el precio sugerido de todos los productos.</p>
         {!locked && (
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t border-border pt-6">
             <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
             {/* Edicion: sin cambios no hay nada que guardar (la unica excepcion de la regla de Guardar). */}
-            <Button type="submit" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={!dirty || save.isPending} aria-busy={save.isPending || undefined}>
               {save.isPending ? 'Guardando…' : 'Guardar configuración'}
             </Button>
           </div>
         )}
       </form>
-      <UnsavedChangesGuard
-        dirty={dirty}
-        allowLeave={allowLeave}
-        message="Si sales ahora, se pierden los cambios que no guardaste en la configuración financiera."
-      />
     </section>
   )
 }
