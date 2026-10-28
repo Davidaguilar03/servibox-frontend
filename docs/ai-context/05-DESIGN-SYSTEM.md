@@ -6,6 +6,24 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Reportes (2026-10-28)
+
+* ListHeader con menu movil dentro del contenido, sin barra superior redundante. Logo y
+  sidebar actuales intactos. Rejilla por contenedor: desde 960 px, 3fr/5fr; debajo apila.
+  Superficies con borde superior border-accent, radios y relleno 16/24 del sistema.
+* KPI de resultados usan IndicatorCard compact, iconos y variaciones existentes; numeros
+  text-kpi, sin cambio de tokens. Utilidad bruta sobre canvas y peso 600; neta con fondos
+  success/error segun signo sin redondear. Se conservan las seis filas con moneda entera.
+* PeriodPicker agrega layout form, selector a ancho completo y fechas auto-fit de minimo
+  160 px. No altera stacked, inline o toolbar. Tipos con radio nativo y formatos con el
+  SegmentedControl existente, una sola accion primaria y estados de foco/carga conservados.
+* Movimientos usa DataTable dense y tarjetas bajo md con fecha, cuenta global, tipo,
+  concepto/categoria e importe con signo. Totales discretos sobre canvas y paginacion
+  compartida; estados reales, sin graficos ni acciones de edicion.
+* David aprueba presentacion general; correccion posterior limita a diez filas por pagina,
+  rango compacto y Pagination compartida. Sin scroll interno. David aprueba visualmente
+  tambien altura y controles el 2026-10-28; sin navegador ni auditoria visual automatizada.
+
 ## Registro (2026-10-28)
 
 * RegisterPage.css acota todas las reglas bajo #register. Desde lg foto 44%

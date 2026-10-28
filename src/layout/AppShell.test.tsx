@@ -52,11 +52,11 @@ describe('shell', () => {
       expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveAttribute('aria-expanded', 'false')
     })
 
-    it('abrir lleva el foco al menu, deja el contenido inerte, y Esc lo cierra y devuelve el foco', async () => {
+    it.each(['/inicio', '/reportes'])('abrir en %s lleva el foco al menu, deja el contenido inerte, y Esc lo cierra y devuelve el foco', async (path) => {
       stubViewport(false)
       const user = userEvent.setup()
-      renderRoute('/inicio')
-      await screen.findByRole('heading', { level: 1, name: 'Inicio' })
+      renderRoute(path)
+      await screen.findByRole('heading', { level: 1, name: path === '/inicio' ? 'Inicio' : 'Reportes' })
 
       const button = screen.getByRole('button', { name: 'Abrir menú' })
       expect(screen.getByRole('main')).toContainElement(button)

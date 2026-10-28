@@ -162,7 +162,7 @@ el area de contenido (ancho maximo 1440 px):
   `displayName` e `initials` viven en `auth/session.ts`.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
   buscador ni campana. Inicio, el listado de Productos y las rutas bajo /ventas y /compras no
-  montan la barra; el boton de menu movil se entrega por contexto de Outlet a sus
+  montan la barra; Reportes tampoco la monta. El boton de menu movil se entrega por contexto de Outlet a sus
   encabezados. Conserva estado, referencia, foco, SkipLink y titulo de pestana del
   shell. Categorias, formularios de Inventario y las demas rutas conservan la barra.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
@@ -266,6 +266,7 @@ variacion, titulo del periodo, ruta de exportacion y filas del estado de resulta
 | Selector de cuenta (solo Movimientos de cuentas) | `GET /api/treasury/accounts` |
 | Vista previa del Estado de resultados | `GET /api/reporting/kpis?desde&hasta` del rango |
 | Variacion | `GET /api/reporting/kpis` del periodo anterior de igual duracion |
+| Vista previa de Movimientos | `GET /api/treasury/movements?desde&hasta[&accountId]`, conjunto completo de movimientos activos |
 | Generar reporte | `apiDownload` de `GET /api/reporting/export?type&format&desde&hasta[&accountId]` |
 
 * `type` es `ESTADO_RESULTADOS` o `MOVIMIENTOS`; `format` es `PDF` o `XLSX`; `desde` y
@@ -275,11 +276,25 @@ variacion, titulo del periodo, ruta de exportacion y filas del estado de resulta
   con `estado-resultados` o `movimientos-cuentas` y `pdf` o `xlsx`.
 * Vista previa y variacion cargan y fallan por separado, con skeleton y reintentar. La
   vista previa sigue al rango con una espera de 400 ms (`PREVIEW_DEBOUNCE_MS`) y solo si es
-  valido.
+  valido. Mientras cambia el rango se retiran los datos anteriores, tambien durante la
+  espera; no se presentan como datos del filtro nuevo.
 * Un error del backend al generar queda en un `Alert` en la pantalla, con lo digitado
   intacto; el exito es un toast con el nombre del archivo.
-* Bajo `md` las fechas se apilan; desde `lg` el formulario y la vista previa van en dos
-  columnas (2 y 3).
+* Encabezado propio con menu movil de AppShell. Dos columnas 3/5 (37,5/62,5 por ciento)
+  desde 960 px disponibles en el contenedor; debajo se apilan. PeriodPicker usa variante
+  form con fechas en auto-fit de minimo 160 px, sin cambiar los demas consumidores.
+* Movimientos comparte fetchPeriodMovements con Cuentas, agregando accountId opcional.
+  Consulta propia ['treasury', 'report-movements', desde, hasta, accountId]. Fecha e id
+  ascendentes como el archivo, paginacion local de 10 sobre el conjunto completo y
+  periodTotals compartido antes de paginar. Transferencias incluidas en ingresos/egresos.
+  Cambio de tipo, cuenta o periodo reinicia pagina, incluso con el mismo rango de fechas.
+  paginate ajusta la pagina visible si disminuye el conjunto; exportacion sin pagina.
+  DataTable con tarjetas moviles, sin edicion; cuenta solo en global. Concepto y categoria
+  de origen reales, sin pedir numeros de factura adicionales. No muestra saldos de apertura,
+  cierre o acumulados. Estados propios de carga, error, vacio y ausencia de cuentas.
+* Sin limite local de filas: el endpoint JSON no pagina ni trunca. La descarga conserva el
+  limite configurado en backend (20000 por defecto), independiente de la paginacion visual.
+  La carga de grandes volumenes en memoria queda como limitacion, sin endpoint nuevo.
 
 ## Inventario
 

@@ -6,6 +6,7 @@ interface PaginationProps {
   page: Omit<Page<unknown>, 'rows'>
   /** Que se cuenta, en plural: "1 a 25 de 231 facturas". */
   itemLabel: string
+  rangeSeparator?: string
   onPageChange: (page: number) => void
 }
 
@@ -13,11 +14,11 @@ const pageButton =
   'flex size-touch items-center justify-center rounded-control text-button lg:size-control transition-colors duration-(--duration-fast) focus-ring disabled:pointer-events-none disabled:text-text-subtle'
 
 /** Texto del rango y botones anterior, numeros y siguiente. */
-export function Pagination({ page, itemLabel, onPageChange }: PaginationProps) {
+export function Pagination({ page, itemLabel, rangeSeparator = ' a ', onPageChange }: PaginationProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="tabular text-small text-text-muted">
-        {page.from} a {page.to} de {page.total} {itemLabel}
+        {page.from}{rangeSeparator}{page.to} de {page.total} {itemLabel}
       </p>
       {page.totalPages > 1 && (
         <nav aria-label="Paginación">
