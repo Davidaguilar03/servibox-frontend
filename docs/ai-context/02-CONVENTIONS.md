@@ -142,7 +142,8 @@ necesite, no antes.
   `Detalle de factura` mientras tanto) y lo restaura al salir del shell.
 * El wordmark de las paginas publicas enlaza a `/` con `WordmarkLink`.
 * Toda pagina tiene un unico `h1` en todos los anchos y un unico landmark `main`. Login y
-  registro no llevan lema ni columna decorativa.
+  Registro usan fotografia ambiental desde lg, oculta en movil; variantes locales y
+  dimensiones de marca en [05-DESIGN-SYSTEM.md](05-DESIGN-SYSTEM.md).
 
 ## Accesibilidad del shell
 

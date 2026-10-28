@@ -1,7 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
-import { userMessage } from '../api/errorMessages'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { MESSAGES } from '../api/errorMessages'
+import { reportError } from '../api/reportError'
+import workshopPhoto from '../assets/register/register-workshop-v1.webp'
 import { register, startSession } from '../auth/authApi'
 import {
   EMPTY_REGISTER_VALUES,
@@ -18,15 +21,18 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { TextField } from '../components/TextField'
+import { iconSm } from '../components/icons'
 import { showToast } from '../components/toast'
+import { GLOSSARY } from '../copy/glossary'
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
 import { usePageMeta } from '../lib/usePageMeta'
+import './RegisterPage.css'
 
 const linkClass =
   'rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
-const legendClass = 'text-label text-text-muted'
+const legendClass = 'text-body font-semibold text-text'
 
 /** Lo que crea el backend al registrar (TenantRegistrationService), sin el administrador. */
 export const REGISTER_SUCCESS =
@@ -63,7 +69,7 @@ export function RegisterPage() {
     },
     onError: (error, request) => {
       if (error instanceof ApiError && error.status === 409) {
-        setSlugConflict({ slug: request.slug, message: userMessage(error) })
+        setSlugConflict({ slug: request.slug, message: reportError(error, { inlineOnly: true })! })
         slugRef.current?.focus()
       }
     },
@@ -113,6 +119,10 @@ export function RegisterPage() {
   }
 
   const error = mutation.error
+  const reportedError = reportError(error, { inlineOnly: true })
+  const errorMessage = reportedError === MESSAGES.network
+    ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
+    : reportedError
   const alert =
     error instanceof ApiError && error.status === 409
       ? null
@@ -122,28 +132,43 @@ export function RegisterPage() {
             body: 'Por ahora no estamos creando servitecas nuevas. Intenta de nuevo más tarde.',
           }
         : error
-          ? { title: 'No pudimos crear tu serviteca', body: userMessage(error) }
+          ? { title: 'No pudimos crear tu serviteca', body: errorMessage }
           : null
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12 sm:px-6">
-      <div className="mb-8">
-        <WordmarkLink />
+    <main id="register" className="bg-neutral-100 text-text">
+      <div className="register-scene">
+        <img className="register-photo" src={workshopPhoto} alt="" width={1122} height={1402} fetchPriority="high" decoding="async" />
+        <div className="register-scene-brand register-brand"><WordmarkLink onDark /></div>
+        <div className="register-scene-copy text-text-inverse">
+          <p className="register-statement font-display font-semibold">Tu serviteca empieza aquí.</p>
+          <p className="mt-3">Ventas, inventario y caja conectados.</p>
+        </div>
       </div>
-      <div className="w-full max-w-xl rounded-surface border border-border bg-surface p-6 sm:p-8">
-        <h1 className="text-title text-text">Crea tu serviteca</h1>
-        <p className="mt-1 text-small text-text-muted">
+      <div className="register-panel">
+        <nav aria-label="Navegación de registro" className="flex flex-wrap items-center justify-between gap-4">
+          <div className="register-mobile-brand register-brand"><WordmarkLink /></div>
+          <Link to="/" className="ml-auto inline-flex min-h-touch items-center gap-2 rounded-control text-small text-text focus-ring hover:underline">
+            <ArrowLeft {...iconSm} aria-hidden />Volver al inicio
+          </Link>
+        </nav>
+        <div className="register-content">
+        <p className="mb-4 flex items-center gap-3 text-label text-text-muted">
+          <span aria-hidden className="size-2 shrink-0 rounded-pill bg-brand" />CREA TU SERVITECA
+        </p>
+        <h1 className="register-title text-title text-text">Crea tu serviteca</h1>
+        <p className="mt-3 text-body text-text-muted">
           Llena los datos del negocio y de quien lo administra. La información de cada serviteca se guarda por separado.
         </p>
 
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-6" aria-label="Crear serviteca" aria-busy={mutation.isPending}>
           {alert && (
             <Alert tone="error" title={alert.title}>
               {alert.body}
             </Alert>
           )}
 
-          <fieldset className="flex flex-col gap-4">
+          <fieldset className="min-w-0 border-t border-border pt-6 flex flex-col gap-4">
             <legend className={`mb-4 ${legendClass}`}>1. Datos de la serviteca</legend>
             <TextField
               label="Nombre comercial"
@@ -154,7 +179,7 @@ export function RegisterPage() {
               onChange={(event) => changeBusinessName(event.target.value)}
               onBlur={() => blur('businessName')}
             />
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="register-fields grid gap-4">
               <TextField
                 label="NIT"
                 name="nit"
@@ -178,7 +203,7 @@ export function RegisterPage() {
             </div>
             <TextField
               ref={slugRef}
-              label="Código de tu serviteca"
+              label={GLOSSARY.tenantCode}
               name="slug"
               autoCapitalize="none"
               autoCorrect="off"
@@ -191,9 +216,9 @@ export function RegisterPage() {
             />
           </fieldset>
 
-          <fieldset className="flex flex-col gap-4">
+          <fieldset className="min-w-0 border-t border-border pt-6 flex flex-col gap-4">
             <legend className={`mb-4 ${legendClass}`}>2. Administrador</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="register-fields grid gap-4">
               <TextField
                 label="Nombre completo"
                 name="adminFullName"
@@ -270,8 +295,9 @@ export function RegisterPage() {
           </div>
 
           <ErrorSummary count={submitted ? Object.keys(errors).length + (slugError ? 1 : 0) : 0} />
-          <Button type="submit" className="w-full" disabled={mutation.isPending} aria-busy={mutation.isPending || undefined}>
-            {mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}
+          <Button type="submit" className="register-submit relative w-full" disabled={mutation.isPending} aria-busy={mutation.isPending || undefined}>
+            <span role="status">{mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}</span>
+            <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
           </Button>
         </form>
 
@@ -281,6 +307,11 @@ export function RegisterPage() {
             Iniciar sesión
           </Link>
         </p>
+        </div>
+        <footer className="text-right text-small text-text-muted">
+          <p className="mb-1">ServiBox · Colombia</p>
+          <Link to="/terminos" className="inline-flex min-h-touch items-center rounded-control underline focus-ring">Términos y datos personales</Link>
+        </footer>
       </div>
     </main>
   )

@@ -6,6 +6,28 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Registro (2026-10-28)
+
+* RegisterPage.css acota todas las reglas bajo #register. Desde lg foto 44%
+  y panel neutral-100 56%, formulario integrado max640 px sin tarjeta.
+  Foto decorativa cover 60%/35%, con velo gradual solo en la escena.
+  Cobertura exclusiva del hijo directo register-photo. Marca compartida
+  con simbolo 48x48, palabra 32/40 y ancho natural; capas 0/1/2 para foto,
+  velo y contenido. No modifica Login, marca global, favicon ni tokens.
+* Controles de texto y boton 52 px; casilla de terminos conserva su tamano.
+  Etiquetas 14/20, titulo 32/40 y 44/52 desde lg; mensaje ambiental 36/44.
+  Son variantes locales de los patrones del Login aprobado.
+* Formulario con dos fieldsets y sus ocho campos actuales. Dos columnas
+  desde sm solo con contenedor de al menos 440 px, una en movil. Altura
+  determinada por contenido, min-height 100svh sin altura fija ni overflow
+  que recorte formulario, errores o footer. Bajo lg foto oculta y marca
+  visible sobre formulario con Volver al inicio.
+* TextField, terminos explicitos, resumen de errores y foco conservados.
+  Formulario con nombre accesible y aria-busy; envio con status y bloqueo.
+  Logo, textos y navegacion en HTML. Fotografia generada decorativa, sin
+  testimonio real. Sin navegador ni auditoria visual automatizada.
+  Revision visual aprobada por David el 2026-10-28.
+
 ## Login (2026-10-28)
 
 * LoginPage.css acota todas las reglas bajo #login. Desde lg dos columnas
