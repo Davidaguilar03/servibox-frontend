@@ -12,11 +12,257 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-28: Cierre de Landing aprobado por David y recursos depurados
+
+* David aprueba la revision visual y autoriza publicar feat/39-landing-refresh.
+  Sin navegador en el cierre. Se conservan composicion responsive, producto
+  generado basado en funciones existentes y ultimo tratamiento ambiental FAQ.
+* Inventario real: 22 archivos al incluir el panorama nuevo sobre los 21
+  anteriores. Se eliminan 13 recursos demostrablemente obsoletos sin uso;
+  quedan nueve WebP finales, 4770978 bytes. Sin fuentes PNG ni originales
+  externos modificados. Inventario y limitaciones en la nota de sesion.
+* Producto generado no equivale a capturas reales. Contactos reales
+  pendientes, recursos pesados y rendimiento de carga sin medir se conservan
+  como limitaciones. La aprobacion visual reemplaza solo los pendientes de
+  revision de David, sin atribuir mediciones de rendimiento o API.
+
+## 2026-10-28: Fundido FAQ antes del acordeon y velo solo en el fondo
+
+* Fundido horizontal de la escena del 27 al 44% desde lg, antes de las
+  preguntas, para que no haya maquinaria entre tarjetas. Ultimo 10% inferior
+  suavizado; llantas inferiores izquierdas sin blanqueado uniforme.
+* En movil el fundido horizontal va del 28 al 60% de escena y el vertical
+  del 60 al 82%, limpiando el fondo antes de las preguntas apiladas.
+* Se elimina el pseudo-elemento del bloque de texto. Velo radial amplio
+  sobre la escena fotografica z0, con final transparente sin limite ligado
+  a la caja del titular. Toda capa ambiental tiene pointer-events none.
+  Texto y acordeon mantienen opacidad completa en z10; ninguna capa blanca
+  se monta sobre los signos iniciales de las preguntas.
+* Sin cambios de imagen, encuadre, dimensiones, espaciados ni cierre rojo.
+  Reemplaza solo las mascaras y el velo de la entrada siguiente; David
+  revisara la transicion y legibilidad sin revision en navegador del agente.
+
+## 2026-10-28: Panorama FAQ con llantas visibles y proteccion local del texto (capas reemplazadas)
+
+* Se sustituye solo la foto ambiental FAQ/cierre por faq-workshop-panorama-v2.webp,
+  1942x809 y 170438 bytes, WebP calidad 82 sin recortar ni redimensionar.
+  Original PNG externo conservado y comprobado por SHA256.
+* Escena absoluta de ancho completo desde lg, minimo visual 840 px debajo,
+  altura natural independiente del acordeon y sin reservar espacio adicional.
+  Se elimina el limite 54% y el velo casi blanco sobre toda la escena.
+* Foto sin opacity global: fundido hacia derecha del 35 al 80% y suavizado
+  solo del ultimo 10% inferior. Velo radial localizado detras del texto HTML,
+  sin rectangulo y sin extender su intensidad a las llantas inferiores.
+* Conserva contenedor, espaciados, acordeon blanco, panel rojo, rueda, CTA y
+  demas secciones. Revision visual de escritorio/movil pendiente de David.
+* Reemplaza el encuadre y velo de la entrada siguiente.
+
+## 2026-10-27: Encuadre natural del FAQ y velo ambiental sin rectangulo (reemplazado)
+
+* La foto de FAQ usaba h-full/object-cover dentro de la altura conjunta de
+  FAQ y cierre: al crecer el contenido, crecia tambien la escala de la imagen.
+  Ahora una escena absoluta anclada arriba/izquierda usa ancho 54% desde lg,
+  100% debajo; su img mantiene ancho completo de escena y height auto con
+  proporcion nativa 960x640. No depende del alto del acordeon ni reserva altura.
+* Se elimina el fondo del bloque de texto. Velo gradual en pseudo-elemento
+  de la escena fotografica y mascaras de desvanecimiento lateral e inferior,
+  sin blur ni opacity sobre el texto o el acordeon. El punto 280px es una
+  parada del gradiente, no altura minima o espacio de contenido.
+* Contexto ambiental, separacion, alineaciones, cierre, rueda y boton se
+  conservan. No se genera ni reexporta ningun recurso y no se toca otra
+  seccion de interfaz. Reemplaza solo el encuadre y velo del FAQ de la
+  entrada anterior; comprobacion visual pendiente de David.
+
+## 2026-10-27: Ambiente compartido FAQ/cierre y accion final
+
+* FAQ y cierre comparten landing-faq-environment, relativo y aislado. Foto
+  absoluta desde arriba hasta el final del contexto, anclada a la izquierda,
+  con fundido CSS hacia la derecha. No participa de altura ni eventos.
+  Texto FAQ con velo claro localizado, acordeon blanco y cierre rojo solidos
+  por delante. Sin difuminar ni reducir opacidad del contenido.
+* Se elimina la ventana rectangular de foto 2:1. Se conservan alineaciones,
+  contenedor 1760 y separacion inferior FAQ 48/32. Apertura del acordeon en
+  flujo natural, sin alturas reservadas ni margen lateral negativo.
+* Solo la accion del cierre usa variante local: 56 px, texto 16/18 desde lg,
+  semibold, fondo blanco y texto oscuro, radio surface 12, padding 24/32,
+  borde border y shadow-raised existente. Flecha decorativa y foco inverso.
+  Mantiene hover/active secundarios y destino de sesion vigente. Agrupada
+  debajo del mensaje, en ocho columnas, separada del cuarto de la rueda.
+* Funciones usa canvas existente (#f2f3f5) a ancho de ventana, frente a
+  neutral-100 de pasos. No se cambia paleta, tipografia, ancho general ni
+  pasos. Stock solo en funciones baja a max580; columnas de recursos
+  minmax(0,580px)/minmax(0,460px) con gap32 desde lg, centradas. Asi el
+  espacio sobrante no se acumula entre imagenes. Cuentas/utilidad sin cambios.
+* Reemplaza el FAQ fotografico rectangular y la accion aislada del cierre de
+  la entrada anterior. Recursos binarios, portada, navbar y Reportes intactos;
+  sin navegador ni generacion/exportacion de imagen. Revision visual de David.
+
+## 2026-10-27: Fondo continuo de introduccion y escala propia de recursos
+
+* Navbar y portada comparten un unico header exterior aislado a ancho de
+  ventana. Foto absoluta inset 0 desde el borde superior hasta el final
+  de la portada, sin recortar ni afectar el grupo blanco Navegacion y acceso
+  en z30. Contenido z10 y ambiente z0, pointer-events none. Main empieza
+  despues de la introduccion y SkipLink conserva main#contenido como destino.
+* No se reduce el ancho aprobado: 1760 px y margenes minimos 24/16.
+  Se separa ancho de seccion de recursos: pasos max440 para venta/stock y
+  max320 pago, centrados; stock de funciones max660 y cuentas max460 con
+  utilidad alineada en la misma columna. Sin min-height ni espaciadores.
+* Titulos de paso 22/28 y 24/32 desde lg; descripciones 18 y 20 desde lg,
+  interlineado 1,6. Reportes titulo 32/36 y 44/48 desde lg, imagen max520
+  centrada; desde lg su ancho tambien se limita a 56svh para que su altura
+  natural ronde como maximo 70% del viewport, sin imponer altura fija.
+* FAQ sin margen negativo ni fundido blanco: imagen natural dentro de una
+  ventana responsive max520 con proporcion 2:1, sin estirar el bitmap.
+  Se recorta solo ambiente inferior, no texto ni preguntas. Contenido
+  alineado arriba; padding inferior 48 desde lg y 32 debajo, sin reserva
+  de altura. Las respuestas expanden el documento naturalmente.
+* Reemplaza las escalas sin limite de imagen, el fondo que empezaba debajo
+  del navbar y el encuadre anterior del FAQ. Recursos binarios intactos:
+  no se exporta, genera ni convierte ninguna imagen en esta iteracion.
+  Verificacion tecnica sin navegador; aprobacion visual pendiente de David.
+
+## 2026-10-27: Ancho 1760, fondo independiente y producto sin perdida
+
+* Se revisa cadena completa: index.html, main, App, ruta publica y Landing.
+  La raiz no pasa por AppShell ni tiene max-width. La restriccion general era
+  landing-container a 1360 px y margenes de 48 px desde lg; Reportes ademas
+  limitaba su imagen a 560 px. Se sustituyen por maximo 1760 y margen 24 desde
+  lg, 16 debajo; Reportes ocupa su columna. Prosa limitada dentro de columnas.
+* La foto estaba en figure con aislamiento y offsets superiores negativos,
+  mientras el header carecia de capa propia. Esa estructura permitia pintar
+  el fondo posterior sobre la parte inferior del navbar. Ahora header relativo
+  z30, hero aislado z0 y contenido z10; la foto ocupa toda la seccion a ancho
+  de ventana, sin offsets negativos. Solo su capa ambiental se enmascara y
+  recorta, con pointer-events none. Sin overflow horizontal global.
+* Se retira frase del piloto, sus dos lineas y el bloque espaciador. Se
+  conservan sus referencias historicas en las notas. Funciones y rutas intactas.
+* Imagenes de producto en contenedores sin borde ni fondo nuevo, radio local
+  20 px y overflow hidden, incluido Reportes. El recorte afecta solo esquinas
+  del bitmap, no el header ni toda la pagina. Sin deformar ni recortar datos.
+* Los seis WebP se reconvierten directamente desde PNG a lossless, mismas
+  dimensiones y RGB identico pixel a pixel. No habia variante pequena, srcset,
+  filtros, opacidad ni transform scale en Inicio. Se acepta aumento de peso
+  para eliminar perdida de codec; no se presenta como recuperacion de detalle.
+  Inventario y limites de densidad, incluida peticion de originales mayores
+  para 2x en hero, stock y reporte, quedan en la nota de sesion.
+* Reemplaza medidas y calidad de la entrada anterior. Originales externos,
+  marca, favicon, contactos omitidos, FAQ/DIAN, backend y AGENTS intactos.
+  Sin navegador: capas, medidas y calidad descritas son verificacion de codigo
+  y archivos, no certificacion visual de ausencia de cortes o nitidez.
+
+## 2026-10-27: Landing fluida y representaciones de producto v2
+
+* David autoriza sustituir recortes pequenos por seis imagenes generadas de
+  funciones existentes. No se describen como capturas reales. Se retiran los
+  pies y rotulos de referencia o ilustracion, tambien las expectativas antiguas.
+  Reemplaza el requisito anterior de identificar Reportes con un rotulo visible.
+* Contenedor exclusivo de Landing: maximo util 1360 px, ancho de ventana menos
+  32 px bajo sm, 64 desde sm y 96 desde lg. El anterior max-w-6xl era 72 rem
+  (1152 px con raiz 16), con 64 px adicionales de relleno desde lg. No se
+  modifica html, raiz, tokens globales, zoom ni escala. Cuerpo 16 px y 18 desde
+  lg; ayudas 14. Jerarquia protagonista anterior conservada.
+* Los seis WebP conservan dimensiones de origen; stock-panel se reutiliza
+  sin duplicarlo. Pasos apilados bajo lg, tres columnas desde lg con items-start,
+  imagenes tras el texto y sin flex-1 ni alturas forzadas. Pago usa ancho completo
+  bajo lg y 72% desde lg; mantiene proporcion vertical sin alargar las otras tarjetas.
+* Funciones 60/40 con columna derecha propia, sin row-span ni estiramiento del
+  inventario. Titulos HTML de stock y cuentas accesibles sin repetir visualmente
+  los de las imagenes. Reportes usa una sola superficie y descripcion accesible
+  HTML, sin marco adicional ni botones falsos. Fotografia y rueda conservadas.
+* Cambios acotados a Landing, recursos, pruebas y docs; codigo de Reportes,
+  backend, AGENTS, contactos y pantallas privadas sin cambios. Revision visual
+  y lectura pendientes de David; medidas reportadas son definiciones de codigo.
+
+## 2026-10-27: Composicion de Landing con capturas actuales y reporte ilustrativo
+
+* David autoriza escala exclusiva de Landing y la imagen ilustrativa de Reportes.
+  Se inspeccionan resource-manifest, referencia y seis recursos seleccionados.
+  Hero usa hero-workshop-mechanic-v2, nunca el experimento sin personas.
+* Dos fuentes reales actuales de David producen seis recortes deterministas de
+  Inicio y Nueva venta: portada, tres pasos, stock y saldos. Solo recorte y
+  compresion; sin importes, etiquetas ni controles reconstruidos. Se ajustan dos
+  limites sugeridos para excluir una fila incompleta y conservar el encabezado.
+  Coordenadas, dimensiones, procedencia y limitaciones en la nota de sesion.
+* LandingPage.css limita las variantes a #landing: H1 36/40 y 56/60 desde lg;
+  secciones 28/32 y 36/40; funciones 20/28 y 24/32. Sin modificar tokens
+  globales. Montserrat y pesos del sistema. Mascaras CSS integran foto y FAQ.
+* Portada 40/60 con captura real delante de foto y acento discreto; sombra
+  raised autorizada solo para esa captura flotante, registrada en la guarda.
+  Pasos con imagenes y flechas; beneficios 60/40; reporte ilustrativo a la
+  derecha de beneficios e iconos informativos. Cierre con tipografia ampliada.
+* Reportes conserva el rotulo Vista ilustrativa de la imagen y agrega una
+  leyenda HTML visible. Las seis filas y PDF/Excel corresponden a capacidades
+  existentes; sus cifras no se copian al texto comercial. No hay pestanas falsas
+  ni aviso flotante de venta registrada. Se mantiene aclaracion DIAN y sesion.
+* Reemplaza las composiciones provisionales, la foto anterior y los pendientes
+  de capturas de las entradas anteriores. Quedan contactos reales y aprobacion
+  visual de David; las fotos ambientales no se consideran automaticamente
+  aprobadas. Backend, AGENTS y pantallas privadas permanecen fuera del alcance.
+
+## 2026-10-27: Integracion de los tres recursos ambientales de Landing
+
+* Se integran hero-workshop, faq-workshop y cta-tire aportados por David
+  desde landing-assets externo, inspeccionados antes de usarlos. Son imagenes
+  ambientales generadas, no clientes ni capturas reales del producto.
+* Conversion real con Pillow a WebP en src/assets/landing, sin instalar
+  dependencias y sin alterar los PNG externos. Rueda en RGBA, alfa conservado
+  exactamente frente al PNG redimensionado. Medidas y pesos en la sesion.
+* Portada: imagen a la derecha en lugar del panel editorial de iconos.
+  FAQ: imagen bajo el texto izquierdo. Cierre: rueda a la derecha, recortada
+  por la superficie roja; en movil pasa al flujo para no cubrir texto ni CTA.
+  Imagenes decorativas, dimensiones explicitas, alta prioridad solo en portada
+  y carga diferida en las otras dos. Texto y acciones siguen en HTML.
+* Reemplaza solo el estado de imagenes ambientales pendientes de la decision
+  anterior. Siguen pendientes las cuatro capturas actuales, sus recortes y
+  contactos reales; no se fabrican pantallas ni se declara fidelidad comprobada.
+
+## 2026-10-27: Correccion visual de Landing, recursos obligatorios
+
+* David detecto que la estructura sin las imagenes no satisface landing.png.
+  Reemplaza la decision anterior de tratar el panel editorial de portada
+  como sustituto suficiente de la presentacion grafica del producto.
+* Se conservan los cambios de feat/39-landing-refresh. No hay fotos ambientales
+  independientes en el repositorio; la referencia de 732x2148 no permite
+  extraerlas limpias a la resolucion necesaria. No se agregan sustitutos,
+  capturas ficticias, dependencias ni descargas arbitrarias.
+* Pendientes: tres recursos ambientales preparados desde el chat y cuatro
+  capturas actuales aportadas por David. El inventario de la nota de sesion
+  distingue posicion, proporcion, dimensiones, recortes reales y rutas.
+  Las miniaturas de interfaz de la propuesta no se consideran capturas reales.
+* No se cambia codigo en esta correccion documental: recuperar la composicion
+  con imagenes sigue pendiente de los recursos. La portada editorial actual
+  es una limitacion abierta, no una alternativa visual aprobada.
+
+## 2026-10-27: Landing y orden restante del rediseno
+
+* Decision: orden vigente: 7 Landing, 8 Login, 9 Registro, 10 Reportes,
+  11 Configuracion. Despues se retoman integracion y entrega del MVP.
+  Reemplaza las menciones anteriores que situaban Reportes inmediatamente
+  despues del selector de color de cuentas.
+* Decision: feat/39-landing-refresh adapta landing.png: portada clara,
+  flujo de venta en tres pasos, beneficios, franja oscura de reportes,
+  preguntas frecuentes, cierre rojo y pie oscuro. Marca y favicon compartidos;
+  mismos tokens, botones, radios y escala tipografica, sin dependencias.
+* Recursos: las cuatro capturas de octubre 25 muestran interfaces anteriores
+  al rediseno. Se conservan en disco pero no se presentan como producto actual.
+  La portada reserva una superficie editorial con la marca y las areas reales
+  del producto, sin simular una pantalla, importes ni controles. David debe
+  aportar capturas actuales de Inicio, Nueva factura de venta, Productos y
+  Reportes, esta ultima despues de la tarea 10. Ver nota de sesion.
+* Contactos: se omiten WhatsApp y correo demostrativos solo en la landing y
+  la pregunta de precios que remitia a ellos. Configuracion compartida y otras
+  pantallas quedan fuera de alcance. Pendiente contacto real confirmado.
+* Reemplaza la composicion, capturas y contactos de la landing en la decision
+  del 2026-10-25; conserva sus reglas de honestidad, DIAN, rutas y sesion.
+* Motivo: acercar la presentacion a la referencia sin publicar recursos
+  desactualizados ni datos inventados. Revision visual manual de David.
+
 ## 2026-10-27: Selector persistente de color de cuentas
 
 * Decision: feat/38-account-colors ocupa el extra frontend del rediseno. Backend
-  PR 42 ya mergeado segun David. Reportes sigue como siguiente tarea; actualizar
-  la numeracion de sus ramas y las posteriores del plan antes de iniciarlas.
+  PR 42 ya mergeado segun David. Orden reemplazado por la decision de Landing
+  de esta fecha: Landing, Login, Registro, Reportes y Configuracion.
 * Decision: paleta breve y selector nativo comparten un valor en Nueva/Editar.
   Nueva envia azul inicial; Editar precarga color persistido o propone el acento
   estable anterior por id si es null. Confirmar Guardar persiste la propuesta;

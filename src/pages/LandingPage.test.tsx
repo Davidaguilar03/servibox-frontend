@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
@@ -19,8 +19,7 @@ describe('landing', () => {
     renderRoute('/')
 
     const h1 = await screen.findByRole('heading', { level: 1 })
-    expect(h1).toHaveTextContent('Una venta. Inventario y caja al día.')
-    expect(h1).toHaveClass('text-display')
+    expect(h1).toHaveTextContent('Tu serviteca,bajo control.De verdad.')
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(
       screen.getByText(
@@ -34,7 +33,7 @@ describe('landing', () => {
     expect(document.title).toBe('ServiBox | Ventas, inventario y caja para servitecas')
   })
 
-  it('los encabezados van en orden y las secciones llevan text-title', async () => {
+  it('los encabezados van en orden y las secciones tienen nombre accesible', async () => {
     renderRoute('/')
     await screen.findByRole('heading', { level: 1 })
 
@@ -42,14 +41,14 @@ describe('landing', () => {
     levels.forEach((level, index) => {
       if (index > 0) expect(level - levels[index - 1]!).toBeLessThanOrEqual(1)
     })
-    for (const name of ['Lo que haces con ServiBox', 'Y también', 'Preguntas frecuentes']) {
-      expect(screen.getByRole('heading', { level: 2, name })).toHaveClass('text-title')
+    for (const name of ['Una venta. Todo conectado.', 'Lo que necesitas, en orden.', 'Lo que quieres saber.']) {
+      expect(section(name)).toHaveAccessibleName(name)
     }
   })
 
   it('la barra tiene Crear cuenta como unico primario e Iniciar sesion secundario', async () => {
     renderRoute('/')
-    const header = await screen.findByRole('banner')
+    const header = await screen.findByRole('group', { name: 'Navegación y acceso' })
 
     const login = within(header).getByRole('link', { name: 'Iniciar sesión' })
     const register = within(header).getByRole('link', { name: 'Crear cuenta' })
@@ -59,55 +58,105 @@ describe('landing', () => {
     expect(primaryLinks(header)).toEqual([register])
   })
 
-  it('el hero tiene un solo boton primario, la captura real y su leyenda', async () => {
+  it('la portada ofrece registro, mecanico y panel de Inicio sin rotulos de captura', async () => {
     renderRoute('/')
     const hero = (await screen.findByRole('heading', { level: 1 })).closest('section') as HTMLElement
 
     expect(primaryLinks(hero)).toHaveLength(1)
     expect(within(hero).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
-    const image = within(hero).getByRole('img')
-    expect(image.getAttribute('src')).toMatch(/assets\/landing\/hero-inicio\.webp$/)
-    expect(image).toHaveAttribute('fetchpriority', 'high')
-    expect(image).not.toHaveAttribute('loading')
-    expect(image).toHaveAttribute('width', '1200')
-    expect(image).toHaveAttribute('height', '836')
-    expect(image.getAttribute('alt')).not.toBe('')
-    expect(within(hero).getByText('Pantalla real de ServiBox con datos de demostración.')).toBeInTheDocument()
+    const ambient = screen.getByRole('banner').querySelector('img[src$="hero-workshop-mechanic-v2.webp"]')!
+    expect(ambient.getAttribute('src')).toMatch(/hero-workshop-mechanic-v2\.webp$/)
+    expect(ambient).toHaveAttribute('alt', '')
+    const dashboard = within(hero).getByRole('img', { name: /^Panel de Inicio/ })
+    expect(dashboard.getAttribute('src')).toMatch(/product-visuals-v2\/hero-dashboard\.webp$/)
+    expect(dashboard).toHaveAttribute('width', '1586')
+    expect(dashboard).toHaveAttribute('height', '992')
+    expect(dashboard).toHaveAttribute('fetchpriority', 'high')
+    expect(ambient).not.toHaveAttribute('loading')
+    expect(within(hero).getByRole('link', { name: 'Conoce cómo funciona' })).toHaveAttribute('href', '#como-funciona')
+    expect(hero.querySelector('img[src*="hero-inicio"]')).not.toBeInTheDocument()
   })
 
-  it('tres bloques de lo que haces, cada uno con su captura y alt', async () => {
+  it('las imagenes ambientales son decorativas y reservan dimensiones sin reemplazar texto o acciones', async () => {
+    renderRoute('/')
+    const hero = (await screen.findByRole('heading', { level: 1 })).closest('header')!
+    const faq = section('Lo que quieres saber.')
+    const closing = screen.getByRole('heading', { level: 2, name: /Tu próxima venta,/ }).closest('section')!
+    for (const [area, name, width, height] of [
+      [hero, 'hero-workshop-mechanic-v2', '1280', '960'],
+      [screen.getByRole('main'), 'faq-workshop-panorama-v2', '1942', '809'],
+      [closing, 'cta-tire', '640', '960'],
+    ] as const) {
+      const image = area.querySelector(`img[src$="${name}.webp"]`)!
+      expect(image.getAttribute('src')).toMatch(new RegExp(`${name}\\.webp$`))
+      expect(image).toHaveAttribute('alt', '')
+      expect(image).toHaveAttribute('width', width)
+      expect(image).toHaveAttribute('height', height)
+      if (area !== hero) {
+        expect(image).toHaveAttribute('loading', 'lazy')
+        expect(image).toHaveAttribute('decoding', 'async')
+      }
+    }
+    expect(within(closing).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
+    expect(faq.querySelectorAll('summary')).toHaveLength(5)
+  })
+
+  it('el flujo explica la venta, el descuento de productos y el cobro de credito sin anticiparlo', async () => {
     renderRoute('/')
     await screen.findByRole('heading', { level: 1 })
-    const flows = section('Lo que haces con ServiBox')
-
-    const blocks = within(flows).getAllByRole('article')
+    const flows = section('Una venta. Todo conectado.')
+    const blocks = within(flows).getAllByRole('listitem')
     expect(blocks.map((block) => within(block).getByRole('heading', { level: 3 }).textContent)).toEqual([
-      'Registra una venta y todo se actualiza',
-      'Sabe qué se te acaba',
-      'Mira cuánto ganas de verdad',
+      'Registra la venta',
+      'Actualiza el inventario',
+      'Refleja el pago en caja',
     ])
-    const names = ['flujo-venta', 'flujo-inventario', 'flujo-reportes']
-    blocks.forEach((block, index) => {
-      const image = within(block).getByRole('img')
-      expect(image.getAttribute('src')).toMatch(new RegExp(`assets/landing/${names[index]}\\.webp$`))
-      expect(image.getAttribute('alt')?.trim()).not.toBe('')
+    expect(blocks[1]).toHaveTextContent('El stock de los productos vendidos se descuenta automáticamente.')
+    expect(flows).not.toHaveTextContent(/productos o servicios|servicios no descuentan/i)
+    expect(blocks[2]).toHaveTextContent('Si vendes a crédito, el dinero entra cuando registras cada abono.')
+    for (const [index, name, width, height] of [[0, 'step-sale', '1448', '1086'], [1, 'stock-panel', '1448', '1086'], [2, 'step-payment', '1122', '1402']] as const) {
+      const image = within(blocks[index]!).getByRole('img')
+      expect(image.getAttribute('src')).toMatch(new RegExp(`${name}\\.webp$`))
+      expect(image).toHaveAttribute('width', width)
+      expect(image).toHaveAttribute('height', height)
       expect(image).toHaveAttribute('loading', 'lazy')
-      expect(image).toHaveAttribute('decoding', 'async')
-      expect(image).toHaveAttribute('width', '1200')
-      expect(image).toHaveAttribute('height', '836')
-    })
+    }
   })
 
-  it('Y tambien es una lista y la empresa piloto una sola linea', async () => {
+  it('presenta las funciones existentes sin mencionar empresa ni negocio piloto', async () => {
     renderRoute('/')
     await screen.findByRole('heading', { level: 1 })
 
-    expect(within(section('Y también')).getAllByRole('listitem')).toHaveLength(5)
-    expect(
-      screen.getByText(
-        'ServiBox se probó en Autollantas A&C S.A.S., un negocio de llantas, lubricantes y servicios automotrices.',
-      ),
-    ).toBeInTheDocument()
+    const features = section('Lo que necesitas, en orden.')
+    expect(within(features).getAllByRole('article')).toHaveLength(3)
+    expect(within(features).getByText('Compras a proveedores con sus pagos.')).toBeInTheDocument()
+    const reports = section('Menos archivos sueltos. Más claridad.')
+    const preview = within(reports).getByRole('img')
+    expect(preview).toHaveAccessibleDescription(/ventas sin IVA, costo de lo vendido, utilidad bruta, otros ingresos, gastos operativos y utilidad neta/)
+    const featureStock = within(features).getByRole('img', { name: 'Productos con stock bajo y sus alertas.' })
+    expect(featureStock.getAttribute('src')).toMatch(/product-visuals-v2\/stock-panel\.webp$/)
+    const stepStock = within(section('Una venta. Todo conectado.')).getByRole('img', { name: 'Productos con stock bajo y sus alertas.' })
+    expect(featureStock.getAttribute('src')).toBe(stepStock.getAttribute('src'))
+    expect(within(features).getByRole('img', { name: /^Saldos de cuentas/ }).getAttribute('src')).toMatch(/product-visuals-v2\/feature-balances\.webp$/)
+    expect(reports).not.toHaveTextContent('Compras')
+    expect(document.body).not.toHaveTextContent(/Autollantas|A&C|empresa piloto|negocio piloto|se probó en/i)
+  })
+
+  it('los recursos no llevan rotulos de referencia y los controles dibujados no son acciones de la landing', async () => {
+    renderRoute('/')
+    await screen.findByRole('heading', { level: 1 })
+    const reports = section('Menos archivos sueltos. Más claridad.')
+    expect(document.body).not.toHaveTextContent(/Vista ilustrativa|Referencia|Captura real/i)
+    for (const image of screen.getAllByRole('img')) expect(image).not.toHaveAccessibleName(/captura real|vista ilustrativa|referencia/i)
+    expect(within(reports).getByRole('img').getAttribute('src')).toMatch(/feature-reports\.webp$/)
+    expect(within(reports).getByRole('img')).toHaveAttribute('width', '1122')
+    expect(within(reports).getByRole('img')).toHaveAttribute('height', '1402')
+    const modules = within(reports).getByRole('list', { name: 'Áreas del producto' })
+    expect(within(modules).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Ventas', 'Inventario', 'Cuentas', 'Reportes'])
+    expect(within(reports).queryByRole('tab')).not.toBeInTheDocument()
+    expect(within(reports).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(reports).queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Agregar producto|Guardar factura|PDF|Excel/ })).not.toBeInTheDocument()
   })
 
   it('las 5 preguntas frecuentes estan cerradas y se abren', async () => {
@@ -115,45 +164,84 @@ describe('landing', () => {
     renderRoute('/')
     await screen.findByRole('heading', { level: 1 })
 
-    const details = [...section('Preguntas frecuentes').querySelectorAll('details')]
+    const details = [...section('Lo que quieres saber.').querySelectorAll('details')]
     expect(details).toHaveLength(5)
     for (const item of details) expect(item).not.toHaveAttribute('open')
     const dian = details.find((item) => item.textContent?.includes('¿Reemplaza la facturación electrónica de la DIAN?'))
     expect(dian?.textContent).toContain('No emite facturas electrónicas')
 
     // jsdom no activa summary con Enter ni espacio: el teclado se verifica en el navegador.
-    await user.click(details[0]!.querySelector('summary') as HTMLElement)
-    expect(details[0]).toHaveAttribute('open')
+    for (const item of details) {
+      const summary = item.querySelector('summary') as HTMLElement
+      await user.click(summary)
+      expect(item).toHaveAttribute('open')
+      await user.click(summary)
+      expect(item).not.toHaveAttribute('open')
+    }
   })
 
-  it('el cierre y el pie usan los contactos de contact.ts y el pie enlaza los terminos', async () => {
+  it('el cierre lleva al registro y el pie conserva los destinos existentes sin contactos de ejemplo', async () => {
+    const user = userEvent.setup()
     renderRoute('/')
     await screen.findByRole('heading', { level: 1 })
 
     const closing = screen
-      .getByRole('heading', { level: 2, name: 'Registra tu serviteca y empieza a llevar ventas e inventario hoy mismo.' })
+      .getByRole('heading', { level: 2, name: /Tu próxima venta,/ })
       .closest('section') as HTMLElement
-    expect(primaryLinks(closing)).toHaveLength(1)
+    expect(within(closing).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
     for (const area of [closing, screen.getByRole('contentinfo')]) {
-      expect(within(area).getByRole('link', { name: WHATSAPP_DISPLAY })).toHaveAttribute('href', WHATSAPP_URL)
-      expect(within(area).getByRole('link', { name: SUPPORT_EMAIL })).toHaveAttribute('href', `mailto:${SUPPORT_EMAIL}`)
+      expect(within(area).queryByRole('link', { name: WHATSAPP_DISPLAY })).not.toBeInTheDocument()
+      expect(within(area).queryByRole('link', { name: SUPPORT_EMAIL })).not.toBeInTheDocument()
     }
     const footer = screen.getByRole('contentinfo')
     expect(within(footer).getByRole('link', { name: 'Términos y tratamiento de datos' })).toHaveAttribute('href', '/terminos')
     expect(within(footer).getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
     expect(within(footer).getByRole('link', { name: 'Crear cuenta' })).toHaveAttribute('href', '/registro')
     expect(primaryLinks(footer)).toHaveLength(0)
+    await user.click(within(closing).getByRole('link', { name: 'Crear mi serviteca' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Crea tu serviteca' })).toBeInTheDocument()
   })
 
   it('con sesion muestra Ir al panel en lugar de iniciar sesion y crear cuenta', async () => {
     saveToken(validToken())
     renderRoute('/')
-    const header = await screen.findByRole('banner')
+    const header = await screen.findByRole('group', { name: 'Navegación y acceso' })
 
     expect(within(header).getByRole('link', { name: 'Ir al panel' })).toHaveAttribute('href', '/inicio')
     expect(within(header).queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
     expect(within(header).queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Crear mi serviteca' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Ir al panel' })).toHaveLength(4)
+    for (const link of screen.getAllByRole('link', { name: 'Ir al panel' })) expect(link).toHaveAttribute('href', '/inicio')
+  })
+
+  it('todas las anclas tienen un destino visible y no hay controles sin accion ni contactos ficticios', async () => {
+    renderRoute('/')
+    await screen.findByRole('heading', { level: 1 })
+    const navigation = screen.getByRole('navigation', { name: 'Navegación principal' })
+    expect(within(navigation).getAllByRole('link')).toHaveLength(3)
+    for (const link of screen.getAllByRole('link')) {
+      const href = link.getAttribute('href')!
+      expect(href).not.toBe('#')
+      expect(href).not.toMatch(/\.example|wa\.me|mailto:/)
+      if (href.startsWith('#')) expect(document.getElementById(href.slice(1))).toBeVisible()
+      else expect(['/', '/login', '/registro', '/terminos']).toContain(href)
+    }
+    expect(document.querySelector('img[src*="hero-inicio"], img[src*="flujo-"]')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/prueba gratis|garantizado|%|\$|300 000 0000|\.example/i)
+  })
+
+  it.each([
+    ['Iniciar sesión', 'Iniciar sesión'],
+    ['Crear cuenta', 'Crea tu serviteca'],
+  ])('la accion %s abre su pagina publica', async (action, heading) => {
+    const user = userEvent.setup()
+    renderRoute('/')
+    const header = await screen.findByRole('group', { name: 'Navegación y acceso' })
+    await user.click(within(header).getByRole('link', { name: action }))
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
   })
 })
 
@@ -234,11 +322,21 @@ describe('paginas publicas', () => {
     expect(readFileSync('index.html', 'utf-8')).not.toMatch(/573000000000|hola@servibox/)
   })
 
-  it('las capturas existen en src/assets/landing y pesan 250 KB o menos', () => {
-    for (const name of ['hero-inicio', 'flujo-venta', 'flujo-inventario', 'flujo-reportes']) {
-      const size = statSync(`src/assets/landing/${name}.webp`).size
-      expect(size).toBeGreaterThan(0)
-      expect(size).toBeLessThanOrEqual(250 * 1024)
+  it('conserva el favicon compartido con el simbolo de marca', () => {
+    expect(readFileSync('index.html', 'utf-8')).toMatch(/rel="icon"[^>]*href="\/src\/brand\/symbol.svg"/)
+  })
+
+  it('los recursos son WebP y el producto conserva codificacion sin perdida con peso acotado', () => {
+    for (const name of ['hero-workshop-mechanic-v2', 'faq-workshop-panorama-v2', 'cta-tire', ...['hero-dashboard', 'step-sale', 'stock-panel', 'step-payment', 'feature-balances', 'feature-reports'].map((name) => `product-visuals-v2/${name}`)]) {
+      const file = readFileSync(`src/assets/landing/${name}.webp`)
+      expect(file.toString('ascii', 0, 4)).toBe('RIFF')
+      expect(file.toString('ascii', 8, 12)).toBe('WEBP')
+      if (name.startsWith('product-visuals-v2/')) {
+        expect(file.toString('ascii', 12, 16)).toBe('VP8L')
+        expect(file.length).toBeLessThan(1024 * 1024)
+      } else {
+        expect(file.length).toBeLessThan(180 * 1024)
+      }
     }
   })
 })

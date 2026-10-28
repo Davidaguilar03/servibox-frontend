@@ -35,6 +35,8 @@ const FLOATING_SHADOWS: Record<string, string[]> = {
   'components/ListHeader.tsx': ['shadow-raised'],
   // Panel del menu de usuario del pie lateral.
   'layout/UserMenu.tsx': ['shadow-raised'],
+  // Imagen de Inicio y accion final autorizadas, solo en Landing.
+  'pages/LandingPage.tsx': ['shadow-raised'],
 }
 
 /**

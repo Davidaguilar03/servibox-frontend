@@ -6,6 +6,86 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Landing (2026-10-27)
+
+* Contenedor util fluido maximo 1760 px: ventana menos 32 px bajo lg
+  y 48 desde lg, centrado. Reemplaza limite 1360 y margenes anteriores.
+  Medidas definidas en px solo en LandingPage.css; raiz, html y tokens intactos.
+  Cuerpo y h3 16 px, 18 desde lg; ayudas 14. Las variantes de titulo conservan
+  prioridad propia. Sin zoom, transform scale ni anchos minimos de contenido.
+* Banner exterior a ancho de ventana compartido por navbar y portada; foto
+  ambiental desde arriba del navbar hasta el final de portada, independiente
+  del contenedor interior 40/60 desde lg. Grupo de barra blanca relativo con
+  z30, banner aislado con z0 y contenido con z10. Se
+  eliminan offsets negativos de foto y se recorta solo la capa ambiental,
+  con pointer-events none; no se recorta el header ni la pagina completa.
+  Mascaras laterales e inferiores integran la foto al
+  fondo claro. Acento tenue border-accent; imagen con radio surface y sombra
+  raised discreta. Excepcion de sombra documentada en la guarda solo para
+  LandingPage para esa imagen y la accion final autorizada; sin borde grueso.
+  Cada vista de producto usa landing-product-frame con radio local 20 px y
+  recorte de sus propias esquinas, sin doble marco, nuevo fondo ni cambio
+  de radios globales. Se retira el bloque del piloto y sus lineas decorativas.
+* Limites responsive separados del ancho de seccion: venta y stock de pasos
+  max440 px, pago max320, centrados, con height auto. Titulos de paso 22/28,
+  24/32 desde lg; descripciones 18 y 20 desde lg con interlineado 1,6.
+  Funciones con stock max580 px y cuentas/utilidad max460, sin estirar
+  tarjetas. Desde lg pistas minmax(0,580px)/minmax(0,460px), gap32 y
+  conjunto centrado: se compacta solo el grupo de recursos. Seccion sobre
+  canvas existente, a ancho de ventana, pasos sobre neutral-100 sin cambios.
+  Reportes max520 px centrado; desde lg
+  max-width min(520px,56svh), manteniendo ratio natural y titulo 44/48.
+* Las seis imagenes product-visuals-v2 son representaciones generadas, no
+  capturas reales. No llevan pies visibles de captura, referencia o ilustracion.
+  Pasos con flechas horizontales y tres columnas desde lg, verticales debajo;
+  items-start y sin espaciadores flexibles. Limites de imagen no amplian
+  recursos en ventanas pequenas ni imponen altura a otras columnas.
+* Beneficios con columnas independientes y alineacion inicial: inventario
+  sin row-span, stock-panel reutilizado en dos ubicaciones con una unica fuente.
+  Sin titulos visibles repetidos ni marcos anidados. Reportes con alt breve y
+  seis conceptos accesibles en HTML, sin otra tarjeta. Parrafos largos limitados a 64ch;
+  otros textos conservan sus limites de lectura dentro de las columnas.
+* FAQ y cierre en contexto ambiental comun: escena absoluta arriba/izquierda,
+  panorama 1942x809 al 100% desde lg, minimo visual 840 px debajo para el
+  recorte izquierdo movil, limitado por la capa decorativa. Img height auto,
+  sin cover ni altura vinculada al acordeon. Fundido desde el 27% hacia la
+  derecha hasta 44%, suavizado solo en el ultimo 10% inferior desde lg.
+  Debajo: fundido horizontal 28 a 60% y vertical 60 a 82%, antes de las
+  preguntas apiladas. Velo radial amplio neutral-100 solo en pseudo-elemento
+  de escena z0, sin limite inferior ligado a la caja del texto ni capa blanca
+  global. Fondo con pointer-events none; texto y acordeon en z10, opacidad plena.
+  Capa decorativa sin eventos ni altura de flujo, sin rectangulo detras del
+  titulo, ni opacity o blur sobre texto o preguntas.
+  Acordeon y panel rojo opacos en z10. Sin ventana de imagen, min-height o
+  desplazamientos laterales; espacio FAQ/cierre 48 px desde lg, 32 debajo.
+* Accion final local landing-closing-action: blanco surface, texto text
+  semibold, altura 56 px, texto 16 y 18 desde lg, padding horizontal 24/32,
+  radio surface 12, borde border y shadow-raised corto existente. Flecha
+  Lucide decorativa, hover y active de secondary, foco inverso. Se agrupa
+  bajo el mensaje y reserva la zona derecha de rueda; no cambia otros botones.
+  Rueda transparente en el cuarto derecho del cierre desde lg y en flujo bajo
+  el CTA en movil. Texto y acciones fuera de imagenes ambientales; sin falsos
+  controles de navegacion ni toast ficticio.
+* Composicion guiada por landing.png: navegacion clara, portada de dos columnas
+  desde lg, flujo en tres pasos, beneficios asimetricos, franja nav de reportes,
+  FAQ en dos columnas, cierre action y footer nav. En movil los bloques se apilan
+  y la navegacion envuelve sin ocultar enlaces ni necesitar un menu.
+* Reutiliza marca, simbolo y favicon existentes. Sin cambios en tokens globales,
+  componentes compartidos o pantallas aprobadas. Excepcion autorizada solo en
+  LandingPage.css, selectores bajo #landing: landing-title 36/40 y 56/60 desde
+  lg; landing-heading 28/32 y 36/40; landing-feature-title 20/28 y 24/32. Pesos
+  display y title ya existentes. Las demas pantallas conservan la escala habitual.
+* Texto rojo sobre claro en brand-ink; texto inverso sobre nav y action;
+  texto auxiliar oscuro en neutral-300. Boton secundario claro en el cierre.
+  El enfasis brand del titulo oscuro es texto grande, con el contraste de
+  brand sobre nav ya comprobado a 3:1. Sin animaciones ni capturas falsas.
+  Todas las imagenes declaran dimensiones naturales; solo el panel de Inicio
+  tiene alta prioridad, las inferiores son diferidas. Dimensiones y pesos
+  actualizados en el inventario de la nota de sesion. Producto en WebP
+  lossless desde originales, sin redimensionar ni aplicar filtros al panel;
+  revision visual final aprobada por David el 2026-10-28.
+* Sin navegador en el cierre ni mediciones de rendimiento de carga.
+
 ## Cuentas (2026-10-27)
 
 * Cuentas reutiliza ListHeader con menu movil en contenido y omite la barra
