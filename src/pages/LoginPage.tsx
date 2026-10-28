@@ -1,16 +1,21 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
-import { MESSAGES, userMessage } from '../api/errorMessages'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { MESSAGES } from '../api/errorMessages'
+import { reportError } from '../api/reportError'
+import workshopPhoto from '../assets/login/login-workshop-v1.webp'
 import { login, startSession } from '../auth/authApi'
 import { getRememberedTenantSlug, rememberTenantSlug, takeSessionExpired, useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
-import { WHATSAPP_URL } from '../config/contact'
+import { iconSm } from '../components/icons'
+import { GLOSSARY } from '../copy/glossary'
 import { ApiError } from '../lib/api'
 import { usePageMeta } from '../lib/usePageMeta'
+import './LoginPage.css'
 
 const linkClass =
   'rounded-control font-semibold text-brand-ink hover:underline focus-ring'
@@ -41,32 +46,52 @@ export function LoginPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (mutation.isPending) return
     mutation.mutate({ tenantSlug: tenantSlug.trim(), username: username.trim(), password })
   }
 
   const invalidCredentials = mutation.error instanceof ApiError && mutation.error.status === 401
+  const reportedError = reportError(mutation.error, { inlineOnly: true })
+  const errorMessage = reportedError === MESSAGES.network
+    ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
+    : reportedError
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-12 sm:px-6">
-      <div className="mb-8">
-        <WordmarkLink />
+    <main id="login" className="bg-neutral-100 text-text">
+      <div className="login-scene">
+        <img className="login-photo" src={workshopPhoto} alt="" width={1122} height={1402} fetchPriority="high" decoding="async" />
+        <div className="login-scene-brand login-brand"><WordmarkLink onDark /></div>
+        <div className="login-scene-copy text-text-inverse">
+          <p className="login-statement font-display font-semibold">El trabajo sigue.<br />Tu negocio, en orden.</p>
+          <p className="mt-3">Ventas, inventario y caja conectados.</p>
+        </div>
       </div>
-      <div className="w-full max-w-sm rounded-surface border border-border bg-surface p-6 sm:p-8">
-        <h1 className="text-title text-text">Iniciar sesión</h1>
-        <p className="mt-1 text-small text-text-muted">Ventas, inventario y caja en un solo lugar.</p>
+      <div className="login-panel">
+        <nav aria-label="Navegación de acceso" className="flex flex-wrap items-center justify-between gap-4">
+          <div className="login-mobile-brand login-brand"><WordmarkLink /></div>
+          <Link to="/" className="ml-auto inline-flex min-h-touch items-center gap-2 rounded-control text-small text-text focus-ring hover:underline">
+            <ArrowLeft {...iconSm} aria-hidden />Volver al inicio
+          </Link>
+        </nav>
+        <div className="login-content">
+        <p className="mb-4 flex items-center gap-3 text-label text-text-muted">
+          <span aria-hidden className="size-2 shrink-0 rounded-pill bg-brand" />ACCESO A TU SERVITECA
+        </p>
+        <h1 className="login-title text-title text-text">Inicia sesión</h1>
+        <p className="mt-3 text-body text-text-muted">Entra y continúa con tu negocio.</p>
 
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6" aria-label="Iniciar sesión" aria-busy={mutation.isPending}>
           {expired && !mutation.isError && <Alert tone="info" title={MESSAGES.session} />}
           {mutation.isError && (
             <Alert
               tone="error"
               title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
             >
-              {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : userMessage(mutation.error)}
+              {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage}
             </Alert>
           )}
           <TextField
-            label="Código de tu serviteca"
+            label={GLOSSARY.tenantCode}
             name="tenantSlug"
             hint="El nombre corto que elegiste al registrarte."
             autoComplete="organization"
@@ -93,8 +118,9 @@ export function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-          <Button type="submit" className="w-full" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}
+          <Button type="submit" className="login-submit relative w-full" disabled={mutation.isPending}>
+            <span role="status">{mutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}</span>
+            <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
           </Button>
         </form>
 
@@ -104,13 +130,12 @@ export function LoginPage() {
             Crear cuenta
           </Link>
         </p>
+        </div>
+        <footer className="text-right text-small text-text-muted">
+          <p className="mb-1">ServiBox · Colombia</p>
+          <Link to="/terminos" className="inline-flex min-h-touch items-center rounded-control underline focus-ring">Términos y datos personales</Link>
+        </footer>
       </div>
-      <p className="mt-6 text-center text-small text-text-muted">
-        ¿No puedes entrar?{' '}
-        <a href={WHATSAPP_URL} target="_blank" rel="noopener" className={linkClass}>
-          Escríbenos por WhatsApp.
-        </a>
-      </p>
     </main>
   )
 }

@@ -8,7 +8,7 @@ describe('guard de rutas privadas', () => {
   it('sin sesion manda a /login', async () => {
     const router = renderRoute('/inventario')
 
-    expect(await screen.findByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
   })
 
@@ -16,7 +16,7 @@ describe('guard de rutas privadas', () => {
     saveToken(makeToken({ sub: 'admin', role: 'ADMIN', exp: Math.floor(Date.now() / 1000) - 60 }))
     const router = renderRoute('/ventas')
 
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 
@@ -38,7 +38,7 @@ describe('guard de rutas privadas', () => {
   it('una ruta desconocida sin sesion termina en /login', async () => {
     const router = renderRoute('/no-existe')
 
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 
@@ -81,7 +81,7 @@ describe('guard de rutas privadas', () => {
 
     act(() => clearSession())
 
-    await screen.findByRole('heading', { name: 'Iniciar sesión' })
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
     expect(router.state.location.pathname).toBe('/login')
   })
 })

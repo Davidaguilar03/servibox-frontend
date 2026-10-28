@@ -12,6 +12,34 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-28: Login con fotografia ambiental y formulario integrado
+
+* Tarea 8 de 11: Login usa HTML/CSS local bajo #login, sin layout compartido
+  con Registro. Dos mitades desde lg: foto a sangre y superficie clara con
+  formulario max480 px; debajo de lg se omite la escena y se muestra marca
+  junto al regreso al inicio. Altura minima, scroll natural y controles 52 px.
+* Correccion de marca: se reemplaza el selector descendiente de todas las
+  imagenes de la escena por el hijo directo login-photo. BrandSymbol usa
+  img con SVG y heredaba posicion absoluta y 100% del panel. Login acota
+  simbolo a 48x48, palabra a 32/40 y ancho natural, sin cambiar componentes
+  compartidos; capas explicitas separan fotografia, velo y contenido.
+* Marca y favicon compartidos intactos. Foto generada aportada por David,
+  decorativa, sin testimonio ni atribucion a un cliente real. WebP 1122x1402,
+  111698 bytes; PNG externo intacto. Velos graduales solo sobre la foto.
+* Conserva contratos, normalizacion, sesion, campos, rutas, mensajes de
+  credenciales y contrasena oculta inicialmente. Refuerza bloqueo de submit
+  pendiente y anuncio de carga, reutilizando TextField y Button.
+* Se omite ayuda: contact.ts contiene solo datos demostrativos. Los errores
+  siguen reportError inlineOnly y el mapa; Login elimina exclusivamente la
+  invitacion al numero de ejemplo del mensaje generico. Falta contacto real.
+  Enlaces Crear cuenta y Terminos conservan sus rutas existentes.
+* Reemplaza solo para Login la decision del 2026-10-25 de formulario sin
+  columna ni lema y soporte demostrativo. Registro y demas rutas no cambian.
+  Sin navegador ni auditoria visual automatizada por instruccion de David;
+  David aprueba visualmente el 2026-10-28 y autoriza commit, push y PR.
+  La ayuda sigue omitida hasta disponer de WhatsApp real. Tras merge,
+  continua Registro, tarea 9 de 11.
+
 ## 2026-10-28: Cierre de Landing aprobado por David y recursos depurados
 
 * David aprueba la revision visual y autoriza publicar feat/39-landing-refresh.
@@ -641,7 +669,8 @@ Formato de cada entrada:
   * `text-display` (32/36, 40/44 desde md, 700) como excepcion unica en el `h1` de la landing;
     tokens de legado eliminados y la guarda sin exclusiones.
   * `src/config/contact.ts` como unica fuente de WhatsApp y correo (demostrativos).
-  * Login y registro sin columna oscura ni lema; el identificador se rotula `Codigo de tu
+  * Reemplazado para Login por la decision del 2026-10-28; Registro conserva
+    esta regla: sin columna oscura ni lema; el identificador se rotula `Codigo de tu
     serviteca`. El toast de exito del registro lista solo lo que crea
     `TenantRegistrationService` (Caja General, categorias base, IVA 19 %); el aviso previo
     nombra ademas las categorias y el Consumidor final.

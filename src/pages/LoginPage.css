@@ -1,0 +1,126 @@
+/* Variantes exclusivas de acceso; Registro conserva sus controles y layout. */
+#login {
+  min-height: 100svh;
+}
+
+#login .login-scene {
+  display: none;
+}
+
+#login .login-brand a,
+#login .login-brand [role="img"] {
+  width: max-content;
+}
+
+#login .login-brand [role="img"] > img {
+  width: 48px;
+  height: 48px;
+}
+
+#login .login-brand [role="img"] > span {
+  font-size: 32px;
+  line-height: 40px;
+}
+
+#login .login-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 100svh;
+  flex-direction: column;
+  padding: 24px;
+}
+
+#login .login-content {
+  width: 100%;
+  max-width: 480px;
+  margin: auto;
+  padding-block: 48px;
+}
+
+#login .login-title {
+  font-size: 32px;
+  line-height: 40px;
+}
+
+#login form input,
+#login .login-submit {
+  height: 52px;
+}
+
+#login form label {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+@media (min-width: 1024px) {
+  #login {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  #login .login-mobile-brand {
+    display: none;
+  }
+
+  #login .login-panel {
+    padding: 32px 48px;
+  }
+
+  #login .login-title {
+    font-size: 44px;
+    line-height: 52px;
+  }
+
+  #login .login-scene {
+    display: block;
+    position: relative;
+    isolation: isolate;
+    min-width: 0;
+    color: var(--color-text-inverse);
+    background: var(--color-nav);
+  }
+
+  #login .login-scene > .login-photo,
+  #login .login-scene::after {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #login .login-scene > .login-photo {
+    object-fit: cover;
+    object-position: 50% 35%;
+    z-index: 0;
+  }
+
+  #login .login-scene::after {
+    content: '';
+    pointer-events: none;
+    z-index: 1;
+    background: linear-gradient(to bottom,
+      color-mix(in srgb, var(--color-overlay) 70%, transparent),
+      transparent 28%, transparent 55%,
+      color-mix(in srgb, var(--color-overlay) 88%, transparent));
+  }
+
+  #login .login-scene-brand {
+    position: relative;
+    z-index: 2;
+    padding: 40px;
+  }
+
+  #login .login-scene-copy {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 40px;
+    bottom: 48px;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  #login .login-statement {
+    font-size: 36px;
+    line-height: 44px;
+  }
+}

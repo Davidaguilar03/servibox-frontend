@@ -123,6 +123,10 @@ es para pantallas sin Toaster (registro): todo va en linea.
 
 Excepciones: el 404 de la ruta (factura o producto inexistente) es el estado "no encontrado"
 de la pantalla, no un toast; el login muestra su propio texto de credenciales.
+Desde 2026-10-28 Login usa reportError inlineOnly para los demas errores y conserva
+del generico la accion de revisar conexion y reintentar, sin invitar al contacto
+demostrativo de contact.ts. La ayuda se omite hasta tener WhatsApp real;
+los mensajes compartidos de las otras pantallas no cambian en esta tarea.
 
 ## Validacion de contacto
 
