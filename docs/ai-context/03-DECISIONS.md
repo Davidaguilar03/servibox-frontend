@@ -12,6 +12,28 @@ Formato de cada entrada:
 * Motivo: por que se eligio esta opcion sobre las demas.
 ```
 
+## 2026-10-28: Registro con fotografia propia y formulario integrado
+
+* Tarea 9 de 11: RegisterPage reutiliza patrones del Login aprobado con CSS
+  local bajo #register, sin modificar Login ni componentes compartidos.
+  Escritorio desde lg: foto 44%, formulario claro 56%, max640 px. Movil sin
+  foto previa, marca visible y campos en una columna; dos columnas desde sm
+  solo con 440 px disponibles en el contenedor. Scroll natural sin recortes.
+* Fotografia decorativa aportada por David, distinta a Login, WebP 1122x1402,
+  84042 bytes. PNG externo intacto. Cobertura exclusiva del hijo directo
+  register-photo; simbolo 48x48 y palabra 32/40, capas de foto/velo/contenido.
+  Logo HTML compartido y favicon intacto. Textos ambientales solicitados.
+* Conserva ocho campos, dos agrupaciones, ayudas, aviso inicial, terminos,
+  validaciones, payload, 409 ligado al codigo y foco, 403 y bloqueo pendiente.
+  Exito sin pantalla intermedia: recordar codigo, toast, sesion y /inicio.
+  Agrega nombre accesible y aria-busy al formulario y status al envio.
+* Errores pasan por reportError inlineOnly y el mapa. Como Login, el generico
+  local conserva conexion/reintento y omite contacto demostrativo. No cambia
+  el mapa compartido. Codigo de serviteca toma el rotulo de GLOSSARY.
+* Reemplaza para Registro la presentacion sin columna/lema del 2026-10-25.
+  Sin navegador ni auditoria visual automatizada. David aprueba visualmente
+  el 2026-10-28 y autoriza commit, push y PR. Tras confirmar merge sigue Reportes.
+
 ## 2026-10-28: Login con fotografia ambiental y formulario integrado
 
 * Tarea 8 de 11: Login usa HTML/CSS local bajo #login, sin layout compartido
@@ -669,8 +691,8 @@ Formato de cada entrada:
   * `text-display` (32/36, 40/44 desde md, 700) como excepcion unica en el `h1` de la landing;
     tokens de legado eliminados y la guarda sin exclusiones.
   * `src/config/contact.ts` como unica fuente de WhatsApp y correo (demostrativos).
-  * Reemplazado para Login por la decision del 2026-10-28; Registro conserva
-    esta regla: sin columna oscura ni lema; el identificador se rotula `Codigo de tu
+  * Presentacion sin columna ni lema reemplazada para Login y Registro por sus
+    decisiones del 2026-10-28; el identificador se rotula `Codigo de tu
     serviteca`. El toast de exito del registro lista solo lo que crea
     `TenantRegistrationService` (Caja General, categorias base, IVA 19 %); el aviso previo
     nombra ademas las categorias y el Consumidor final.

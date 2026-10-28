@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
 import { jsonResponse, makeToken, primaryActions, renderRoute, validToken } from '../test/utils'
@@ -50,6 +50,19 @@ describe('registro de serviteca', () => {
     expect(screen.getByText(/La información de cada serviteca se guarda por separado\./)).toBeInTheDocument()
     expect(screen.queryByText('Tu serviteca lista en minutos.')).not.toBeInTheDocument()
     expect(primaryActions()).toHaveLength(1)
+    const business = screen.getByRole('group', { name: '1. Datos de la serviteca' })
+    for (const label of ['Nombre comercial', 'NIT', 'Teléfono', 'Código de tu serviteca']) {
+      expect(within(business).getByLabelText(label)).toBeInTheDocument()
+    }
+    const admin = screen.getByRole('group', { name: '2. Administrador' })
+    for (const label of ['Nombre completo', 'Correo', 'Usuario', 'Contraseña']) {
+      expect(within(admin).getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.getByText('Tu serviteca empieza aquí.')).toBeInTheDocument()
+    const photo = document.querySelector('.register-photo')!
+    expect(photo).toHaveAttribute('alt', '')
+    expect(photo).toHaveAttribute('width', '1122')
+    expect(photo).toHaveAttribute('height', '1402')
   })
 
   it('sugiere el identificador desde el nombre comercial hasta que se edita a mano', async () => {
@@ -130,6 +143,8 @@ describe('registro de serviteca', () => {
       screen.getByText(/Dejamos listas la Caja General, las categorías base \(Llantas, Lubricantes y Baterías\), el IVA del 19 %/),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
+    expect(screen.getByRole('link', { name: 'Términos y datos personales' })).toHaveAttribute('href', '/terminos')
   })
 
   it('el mensaje de exito lista solo lo que crea el backend', () => {
@@ -254,9 +269,8 @@ describe('registro de serviteca', () => {
     mockFetch(() => Promise.resolve(jsonResponse({ error: 'Error interno del servidor', status: 500 }, 500)))
     await user.click(submit())
 
-    await waitFor(() =>
-      expect(screen.getByRole('alert')).toHaveTextContent('si sigue pasando, escríbenos por WhatsApp'),
-    )
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Revisa tu conexión e inténtalo de nuevo.'))
+    expect(screen.getByRole('alert')).not.toHaveTextContent('WhatsApp')
     expect(screen.getByLabelText('Contraseña')).toHaveValue('secreta123')
   })
 
@@ -270,9 +284,57 @@ describe('registro de serviteca', () => {
 
     const loading = await screen.findByRole('button', { name: 'Creando serviteca…' })
     expect(loading).toBeDisabled()
+    const form = screen.getByRole('form', { name: 'Crear serviteca' })
+    expect(form).toHaveAttribute('aria-busy', 'true')
+    expect(within(loading).getByRole('status')).toHaveTextContent('Creando serviteca…')
+    fireEvent.submit(form)
+    fireEvent.submit(form)
     expect(registerCalls(fetchMock)).toHaveLength(1)
     resolve(jsonResponse(created, 201))
     expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
+  })
+
+  it('mostrar y ocultar con teclado conserva la contrasena y Enter registra sin pasos adicionales', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
+    const router = renderRoute('/registro')
+    const user = await fillForm()
+    const password = screen.getByLabelText('Contraseña')
+    expect(password).toHaveAttribute('type', 'password')
+    expect(password).toHaveAttribute('autocomplete', 'new-password')
+    password.focus()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Mostrar contraseña' })).toHaveFocus()
+    await user.keyboard('{Enter}')
+    expect(password).toHaveAttribute('type', 'text')
+    expect(password).toHaveValue('secreta123')
+    await user.keyboard(' ')
+    expect(password).toHaveAttribute('type', 'password')
+    expect(registerCalls(fetchMock)).toHaveLength(0)
+    password.focus()
+    await user.keyboard('{Enter}')
+    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
+    expect(registerCalls(fetchMock)).toHaveLength(1)
+    expect(router.state.location.pathname).toBe('/inicio')
+  })
+
+  it('un 409 tardio solo marca el codigo enviado y reaparece si se vuelve a ese codigo', async () => {
+    let resolve: (response: Response) => void = () => {}
+    const fetchMock = mockFetch(() => new Promise<Response>((done) => (resolve = done)))
+    renderRoute('/registro')
+    const user = await fillForm()
+    await user.click(submit())
+    const slug = screen.getByLabelText('Código de tu serviteca')
+    await user.type(slug, '-2')
+    resolve(jsonResponse({ error: 'Ya existe una serviteca con el identificador serviteca-el-roble', status: 409 }, 409))
+    await waitFor(() => expect(slug).toHaveFocus())
+    expect(slug).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByText(/Ya existe una serviteca/)).not.toBeInTheDocument()
+    await user.keyboard('{Backspace}{Backspace}')
+    expect(slug).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText('Ya existe una serviteca con el código serviteca-el-roble. Elige otro.')).toBeInTheDocument()
+    await user.click(submit())
+    expect(registerCalls(fetchMock)).toHaveLength(1)
+    expect(slug).toHaveFocus()
   })
 
   it('con sesion redirige a /inicio', async () => {

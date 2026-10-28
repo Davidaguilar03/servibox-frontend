@@ -483,3 +483,6 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
 * `RegisterPage`: reglas, sugerencia y normalizacion del identificador y cuerpo del POST en
   `auth/registerForm.ts`. Errores del servidor segun
   [03-DECISIONS.md](03-DECISIONS.md).
+  RegisterPage.css acota la composicion a #register, foto ambiental 44% desde lg y
+  formulario integrado con dos agrupaciones. Movil sin foto, altura natural;
+  controles, marca y accesibilidad siguen los patrones del Login aprobado.
