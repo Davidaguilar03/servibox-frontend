@@ -2,14 +2,20 @@ import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router'
 import {
   ChartColumn,
+  ChevronDown,
+  CirclePlus,
   House,
   Menu,
   Package,
   PanelLeftClose,
   PanelLeftOpen,
+  Receipt,
   Settings,
   ShoppingCart,
+  TrendingDown,
+  TrendingUp,
   Truck,
+  Users,
   Wallet,
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
@@ -19,14 +25,22 @@ import { SkipLink } from '../components/SkipLink'
 import { DESKTOP_QUERY, useMediaQuery } from '../lib/useMediaQuery'
 import { UserMenu } from './UserMenu'
 import { iconMd } from '../components/icons'
+import { GLOSSARY } from '../copy/glossary'
 
-// Clientes vive dentro de Ventas y Proveedores dentro de Compras. Ver 03-DECISIONS.md.
 const navItems = [
   { to: '/inicio', label: 'Inicio', icon: House },
+  { to: '/ventas', label: GLOSSARY.incomeNavigation, icon: TrendingUp, children: [
+    { to: '/ventas', label: 'Facturas de venta', icon: ShoppingCart },
+    { to: '/ventas/ingresos', label: GLOSSARY.otherIncome, icon: CirclePlus },
+    { to: '/ventas/clientes', label: 'Clientes', icon: Users },
+  ] },
+  { to: '/compras', label: GLOSSARY.expenseNavigation, icon: TrendingDown, children: [
+    { to: '/compras', label: 'Facturas de compra', icon: Truck },
+    { to: '/compras/gastos', label: 'Gastos operativos', icon: Receipt },
+    { to: '/compras/proveedores', label: 'Proveedores', icon: Truck },
+  ] },
   { to: '/inventario', label: 'Inventario', icon: Package },
-  { to: '/ventas', label: 'Ventas', icon: ShoppingCart },
-  { to: '/compras', label: 'Compras', icon: Truck },
-  { to: '/cuentas', label: 'Cuentas', icon: Wallet },
+  { to: '/cuentas', label: GLOSSARY.treasury, icon: Wallet },
   { to: '/reportes', label: 'Reportes', icon: ChartColumn },
 ]
 
@@ -106,7 +120,14 @@ export interface AppShellContext {
  */
 export function AppShell() {
   const breadcrumb = useBreadcrumb()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
+  const activeGroup = ['/ventas', '/compras'].find((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const [navigation, setNavigation] = useState(() => ({ location, groups: { [activeGroup ?? '']: true } }))
+  // Una entrada de historial nueva reabre su grupo, incluso si solo cambia la query.
+  if (navigation.location !== location) {
+    setNavigation({ location, groups: { ...navigation.groups, ...(activeGroup ? { [activeGroup]: true } : {}) } })
+  }
   const headerInPage = /^\/(inicio|inventario|cuentas|reportes|configuracion)\/?$/.test(pathname) || /^\/(ventas|compras)(?:\/|$)/.test(pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
@@ -114,7 +135,9 @@ export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const isDesktop = useIsDesktop()
   const asideRef = useRef<HTMLElement>(null)
+  const sidebarToggleRef = useRef<HTMLButtonElement>(null)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const menuNavigationRef = useRef<typeof location | null>(null)
   const mainRef = useRef<HTMLElement>(null)
   const wasOpen = useRef(false)
   // El menu movil solo existe bajo lg: cerrado no recibe foco; abierto, el resto queda inerte.
@@ -123,13 +146,26 @@ export function AppShell() {
   useDocumentTitle(breadcrumb.at(-1)?.label)
 
   useEffect(() => {
-    if (mobileMenuOpen) {
+    if (collapsed && isDesktop && asideRef.current?.contains(document.activeElement) &&
+      document.activeElement?.closest('[data-nav-children]')) {
+      sidebarToggleRef.current?.focus()
+    }
+  }, [collapsed, isDesktop])
+
+  useEffect(() => {
+    if (mobileMenuOpen && !wasOpen.current) {
       asideRef.current?.querySelector<HTMLElement>(focusableSelector)?.focus()
-    } else if (wasOpen.current) {
+    } else if (!mobileMenuOpen && (wasOpen.current || (menuNavigationRef.current && menuNavigationRef.current !== location))) {
       menuButtonRef.current?.focus()
+      if (menuNavigationRef.current !== location) menuNavigationRef.current = null
     }
     wasOpen.current = mobileMenuOpen
-  }, [mobileMenuOpen])
+  }, [mobileMenuOpen, location])
+
+  function closeMenuAfterNavigation() {
+    if (mobileMenuOpen) menuNavigationRef.current = location
+    setMenuOpen(false)
+  }
 
   // Esc cierra el menu y Tab no sale de el mientras esta abierto.
   function onMenuKeyDown(event: KeyboardEvent<HTMLElement>) {
@@ -140,6 +176,7 @@ export function AppShell() {
     }
     if (event.key !== 'Tab') return
     const focusable = [...(asideRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [])]
+      .filter((element) => !element.closest('[hidden], [inert]'))
     const first = focusable[0]
     const last = focusable.at(-1)
     if (event.shiftKey && document.activeElement === first) {
@@ -183,14 +220,16 @@ export function AppShell() {
         } ${collapsed ? 'lg:w-sidebar-collapsed' : ''}`}
       >
         <div role="group" aria-label="Cabecera del menú lateral" className={`flex h-topbar shrink-0 items-center gap-1 px-3 ${collapsed ? 'lg:h-auto lg:flex-col lg:py-2' : ''}`}>
-          <Link to="/inicio" aria-label="ServiBox, ir a Inicio" title="ServiBox" onClick={() => setMenuOpen(false)} className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-control focus-ring">
+          <Link to="/inicio" aria-label="ServiBox, ir a Inicio" title="ServiBox" onClick={closeMenuAfterNavigation} className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-control focus-ring">
             <Wordmark onDark compact={collapsed && isDesktop} />
           </Link>
           {/* Solo escritorio: en compacto ocupa su propia fila bajo el simbolo. */}
           {isDesktop && (
             <button
+              ref={sidebarToggleRef}
               type="button"
-              onClick={() => {
+              onClick={(event) => {
+                event.currentTarget.focus()
                 const next: SidebarChoice = collapsed ? 'expanded' : 'collapsed'
                 setSidebarChoice(next)
                 saveSidebarChoice(next)
@@ -205,13 +244,56 @@ export function AppShell() {
           )}
         </div>
 
-        <nav aria-label="Principal" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 py-4 lg:gap-1">
-          {navItems.map(({ to, label, icon: Icon }) => (
+        <nav aria-label="Principal" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+          <ul className="flex flex-col gap-2 lg:gap-1">
+          {navItems.map(({ to, label, icon: Icon, children }) => {
+            const groupActive = activeGroup === to
+            const expanded = !!navigation.groups[to] && !(collapsed && isDesktop)
+            const activeChild = children?.slice(1).find((child) => pathname === child.to || pathname.startsWith(`${child.to}/`))?.to ?? to
+            const groupId = `navigation-${to.slice(1)}`
+            return <li key={to}>
+            {children ? <>
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={groupId}
+                data-active={groupActive}
+                title={collapsed ? label : undefined}
+                onClick={(event) => {
+                  event.currentTarget.focus()
+                  if (collapsed && isDesktop) {
+                    setSidebarChoice('expanded')
+                    saveSidebarChoice('expanded')
+                  }
+                  setNavigation({ location, groups: { ...navigation.groups, [to]: !expanded } })
+                }}
+                className={`flex min-h-touch w-full items-center gap-3 rounded-control border-l-4 px-2 text-small font-semibold transition-colors duration-(--duration-fast) ${focusRing} ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${groupActive ? 'border-brand bg-nav-active text-text-inverse' : 'border-transparent text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`}
+              >
+                <Icon {...iconMd} aria-hidden className={`shrink-0 ${groupActive ? 'text-brand' : ''}`} />
+                <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
+                <ChevronDown {...iconMd} aria-hidden className={`ml-auto shrink-0 transition-transform duration-(--duration-base) ease-standard motion-reduce:transition-none ${expanded ? 'rotate-180' : ''} ${collapsed ? 'lg:hidden' : ''}`} />
+              </button>
+              <div className={`ml-4 grid transition-[grid-template-rows] duration-(--duration-base) ease-standard motion-reduce:transition-none ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+              <ul id={groupId} data-nav-children inert={!expanded} aria-hidden={!expanded} className="min-h-0 overflow-hidden">
+                {children.map(({ icon: ChildIcon, ...child }) => <li key={child.to} className="px-1 pt-1 last:pb-1">
+                  <Link
+                    to={child.to}
+                    tabIndex={expanded ? undefined : -1}
+                    aria-current={groupActive && activeChild === child.to ? 'page' : undefined}
+                    onClick={closeMenuAfterNavigation}
+                    className={`flex min-h-touch items-center gap-3 rounded-control border-l-4 px-3 text-small font-semibold focus-ring ${groupActive && activeChild === child.to ? 'border-brand bg-nav-active text-text-inverse' : 'border-transparent text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`}
+                  >
+                    <ChildIcon {...iconMd} aria-hidden className="shrink-0" />
+                    <span>{child.label}</span>
+                  </Link>
+                </li>)}
+              </ul>
+              </div>
+            </> :
             <NavLink
-              key={to}
               to={to}
               title={collapsed ? label : undefined}
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenuAfterNavigation}
               className={({ isActive }) =>
                 `flex min-h-touch shrink-0 items-center gap-3 rounded-control border-l-4 px-2 text-small font-semibold transition-colors duration-(--duration-fast) ${focusRing} ${
                   collapsed ? 'lg:justify-center lg:px-0' : ''
@@ -221,7 +303,10 @@ export function AppShell() {
               <Icon {...iconMd} aria-hidden className="shrink-0 [[aria-current=page]_&]:text-brand" />
               <span className={collapsed ? 'lg:sr-only' : ''}>{label}</span>
             </NavLink>
-          ))}
+            }
+            </li>
+          })}
+          </ul>
         </nav>
 
         <div className="shrink-0 border-t border-nav-hover px-3 pt-2">
@@ -229,7 +314,7 @@ export function AppShell() {
             <NavLink
               to="/configuracion"
               title="Configuración"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenuAfterNavigation}
               className={({ isActive }) =>
                 `flex min-h-touch items-center gap-3 rounded-control border-l-4 px-2 text-small font-semibold focus-ring ${collapsed ? 'lg:justify-center lg:px-0' : ''} ${isActive ? 'border-brand bg-nav-active text-text-inverse' : 'border-transparent text-neutral-300 hover:bg-nav-hover hover:text-text-inverse'}`
               }

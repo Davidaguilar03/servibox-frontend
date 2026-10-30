@@ -134,6 +134,9 @@ describe('glosario', () => {
   })
 
   it('define los terminos oficiales', () => {
+    expect(GLOSSARY.incomeNavigation).toBe('Ingresos')
+    expect(GLOSSARY.expenseNavigation).toBe('Egresos')
+    expect(GLOSSARY.treasury).toBe('Tesorería')
     expect(GLOSSARY.paymentType).toBe('Forma de pago')
     expect(GLOSSARY.paymentMethod).toBe('Medio de pago')
     expect(GLOSSARY.otherIncome).toBe('Otros ingresos')

@@ -2,6 +2,31 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-30: Navegacion agrupada del panel de serviteca
+
+* Decision: Inicio, Ingresos, Egresos, Inventario, Tesoreria y Reportes en ese orden.
+  Ingresos contiene Facturas de venta, Otros ingresos y Clientes; Egresos contiene
+  Facturas de compra, Gastos operativos y Proveedores. Configuracion y usuario abajo.
+  Padres como botones nativos, listas anidadas, foco visible y aria-expanded/aria-controls.
+* Pathname determina el grupo y un solo hijo activo. Alta, detalle y papelera son
+  Facturas; los hijos especificos tienen prioridad. Cada navegacion reabre su grupo,
+  incluido historial y query; cierre deliberado permitido hasta la siguiente navegacion.
+  Grupos independientes, sin almacenamiento nuevo, enlaces ocultos fuera de Tab.
+* Compacto: activar padre expande el shell, guarda la preferencia existente y deja
+  foco en el padre. Contraer recupera foco del hijo oculto. Movil: padre no cierra,
+  hijo navega y cierra; se corrige retorno de foco al nuevo boton tras cambiar pagina.
+* Tesoreria reemplaza Cuentas solo como etiqueta, titulo y miga de modulo en /cuentas.
+  Cuenta, Nueva cuenta, nombres, acciones internas, contratos y query permanecen.
+  Ingresos/Egresos son agrupadores, sin nuevas reglas financieras ni rutas ficticias.
+* Reemplaza el menu plano de "Clientes dentro de Ventas y Proveedores dentro de Compras"
+  solo en navegacion. Conserva rutas, acciones dentro de paginas, tokens, marca y favicon.
+  Sin backend, plataforma, solicitudes, activacion, Docker/proxy ni contactos.
+* David aprobo la revision visual del sidebar, iconos y animaciones el 2026-10-30,
+  y autorizo el cierre con commit, push y PR. Sin navegador del agente.
+  La revision manual Docker aplazada sigue obligatoria antes de publicar;
+  esta aprobacion del sidebar no la cumple. Sin merge ni cambio de rama al cerrar.
+  Cifras y limites en sessions/2026-10-30-sidebar-navigation.md.
+
 ## 2026-10-30: Cierre Git autorizado con revision manual aplazada
 
 David autoriza commit, push y PR de chore/44-frontend-deployment sin ejecutar ahora
@@ -2377,6 +2402,9 @@ ampliacion autorizada de Movimientos. Los contratos financieros posteriores sigu
   es bajo. Si un listado crece, se pasa ese listado al servidor sin cambiar los demas.
 
 ## 2026-10-18: Clientes dentro de Ventas y Proveedores dentro de Compras
+
+* Estado: menu plano reemplazado el 2026-10-30 por navegacion agrupada.
+  Las rutas y el modelo de terceros se conservan.
 
 * Decision: el menu lateral tiene Inicio, Inventario, Ventas, Compras, Cuentas, Reportes y
   Configuracion. Clientes es una seccion de Ventas y Proveedores una de Compras; no hay

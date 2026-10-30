@@ -34,7 +34,7 @@ const crumbLinks: Record<string, string> = {
   'Facturas de compra': '/compras',
   Inventario: '/inventario',
   Productos: '/inventario',
-  Cuentas: '/cuentas',
+  [GLOSSARY.treasury]: '/cuentas',
   Movimientos: '/cuentas',
 }
 
@@ -57,39 +57,39 @@ export const routes: RouteObject[] = [
         element: <AppShell />,
         children: [
           { path: 'inicio', element: <DashboardPage />, handle: handle(['Inicio']) },
-          { path: 'ventas', element: <SalesInvoicesPage />, handle: handle(['Ventas', 'Facturas de venta']) },
-          { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle(['Ventas', 'Papelera']) },
-          { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle(['Ventas', GLOSSARY.otherIncome]) },
-          { path: 'ventas/clientes', element: <CustomersPage />, handle: handle(['Ventas', 'Clientes']) },
+          { path: 'ventas', element: <SalesInvoicesPage />, handle: handle([GLOSSARY.incomeNavigation, 'Facturas de venta']) },
+          { path: 'ventas/papelera', element: <SalesTrashPage />, handle: handle([GLOSSARY.incomeNavigation, 'Papelera']) },
+          { path: 'ventas/ingresos', element: <OccasionalIncomePage />, handle: handle([GLOSSARY.incomeNavigation, GLOSSARY.otherIncome]) },
+          { path: 'ventas/clientes', element: <CustomersPage />, handle: handle([GLOSSARY.incomeNavigation, 'Clientes']) },
           {
             path: 'ventas/nueva',
             element: <NewSaleInvoicePage />,
-            handle: handle(['Ventas', 'Facturas de venta', 'Nueva factura']),
+            handle: handle([GLOSSARY.incomeNavigation, 'Facturas de venta', 'Nueva factura']),
           },
           {
             path: 'ventas/:id',
             element: <SaleDetailPage />,
             // El ultimo tramo lo reemplaza la pagina por el numero de la factura.
-            handle: handle(['Ventas', 'Facturas de venta', 'Detalle de factura']),
+            handle: handle([GLOSSARY.incomeNavigation, 'Facturas de venta', 'Detalle de factura']),
           },
-          { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle(['Compras', 'Facturas de compra']) },
-          { path: 'compras/papelera', element: <PurchasesTrashPage />, handle: handle(['Compras', 'Papelera']) },
-          { path: 'compras/gastos', element: <OperationalExpensesPage />, handle: handle(['Compras', 'Gastos operativos']) },
-          { path: 'compras/proveedores', element: <SuppliersPage />, handle: handle(['Compras', 'Proveedores']) },
+          { path: 'compras', element: <PurchaseInvoicesPage />, handle: handle([GLOSSARY.expenseNavigation, 'Facturas de compra']) },
+          { path: 'compras/papelera', element: <PurchasesTrashPage />, handle: handle([GLOSSARY.expenseNavigation, 'Papelera']) },
+          { path: 'compras/gastos', element: <OperationalExpensesPage />, handle: handle([GLOSSARY.expenseNavigation, 'Gastos operativos']) },
+          { path: 'compras/proveedores', element: <SuppliersPage />, handle: handle([GLOSSARY.expenseNavigation, 'Proveedores']) },
           {
             path: 'compras/nueva',
             element: <NewPurchaseInvoicePage />,
-            handle: handle(['Compras', 'Facturas de compra', 'Nueva factura']),
+            handle: handle([GLOSSARY.expenseNavigation, 'Facturas de compra', 'Nueva factura']),
           },
           {
             path: 'compras/:id',
             element: <PurchaseDetailPage />,
             // El ultimo tramo lo reemplaza la pagina por el numero de la factura.
-            handle: handle(['Compras', 'Facturas de compra', 'Detalle de factura']),
+            handle: handle([GLOSSARY.expenseNavigation, 'Facturas de compra', 'Detalle de factura']),
           },
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
           // El ultimo tramo lo reemplaza la pagina por la cuenta seleccionada.
-          { path: 'cuentas', element: <AccountsPage />, handle: handle(['Cuentas', 'Movimientos']) },
+          { path: 'cuentas', element: <AccountsPage />, handle: handle([GLOSSARY.treasury]) },
           { path: 'inventario', element: <ProductsPage />, handle: handle(['Inventario', 'Productos']) },
           {
             path: 'inventario/nuevo',

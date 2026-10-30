@@ -77,7 +77,7 @@ describe('guard de rutas privadas', () => {
   it('al cerrar la sesion vuelve a /login', async () => {
     saveToken(validToken())
     const router = renderRoute('/cuentas')
-    await screen.findByRole('heading', { name: 'Cuentas' })
+    await screen.findByRole('heading', { name: 'Tesorería' })
 
     act(() => clearSession())
 

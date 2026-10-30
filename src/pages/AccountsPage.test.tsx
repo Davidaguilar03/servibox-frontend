@@ -96,7 +96,7 @@ async function setup(path = '/cuentas', routes: Routes = fullRoutes()) {
   const fetchMock = mockApi(routes)
   const user = userEvent.setup()
   const router = renderRoute(path)
-  await screen.findByRole('heading', { name: 'Cuentas' })
+  await screen.findByRole('heading', { name: 'Tesorería' })
   return { fetchMock, user, router }
 }
 

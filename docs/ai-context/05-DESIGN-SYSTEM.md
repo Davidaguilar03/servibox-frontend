@@ -475,6 +475,23 @@ ease-standard, asi que `transition-*` ya los usa. Prohibidos `duration-<n>`, `du
 `ease-in`/`ease-out`/`ease-in-out`/`ease-linear`. `index.css` anula animaciones y
 transiciones con `prefers-reduced-motion`. Sin rebotes ni parallax.
 
+Sidebar agrupado (2026-10-30): Ingresos usa TrendingUp y Egresos TrendingDown,
+distintos de Facturas de venta (ShoppingCart) y de compra (Truck). Otros ingresos
+usa CirclePlus; Clientes, Users; Gastos operativos, Receipt; Proveedores, Truck.
+Padres e hijos usan iconMd, trazo 1.5, iconos decorativos con aria-hidden, mismo
+espaciado icono/texto y colores de estado existentes, sin color propio por opcion.
+
+Los submenus animan su altura natural con rejilla de 0fr a 1fr y viceversa,
+sin alturas maximas, timers ni desmontaje al cerrar. El indicador gira suavemente;
+ambos usan duration-base y ease-standard, con transition-none en movimiento reducido.
+El estado inicial refleja la ruta activa sin una fase oculta de entrada.
+El cierre aplica inmediatamente inert, aria-hidden y tabIndex negativo a los hijos;
+la lista sigue montada solo para completar el movimiento visual, con espacio interior
+para el anillo de foco junto al recorte. El foco vuelve
+al padre o al control de ancho antes de perder acceso; la trampa movil excluye inert.
+David aprobo visualmente sidebar, iconos y animaciones el 2026-10-30.
+La revision manual Docker sigue aplazada y obligatoria antes de publicar.
+
 ## Alturas de control y areas tactiles
 
 | Token | Valor | Uso |

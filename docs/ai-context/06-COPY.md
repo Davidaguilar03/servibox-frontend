@@ -11,6 +11,9 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 
 | Clave | Rotulo | Uso | Reemplaza |
 |-|-|-|-|
+| `incomeNavigation` | Ingresos | agrupador de navegacion, sin ruta propia | Ventas solo como padre de navegacion |
+| `expenseNavigation` | Egresos | agrupador de navegacion, sin ruta propia | Compras solo como padre de navegacion |
+| `treasury` | Tesoreria | etiqueta, titulo y miga del modulo /cuentas | Cuentas solo como nombre del modulo |
 | `paymentType` | Forma de pago | Contado o Credito | Tipo de pago |
 | `paymentMethod` | Medio de pago | Efectivo, Transferencia, Tarjeta... | Metodo de pago |
 | `registerSale` | Registrar venta | boton, estado vacio y menus hacia `/ventas/nueva` | |
@@ -32,6 +35,10 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 | `accountColor` | Color de la cuenta | Nueva y Editar cuenta | |
 
 Un concepto nuevo con mas de un sinonimo posible se agrega aqui antes de usarlo en pantalla.
+
+Ingresos y Egresos no redefinen reglas financieras. Facturas de venta y de compra conservan
+sus conceptos, rutas y acciones. Cuenta, Nueva cuenta, nombres y grupos de cuentas reales
+no se renombran. Las migas de Ingresos/Egresos no enlazan a destinos ficticios.
 
 ## Guarda de textos
 

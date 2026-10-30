@@ -75,14 +75,14 @@ src/
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
 | `/ventas/:id` | privada | `SaleDetailPage`, Detalle de factura de venta; un id no numerico o un 404 muestran "Factura no encontrada" |
 | `/ventas/papelera` | privada | `SalesTrashPage`, Papelera de ventas (`TrashPage` con la configuracion de ventas) |
-| `/ventas/ingresos` | privada | `OccasionalIncomePage`, Ingresos ocasionales (`ManualMovementsPage` con `INGRESO_OCASIONAL`) |
+| `/ventas/ingresos` | privada | `OccasionalIncomePage`, Otros ingresos (`ManualMovementsPage` con `INGRESO_OCASIONAL`) |
 | `/ventas/clientes` | privada | `CustomersPage`, Clientes (`CounterpartiesPage` con el rol CLIENTE) |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
 | `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
 | `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
 | `/inventario/:id/editar` | privada | `ProductFormPage`, Editar producto; un id no numerico o un 404 muestran "Producto no encontrado" |
 | `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
-| `/cuentas` | privada | `AccountsPage`, Cuentas: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
+| `/cuentas` | privada | `AccountsPage`, Tesoreria: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
 | `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
 | `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
@@ -95,7 +95,8 @@ src/
 Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las
 privadas cuelgan de `RequireAuth` (ruta de layout sin path), que sin sesion valida redirige a `/login`
 guardando la ruta pedida en `state.from`; tras el login se vuelve a ella. Cada ruta privada
-declara su miga de pan en `handle` (`{ breadcrumb: ['Ventas', 'Facturas de venta'] }`).
+declara su miga de pan en `handle` (Ingresos / Facturas de venta, por ejemplo).
+Ingresos y Egresos son tramos sin enlace; no tienen rutas propias.
 Una pagina que solo conoce el ultimo tramo con sus datos (el numero de una factura) lo
 reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada.
 
@@ -172,6 +173,18 @@ el area de contenido (ancho maximo 1440 px):
   muestra iniciales, serviteca y rol; en compacto solo iniciales con nombre accesible.
   Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
   `displayName` e `initials` viven en `auth/session.ts`.
+* Orden operativo: Inicio; Ingresos (Facturas de venta, Otros ingresos, Clientes);
+  Egresos (Facturas de compra, Gastos operativos, Proveedores); Inventario; Tesoreria;
+  Reportes. Los padres son botones con aria-expanded/aria-controls y listas anidadas;
+  no navegan ni cierran el otro grupo. Rutas y query strings conservadas.
+  Pathname determina padre e hijo activos, con destinos especificos antes de Facturas;
+  alta, detalle y papelera activan Facturas. Cada navegacion, incluido historial o query,
+  reabre su grupo; se permite cerrarlo manteniendo el indicador del padre activo.
+  No se guardan preferencias nuevas de grupos. En compacto activar un padre expande
+  el sidebar y guarda expanded en servibox.sidebar; conserva foco en el boton.
+  Hijos ocultos quedan fuera de Tab y de la trampa movil. Cerrar grupo o contraer
+  recupera el foco; en movil padre mantiene el panel, hijo lo cierra y devuelve el
+  foco al boton de la pagina de destino. Escape, SkipLink y usuario conservados.
 * Barra superior (64 px): miga de pan tomada del `handle` de la ruta. Sin usuario duplicado,
   buscador ni campana. Inicio, el listado de Productos y las rutas bajo /ventas y /compras no
   montan la barra; Reportes y Configuracion tampoco la montan. El boton de menu movil se entrega por contexto de Outlet a sus
@@ -364,7 +377,7 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
   (`useBlocker` y `beforeunload`). En el modal de categoria, Esc, la X o Cancelar con datos
   digitados cambian el contenido del modal a "Descartar cambios".
 
-## Cuentas
+## Tesoreria
 
 `AccountsPage` (`/cuentas`). Logica pura en `src/accounts/`; reglas en
 [03-DECISIONS.md](03-DECISIONS.md).
@@ -396,7 +409,9 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 * accountColors define la paleta de datos persistidos y el fallback de tres colores
   por id solo para cuentas null. AccountColorField comparte valor entre paleta y
   selector nativo. No se persiste color en localStorage.
-* La miga de pan termina en la cuenta seleccionada (`useBreadcrumbTail`).
+* Titulo principal y etiqueta del modulo: Tesoreria, manteniendo /cuentas.
+  La miga parte de Tesoreria y agrega la cuenta seleccionada (`useBreadcrumbTail`).
+  Las entidades mantienen cuenta, Nueva cuenta y sus nombres reales.
 * Bajo `md` la tabla de movimientos pasa a tarjetas apiladas; las tarjetas de cuentas se
   desplazan en horizontal.
 

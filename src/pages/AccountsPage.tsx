@@ -3,6 +3,7 @@ import { useOutletContext, useSearchParams } from 'react-router'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowDownRight, ArrowUpRight, Check, FileSpreadsheet, Landmark, Layers, Pencil, Smartphone, Wallet } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
+import { GLOSSARY } from '../copy/glossary'
 import { EditAccountModal, NewAccountModal, TransferModal } from '../accounts/AccountModals'
 import {
   ACCOUNTS_KEY,
@@ -149,7 +150,7 @@ export function AccountsPage() {
     <div className="flex flex-col gap-6">
       <ListHeader
         leading={menuButton}
-        title="Cuentas"
+        title={GLOSSARY.treasury}
         subtitle="Saldos de caja y bancos, y el detalle de cada movimiento."
         // El primario depende del estado: sin dos cuentas no hay transferencia y el primario es Nueva cuenta.
         primary={canTransfer ? transferButton : newAccountButton}
