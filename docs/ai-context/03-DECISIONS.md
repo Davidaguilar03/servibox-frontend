@@ -2,6 +2,30 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-30: Cierre Git autorizado con revision manual aplazada
+
+David autoriza commit, push y PR de chore/44-frontend-deployment sin ejecutar ahora
+la revision manual del conjunto Docker. Se reemplaza su condicion de paso previo al
+cierre Git: queda obligatoria en la regresion del nuevo bloque, antes del despliegue
+publico. No hay aprobacion visual ni verificacion de navegador. Se reutiliza la evidencia
+aceptada del 2026-10-29 sin repetir suites, al conservar codigo y configuracion.
+Permanecen los limites y pendientes de [DEPLOYMENT](../DEPLOYMENT.md).
+
+## 2026-10-29: Frontend compilado y proxy privado preparados sin publicar
+
+* Docker desde raiz Git: npm ci con lockfile, build Node 24.15.0 y Nginx 1.30.2,
+  bases por digest y UID/GID 101. Sin dependencias npm nuevas ni cambios de aplicacion.
+* PORT con fallback 8080; BACKEND_UPSTREAM http://hostname:port sin ruta ni credenciales.
+  /api conserva request_uri, cuerpos y Authorization. DNS del contenedor, cache 10 s,
+  A/AAAA activos. Sigue el contrato oficial de red privada Railway, aun sin desplegar.
+* SPA sin cache, recursos ausentes 404 y hash immutable. API sin cache, intercepcion
+  ni reintentos. Descargas sin buffering de respuesta. Cuerpo 1 MiB, inactividad 120 s.
+  /healthz solo Nginx e index.html; no prueba React, backend ni DB.
+* Extiende el proxy dev sin reemplazarlo. Alternativa de URL publica embebida descartada
+  por mismo origen y configuracion runtime. Contrato y fuentes en [DEPLOYMENT](../DEPLOYMENT.md).
+* Sin publicacion. Contactos demostrativos en TermsPage/Toaster/errores deben sustituirse
+  antes de entrega publica. Railway, dominio, backups y revision manual pendientes.
+
 Formato de cada entrada:
 
 ```
