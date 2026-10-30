@@ -120,6 +120,17 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
   `filename*`; si falta, `FALLBACK_FILE_NAME`), lo descarga con `URL.createObjectURL` y un
   enlace temporal con `download`, libera la URL en la siguiente vuelta y devuelve el nombre.
 
+## Proxy de produccion
+
+Produccion local preparada con Dockerfile multietapa Node 24.15.0 y Nginx 1.30.2,
+bases por digest, usuario 101. /api relativo llega al backend por red privada;
+BACKEND_UPSTREAM y PORT se resuelven al arrancar, DNS dinamico IPv4/IPv6.
+SPA sin cache, recursos con hash immutable y recursos ausentes 404; API sin cache
+ni reintentos. /healthz comprueba Nginx e index.html, sin backend ni DB.
+Contrato, limites, fuentes oficiales y reproduccion en [DEPLOYMENT](../DEPLOYMENT.md).
+Solo validacion local, sin Railway ni dominio publicados. David aplaza la revision manual
+hasta la regresion del nuevo bloque, obligatoria antes de publicar; sin aprobacion visual.
+
 ## Proxy de desarrollo
 
 `vite.config.ts` reenvia `/api` a `API_PROXY_TARGET` (por defecto
