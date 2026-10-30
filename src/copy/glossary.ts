@@ -2,6 +2,10 @@
 // estos conceptos. Tabla y reglas en docs/ai-context/06-COPY.md.
 
 export const GLOSSARY = {
+  /** Agrupadores de navegacion, sin cambiar los conceptos financieros. */
+  incomeNavigation: 'Ingresos',
+  expenseNavigation: 'Egresos',
+  treasury: 'Tesorería',
   accountColor: 'Color de la cuenta',
   /** Contado o Crédito. */
   paymentType: 'Forma de pago',

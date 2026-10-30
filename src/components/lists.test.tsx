@@ -315,7 +315,7 @@ describe('ningun listado muestra dos botones primarios', () => {
     ['/compras', 'Facturas de compra'],
     ['/ventas/papelera', 'Papelera de ventas'],
     ['/compras/gastos', 'Gastos operativos'],
-    ['/cuentas', 'Cuentas'],
+    ['/cuentas', 'Tesorería'],
     ['/ventas/clientes', 'Clientes'],
     ['/compras/proveedores', 'Proveedores'],
     ['/inventario', 'Productos'],

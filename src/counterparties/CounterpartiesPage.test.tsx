@@ -568,13 +568,13 @@ describe('Botones de los encabezados', () => {
     const router = renderRoute('/ventas')
     await screen.findByRole('heading', { name: 'Facturas de venta' })
 
-    await user.click(screen.getByRole('link', { name: 'Clientes' }))
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Clientes' }))
     expect(router.state.location.pathname).toBe('/ventas/clientes')
     expect(await screen.findByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
 
     await router.navigate('/compras')
     await screen.findByRole('heading', { name: 'Facturas de compra' })
-    await user.click(screen.getByRole('link', { name: 'Proveedores' }))
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Proveedores' }))
     expect(router.state.location.pathname).toBe('/compras/proveedores')
     expect(await screen.findByRole('heading', { name: 'Proveedores' })).toBeInTheDocument()
   })

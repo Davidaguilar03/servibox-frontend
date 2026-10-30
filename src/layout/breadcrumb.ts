@@ -2,7 +2,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 
 // Ultimo tramo de la miga de pan que una pagina conoce solo con sus datos (el numero de
 // una factura). Mientras la pagina esta montada reemplaza al ultimo tramo de su ruta o, con
-// `append`, se agrega despues de el (Cuentas / Movimientos / la cuenta elegida).
+// `append`, se agrega despues de el (Tesoreria / la cuenta elegida).
 
 export interface BreadcrumbTail {
   value: string

@@ -419,7 +419,7 @@ describe('botones de los listados de facturas', () => {
     mockApi(routes(expenses, { 'GET /api/purchases': () => jsonResponse([]) }))
     const router = renderRoute('/compras')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Gastos operativos' }))
+    await userEvent.click(await within(screen.getByRole('main')).findByRole('link', { name: 'Gastos operativos' }))
     expect(router.state.location.pathname).toBe('/compras/gastos')
     expect(await screen.findByRole('heading', { level: 1, name: 'Gastos operativos' })).toBeInTheDocument()
   })
@@ -428,7 +428,7 @@ describe('botones de los listados de facturas', () => {
     mockApi(routes(incomes, { 'GET /api/sales': () => jsonResponse([]) }))
     const router = renderRoute('/ventas')
 
-    await userEvent.click(await screen.findByRole('link', { name: 'Otros ingresos' }))
+    await userEvent.click(await within(screen.getByRole('main')).findByRole('link', { name: 'Otros ingresos' }))
     expect(router.state.location.pathname).toBe('/ventas/ingresos')
     expect(await screen.findByRole('heading', { level: 1, name: 'Otros ingresos' })).toBeInTheDocument()
   })
