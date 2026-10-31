@@ -22,11 +22,23 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   alineados arriba. Correos tiene altura natural, relleno 16 px y filas compactas con
   Clock, MailCheck y MailX (iconMd), etiquetas y contador a la derecha. Fondos de icono
   warning-bg, success-bg y error-bg con sus tonos ink; aclaracion de envio conservada.
-* Diferencias deliberadas con la referencia: sin boton Ver solicitudes, Ver todas ni Revisar
-  (rutas pendientes), sin bloque Usuarios repetido, sin aviso global de correos
+* Desde la entrega 2, Ver todas y Revisar enlazan a Solicitudes y su detalle.
+  Listado con ListHeader, FilterBar, SelectField, DataTable, tarjetas y Pagination.
+  Correccion de filtros: Serviteca y Responsable usan TextField; Desde y Hasta
+  reutilizan DateRangeFields de PeriodPicker (misma implementacion, sin otro selector).
+  FilterBar requests reparte los cinco controles en una columna bajo sm, dos desde
+  sm, tres desde xl y fila completa desde 2xl, con Limpiar filtros al final.
+  Detalle en ruta separada, superficies apiladas y datos en dos columnas desde sm;
+  confirmaciones con DiscardableModal y componentes existentes. Sin barra redundante.
+  Estados con texto y StatusBadge: aprobada info, rechazada error, cancelada neutral
+  y activada success; mismos pares de contraste ya verificados, sin tokens nuevos.
+* Diferencias deliberadas con la referencia: dos filtros de nombre segun contrato,
+  sin tabla y detalle simultaneos, sin bloque Usuarios repetido, sin aviso global de correos
   ni gradientes o sombras. Fallidos usa texto error solo si es mayor que cero.
   David aprobo visualmente la ultima correccion el 2026-10-31, incluidos KPI compactos,
   alineacion, altura natural de Correos, iconos y distribucion movil.
+  David tambien aprobo visualmente Solicitudes y sus nuevos filtros al autorizar
+  el cierre de la entrega 2 el 2026-10-31.
 
 ## Configuracion (2026-10-28)
 

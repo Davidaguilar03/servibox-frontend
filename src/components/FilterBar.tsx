@@ -23,14 +23,16 @@ interface FilterBarProps {
   /** Ventas: el periodo personalizado ocupa una fila amplia para las dos fechas. */
   salesCustom?: boolean
   sales?: boolean
+  /** Cinco filtros de Solicitudes: filas ordenadas hasta que quepan con Limpiar. */
+  requests?: boolean
 }
 
 /**
  * Barra de filtros de los listados: misma disposicion y espaciado en todos, apilada en movil,
  * en dos columnas desde sm y en una fila desde lg. "Limpiar filtros" solo con filtros activos.
  */
-export function FilterBar({ children, active, onClear, embedded = false, inventory = false, sales = false, salesCustom = false }: FilterBarProps) {
-  const columns = sales
+export function FilterBar({ children, active, onClear, embedded = false, inventory = false, sales = false, salesCustom = false, requests = false }: FilterBarProps) {
+  const columns = requests ? 'xl:grid-cols-3 2xl:grid-cols-[repeat(2,minmax(0,1.25fr))_repeat(3,minmax(0,1fr))_auto]' : sales
     ? salesCustom
       ? active ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto]' : 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))]'
       : active ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_minmax(0,1.25fr)_auto]' : 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_minmax(0,1.25fr)]'
@@ -41,7 +43,7 @@ export function FilterBar({ children, active, onClear, embedded = false, invento
     >
       {children}
       {active ? (
-        <Button variant="secondary" className={inventory || sales ? '2xl:mt-6' : 'lg:mt-6'} onClick={onClear}>
+        <Button variant="secondary" className={requests ? 'sm:mt-6' : inventory || sales ? '2xl:mt-6' : 'lg:mt-6'} onClick={onClear}>
           Limpiar filtros
         </Button>
       ) : (

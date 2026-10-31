@@ -23,16 +23,27 @@ export interface PlatformMetrics {
   outboxMessages: Record<string, number>
 }
 
-/** Campos de `PlatformRegistrationRequestResponse` que usa el Resumen. */
+export type RegistrationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'ACTIVATED'
+
+/** `PlatformRegistrationRequestResponse`, sin datos secretos. */
 export interface PlatformRegistrationRequest {
   id: string
-  status: string
+  status: RegistrationStatus
   businessName: string
   slug: string
   contactName: string
+  nit: string
+  phone: string
+  contactEmail: string
   /** Fecha y hora UTC sin zona (`2026-10-30T15:20:11.123456`). */
   createdAt: string
   reservationExpired: boolean
+  reservationExpiresAt: string
+  reviewedAt: string | null
+  reviewerId: number | null
+  rejectionReason: string | null
+  version: number
+  matches: { requestsWithSameNit: number; requestsWithSameEmail: number; tenantsWithSameNit: number } | null
 }
 
 /** `RegistrationRequestPage`. */
@@ -63,4 +74,37 @@ export function fetchPlatformMetrics() {
 /** Primera pagina de solicitudes PENDING; el backend ordena por fecha de creacion descendente. */
 export function fetchPendingRequests(size: number) {
   return apiFetch<RegistrationRequestPage>(`/platform/registration-requests?status=PENDING&page=0&size=${size}`, { platform: true })
+}
+
+export const PLATFORM_REQUESTS_KEY = [PLATFORM_QUERY_KEY, 'registration-requests'] as const
+
+export interface RegistrationRequestFilters {
+  tenantName?: string
+  contactName?: string
+  receivedFrom?: string
+  receivedTo?: string
+}
+
+export function fetchRegistrationRequests(status: RegistrationStatus | '', page: number, filters: RegistrationRequestFilters = {}) {
+  const params = new URLSearchParams({ page: String(page), size: '25' })
+  if (status) params.set('status', status)
+  for (const key of ['tenantName', 'contactName', 'receivedFrom', 'receivedTo'] as const) {
+    const value = filters[key]?.trim()
+    if (value) params.set(key, value)
+  }
+  return apiFetch<RegistrationRequestPage>(`/platform/registration-requests?${params}`, { platform: true })
+}
+
+export function fetchRegistrationRequest(id: string) {
+  return apiFetch<PlatformRegistrationRequest>(`/platform/registration-requests/${encodeURIComponent(id)}`, { platform: true })
+}
+
+export type RegistrationAction = 'approve' | 'reject' | 'resend-activation'
+
+export function reviewRegistrationRequest(request: PlatformRegistrationRequest, action: RegistrationAction, reason: string) {
+  return apiFetch<PlatformRegistrationRequest>(`/platform/registration-requests/${encodeURIComponent(request.id)}/${action}`, {
+    platform: true,
+    method: 'POST',
+    ...(action === 'resend-activation' ? {} : { body: { expectedVersion: request.version, ...(action === 'reject' ? { reason: reason.trim() } : {}) } }),
+  })
 }

@@ -93,6 +93,8 @@ src/
 | `/configuracion` | privada | `SettingsPage`, Configuracion: Datos de la serviteca y Configuracion financiera visibles; `?tab=financiera` enfoca la segunda seccion |
 | `/plataforma/login` | publica | `PlatformLoginPage`, acceso de plataforma. Con sesion de plataforma redirige a `/plataforma` |
 | `/plataforma` | plataforma | `PlatformOverviewPage`, Resumen, dentro de `PlatformShell` |
+| `/plataforma/solicitudes` | plataforma | `PlatformRequestsPage`, nombres, fechas, estado y pagina en URL, paginacion de servidor |
+| `/plataforma/solicitudes/:id` | plataforma | `PlatformRequestDetailPage`, revision y coincidencias, conserva contexto del listado |
 | `/plataforma/*` | plataforma | redirige a `/plataforma` (sin sesion de plataforma, a su acceso) |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -178,7 +180,7 @@ Acceso, sesion, guard, shell y cache independientes de la serviteca. Decision en
   PLATFORM vigente es sesion. `PlatformRequireAuth` programa el cierre en `exp`, redirige a
   `/plataforma/login` y borra las consultas `['platform', ...]` al quedar sin sesion.
 * `apiFetch(path, { platform: true })` usa el token de plataforma; un 401 cierra solo esa sesion.
-* `PlatformShell` monta `AppShell` con navegacion propia (Resumen), sin Configuracion ni
+* `PlatformShell` monta `AppShell` con navegacion propia (Resumen y Solicitudes), sin Configuracion ni
   barra superior, y el menu de usuario con el correo. Consulta `/me`; un 403 muestra Acceso
   denegado con Cerrar sesion.
 
@@ -187,9 +189,23 @@ Acceso, sesion, guard, shell y cache independientes de la serviteca. Decision en
 | KPI y Correos de activacion | `GET /api/platform/metrics` (`tenants`, `users`, `registrationRequests`, `outboxMessages`) | `['platform', 'metrics']` |
 | Solicitudes por revisar | `GET /api/platform/registration-requests?status=PENDING&page=0&size=5` (`items`, `totalElements`) | `['platform', 'registration-requests', 'PENDING', 5]` |
 
-Siguientes entregas: Solicitudes (`/plataforma/solicitudes`), Servitecas
-(`/plataforma/servitecas`) y su detalle con usuarios (`/plataforma/servitecas/:id`).
-No se enlazan hasta existir.
+Solicitudes usa claves `['platform', 'registration-requests', 'list', estado, pagina, filtros]`
+y `['platform', 'registration-requests', 'detail', id]`. Mutaciones POST approve/reject
+con expectedVersion, resend-activation sin cuerpo. Invalida ese prefijo y metrics;
+el prefijo incluye las cinco pendientes del Resumen. Detalle sin reintentos automaticos.
+Filtros admitidos: status, tenantName, contactName, receivedFrom, receivedTo, page y size;
+sin orden configurable. URL con serviteca, responsable, desde, hasta, estado y pagina.
+Los cuatro filtros nuevos entran en el objeto filtros de la clave, vacios como cadena
+vacia, textos recortados. Nombres y fechas usan useUrlTextParam; limpiar conserva
+parametros ajenos. Rango invertido no consulta; fechas abiertas admitidas y enviadas
+como YYYY-MM-DD sin conversion UTC. Backend cuenta coincidencias antes de paginar.
+Reglas de confirmacion y conflictos en [03-DECISIONS.md](03-DECISIONS.md).
+Requiere backend con filtros de solicitudes, documentado en su nota
+2026-10-31-registration-request-filters.md (feat/48-registration-request-filters).
+El cierre y publicacion del backend son independientes del PR frontend.
+
+Siguientes entregas: Servitecas (`/plataforma/servitecas`) y su detalle con usuarios
+(`/plataforma/servitecas/:id`). No se enlazan hasta existir.
 
 ## Shell de la aplicacion
 

@@ -12,6 +12,8 @@ import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
 import { PlatformLoginPage } from './pages/PlatformLoginPage'
 import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
+import { PlatformRequestsPage } from './pages/PlatformRequestsPage'
+import { PlatformRequestDetailPage } from './pages/PlatformRequestDetailPage'
 import { PlatformRequireAuth } from './platform/PlatformRequireAuth'
 import { PlatformShell } from './platform/PlatformShell'
 import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
@@ -54,7 +56,7 @@ export const routes: RouteObject[] = [
   { path: '/terminos', element: <TermsPage /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   // Plataforma: acceso, guard, shell y cache propios; la sesion de serviteca no cuenta aqui.
-  // Siguientes entregas: /plataforma/solicitudes, /plataforma/servitecas y /plataforma/servitecas/:id.
+  // Servitecas y usuarios quedan para las siguientes entregas.
   { path: '/plataforma/login', element: <PlatformLoginPage /> },
   {
     path: '/plataforma',
@@ -62,7 +64,11 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <PlatformShell />,
-        children: [{ index: true, element: <PlatformOverviewPage />, handle: handle(['Resumen']) }],
+        children: [
+          { index: true, element: <PlatformOverviewPage />, handle: handle(['Resumen']) },
+          { path: 'solicitudes', element: <PlatformRequestsPage />, handle: handle(['Solicitudes']) },
+          { path: 'solicitudes/:id', element: <PlatformRequestDetailPage />, handle: handle(['Solicitudes', 'Detalle de solicitud']) },
+        ],
       },
       { path: '*', element: <Navigate to="/plataforma" replace /> },
     ],

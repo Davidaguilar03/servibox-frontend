@@ -5,6 +5,12 @@ import { TextField } from './TextField'
 
 type DateFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'>
 
+interface DateRangeFieldsProps {
+  desde: DateFieldProps
+  hasta: DateFieldProps
+  errors: { desde?: string; hasta?: string }
+}
+
 interface PeriodPickerProps<T extends PeriodKey> {
   /** Periodos de la pantalla, con su texto, en el orden en que se muestran. */
   options: Array<{ value: T; label: string }>
@@ -13,11 +19,7 @@ interface PeriodPickerProps<T extends PeriodKey> {
   /** Rango activo para la etiqueta; null si no hay (Todas, o Personalizado incompleto). */
   range: DateRange | null
   /** Solo si la pantalla ofrece Personalizado: los campos Desde y Hasta y sus errores. */
-  custom?: {
-    desde: DateFieldProps
-    hasta: DateFieldProps
-    errors: { desde?: string; hasta?: string }
-  }
+  custom?: DateRangeFieldsProps
   label?: string
   /** Inline reserva una fila horizontal para fechas segun el ancho real del contenedor. */
   layout?: 'stacked' | 'inline' | 'toolbar' | 'form'
@@ -48,12 +50,19 @@ export function PeriodPicker<T extends PeriodKey>({ options, value, onChange, ra
         </div>
         {showCustom && (
           <div className={inline ? 'order-2 grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,144px),1fr))] gap-4 @min-[720px]:order-1 @min-[720px]:flex-1 @min-[720px]:basis-80' : toolbar || layout === 'form' ? 'grid min-w-0 basis-full grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-4' : 'grid gap-4 sm:grid-cols-2 lg:grid-cols-1'}>
-            <TextField label="Desde" type="date" {...custom.desde} error={custom.errors.desde} />
-            <TextField label="Hasta" type="date" {...custom.hasta} error={custom.errors.hasta} />
+            <DateRangeFields {...custom} />
           </div>
         )}
         {action && <div className="order-1 shrink-0 pt-6 @min-[720px]:order-2">{action}</div>}
       </div>
     </div>
   )
+}
+
+/** Los mismos campos para filtros con fechas abiertas, sin selector de periodo adicional. */
+export function DateRangeFields({ desde, hasta, errors }: DateRangeFieldsProps) {
+  return <>
+    <TextField label="Desde" type="date" {...desde} error={errors.desde} />
+    <TextField label="Hasta" type="date" {...hasta} error={errors.hasta} />
+  </>
 }
