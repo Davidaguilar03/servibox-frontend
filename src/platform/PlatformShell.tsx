@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { House, LogOut, ShieldAlert } from 'lucide-react'
+import { FileClock, House, LogOut, ShieldAlert } from 'lucide-react'
 import { MESSAGES } from '../api/errorMessages'
 import { initials } from '../auth/session'
 import { Wordmark } from '../brand/Wordmark'
 import { Button } from '../components/Button'
 import { iconLg, iconSm } from '../components/icons'
+import { GLOSSARY } from '../copy/glossary'
 import { AppShell, type NavItem } from '../layout/AppShell'
 import { ApiError } from '../lib/api'
 import { usePageMeta } from '../lib/usePageMeta'
@@ -14,8 +15,10 @@ import { clearPlatformSession, usePlatformSession } from './platformSession'
 export const PLATFORM_HOME = '/plataforma'
 export const PLATFORM_ROLE_LABEL = 'Administrador de plataforma'
 
-// Solicitudes, Servitecas y su detalle se agregan cuando existan sus pantallas.
-const platformNav: NavItem[] = [{ to: PLATFORM_HOME, label: 'Resumen', icon: House, end: true }]
+const platformNav: NavItem[] = [
+  { to: PLATFORM_HOME, label: 'Resumen', icon: House, end: true },
+  { to: '/plataforma/solicitudes', label: GLOSSARY.platformRequests, icon: FileClock },
+]
 
 /**
  * Shell del panel de plataforma: el mismo AppShell con su propia navegacion, sin

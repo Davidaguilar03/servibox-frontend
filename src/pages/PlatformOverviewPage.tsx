@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CirclePause, Clock, FileClock, MailCheck, MailX, Store, Users } from 'lucide-react'
 import { useReportedError } from '../api/reportError'
 import { DataTable, type Column } from '../components/DataTable'
+import { CellLink } from '../components/CellLink'
 import { IndicatorCard } from '../components/IndicatorCard'
 import { iconMd } from '../components/icons'
 import { StatusBadge } from '../components/StatusBadge'
@@ -121,6 +122,7 @@ const requestColumns: Column<PlatformRegistrationRequest>[] = [
   { header: 'Responsable', render: (r) => <span className="wrap-anywhere">{r.contactName}</span> },
   { header: 'Recibida', render: (r) => requestDate(r.createdAt) },
   { header: 'Estado', render: (r) => <RequestStatus request={r} /> },
+  { header: 'Acciones', render: (r) => <CellLink to={`/plataforma/solicitudes/${encodeURIComponent(r.id)}?estado=PENDING`} aria-label={`Revisar ${r.businessName}`}>Revisar</CellLink> },
 ]
 
 function RequestStatus({ request }: { request: PlatformRegistrationRequest }) {
@@ -144,6 +146,7 @@ function requestCard(r: PlatformRegistrationRequest) {
         </span>
       </span>
       <RequestStatus request={r} />
+      <CellLink to={`/plataforma/solicitudes/${encodeURIComponent(r.id)}?estado=PENDING`} aria-label={`Revisar ${r.businessName}`}>Revisar</CellLink>
     </div>
   )
 }
@@ -166,6 +169,7 @@ function PendingRequestsBlock() {
 
   return (
     <Section title="Solicitudes por revisar" subtitle={subtitle}>
+      <div className="mb-4"><CellLink to="/plataforma/solicitudes?estado=PENDING">Ver todas</CellLink></div>
       <DataTable
         columns={requestColumns}
         rows={requests.data?.items}

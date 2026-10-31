@@ -2,6 +2,8 @@
 // estos conceptos. Tabla y reglas en docs/ai-context/06-COPY.md.
 
 export const GLOSSARY = {
+  platformRequests: 'Solicitudes',
+  registrationStatuses: { PENDING: 'Pendiente', APPROVED: 'Aprobada', REJECTED: 'Rechazada', CANCELLED: 'Cancelada', ACTIVATED: 'Activada' },
   /** Agrupadores de navegacion, sin cambiar los conceptos financieros. */
   incomeNavigation: 'Ingresos',
   expenseNavigation: 'Egresos',

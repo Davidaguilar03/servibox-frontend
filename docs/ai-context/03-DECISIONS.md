@@ -2,6 +2,57 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Correccion de filtros de Solicitudes
+
+* Reemplaza la limitacion de solo Estado de la entrega 2: el backend ya admite
+  tenantName, contactName, receivedFrom y receivedTo, opcionales y combinables con
+  status. No agrega orden configurable ni cambia respuesta, detalle o acciones.
+* URL: serviteca, responsable, desde, hasta, estado y pagina. Los textos y fechas
+  usan useUrlTextParam (300 ms, Enter o blur, replace); cada cambio reinicia pagina.
+  Se conservan parametros ajenos al filtrar, paginar, limpiar y volver del detalle.
+  Cache de listado incluye todos los filtros normalizados, bajo el mismo prefijo.
+* Fechas YYYY-MM-DD sin conversion UTC en frontend. El backend incluye dias completos
+  en America/Bogota y admite limites abiertos. Rango invertido se marca en Hasta y
+  no consulta hasta corregirlo; no se descartan los valores introducidos.
+* Texto recortado al enviar; vacio se omite. Por backend: hasta 100 caracteres,
+  contiene sin distinguir mayusculas, sensible a acentos, % y _ literales.
+  Errores 400 mapeados y mostrados en linea, conservando los campos.
+* FilterBar con variante requests: apilada bajo sm, dos columnas desde sm, tres
+  desde xl y fila completa desde 2xl. Estado comparte fila, sin ocupar ancho total
+  en escritorio. DateRangeFields extrae los campos existentes de PeriodPicker;
+  ambas pantallas comparten la misma implementacion sin selector extra ni cambiar
+  guardas. No cambia la presentacion de periodos de otras pantallas.
+* Vacio sin filtros y busqueda sin coincidencias tienen textos distintos.
+  totalElements filtrado manda para conteo y paginacion. Invalidaciones de acciones
+  y limite de cinco del Resumen sin cambios. Sin HTTP real ni navegador.
+  David aprobo visualmente Solicitudes y filtros y autorizo el cierre frontend.
+  Requiere backend feat/48-registration-request-filters, cuyo cierre es independiente.
+  Evidencia final en la nota de Solicitudes; sin envio real de correo verificado.
+
+## 2026-10-31: Solicitudes de plataforma (entrega 2 de 4)
+
+* Reemplaza el pendiente de Solicitudes de la entrega 1: shell con Solicitudes,
+  Resumen con Ver todas y Revisar, listado y detalle con URL propia. No cambia
+  el limite de cinco pendientes ni su orden descendente por createdAt e id.
+* Solo filtro por estado, sin buscador ni orden configurable: el backend no los admite.
+  URL con estado y pagina (base uno); API con status, page (base cero), size 25.
+  Cambiar estado borra pagina; detalle conserva ambos parametros incluso al recargar.
+  Una pagina que deja de existir se ajusta a la ultima disponible con replace.
+* Aprobar solo PENDING con reserva vigente; rechazar cualquier PENDING, incluso
+  vencida, con motivo obligatorio recortado de hasta 500 caracteres. Reenviar solo
+  APPROVED vigente, sin cuerpo ni expectedVersion, devuelve detalle con HTTP 202.
+* Confirmacion conserva la version revisada pese a actualizaciones de consultas.
+  Un 409 bloquea confirmar y exige Actualizar solicitud explicito; conserva motivo,
+  no repite operacion. La actualizacion fallida conserva el formulario y el bloqueo.
+  429 se muestra por reportError en la confirmacion, sin reintentos ni cuenta regresiva.
+* Exito invalida registration-requests y metrics bajo platform, incluyendo Resumen.
+  No toca sesion ni cache comercial. Coincidencias son cantidades indicativas.
+  Aprobar encola correo; solo activar crea la serviteca. No se garantiza recepcion.
+* Reutiliza componentes y tonos existentes; detalle separado para facilitar lectura.
+  Sin navegador, HTTP real, correos reales ni mutaciones del entorno de revision.
+  Aprobada visualmente por David junto con la correccion de filtros. Contrato y
+  evidencia en la nota de sesion; cierre de backend independiente.
+
 ## 2026-10-31: Correccion compacta del Resumen de plataforma
 
 * Reemplaza la presentacion densa de KPI y el estiramiento de Correos de la entrega 1.

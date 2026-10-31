@@ -244,7 +244,7 @@ describe('shell de plataforma', () => {
     await screen.findByRole('heading', { level: 1, name: 'Resumen' })
     const nav = screen.getByRole('navigation', { name: 'Principal' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((link) => link.textContent)).toEqual(['Resumen'])
+    expect(links.map((link) => link.textContent)).toEqual(['Resumen', 'Solicitudes'])
     expect(links[0]).toHaveAttribute('href', '/plataforma')
     expect(links[0]).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('link', { name: 'Configuración' })).not.toBeInTheDocument()
@@ -375,11 +375,12 @@ describe('Resumen de plataforma', () => {
     expect(url.searchParams.get('status')).toBe('PENDING')
     expect(url.searchParams.get('size')).toBe('5')
     expect(url.searchParams.get('page')).toBe('0')
-    const table = screen.getByRole('cell', { name: /Taller de prueba 5/ }).closest('table') as HTMLElement
+    const table = screen.getAllByText('Taller de prueba 5')[0]!.closest('table') as HTMLElement
     expect(within(table).getAllByRole('row')).toHaveLength(6)
-    // Sin acciones de revision ni enlaces a pantallas que aun no existen.
+    // Accesos a la cola y al detalle sin cambiar el limite de cinco.
     const section = screen.getByRole('heading', { name: 'Solicitudes por revisar' }).closest('section') as HTMLElement
-    expect(within(section).queryByRole('link')).not.toBeInTheDocument()
+    expect(within(section).getByRole('link', { name: 'Ver todas' })).toHaveAttribute('href', '/plataforma/solicitudes?estado=PENDING')
+    expect(within(section).getAllByRole('link', { name: /Revisar/ })).toHaveLength(10)
     expect(within(section).queryByRole('button')).not.toBeInTheDocument()
   })
 
@@ -390,7 +391,7 @@ describe('Resumen de plataforma', () => {
     signInPlatform()
     renderRoute('/plataforma')
 
-    const table = (await screen.findByRole('cell', { name: /Taller de prueba 1/ })).closest('table') as HTMLElement
+    const table = (await screen.findAllByText('Taller de prueba 1'))[0]!.closest('table') as HTMLElement
     expect(within(table).getByText('taller-prueba-1')).toBeInTheDocument()
     expect(within(table).getByText('Contacto 1')).toBeInTheDocument()
     // 03:30 UTC del 30 es el 29 en Bogota.

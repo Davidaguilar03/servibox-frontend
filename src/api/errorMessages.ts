@@ -45,6 +45,20 @@ type Rule = [RegExp, string | ((...groups: string[]) => string)]
  * (errorMessages.test.ts) tienen la lista de origen.
  */
 const RULES: Rule[] = [
+  // Revision de solicitudes y reenvio de activacion.
+  [/^El filtro de texto no puede superar 100 caracteres$/, 'El filtro de texto no puede superar 100 caracteres.'],
+  [/^La fecha debe tener formato AAAA-MM-DD$/, 'Escribe una fecha válida con formato AAAA-MM-DD.'],
+  [/^La fecha inicial no puede ser posterior a la final$/, 'Desde no puede ser posterior a Hasta.'],
+  [/^Paginacion invalida$/, 'La paginación no es válida. Vuelve al listado.'],
+  [/^Solicitud no encontrada$/, 'No encontramos esta solicitud. Puede que ya no exista.'],
+  [/^El motivo de rechazo es obligatorio$/, 'Escribe el motivo del rechazo.'],
+  [/^El motivo de rechazo no puede superar 500 caracteres$/, 'El motivo del rechazo no puede superar 500 caracteres.'],
+  [/^La version esperada es obligatoria$/, 'Actualiza la solicitud antes de continuar.'],
+  [/^El codigo solicitado no esta disponible$/, 'El código solicitado ya no está disponible. Actualiza la solicitud.'],
+  [/^La solicitud ya no permite esta operacion$/, 'La solicitud cambió de estado o su reserva venció. Actualízala antes de continuar.'],
+  [/^El recurso cambio; actualiza e intenta de nuevo$/, 'La solicitud cambió mientras la revisabas. Actualízala antes de continuar.'],
+  [/^Espera un momento antes de reenviar la activacion$/, 'Espera un momento antes de reenviar la activación.'],
+  [/^Se alcanzo el limite diario de reenvios de esta solicitud$/, 'Se alcanzó el límite diario de reenvíos de esta solicitud.'],
   [/^El color debe tener el formato #RRGGBB$/, 'El color debe tener el formato #RRGGBB.'],
   [/^El precio unitario admite como maximo dos decimales$/, 'El precio unitario admite como máximo dos decimales.'],
   // Registro y sesion.

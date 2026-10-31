@@ -3,6 +3,15 @@ import { decimal, roundInteger } from './decimal'
 /** Lo que se muestra cuando no hay valor: una raya, nunca "N/A". */
 export const EMPTY_VALUE = '\u2014'
 
+/** LocalDateTime UTC de plataforma, presentado en la zona del negocio. */
+export function formatPlatformDate(value: string | null): string {
+  if (!value) return EMPTY_VALUE
+  const date = new Date(`${value}Z`)
+  return Number.isNaN(date.getTime()) ? EMPTY_VALUE : new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short',
+  }).format(date)
+}
+
 const integerFormat = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 })
 
 /** Pesos colombianos para lectura: HALF_UP al peso, sin alterar el valor de origen. */

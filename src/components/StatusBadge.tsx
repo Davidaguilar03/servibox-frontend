@@ -11,8 +11,16 @@ export type BadgeStatus =
   | 'INACTIVO'
   | 'INGRESO'
   | 'EGRESO'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'CANCELLED'
+  | 'ACTIVATED'
 
 const badges: Record<BadgeStatus, { label: string; tone: string }> = {
+  APPROVED: { label: GLOSSARY.registrationStatuses.APPROVED, tone: 'bg-info-bg text-info-ink' },
+  REJECTED: { label: GLOSSARY.registrationStatuses.REJECTED, tone: 'bg-error-bg text-error-ink' },
+  CANCELLED: { label: GLOSSARY.registrationStatuses.CANCELLED, tone: 'bg-neutral-200 text-text-muted' },
+  ACTIVATED: { label: GLOSSARY.registrationStatuses.ACTIVATED, tone: 'bg-success-bg text-success-ink' },
   DISPONIBLE: { label: 'Disponible', tone: 'bg-success-bg text-success-ink' },
   BAJO_STOCK: { label: GLOSSARY.lowStock, tone: 'bg-warning-bg text-warning-ink' },
   // Variante que el manual no define: pendiente de validar con el disenador.

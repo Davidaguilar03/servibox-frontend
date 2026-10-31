@@ -33,6 +33,8 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 | `restore` | Restaurar | accion de la Papelera | Recuperar |
 | `trash` | Papelera | | |
 | `accountColor` | Color de la cuenta | Nueva y Editar cuenta | |
+| `platformRequests` | Solicitudes | navegacion de plataforma | |
+| `registrationStatuses` | Pendiente, Aprobada, Rechazada, Cancelada, Activada | filtros y estados de solicitudes | |
 
 Un concepto nuevo con mas de un sinonimo posible se agrega aqui antes de usarlo en pantalla.
 
@@ -138,6 +140,21 @@ El acceso de plataforma sigue la misma regla con su propio texto de credenciales
 ("Revisa tu correo y tu contrasena."), sin mencionar el codigo de la serviteca.
 
 ## Validacion de contacto
+
+Solicitudes de plataforma (2026-10-31): mensajes exactos de revision, paginacion,
+version, estado y limites de reenvio agregados a errorMessages.ts. Formularios de
+confirmacion usan reportError con inlineOnly: errores visibles sin perder motivo,
+incluido 429. Un 401 conserva el cierre aislado de plataforma. El 404 del detalle
+es solicitud inexistente, sin toast; durante una accion conserva la confirmacion.
+No se muestran enlaces secretos ni se promete recepcion del correo. Lista exacta
+de mensajes y reglas en la nota de sesion platform-requests.
+
+Correccion de filtros de Solicitudes: Serviteca, Responsable, Desde, Hasta y Estado
+son etiquetas visibles. Sin filtros: No hay solicitudes de registro. Con filtros:
+No hay solicitudes que coincidan con estos filtros. Tres mensajes 400 nuevos del
+backend se mapean para longitud de texto, formato de fecha y rango invertido.
+El rango invertido tambien se valida en el frontend usando el mismo mensaje mapeado;
+fechas abiertas validas. Datos conservados ante errores y al volver del detalle.
 
 `src/lib/validation/contact.ts` es el unico modulo de NIT y telefono (registro y
 Configuracion): mismo patron que el backend, mismo largo maximo (25) y mismos mensajes. El NIT
