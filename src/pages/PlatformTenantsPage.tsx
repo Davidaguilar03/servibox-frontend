@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useReportedError } from '../api/reportError'
+import { CellLink } from '../components/CellLink'
 import { DataTable, type Column } from '../components/DataTable'
 import { FilterBar } from '../components/FilterBar'
 import { ListHeader } from '../components/ListHeader'
@@ -71,6 +72,9 @@ export function PlatformTenantsPage() {
     setParams(next)
   }
 
+  const detailLink = (t: PlatformTenant) => (
+    <CellLink to={`/plataforma/servitecas/${encodeURIComponent(t.id)}?${params}`} aria-label={`Ver detalle de ${t.name}`}>Ver detalle</CellLink>
+  )
   const columns: Column<PlatformTenant>[] = [
     { header: 'Serviteca', render: (t) => <span className="flex flex-col gap-1 wrap-anywhere"><span>{t.name}</span><span className="codigo text-small text-text-muted">{t.slug}</span></span> },
     { header: 'NIT', render: (t) => <span className="wrap-anywhere">{t.nit}</span> },
@@ -85,6 +89,7 @@ export function PlatformTenantsPage() {
       ),
     },
     { header: 'Creada', render: (t) => formatPlatformDate(t.createdAt) },
+    { header: 'Acciones', render: detailLink },
   ]
 
   return (
@@ -99,7 +104,8 @@ export function PlatformTenantsPage() {
         </FilterBar>
         <DataTable columns={columns} rows={data?.items} rowKey={(t) => t.id} loading={tenants.isPending} error={tenants.isError} onRetry={() => void tenants.refetch()} emptyMessage={active ? 'No hay servitecas que coincidan con estos filtros.' : 'Todavía no hay servitecas registradas.'} cardsLabel={GLOSSARY.platformTenants} card={(t) => (
           <div className="flex flex-col gap-3">
-            {columns.map((column) => <div key={column.header} className="min-w-0"><p className="text-small text-text-muted">{column.header}</p>{column.render(t)}</div>)}
+            {columns.slice(0, 5).map((column) => <div key={column.header} className="min-w-0"><p className="text-small text-text-muted">{column.header}</p>{column.render(t)}</div>)}
+            {detailLink(t)}
           </div>
         )} />
         {error && <p role="alert" className="p-4 text-small text-error-ink">{error}</p>}

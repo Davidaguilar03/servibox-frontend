@@ -44,7 +44,20 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   Serviteca (nombre y codigo), NIT, Telefono, Estado y Creada. StatusBadge ACTIVE
   success y SUSPENDED warning (mismos pares ya verificados, sin tokens nuevos); motivo
   de suspension bajo la insignia en text-small muted con line-clamp-2. Sin KPI (ya
-  estan en el Resumen), sin Ver detalle, pie de acceso limitado ni rotulo PLATAFORMA.
+  estan en el Resumen), pie de acceso limitado ni rotulo PLATAFORMA. Desde la entrega 4,
+  columna Acciones con CellLink Ver detalle (y al final de cada tarjeta).
+* Detalle de serviteca (entrega 4): mismo patron que el detalle de solicitud. ListHeader
+  con Volver a servitecas; desde lg, Datos (2/3) y Acceso (1/3) en rejilla, apilados
+  debajo. Datos: nombre text-section con StatusBadge, dl en dos columnas desde sm (codigo
+  y NIT con rol codigo), fecha y motivo de suspension solo si aplica, y bloque Solicitud
+  de registro con StatusBadge, fechas y CellLink. Acceso: botones secondary con su
+  consecuencia en texto muted; confirmaciones con DiscardableModal, confirmar danger
+  (suspender y cerrar sesiones) o primary (reactivar). Usuarios: resumen en dl (total,
+  activos, inactivos y por rol) en vez de tarjetas KPI, DataTable con tarjetas bajo md,
+  StatusBadge ACTIVO e INACTIVO y CellButton Cerrar sesiones solo en usuarios activos de
+  una serviteca activa. Motivo con TextField y contador en la ayuda (sin componente
+  nuevo de area de texto). Sin tokens, colores ni clases nuevas; sin bordes superiores
+  de color, gradientes ni tarjetas de cifras de la maqueta.
 
 ## Configuracion (2026-10-28)
 

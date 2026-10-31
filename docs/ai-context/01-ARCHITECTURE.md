@@ -95,7 +95,8 @@ src/
 | `/plataforma` | plataforma | `PlatformOverviewPage`, Resumen, dentro de `PlatformShell` |
 | `/plataforma/solicitudes` | plataforma | `PlatformRequestsPage`, nombres, fechas, estado y pagina en URL, paginacion de servidor |
 | `/plataforma/solicitudes/:id` | plataforma | `PlatformRequestDetailPage`, revision y coincidencias, conserva contexto del listado |
-| `/plataforma/servitecas` | plataforma | `PlatformTenantsPage`, busqueda, estado y pagina en URL, paginacion de servidor, sin detalle |
+| `/plataforma/servitecas` | plataforma | `PlatformTenantsPage`, busqueda, estado y pagina en URL, paginacion de servidor, Ver detalle por fila |
+| `/plataforma/servitecas/:id` | plataforma | `PlatformTenantDetailPage`, datos, solicitud de origen, usuarios de consulta, suspender, reactivar y cerrar sesiones; conserva contexto del listado |
 | `/plataforma/*` | plataforma | redirige a `/plataforma` (sin sesion de plataforma, a su acceso) |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -210,10 +211,19 @@ size 25; clave `['platform', 'tenants', 'list', estado, q, pagina]`. q va recort
 el backend lo busca solo en nombre y slug (contiene, sin distinguir mayusculas, % y _
 literales, maximo 100). URL con q, estado y pagina; q usa useUrlTextParam y limpiar
 conserva parametros ajenos. Sin metricas propias: el Resumen ya muestra activas y
-suspendidas. Sin detalle ni acciones hasta la entrega 4.
+suspendidas. Cada fila enlaza a su detalle con la query string del listado.
 
-Siguientes entregas: Servitecas (`/plataforma/servitecas`) y su detalle con usuarios
-(`/plataforma/servitecas/:id`). No se enlazan hasta existir.
+Detalle de serviteca (entrega 4): `GET /api/platform/tenants/{id}` (tenant, totalUsers,
+userCounts por rol y activo, registrationRequest o null) con clave
+`['platform', 'tenants', 'detail', id]` y `GET /{id}/users?page&size=25` (orden id asc)
+con clave `['platform', 'tenants', 'users', id, pagina]`; pagina de usuarios en estado
+local, no en la URL, para no chocar con la pagina del listado. Mutaciones POST
+`/{id}/suspend` y `/{id}/reactivate` con `{expectedVersion, reason}` (motivo omitido si
+esta vacio al reactivar), `/{id}/users/{userId}/revoke` y `/{id}/revoke-sessions` sin
+cuerpo. Tras exito invalida el prefijo `['platform', 'tenants']` (detalle, usuarios y
+listado) y `['platform', 'metrics']`. Un 409 relee el detalle dentro de la confirmacion.
+`userMessage` y `reportError` admiten contexto `tenant` para los mensajes compartidos con
+Solicitudes (version distinta y version obligatoria).
 
 ## Shell de la aplicacion
 

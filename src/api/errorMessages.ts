@@ -58,6 +58,14 @@ const RULES: Rule[] = [
   [/^El codigo solicitado no esta disponible$/, 'El código solicitado ya no está disponible. Actualiza la solicitud.'],
   [/^La solicitud ya no permite esta operacion$/, 'La solicitud cambió de estado o su reserva venció. Actualízala antes de continuar.'],
   [/^El recurso cambio; actualiza e intenta de nuevo$/, 'La solicitud cambió mientras la revisabas. Actualízala antes de continuar.'],
+
+  // Servitecas de plataforma: detalle, suspension, reactivacion y cierre de sesiones.
+  [/^Tenant no encontrado$/, 'No encontramos esta serviteca. Puede que ya no exista.'],
+  [/^Usuario no encontrado$/, 'No encontramos ese usuario en esta serviteca. Puede que ya no exista.'],
+  [/^El motivo de suspension es obligatorio$/, 'Escribe el motivo de la suspensión.'],
+  [/^El motivo no puede superar 500 caracteres$/, 'El motivo no puede superar 500 caracteres.'],
+  [/^El tenant ya esta suspendido$/, 'La serviteca ya estaba suspendida. Revisa los datos actualizados.'],
+  [/^El tenant ya esta activo$/, 'La serviteca ya estaba activa. Revisa los datos actualizados.'],
   [/^Espera un momento antes de reenviar la activacion$/, 'Espera un momento antes de reenviar la activación.'],
   [/^Se alcanzo el limite diario de reenvios de esta solicitud$/, 'Se alcanzó el límite diario de reenvíos de esta solicitud.'],
   [/^El color debe tener el formato #RRGGBB$/, 'El color debe tener el formato #RRGGBB.'],
@@ -196,6 +204,17 @@ const RULES: Rule[] = [
   [/^El recurso esta siendo modificado por otra operacion/, 'Alguien más está modificando esto. Inténtalo de nuevo en un momento.'],
 ]
 
+/**
+ * Mensajes compartidos con Solicitudes que en Servitecas deben nombrar la serviteca. Se
+ * consultan antes del mapa general cuando el contexto es 'tenant'.
+ */
+const TENANT_RULES: Rule[] = [
+  [/^El recurso cambio; actualiza e intenta de nuevo$/, 'La serviteca cambió mientras la revisabas. Revisa los datos actualizados antes de confirmar.'],
+  [/^La version esperada es obligatoria$/, 'Actualiza la serviteca antes de continuar.'],
+]
+
+export type MessageContext = 'tenant'
+
 /** Palabras que delatan un texto sin tildes o en ingles: ese texto no se muestra crudo. */
 const UNREADABLE_WORDS =
   /\b(?:peticion|categoria|invalid[oa]|valid[oa]|numero|codigo|telefono|descripcion|operacion|parametro|sesion|credito|debito|dias|internal|server|error|bad|request|not|found|forbidden|conflict|unauthorized)\b/i
@@ -211,8 +230,8 @@ function readable(message: string): string | null {
 }
 
 /** El mensaje del backend pasado por el mapa; null si no es uno conocido. */
-export function mapBackendMessage(message: string): string | null {
-  for (const [pattern, output] of RULES) {
+export function mapBackendMessage(message: string, context?: MessageContext): string | null {
+  for (const [pattern, output] of context === 'tenant' ? [...TENANT_RULES, ...RULES] : RULES) {
     const match = pattern.exec(message.trim())
     if (match) return typeof output === 'string' ? output : output(...match.slice(1))
   }
@@ -223,9 +242,9 @@ export function mapBackendMessage(message: string): string | null {
  * Texto para el usuario de cualquier error. Nunca muestra JSON, trazas, nombres de clases ni
  * textos en ingles: lo desconocido cae en el texto de su estado HTTP.
  */
-export function userMessage(error: unknown): string {
+export function userMessage(error: unknown, context?: MessageContext): string {
   if (!(error instanceof ApiError)) return MESSAGES.network
-  const mapped = mapBackendMessage(error.message)
+  const mapped = mapBackendMessage(error.message, context)
   switch (error.status) {
     case 400:
       return mapped ?? readable(error.message) ?? MESSAGES.invalid
