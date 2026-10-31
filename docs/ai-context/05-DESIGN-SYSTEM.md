@@ -6,6 +6,28 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Plataforma (2026-10-30)
+
+* Shell de plataforma: el mismo AppShell (sidebar oscuro, marca, compacto, movil, foco,
+  SkipLink y movimiento reducido) con navegacion propia y encabezado dentro del contenido.
+  Marca y favicon sin cambios; sin rotulo adicional bajo el logo.
+* Acceso de plataforma: tarjeta centrada en canvas con Wordmark, TextField, Button y Alert
+  existentes; sin fotografia ni textos comerciales.
+* Resumen, correccion 2026-10-31: cuatro IndicatorCard compact de Productos (success,
+  warning, brand-strong, info), icono izquierdo y titulo, cifra text-kpi y ayuda a la
+  derecha. Rejilla con gap-4, una columna en movil, dos desde sm y cuatro desde 2xl;
+  misma altura por fila y contenido alineado arriba sin filas de ayuda vacias. El
+  desglose de usuarios sigue bajo el total; cifras largas envuelven sin recorte.
+* Solicitudes conserva DataTable y tarjetas bajo md. Bloques 3/5 y 2/5 desde xl,
+  alineados arriba. Correos tiene altura natural, relleno 16 px y filas compactas con
+  Clock, MailCheck y MailX (iconMd), etiquetas y contador a la derecha. Fondos de icono
+  warning-bg, success-bg y error-bg con sus tonos ink; aclaracion de envio conservada.
+* Diferencias deliberadas con la referencia: sin boton Ver solicitudes, Ver todas ni Revisar
+  (rutas pendientes), sin bloque Usuarios repetido, sin aviso global de correos
+  ni gradientes o sombras. Fallidos usa texto error solo si es mayor que cero.
+  David aprobo visualmente la ultima correccion el 2026-10-31, incluidos KPI compactos,
+  alineacion, altura natural de Correos, iconos y distribucion movil.
+
 ## Configuracion (2026-10-28)
 
 * ListHeader con descripcion y acceso al menu movil dentro del contenido. Solo esta

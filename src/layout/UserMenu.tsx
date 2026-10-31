@@ -6,12 +6,25 @@ import { iconSm } from '../components/icons'
 
 const focusRing = 'focus-ring'
 
+/** Quien entro, tal como lo muestra el menu. Sin el, el menu usa la sesion de serviteca. */
+export interface UserMenuAccount {
+  name: string
+  initials: string
+  /** Primera linea del boton expandido. */
+  title: string
+  /** Segunda linea del boton expandido. */
+  subtitle: string
+  /** Lineas del panel bajo el nombre. */
+  details: string[]
+  onSignOut: () => void
+}
+
 /**
  * Menu de usuario del pie lateral, con el patron disclosure (no role=menu): el boton
  * muestra las iniciales, la serviteca y el rol; el panel, quien entro, su rol, la serviteca
  * y Cerrar sesion. Esc lo cierra y devuelve el foco; el clic fuera y el cambio de ruta tambien.
  */
-export function UserMenu({ compact = false }: { compact?: boolean }) {
+export function UserMenu({ compact = false, account: accountProp }: { compact?: boolean; account?: UserMenuAccount }) {
   const session = useSession()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
@@ -44,7 +57,15 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
     buttonRef.current?.focus()
   }
 
-  if (!session) return null
+  const account: UserMenuAccount | null = accountProp ?? (session ? {
+    name: displayName(session),
+    initials: initials(session),
+    title: session.tenantName || displayName(session),
+    subtitle: roleLabel(session.role),
+    details: [roleLabel(session.role), session.tenantName],
+    onSignOut: () => clearSession(),
+  } : null)
+  if (!account) return null
 
   return (
     <div
@@ -62,21 +83,21 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={`Menú de usuario de ${displayName(session)}`}
-        title={`Menú de usuario de ${displayName(session)}`}
+        aria-label={`Menú de usuario de ${account.name}`}
+        title={`Menú de usuario de ${account.name}`}
         className={`flex min-h-touch w-full items-center gap-2 rounded-control p-1 text-left transition-colors duration-(--duration-fast) hover:bg-nav-hover ${compact ? 'justify-center' : ''} ${focusRing}`}
       >
         <span
           className="flex size-9 shrink-0 items-center justify-center rounded-pill border border-text-subtle bg-nav-hover text-small font-semibold text-text-inverse"
           aria-hidden
         >
-          {initials(session)}
+          {account.initials}
         </span>
         {!compact && (
           <>
             <span className="flex min-w-0 flex-1 flex-col" aria-hidden>
-              <span className="truncate text-small font-semibold text-text-inverse">{session.tenantName || displayName(session)}</span>
-              <span className="truncate text-small text-neutral-300">{roleLabel(session.role)}</span>
+              <span className="truncate text-small font-semibold text-text-inverse">{account.title}</span>
+              <span className="truncate text-small text-neutral-300">{account.subtitle}</span>
             </span>
             <ChevronUp {...iconSm} aria-hidden className="shrink-0 text-text-subtle" />
           </>
@@ -90,14 +111,15 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           className="absolute bottom-full left-0 z-50 mb-2 flex max-h-[calc(100dvh-96px)] w-[216px] flex-col gap-1 overflow-y-auto rounded-surface border border-border bg-surface p-2 shadow-raised outline-none"
         >
           <div className="flex flex-col px-3 py-2">
-            <span className="truncate text-body font-semibold text-text">{displayName(session)}</span>
-            <span className="text-small text-text-muted">{roleLabel(session.role)}</span>
-            <span className="truncate text-small text-text-muted">{session.tenantName}</span>
+            <span className="truncate text-body font-semibold text-text">{account.name}</span>
+            {account.details.map((detail, index) => (
+              <span key={index} className="truncate text-small text-text-muted">{detail}</span>
+            ))}
           </div>
           <div className="border-t border-border pt-1">
             <button
               type="button"
-              onClick={() => clearSession()}
+              onClick={account.onSignOut}
               className={`flex min-h-touch w-full items-center gap-2 rounded-control px-3 text-button text-text transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing}`}
             >
               <LogOut {...iconSm} aria-hidden />

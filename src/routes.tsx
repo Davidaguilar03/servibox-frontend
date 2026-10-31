@@ -10,6 +10,10 @@ import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewPurchaseInvoicePage } from './pages/NewPurchaseInvoicePage'
 import { NewSaleInvoicePage } from './pages/NewSaleInvoicePage'
+import { PlatformLoginPage } from './pages/PlatformLoginPage'
+import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
+import { PlatformRequireAuth } from './platform/PlatformRequireAuth'
+import { PlatformShell } from './platform/PlatformShell'
 import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
 import { OperationalExpensesPage } from './pages/OperationalExpensesPage'
 import { ProductFormPage } from './pages/ProductFormPage'
@@ -49,6 +53,20 @@ export const routes: RouteObject[] = [
   { path: '/registro', element: <RegisterPage /> },
   { path: '/terminos', element: <TermsPage /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
+  // Plataforma: acceso, guard, shell y cache propios; la sesion de serviteca no cuenta aqui.
+  // Siguientes entregas: /plataforma/solicitudes, /plataforma/servitecas y /plataforma/servitecas/:id.
+  { path: '/plataforma/login', element: <PlatformLoginPage /> },
+  {
+    path: '/plataforma',
+    element: <PlatformRequireAuth />,
+    children: [
+      {
+        element: <PlatformShell />,
+        children: [{ index: true, element: <PlatformOverviewPage />, handle: handle(['Resumen']) }],
+      },
+      { path: '*', element: <Navigate to="/plataforma" replace /> },
+    ],
+  },
   {
     // Ruta de layout sin path: las privadas siguen colgando de la raiz.
     element: <RequireAuth />,

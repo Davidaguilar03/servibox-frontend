@@ -17,17 +17,27 @@ import {
   Truck,
   Users,
   Wallet,
+  type LucideIcon,
 } from 'lucide-react'
 import { Wordmark } from '../brand/Wordmark'
 import { Toaster } from '../components/Toaster'
 import { useBreadcrumbTailValue } from './breadcrumb'
 import { SkipLink } from '../components/SkipLink'
 import { DESKTOP_QUERY, useMediaQuery } from '../lib/useMediaQuery'
-import { UserMenu } from './UserMenu'
+import { UserMenu, type UserMenuAccount } from './UserMenu'
 import { iconMd } from '../components/icons'
 import { GLOSSARY } from '../copy/glossary'
 
-const navItems = [
+export interface NavItem {
+  to: string
+  label: string
+  icon: LucideIcon
+  children?: NavItem[]
+  /** Activo solo en la ruta exacta, no en sus subrutas. */
+  end?: boolean
+}
+
+const navItems: NavItem[] = [
   { to: '/inicio', label: 'Inicio', icon: House },
   { to: '/ventas', label: GLOSSARY.incomeNavigation, icon: TrendingUp, children: [
     { to: '/ventas', label: 'Facturas de venta', icon: ShoppingCart },
@@ -114,21 +124,40 @@ export interface AppShellContext {
   menuButton: ReactNode
 }
 
+interface AppShellProps {
+  /** Navegacion principal. Por defecto, la de la serviteca. */
+  items?: NavItem[]
+  /** Destino de la marca. */
+  home?: { to: string; label: string }
+  /** Con false no se muestra Configuracion. */
+  settings?: boolean
+  /** Quien entro; sin el, el menu usa la sesion de serviteca. */
+  account?: UserMenuAccount
+  /** Con true todas las paginas llevan su encabezado y no se monta la barra superior. */
+  headerInPage?: boolean
+}
+
 /**
  * Barra lateral, barra superior y area de contenido. Desde lg la barra lateral es fija y
  * se puede contraer; por debajo se abre como menu sobre el contenido.
  */
-export function AppShell() {
+export function AppShell({
+  items = navItems,
+  home = { to: '/inicio', label: 'Inicio' },
+  settings = true,
+  account,
+  headerInPage: allHeadersInPage = false,
+}: AppShellProps = {}) {
   const breadcrumb = useBreadcrumb()
   const location = useLocation()
   const { pathname } = location
-  const activeGroup = ['/ventas', '/compras'].find((path) => pathname === path || pathname.startsWith(`${path}/`))
+  const activeGroup = items.filter((item) => item.children).map((item) => item.to).find((path) => pathname === path || pathname.startsWith(`${path}/`))
   const [navigation, setNavigation] = useState(() => ({ location, groups: { [activeGroup ?? '']: true } }))
   // Una entrada de historial nueva reabre su grupo, incluso si solo cambia la query.
   if (navigation.location !== location) {
     setNavigation({ location, groups: { ...navigation.groups, ...(activeGroup ? { [activeGroup]: true } : {}) } })
   }
-  const headerInPage = /^\/(inicio|inventario|cuentas|reportes|configuracion)\/?$/.test(pathname) || /^\/(ventas|compras)(?:\/|$)/.test(pathname)
+  const headerInPage = allHeadersInPage || /^\/(inicio|inventario|cuentas|reportes|configuracion)\/?$/.test(pathname) || /^\/(ventas|compras)(?:\/|$)/.test(pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
   const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide
@@ -220,7 +249,7 @@ export function AppShell() {
         } ${collapsed ? 'lg:w-sidebar-collapsed' : ''}`}
       >
         <div role="group" aria-label="Cabecera del menú lateral" className={`flex h-topbar shrink-0 items-center gap-1 px-3 ${collapsed ? 'lg:h-auto lg:flex-col lg:py-2' : ''}`}>
-          <Link to="/inicio" aria-label="ServiBox, ir a Inicio" title="ServiBox" onClick={closeMenuAfterNavigation} className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-control focus-ring">
+          <Link to={home.to} aria-label={`ServiBox, ir a ${home.label}`} title="ServiBox" onClick={closeMenuAfterNavigation} className="inline-flex min-h-touch min-w-touch items-center justify-center rounded-control focus-ring">
             <Wordmark onDark compact={collapsed && isDesktop} />
           </Link>
           {/* Solo escritorio: en compacto ocupa su propia fila bajo el simbolo. */}
@@ -246,7 +275,7 @@ export function AppShell() {
 
         <nav aria-label="Principal" className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
           <ul className="flex flex-col gap-2 lg:gap-1">
-          {navItems.map(({ to, label, icon: Icon, children }) => {
+          {items.map(({ to, label, icon: Icon, children, end }) => {
             const groupActive = activeGroup === to
             const expanded = !!navigation.groups[to] && !(collapsed && isDesktop)
             const activeChild = children?.slice(1).find((child) => pathname === child.to || pathname.startsWith(`${child.to}/`))?.to ?? to
@@ -292,6 +321,7 @@ export function AppShell() {
             </> :
             <NavLink
               to={to}
+              end={end}
               title={collapsed ? label : undefined}
               onClick={closeMenuAfterNavigation}
               className={({ isActive }) =>
@@ -309,7 +339,7 @@ export function AppShell() {
           </ul>
         </nav>
 
-        <div className="shrink-0 border-t border-nav-hover px-3 pt-2">
+        {settings && <div className="shrink-0 border-t border-nav-hover px-3 pt-2">
           <nav aria-label="Administración">
             <NavLink
               to="/configuracion"
@@ -323,10 +353,10 @@ export function AppShell() {
               <span className={collapsed ? 'lg:sr-only' : ''}>Configuración</span>
             </NavLink>
           </nav>
-        </div>
+        </div>}
 
         <div className="mx-3 shrink-0 border-t border-nav-hover py-3">
-          <UserMenu compact={collapsed && isDesktop} />
+          <UserMenu compact={collapsed && isDesktop} account={account} />
         </div>
       </aside>
 
