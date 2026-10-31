@@ -34,6 +34,8 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 | `trash` | Papelera | | |
 | `accountColor` | Color de la cuenta | Nueva y Editar cuenta | |
 | `platformRequests` | Solicitudes | navegacion de plataforma | |
+| `platformTenants` | Servitecas | navegacion y titulo de plataforma | |
+| `tenantStatuses` | Activa, Suspendida | estado de servitecas en plataforma | |
 | `registrationStatuses` | Pendiente, Aprobada, Rechazada, Cancelada, Activada | filtros y estados de solicitudes | |
 
 Un concepto nuevo con mas de un sinonimo posible se agrega aqui antes de usarlo en pantalla.
@@ -155,6 +157,11 @@ No hay solicitudes que coincidan con estos filtros. Tres mensajes 400 nuevos del
 backend se mapean para longitud de texto, formato de fecha y rango invertido.
 El rango invertido tambien se valida en el frontend usando el mismo mensaje mapeado;
 fechas abiertas validas. Datos conservados ante errores y al volver del detalle.
+
+Servitecas de plataforma: Buscar (Nombre o codigo) y Estado (Todas, Activas,
+Suspendidas). Sin filtros: Todavia no hay servitecas registradas. Con filtros: No hay
+servitecas que coincidan con estos filtros. 400 nuevo mapeado: La busqueda no puede
+superar 100 caracteres.
 
 `src/lib/validation/contact.ts` es el unico modulo de NIT y telefono (registro y
 Configuracion): mismo patron que el backend, mismo largo maximo (25) y mismos mensajes. El NIT

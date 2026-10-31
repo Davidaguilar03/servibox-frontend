@@ -3,6 +3,8 @@
 
 export const GLOSSARY = {
   platformRequests: 'Solicitudes',
+  platformTenants: 'Servitecas',
+  tenantStatuses: { ACTIVE: 'Activa', SUSPENDED: 'Suspendida' },
   registrationStatuses: { PENDING: 'Pendiente', APPROVED: 'Aprobada', REJECTED: 'Rechazada', CANCELLED: 'Cancelada', ACTIVATED: 'Activada' },
   /** Agrupadores de navegacion, sin cambiar los conceptos financieros. */
   incomeNavigation: 'Ingresos',

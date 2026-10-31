@@ -39,6 +39,12 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   alineacion, altura natural de Correos, iconos y distribucion movil.
   David tambien aprobo visualmente Solicitudes y sus nuevos filtros al autorizar
   el cierre de la entrega 2 el 2026-10-31.
+* Servitecas (entrega 3): ListHeader, FilterBar con SearchField (Buscar, Nombre o
+  codigo) y SelectField Estado, DataTable con tarjetas bajo md y Pagination. Columnas
+  Serviteca (nombre y codigo), NIT, Telefono, Estado y Creada. StatusBadge ACTIVE
+  success y SUSPENDED warning (mismos pares ya verificados, sin tokens nuevos); motivo
+  de suspension bajo la insignia en text-small muted con line-clamp-2. Sin KPI (ya
+  estan en el Resumen), sin Ver detalle, pie de acceso limitado ni rotulo PLATAFORMA.
 
 ## Configuracion (2026-10-28)
 

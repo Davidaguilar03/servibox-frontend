@@ -95,6 +95,7 @@ src/
 | `/plataforma` | plataforma | `PlatformOverviewPage`, Resumen, dentro de `PlatformShell` |
 | `/plataforma/solicitudes` | plataforma | `PlatformRequestsPage`, nombres, fechas, estado y pagina en URL, paginacion de servidor |
 | `/plataforma/solicitudes/:id` | plataforma | `PlatformRequestDetailPage`, revision y coincidencias, conserva contexto del listado |
+| `/plataforma/servitecas` | plataforma | `PlatformTenantsPage`, busqueda, estado y pagina en URL, paginacion de servidor, sin detalle |
 | `/plataforma/*` | plataforma | redirige a `/plataforma` (sin sesion de plataforma, a su acceso) |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
@@ -180,7 +181,7 @@ Acceso, sesion, guard, shell y cache independientes de la serviteca. Decision en
   PLATFORM vigente es sesion. `PlatformRequireAuth` programa el cierre en `exp`, redirige a
   `/plataforma/login` y borra las consultas `['platform', ...]` al quedar sin sesion.
 * `apiFetch(path, { platform: true })` usa el token de plataforma; un 401 cierra solo esa sesion.
-* `PlatformShell` monta `AppShell` con navegacion propia (Resumen y Solicitudes), sin Configuracion ni
+* `PlatformShell` monta `AppShell` con navegacion propia (Resumen, Solicitudes y Servitecas), sin Configuracion ni
   barra superior, y el menu de usuario con el correo. Consulta `/me`; un 403 muestra Acceso
   denegado con Cerrar sesion.
 
@@ -203,6 +204,13 @@ Reglas de confirmacion y conflictos en [03-DECISIONS.md](03-DECISIONS.md).
 Requiere backend con filtros de solicitudes, documentado en su nota
 2026-10-31-registration-request-filters.md (feat/48-registration-request-filters).
 El cierre y publicacion del backend son independientes del PR frontend.
+
+Servitecas usa `GET /api/platform/tenants` con status (ACTIVE o SUSPENDED), q, page y
+size 25; clave `['platform', 'tenants', 'list', estado, q, pagina]`. q va recortado y
+el backend lo busca solo en nombre y slug (contiene, sin distinguir mayusculas, % y _
+literales, maximo 100). URL con q, estado y pagina; q usa useUrlTextParam y limpiar
+conserva parametros ajenos. Sin metricas propias: el Resumen ya muestra activas y
+suspendidas. Sin detalle ni acciones hasta la entrega 4.
 
 Siguientes entregas: Servitecas (`/plataforma/servitecas`) y su detalle con usuarios
 (`/plataforma/servitecas/:id`). No se enlazan hasta existir.

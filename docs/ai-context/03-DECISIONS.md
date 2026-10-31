@@ -2,6 +2,22 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Listado de Servitecas de plataforma (entrega 3 de 4)
+
+* Reemplaza el pendiente de Servitecas de la entrega 1: ruta /plataforma/servitecas y
+  enlace en el shell. Sin detalle, usuarios ni acciones (entrega 4): las filas no enlazan.
+* Contrato real GET /api/platform/tenants: status ACTIVE o SUSPENDED, q, page, size.
+  q busca solo nombre y slug (no NIT ni telefono); por eso el campo dice Nombre o codigo.
+  Orden fijo createdAt e id descendentes. Sin filtros inventados ni de Solicitudes.
+* Mismo patron que Solicitudes: URL con q, estado y pagina (base uno), page base cero y
+  size 25, cambiar filtro reinicia pagina, limpiar conserva ajenos, pagina fuera de
+  rango se ajusta con replace. q con useUrlTextParam; el texto largo no se trunca: el
+  400 del backend se muestra mapeado y conserva el campo.
+* Columnas Serviteca y codigo, NIT, Telefono, Estado y Creada; version e id no se
+  muestran. Motivo de suspension bajo la insignia, recortado a dos lineas.
+* Sin KPI: /api/platform/metrics solo da ACTIVE y SUSPENDED, ya visibles en el Resumen;
+  el total filtrado lo da la paginacion. Evidencia en la nota de sesion platform-tenants.
+
 ## 2026-10-31: Correccion de filtros de Solicitudes
 
 * Reemplaza la limitacion de solo Estado de la entrega 2: el backend ya admite
