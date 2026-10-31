@@ -2,6 +2,54 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Correccion compacta del Resumen de plataforma
+
+* Reemplaza la presentacion densa de KPI y el estiramiento de Correos de la entrega 1.
+  Reutiliza IndicatorCard compact de Productos sin modificar el componente compartido
+  ni otras pantallas. Mantiene acentos, cifras, desglose de usuarios y estados.
+* Rejilla de bloques alineada arriba y Correos sin h-full, con relleno menor, iconos
+  Clock, MailCheck y MailX, etiquetas y contadores alineados a la derecha. Fondos y
+  tonos existentes; sin contenido de relleno. Conserva la aclaracion sobre envio.
+* Solicitudes, contratos, metricas, errores, autenticacion y shell conservados.
+  Sin navegador ni cambios al backend o procesos del entorno de revision.
+  David aprobo visualmente la ultima correccion y autorizo el cierre Git el 2026-10-31.
+  Evidencia en la nota de plataforma.
+
+## 2026-10-30: Panel de plataforma, acceso, shell y Resumen (entrega 1 de 4)
+
+* Decision: acceso propio en /plataforma/login con correo y contrasena contra
+  POST /api/platform/auth/login. Sin codigo de serviteca, registro, recuperacion ni
+  enlace desde paginas publicas. Credenciales invalidas muestran su propio texto
+  (correo y contrasena), no el del login de serviteca.
+* Sesion separada en platform/platformSession.ts: claves servibox.platform.token,
+  servibox.platform.identity y servibox.platform.sessionExpired en sessionStorage, mismo
+  criterio que la sesion de serviteca; sin persistencia adicional ni refresh. Solo es
+  sesion un JWT con identityType PLATFORM vigente y la identidad {id,email} del login.
+  La sesion de serviteca rechaza un JWT con identityType PLATFORM. El rol ADMIN de una
+  serviteca no concede nada en plataforma.
+* apiFetch admite platform: true, que envia solo el token de plataforma; su 401 cierra
+  solo esa sesion y el acceso avisa que vencio. Un 403 de GET /me muestra Acceso
+  denegado con Cerrar sesion, sin reintento automatico ni redireccion. Los 403 o 5xx
+  de los bloques siguen la regla de reportError y el estado de error de cada bloque.
+* Cache: claves bajo ['platform']; al quedar sin sesion de plataforma (cierre, 401 o
+  vencimiento) PlatformRequireAuth borra solo esas. La cache de serviteca no se toca.
+* Shell: el mismo AppShell con props items, home, settings, account y headerInPage;
+  los valores por defecto conservan el shell de serviteca. Navegacion solo Resumen
+  (/plataforma, activo exacto), sin Configuracion ni modulos comerciales, sin barra
+  superior. UserMenu acepta una cuenta explicita (correo y Administrador de plataforma).
+* Resumen usa GET /api/platform/metrics: Servitecas activas (tenants.ACTIVE),
+  suspendidas (tenants.SUSPENDED), Solicitudes pendientes (registrationRequests.PENDING)
+  y Usuarios registrados (users.total, con activos e inactivos como detalle). Un conteo
+  ausente es error de su tarjeta, nunca cero. Sin bloque Usuarios repetido, graficas,
+  tendencias ni tamano de base de datos.
+* Solicitudes por revisar: GET /api/platform/registration-requests?status=PENDING&page=0
+  &size=5, orden del backend (creacion descendente), con totalElements para el total.
+  Sin acciones ni enlaces hasta la entrega 2. Correos de activacion: contadores PENDING,
+  SENT y FAILED de outboxMessages, aclarando que enviado no garantiza el buzon; sin
+  listado de fallidos ni reintento. Fechas UTC del backend mostradas como dia en Bogota.
+* Aprobacion visual de David recibida el 2026-10-31 tras la correccion compacta. Detalle en
+  sessions/2026-10-30-platform-overview.md.
+
 ## 2026-10-30: Navegacion agrupada del panel de serviteca
 
 * Decision: Inicio, Ingresos, Egresos, Inventario, Tesoreria y Reportes en ese orden.

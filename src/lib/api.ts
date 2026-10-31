@@ -1,4 +1,5 @@
 import { clearSession, getToken } from '../auth/session'
+import { clearPlatformSession, getPlatformToken } from '../platform/platformSession'
 
 const BASE_URL = '/api'
 
@@ -24,13 +25,15 @@ interface ApiOptions {
   body?: unknown
   /** false para las rutas publicas: no envia el token ni cierra sesion en un 401. */
   auth?: boolean
+  /** Usa el token de plataforma; su 401 cierra solo la sesion de plataforma. */
+  platform?: boolean
 }
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
-  const { method = 'GET', body, auth = true } = options
+  const { method = 'GET', body, auth = true, platform = false } = options
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
-  const token = auth ? getToken() : null
+  const token = auth ? (platform ? getPlatformToken() : getToken()) : null
   if (token) headers.Authorization = `Bearer ${token}`
 
   const response = await fetch(BASE_URL + path, {
@@ -42,7 +45,10 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   if (!response.ok) {
     // Un 401 con token es una sesion vencida o invalida: se cierra y el guard de rutas
     // privadas manda a /login.
-    if (response.status === 401 && auth) clearSession(true)
+    if (response.status === 401 && auth) {
+      if (platform) clearPlatformSession(true)
+      else clearSession(true)
+    }
     throw await toApiError(response)
   }
   if (response.status === 204) return undefined as T

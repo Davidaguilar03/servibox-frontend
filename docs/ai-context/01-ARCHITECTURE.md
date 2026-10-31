@@ -52,6 +52,7 @@ src/
   inventory/          consultas de Inventario (inventoryApi.ts), logica del listado
                       (productList.ts) y de los formularios de producto y categoria
   auth/               sesion, guard de rutas y llamada de login
+  platform/           sesion, guard, shell y consultas del panel de plataforma
   components/         Button, TextField, SearchField, SelectField, ComboboxField, Alert,
                       IndicatorCard, StatusBadge, DataTable, Pagination, Modal, Toaster
                       (y su store toast.ts), CategoryDot, UnsavedChangesGuard, estados
@@ -90,6 +91,9 @@ src/
 | `/compras/gastos` | privada | `OperationalExpensesPage`, Gastos operativos (`ManualMovementsPage` con `GASTO_OPERATIVO`) |
 | `/compras/proveedores` | privada | `SuppliersPage`, Proveedores (`CounterpartiesPage` con el rol PROVEEDOR) |
 | `/configuracion` | privada | `SettingsPage`, Configuracion: Datos de la serviteca y Configuracion financiera visibles; `?tab=financiera` enfoca la segunda seccion |
+| `/plataforma/login` | publica | `PlatformLoginPage`, acceso de plataforma. Con sesion de plataforma redirige a `/plataforma` |
+| `/plataforma` | plataforma | `PlatformOverviewPage`, Resumen, dentro de `PlatformShell` |
+| `/plataforma/*` | plataforma | redirige a `/plataforma` (sin sesion de plataforma, a su acceso) |
 | cualquier otra | | redirige a `/inicio` (y de ahi a `/login` si no hay sesion) |
 
 Las rutas publicas se declaran arriba en `routes.tsx`, sin `RequireAuth` ni `AppShell`. Las
@@ -161,6 +165,31 @@ configura CORS; el motivo esta en [03-DECISIONS.md](03-DECISIONS.md).
 * Roles: `ADMIN`, `MECANICO`, `CAJERO`, mostrados con `roleLabel` como Administrador,
   Mecanico y Cajero (con tilde en la interfaz). Por ahora solo se muestran; no hay
   permisos por rol.
+
+## Panel de plataforma
+
+Acceso, sesion, guard, shell y cache independientes de la serviteca. Decision en
+[03-DECISIONS.md](03-DECISIONS.md).
+
+* `POST /api/platform/auth/login` con `email` y `password`; responde `token` y `admin`
+  (`id`, `email`). `GET /api/platform/auth/me` devuelve `{id, email}`.
+* `platform/platformSession.ts`: `servibox.platform.token`, `servibox.platform.identity` y
+  `servibox.platform.sessionExpired` en `sessionStorage`. Solo un JWT con `identityType`
+  PLATFORM vigente es sesion. `PlatformRequireAuth` programa el cierre en `exp`, redirige a
+  `/plataforma/login` y borra las consultas `['platform', ...]` al quedar sin sesion.
+* `apiFetch(path, { platform: true })` usa el token de plataforma; un 401 cierra solo esa sesion.
+* `PlatformShell` monta `AppShell` con navegacion propia (Resumen), sin Configuracion ni
+  barra superior, y el menu de usuario con el correo. Consulta `/me`; un 403 muestra Acceso
+  denegado con Cerrar sesion.
+
+| Bloque | Endpoint | Clave |
+|-|-|-|
+| KPI y Correos de activacion | `GET /api/platform/metrics` (`tenants`, `users`, `registrationRequests`, `outboxMessages`) | `['platform', 'metrics']` |
+| Solicitudes por revisar | `GET /api/platform/registration-requests?status=PENDING&page=0&size=5` (`items`, `totalElements`) | `['platform', 'registration-requests', 'PENDING', 5]` |
+
+Siguientes entregas: Solicitudes (`/plataforma/solicitudes`), Servitecas
+(`/plataforma/servitecas`) y su detalle con usuarios (`/plataforma/servitecas/:id`).
+No se enlazan hasta existir.
 
 ## Shell de la aplicacion
 

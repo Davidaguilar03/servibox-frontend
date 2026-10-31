@@ -134,6 +134,8 @@ Desde 2026-10-28 Login usa reportError inlineOnly para los demas errores y conse
 del generico la accion de revisar conexion y reintentar, sin invitar al contacto
 demostrativo de contact.ts. Registro adopta la misma regla local el 2026-10-28.
 La ayuda se omite hasta tener WhatsApp real; los mensajes compartidos no cambian.
+El acceso de plataforma sigue la misma regla con su propio texto de credenciales
+("Revisa tu correo y tu contrasena."), sin mencionar el codigo de la serviteca.
 
 ## Validacion de contacto
 

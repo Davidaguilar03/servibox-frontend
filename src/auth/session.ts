@@ -106,8 +106,10 @@ export function decodeSession(token: string, now = Date.now()): Session | null {
     const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
     const claims: unknown = JSON.parse(json)
     if (typeof claims !== 'object' || claims === null) return null
-    const { sub, role, exp } = claims as Record<string, unknown>
+    const { sub, role, exp, identityType } = claims as Record<string, unknown>
     if (typeof sub !== 'string' || typeof exp !== 'number') return null
+    // Un token de plataforma no es sesion de serviteca.
+    if (identityType === 'PLATFORM') return null
     if (exp * 1000 <= now) return null
     const slug = getRememberedTenantSlug()
     return {
