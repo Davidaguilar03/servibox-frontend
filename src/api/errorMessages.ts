@@ -49,6 +49,7 @@ const RULES: Rule[] = [
   [/^El filtro de texto no puede superar 100 caracteres$/, 'El filtro de texto no puede superar 100 caracteres.'],
   [/^La fecha debe tener formato AAAA-MM-DD$/, 'Escribe una fecha válida con formato AAAA-MM-DD.'],
   [/^La fecha inicial no puede ser posterior a la final$/, 'Desde no puede ser posterior a Hasta.'],
+  [/^La busqueda no puede superar 100 caracteres$/, 'La búsqueda no puede superar 100 caracteres.'],
   [/^Paginacion invalida$/, 'La paginación no es válida. Vuelve al listado.'],
   [/^Solicitud no encontrada$/, 'No encontramos esta solicitud. Puede que ya no exista.'],
   [/^El motivo de rechazo es obligatorio$/, 'Escribe el motivo del rechazo.'],

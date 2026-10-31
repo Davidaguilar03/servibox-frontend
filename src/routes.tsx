@@ -14,6 +14,7 @@ import { PlatformLoginPage } from './pages/PlatformLoginPage'
 import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
 import { PlatformRequestsPage } from './pages/PlatformRequestsPage'
 import { PlatformRequestDetailPage } from './pages/PlatformRequestDetailPage'
+import { PlatformTenantsPage } from './pages/PlatformTenantsPage'
 import { PlatformRequireAuth } from './platform/PlatformRequireAuth'
 import { PlatformShell } from './platform/PlatformShell'
 import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
@@ -68,6 +69,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <PlatformOverviewPage />, handle: handle(['Resumen']) },
           { path: 'solicitudes', element: <PlatformRequestsPage />, handle: handle(['Solicitudes']) },
           { path: 'solicitudes/:id', element: <PlatformRequestDetailPage />, handle: handle(['Solicitudes', 'Detalle de solicitud']) },
+          { path: 'servitecas', element: <PlatformTenantsPage />, handle: handle(['Servitecas']) },
         ],
       },
       { path: '*', element: <Navigate to="/plataforma" replace /> },

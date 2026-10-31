@@ -99,6 +99,41 @@ export function fetchRegistrationRequest(id: string) {
   return apiFetch<PlatformRegistrationRequest>(`/platform/registration-requests/${encodeURIComponent(id)}`, { platform: true })
 }
 
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED'
+
+/** `PlatformTenantResponse`: fila del listado de servitecas. Fechas UTC sin zona. */
+export interface PlatformTenant {
+  id: number
+  name: string
+  slug: string
+  nit: string
+  phone: string
+  status: TenantStatus
+  version: number
+  createdAt: string
+  suspendedAt: string | null
+  suspensionReason: string | null
+}
+
+/** `PlatformPage<PlatformTenantResponse>`. */
+export interface PlatformTenantPage {
+  items: PlatformTenant[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export const PLATFORM_TENANTS_KEY = [PLATFORM_QUERY_KEY, 'tenants'] as const
+
+/** q busca en nombre o codigo (slug) en el backend; orden createdAt e id descendentes. */
+export function fetchPlatformTenants(status: TenantStatus | '', q: string, page: number) {
+  const params = new URLSearchParams({ page: String(page), size: '25' })
+  if (status) params.set('status', status)
+  if (q.trim()) params.set('q', q.trim())
+  return apiFetch<PlatformTenantPage>(`/platform/tenants?${params}`, { platform: true })
+}
+
 export type RegistrationAction = 'approve' | 'reject' | 'resend-activation'
 
 export function reviewRegistrationRequest(request: PlatformRegistrationRequest, action: RegistrationAction, reason: string) {

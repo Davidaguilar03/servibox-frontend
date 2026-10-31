@@ -244,7 +244,7 @@ describe('shell de plataforma', () => {
     await screen.findByRole('heading', { level: 1, name: 'Resumen' })
     const nav = screen.getByRole('navigation', { name: 'Principal' })
     const links = within(nav).getAllByRole('link')
-    expect(links.map((link) => link.textContent)).toEqual(['Resumen', 'Solicitudes'])
+    expect(links.map((link) => link.textContent)).toEqual(['Resumen', 'Solicitudes', 'Servitecas'])
     expect(links[0]).toHaveAttribute('href', '/plataforma')
     expect(links[0]).toHaveAttribute('aria-current', 'page')
     expect(screen.queryByRole('link', { name: 'Configuración' })).not.toBeInTheDocument()

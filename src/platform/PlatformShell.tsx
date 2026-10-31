@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { FileClock, House, LogOut, ShieldAlert } from 'lucide-react'
+import { FileClock, House, LogOut, ShieldAlert, Store } from 'lucide-react'
 import { MESSAGES } from '../api/errorMessages'
 import { initials } from '../auth/session'
 import { Wordmark } from '../brand/Wordmark'
@@ -18,6 +18,7 @@ export const PLATFORM_ROLE_LABEL = 'Administrador de plataforma'
 const platformNav: NavItem[] = [
   { to: PLATFORM_HOME, label: 'Resumen', icon: House, end: true },
   { to: '/plataforma/solicitudes', label: GLOSSARY.platformRequests, icon: FileClock },
+  { to: '/plataforma/servitecas', label: GLOSSARY.platformTenants, icon: Store },
 ]
 
 /**
