@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { showToast } from '../components/toast'
 import { ApiError } from '../lib/api'
-import { userMessage } from './errorMessages'
+import { userMessage, type MessageContext } from './errorMessages'
 
 // Regla unica de donde se muestra un error. Ver docs/ai-context/06-COPY.md.
 
@@ -11,6 +11,8 @@ export interface ReportOptions {
    * linea los que el usuario puede corregir en el formulario.
    */
   inlineOnly?: boolean
+  /** Contexto de mensajes compartidos con otra pantalla (ver TENANT_RULES). */
+  context?: MessageContext
 }
 
 /** 400 y 409 son de validacion o de una regla de negocio: el usuario los corrige en el formulario. */
@@ -30,7 +32,7 @@ function isSessionError(error: unknown): boolean {
  */
 export function reportError(error: unknown, options: ReportOptions = {}): string | null {
   if (!error || isSessionError(error)) return null
-  const message = userMessage(error)
+  const message = userMessage(error, options.context)
   if (options.inlineOnly || isInlineError(error)) return message
   showToast(message, 'error')
   return null
@@ -42,7 +44,7 @@ export function reportError(error: unknown, options: ReportOptions = {}): string
  */
 export function useReportedError(error: unknown, options: ReportOptions = {}): string | null {
   const reported = useRef<unknown>(null)
-  const inline = !error || isSessionError(error) ? null : options.inlineOnly || isInlineError(error) ? userMessage(error) : null
+  const inline = !error || isSessionError(error) ? null : options.inlineOnly || isInlineError(error) ? userMessage(error, options.context) : null
 
   useEffect(() => {
     if (!error || error === reported.current) return

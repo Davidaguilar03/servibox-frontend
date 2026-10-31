@@ -14,6 +14,7 @@ import { PlatformLoginPage } from './pages/PlatformLoginPage'
 import { PlatformOverviewPage } from './pages/PlatformOverviewPage'
 import { PlatformRequestsPage } from './pages/PlatformRequestsPage'
 import { PlatformRequestDetailPage } from './pages/PlatformRequestDetailPage'
+import { PlatformTenantDetailPage } from './pages/PlatformTenantDetailPage'
 import { PlatformTenantsPage } from './pages/PlatformTenantsPage'
 import { PlatformRequireAuth } from './platform/PlatformRequireAuth'
 import { PlatformShell } from './platform/PlatformShell'
@@ -57,7 +58,6 @@ export const routes: RouteObject[] = [
   { path: '/terminos', element: <TermsPage /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   // Plataforma: acceso, guard, shell y cache propios; la sesion de serviteca no cuenta aqui.
-  // Servitecas y usuarios quedan para las siguientes entregas.
   { path: '/plataforma/login', element: <PlatformLoginPage /> },
   {
     path: '/plataforma',
@@ -70,6 +70,7 @@ export const routes: RouteObject[] = [
           { path: 'solicitudes', element: <PlatformRequestsPage />, handle: handle(['Solicitudes']) },
           { path: 'solicitudes/:id', element: <PlatformRequestDetailPage />, handle: handle(['Solicitudes', 'Detalle de solicitud']) },
           { path: 'servitecas', element: <PlatformTenantsPage />, handle: handle(['Servitecas']) },
+          { path: 'servitecas/:id', element: <PlatformTenantDetailPage />, handle: handle(['Servitecas', 'Detalle de serviteca']) },
         ],
       },
       { path: '*', element: <Navigate to="/plataforma" replace /> },

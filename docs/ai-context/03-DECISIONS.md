@@ -2,10 +2,35 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Detalle de serviteca de plataforma (entrega 4 de 4)
+
+* Reemplaza "sin detalle ni acciones" de la entrega 3: las filas del listado enlazan a
+  /plataforma/servitecas/:id con la query string del listado; Volver la restaura.
+* Contrato real (codigo backend): detalle {tenant, totalUsers, userCounts, registrationRequest};
+  usuarios paginados {id, username, fullName, email, role, active, createdAt, updatedAt};
+  suspend y reactivate con {expectedVersion, reason}; revoke de usuario y de serviteca con
+  cuerpo opcional (solo motivo), que no se envia. 409 de version: "El recurso cambio;
+  actualiza e intenta de nuevo", el mismo de Solicitudes.
+* Version e id no se muestran. Suspender solo si esta activa (motivo obligatorio, 500 tras
+  recortar); reactivar solo si esta suspendida (motivo opcional, se omite si esta vacio).
+  Cerrar sesiones (todas o por usuario activo) solo con la serviteca activa: suspender ya
+  las cerro y nadie puede entrar. Un usuario inactivo no puede iniciar sesion: sin accion.
+* Confirmacion conserva la version revisada. 409 relee el detalle automaticamente, muestra
+  el mensaje del backend, conserva el motivo y deja confirmar con la version nueva solo si
+  la accion sigue aplicando; si la relectura falla bloquea confirmar y ofrece Actualizar
+  serviteca. 404 durante una accion avisa por toast, cierra la confirmacion y el detalle
+  muestra la vuelta al listado. 400 y errores de red en linea sin perder el motivo.
+* Contexto 'tenant' en userMessage y reportError: version distinta y version obligatoria
+  nombran la serviteca; Solicitudes conserva sus textos.
+* Exito invalida ['platform','tenants'] (detalle, usuarios, listado) y ['platform','metrics'].
+  Resumen de usuarios en dl, no en tarjetas KPI. Sin borrado, edicion, gestion de usuarios,
+  auditoria ni datos comerciales. Evidencia en la nota de sesion platform-tenant-detail.
+
 ## 2026-10-31: Listado de Servitecas de plataforma (entrega 3 de 4)
 
 * Reemplaza el pendiente de Servitecas de la entrega 1: ruta /plataforma/servitecas y
   enlace en el shell. Sin detalle, usuarios ni acciones (entrega 4): las filas no enlazan.
+  (Reemplazado: desde la entrega 4 las filas enlazan al detalle.)
 * Contrato real GET /api/platform/tenants: status ACTIVE o SUSPENDED, q, page, size.
   q busca solo nombre y slug (no NIT ni telefono); por eso el campo dice Nombre o codigo.
   Orden fijo createdAt e id descendentes. Sin filtros inventados ni de Solicitudes.

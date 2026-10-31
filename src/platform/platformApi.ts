@@ -134,6 +134,68 @@ export function fetchPlatformTenants(status: TenantStatus | '', q: string, page:
   return apiFetch<PlatformTenantPage>(`/platform/tenants?${params}`, { platform: true })
 }
 
+export type TenantUserRole = 'ADMIN' | 'MECANICO' | 'CAJERO'
+
+/** `PlatformTenantDetailResponse`: datos, conteo por rol y estado y solicitud de origen. */
+export interface PlatformTenantDetail {
+  tenant: PlatformTenant
+  totalUsers: number
+  userCounts: { role: TenantUserRole; active: boolean; count: number }[]
+  /** Null si la serviteca no salio de una solicitud (registro inmediato). */
+  registrationRequest: { id: string; status: RegistrationStatus; createdAt: string; reviewedAt: string | null } | null
+}
+
+/** `PlatformTenantUserResponse`: nunca lleva hash, version de sesion ni token. */
+export interface PlatformTenantUser {
+  id: number
+  username: string
+  fullName: string | null
+  email: string | null
+  role: TenantUserRole
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PlatformTenantUserPage {
+  items: PlatformTenantUser[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+const tenantPath = (id: number | string) => `/platform/tenants/${encodeURIComponent(id)}`
+
+export function fetchPlatformTenant(id: string) {
+  return apiFetch<PlatformTenantDetail>(tenantPath(id), { platform: true })
+}
+
+/** Orden id ascendente en el backend. */
+export function fetchPlatformTenantUsers(id: string, page: number) {
+  return apiFetch<PlatformTenantUserPage>(`${tenantPath(id)}/users?page=${page}&size=25`, { platform: true })
+}
+
+/** Suspender exige motivo; reactivar lo admite opcional. Ambos con la version revisada. */
+export function changeTenantStatus(tenant: PlatformTenant, action: 'suspend' | 'reactivate', reason: string) {
+  const trimmed = reason.trim()
+  return apiFetch<PlatformTenantDetail>(`${tenantPath(tenant.id)}/${action}`, {
+    platform: true,
+    method: 'POST',
+    body: { expectedVersion: tenant.version, ...(trimmed ? { reason: trimmed } : {}) },
+  })
+}
+
+/** Cierra las sesiones de un usuario; sigue activo. Idempotente, devuelve el usuario. */
+export function revokeTenantUser(tenantId: number, userId: number) {
+  return apiFetch<PlatformTenantUser>(`${tenantPath(tenantId)}/users/${encodeURIComponent(userId)}/revoke`, { platform: true, method: 'POST' })
+}
+
+/** Cierra las sesiones de todos los usuarios de la serviteca; siguen activos. */
+export function revokeTenantSessions(tenantId: number) {
+  return apiFetch<{ tenantId: number; revokedUsers: number }>(`${tenantPath(tenantId)}/revoke-sessions`, { platform: true, method: 'POST' })
+}
+
 export type RegistrationAction = 'approve' | 'reject' | 'resend-activation'
 
 export function reviewRegistrationRequest(request: PlatformRegistrationRequest, action: RegistrationAction, reason: string) {

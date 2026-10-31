@@ -10,6 +10,13 @@ const api = (message: string, status: number) => new ApiError(message, status)
  * de ejemplo en los parametricos. Cada uno debe pasar por el mapa con su texto final.
  */
 const BACKEND: Array<[string, string]> = [
+  // platform/PlatformTenantService y PlatformTenantConflictException.
+  ['Tenant no encontrado', 'No encontramos esta serviteca. Puede que ya no exista.'],
+  ['Usuario no encontrado', 'No encontramos ese usuario en esta serviteca. Puede que ya no exista.'],
+  ['El motivo de suspension es obligatorio', 'Escribe el motivo de la suspensión.'],
+  ['El motivo no puede superar 500 caracteres', 'El motivo no puede superar 500 caracteres.'],
+  ['El tenant ya esta suspendido', 'La serviteca ya estaba suspendida. Revisa los datos actualizados.'],
+  ['El tenant ya esta activo', 'La serviteca ya estaba activa. Revisa los datos actualizados.'],
   // treasury/TreasuryService, validacion de color.
   ['El color debe tener el formato #RRGGBB', 'El color debe tener el formato #RRGGBB.'],
   ['El precio unitario admite como maximo dos decimales', 'El precio unitario admite como máximo dos decimales.'],
@@ -171,6 +178,13 @@ describe('texto por estado HTTP', () => {
     expect(userMessage(api('Saldo insuficiente en Mi cuenta: faltan 10000.0 para cambiar el saldo inicial', 409)))
       .toBe('Saldo insuficiente en Mi cuenta: faltan $ 10.000 para cambiar el saldo inicial.')
   })
+  it('el contexto de servitecas nombra la serviteca en los mensajes compartidos con Solicitudes', () => {
+    expect(userMessage(api('El recurso cambio; actualiza e intenta de nuevo', 409), 'tenant')).toBe('La serviteca cambió mientras la revisabas. Revisa los datos actualizados antes de confirmar.')
+    expect(userMessage(api('La version esperada es obligatoria', 400), 'tenant')).toBe('Actualiza la serviteca antes de continuar.')
+    expect(userMessage(api('El recurso cambio; actualiza e intenta de nuevo', 409))).toBe('La solicitud cambió mientras la revisabas. Actualízala antes de continuar.')
+    expect(userMessage(api('Tenant no encontrado', 404), 'tenant')).toBe('No encontramos esta serviteca. Puede que ya no exista.')
+  })
+
   it('400 usa el mensaje corto y legible del backend o el generico', () => {
     expect(userMessage(api('el nombre ya se usa', 400))).toBe('El nombre ya se usa.')
     expect(userMessage(api('Valor 12.5 fuera de rango', 400))).toBe(MESSAGES.invalid)

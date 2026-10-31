@@ -39,7 +39,7 @@ const fail = (message: string, status: number) => jsonResponse({ error: message,
 const table = async () => within(await screen.findByRole('table'))
 
 describe('listado de servitecas', () => {
-  it('muestra los campos del contrato con estado, motivo y fecha de Bogota, sin datos internos', async () => {
+  it('muestra los campos del contrato con estado, motivo, fecha de Bogota y enlace al detalle, sin datos internos', async () => {
     api({ [root]: () => jsonResponse(page([
       tenant(),
       tenant({ id: 8, name: 'Llantas del Norte', slug: 'llantasnorte', nit: '900234567-8', phone: '3109876543', status: 'SUSPENDED', version: 5, suspendedAt: '2026-10-31T15:00:00', suspensionReason: 'Mora en el pago' }),
@@ -49,7 +49,7 @@ describe('listado de servitecas', () => {
     await screen.findAllByText('Llantas del Norte')
     const rows = (await table()).getAllByRole('row')
     expect(rows).toHaveLength(3)
-    expect(within(rows[0]!).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Serviteca', 'NIT', 'Teléfono', 'Estado', 'Creada'])
+    expect(within(rows[0]!).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Serviteca', 'NIT', 'Teléfono', 'Estado', 'Creada', 'Acciones'])
     const first = within(rows[1]!).getAllByRole('cell').map((cell) => cell.textContent)
     expect(first.slice(0, 4)).toEqual(['Serviteca El Robleelroble', '900123456-7', '3001234567', 'Activa'])
     expect(first[4]).toMatch(/29\/10\/(20)?26/)
@@ -58,7 +58,7 @@ describe('listado de servitecas', () => {
     expect(document.title).toBe('Servitecas · ServiBox')
     expect(screen.getByRole('heading', { level: 1, name: 'Servitecas' })).toBeInTheDocument()
     expect(screen.queryByText(/^(7|8|2|5)$/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /detalle|Ver/i })).not.toBeInTheDocument()
+    expect(within(rows[1]!).getByRole('link', { name: 'Ver detalle de Serviteca El Roble' })).toHaveAttribute('href', '/plataforma/servitecas/7')
     expect(screen.queryByRole('button', { name: /Suspender|Reactivar|Revocar|Eliminar/ })).not.toBeInTheDocument()
   })
 

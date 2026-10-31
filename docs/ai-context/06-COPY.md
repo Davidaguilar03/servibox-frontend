@@ -163,6 +163,15 @@ Suspendidas). Sin filtros: Todavia no hay servitecas registradas. Con filtros: N
 servitecas que coincidan con estos filtros. 400 nuevo mapeado: La busqueda no puede
 superar 100 caracteres.
 
+Detalle de serviteca: acciones Suspender serviteca, Reactivar serviteca, Cerrar todas las
+sesiones y Cerrar sesiones (por usuario). Las confirmaciones dicen la consecuencia: al
+suspender nadie entra y las sesiones se cierran de inmediato; al reactivar hay que iniciar
+sesion de nuevo; cerrar sesiones no desactiva al usuario. Motivo con contador "N de 500
+caracteres". Seis mensajes nuevos del backend (Tenant no encontrado, Usuario no
+encontrado, motivo obligatorio, motivo largo, ya suspendido, ya activo) y contexto
+`tenant` en userMessage para que version distinta y version obligatoria nombren la
+serviteca en vez de la solicitud. Textos exactos en la nota platform-tenant-detail.
+
 `src/lib/validation/contact.ts` es el unico modulo de NIT y telefono (registro y
 Configuracion): mismo patron que el backend, mismo largo maximo (25) y mismos mensajes. El NIT
 se normaliza (sin puntos ni espacios) antes de validar y de enviar.
