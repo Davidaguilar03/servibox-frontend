@@ -116,6 +116,35 @@ describe('formulario de login', () => {
     })
   })
 
+  it.each([
+    [898, 'Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo. Podrás intentarlo de nuevo en 15 minutos.'],
+    [undefined, 'Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.'],
+  ])('un 429 con Retry-After %s muestra el mensaje del backend y el tiempo si viene', async (retryAfter, text) => {
+    const response = jsonResponse({ error: 'Demasiados intentos de inicio de sesion, espera unos minutos e intenta de nuevo', status: 429 }, 429)
+    if (retryAfter) response.headers.set('Retry-After', String(retryAfter))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response))
+    renderRoute('/login')
+
+    await fillAndSubmit()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Espera antes de intentar de nuevo')
+    expect(alert.textContent).toContain(text)
+    if (!retryAfter) expect(alert).not.toHaveTextContent('Podrás intentarlo')
+    expect(getToken()).toBeNull()
+  })
+
+  it('el 401 sigue siendo generico: no distingue serviteca suspendida, usuario ni contrasena', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Credenciales invalidas', status: 401 }, 401)))
+    renderRoute('/login')
+
+    await fillAndSubmit()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos iniciar sesiónRevisa tus datos e intenta de nuevo.')
+    expect(alert).not.toHaveTextContent(/suspendid|inactiv|espera/i)
+  })
+
   it('muestra la alerta ante un 401', async () => {
     vi.stubGlobal(
       'fetch',
@@ -169,10 +198,10 @@ describe('formulario de login', () => {
     expect(screen.getByRole('button', { name: 'Menú de usuario de Laura Gómez' })).toBeInTheDocument()
   })
 
-  it('Crear cuenta lleva a /registro y el wordmark a la landing', async () => {
+  it('Solicitar cuenta lleva a la solicitud (/registro) y el wordmark a la landing', async () => {
     renderRoute('/login')
 
-    expect(await screen.findByRole('link', { name: 'Crear cuenta' })).toHaveAttribute('href', '/registro')
+    expect(await screen.findByRole('link', { name: 'Solicitar cuenta' })).toHaveAttribute('href', '/registro')
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Términos y datos personales' })).toHaveAttribute('href', '/terminos')
     for (const link of screen.getAllByRole('link', { name: 'ServiBox, ir a la página principal' })) {
@@ -189,10 +218,10 @@ describe('formulario de login', () => {
     expect(router.state.location.pathname).toBe('/inicio')
   })
 
-  it('la ruta vieja /crear-cuenta lleva al registro', async () => {
+  it('la ruta vieja /crear-cuenta lleva a la solicitud de cuenta', async () => {
     const router = renderRoute('/crear-cuenta')
 
-    await screen.findByRole('heading', { name: 'Crea tu serviteca' })
+    await screen.findByRole('heading', { name: 'Solicita tu cuenta' })
     expect(router.state.location.pathname).toBe('/registro')
   })
 

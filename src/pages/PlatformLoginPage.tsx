@@ -42,6 +42,8 @@ export function PlatformLoginPage() {
   }
 
   const invalidCredentials = mutation.error instanceof ApiError && mutation.error.status === 401
+  // 429 de LoginThrottle: el mensaje del backend y, con Retry-After, el tiempo de espera.
+  const tooMany = mutation.error instanceof ApiError && mutation.error.status === 429
   const reportedError = reportError(mutation.error, { inlineOnly: true })
   const errorMessage = reportedError === MESSAGES.network
     ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
@@ -57,7 +59,7 @@ export function PlatformLoginPage() {
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6" aria-label="Iniciar sesión en la plataforma" aria-busy={mutation.isPending}>
           {expired && !mutation.isError && <Alert tone="info" title={MESSAGES.session} />}
           {mutation.isError && (
-            <Alert tone="error" title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}>
+            <Alert tone="error" title={invalidCredentials ? 'No pudimos iniciar sesión' : tooMany ? 'Espera antes de intentar de nuevo' : 'No pudimos conectar con ServiBox'}>
               {invalidCredentials ? 'Revisa tu correo y tu contraseña.' : errorMessage}
             </Alert>
           )}

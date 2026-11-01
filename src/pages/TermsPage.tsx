@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { WordmarkLink } from '../brand/WordmarkLink'
-import { SUPPORT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
+import { SUPPORT_EMAIL, WHATSAPP } from '../config/contact'
 import { usePageMeta } from '../lib/usePageMeta'
 
 const linkClass =
@@ -71,11 +71,17 @@ export function TermsPage() {
             </h2>
             <p className="mt-2">
               Según la Ley 1581 de 2012, puedes conocer, actualizar, rectificar y suprimir tus datos, y revocar la
-              autorización que nos diste. Para hacerlo, escríbenos por WhatsApp al{' '}
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener" className={linkClass}>
-                {WHATSAPP_DISPLAY}
-              </a>{' '}
-              o al correo{' '}
+              autorización que nos diste. Para hacerlo, escríbenos{' '}
+              {WHATSAPP && (
+                <>
+                  por WhatsApp al{' '}
+                  <a href={WHATSAPP.url} target="_blank" rel="noopener" className={linkClass}>
+                    {WHATSAPP.display}
+                  </a>{' '}
+                  o{' '}
+                </>
+              )}
+              al correo{' '}
               <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>
                 {SUPPORT_EMAIL}
               </a>

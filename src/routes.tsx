@@ -3,6 +3,7 @@ import { Navigate, type RouteObject } from 'react-router'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppShell, type RouteHandle } from './layout/AppShell'
 import { AccountsPage } from './pages/AccountsPage'
+import { ActivationPage } from './pages/ActivationPage'
 import { CategoriesPage } from './pages/CategoriesPage'
 import { CustomersPage } from './pages/CustomersPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -54,7 +55,9 @@ export const routes: RouteObject[] = [
   // Publicas: sin RequireAuth ni AppShell. Cada una fija su titulo con usePageMeta.
   { path: '/', element: <LandingPage /> },
   { path: '/login', element: <LoginPage /> },
+  // Solicitud de cuenta (el registro inmediato se retiro) y activacion con el enlace del correo.
   { path: '/registro', element: <RegisterPage /> },
+  { path: '/activar', element: <ActivationPage /> },
   { path: '/terminos', element: <TermsPage /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   // Plataforma: acceso, guard, shell y cache propios; la sesion de serviteca no cuenta aqui.

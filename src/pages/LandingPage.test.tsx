@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
-import { SUPPORT_EMAIL, WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
+import { SUPPORT_EMAIL } from '../config/contact'
 import { renderRoute, validToken } from '../test/utils'
 
 /** Los enlaces que se ven como boton primario. */
@@ -46,12 +46,12 @@ describe('landing', () => {
     }
   })
 
-  it('la barra tiene Crear cuenta como unico primario e Iniciar sesion secundario', async () => {
+  it('la barra tiene Solicitar cuenta como unico primario e Iniciar sesion secundario', async () => {
     renderRoute('/')
     const header = await screen.findByRole('group', { name: 'Navegación y acceso' })
 
     const login = within(header).getByRole('link', { name: 'Iniciar sesión' })
-    const register = within(header).getByRole('link', { name: 'Crear cuenta' })
+    const register = within(header).getByRole('link', { name: 'Solicitar cuenta' })
     expect(login).toHaveAttribute('href', '/login')
     expect(login).not.toHaveAttribute('data-variant', 'primary')
     expect(register).toHaveAttribute('href', '/registro')
@@ -63,7 +63,7 @@ describe('landing', () => {
     const hero = (await screen.findByRole('heading', { level: 1 })).closest('section') as HTMLElement
 
     expect(primaryLinks(hero)).toHaveLength(1)
-    expect(within(hero).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
+    expect(within(hero).getByRole('link', { name: 'Solicitar mi cuenta' })).toHaveAttribute('href', '/registro')
     const ambient = screen.getByRole('banner').querySelector('img[src$="hero-workshop-mechanic-v2.webp"]')!
     expect(ambient.getAttribute('src')).toMatch(/hero-workshop-mechanic-v2\.webp$/)
     expect(ambient).toHaveAttribute('alt', '')
@@ -97,7 +97,7 @@ describe('landing', () => {
         expect(image).toHaveAttribute('decoding', 'async')
       }
     }
-    expect(within(closing).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
+    expect(within(closing).getByRole('link', { name: 'Solicitar mi cuenta' })).toHaveAttribute('href', '/registro')
     expect(faq.querySelectorAll('summary')).toHaveLength(5)
   })
 
@@ -188,18 +188,18 @@ describe('landing', () => {
     const closing = screen
       .getByRole('heading', { level: 2, name: /Tu próxima venta,/ })
       .closest('section') as HTMLElement
-    expect(within(closing).getByRole('link', { name: 'Crear mi serviteca' })).toHaveAttribute('href', '/registro')
+    expect(within(closing).getByRole('link', { name: 'Solicitar mi cuenta' })).toHaveAttribute('href', '/registro')
     for (const area of [closing, screen.getByRole('contentinfo')]) {
-      expect(within(area).queryByRole('link', { name: WHATSAPP_DISPLAY })).not.toBeInTheDocument()
+      expect(within(area).queryByRole('link', { name: /WhatsApp|\+57/ })).not.toBeInTheDocument()
       expect(within(area).queryByRole('link', { name: SUPPORT_EMAIL })).not.toBeInTheDocument()
     }
     const footer = screen.getByRole('contentinfo')
     expect(within(footer).getByRole('link', { name: 'Términos y tratamiento de datos' })).toHaveAttribute('href', '/terminos')
     expect(within(footer).getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
-    expect(within(footer).getByRole('link', { name: 'Crear cuenta' })).toHaveAttribute('href', '/registro')
+    expect(within(footer).getByRole('link', { name: 'Solicitar cuenta' })).toHaveAttribute('href', '/registro')
     expect(primaryLinks(footer)).toHaveLength(0)
-    await user.click(within(closing).getByRole('link', { name: 'Crear mi serviteca' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Crea tu serviteca' })).toBeInTheDocument()
+    await user.click(within(closing).getByRole('link', { name: 'Solicitar mi cuenta' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Solicita tu cuenta' })).toBeInTheDocument()
   })
 
   it('con sesion muestra Ir al panel en lugar de iniciar sesion y crear cuenta', async () => {
@@ -209,9 +209,9 @@ describe('landing', () => {
 
     expect(within(header).getByRole('link', { name: 'Ir al panel' })).toHaveAttribute('href', '/inicio')
     expect(within(header).queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
-    expect(within(header).queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Crear mi serviteca' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Crear cuenta' })).not.toBeInTheDocument()
+    expect(within(header).queryByRole('link', { name: 'Solicitar cuenta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Solicitar mi cuenta' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Solicitar cuenta' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Iniciar sesión' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Ir al panel' })).toHaveLength(4)
     for (const link of screen.getAllByRole('link', { name: 'Ir al panel' })) expect(link).toHaveAttribute('href', '/inicio')
@@ -235,7 +235,7 @@ describe('landing', () => {
 
   it.each([
     ['Iniciar sesión', 'Inicia sesión'],
-    ['Crear cuenta', 'Crea tu serviteca'],
+    ['Solicitar cuenta', 'Solicita tu cuenta'],
   ])('la accion %s abre su pagina publica', async (action, heading) => {
     const user = userEvent.setup()
     renderRoute('/')
@@ -246,7 +246,7 @@ describe('landing', () => {
 })
 
 describe('terminos', () => {
-  it('tiene titulo, fecha, las cinco secciones, la Ley 1581 y los contactos', async () => {
+  it('tiene titulo, fecha, las cinco secciones, la Ley 1581 y el correo, sin telefono mientras no exista', async () => {
     renderRoute('/terminos')
 
     expect(
@@ -262,8 +262,10 @@ describe('terminos', () => {
     ])
     expect(screen.getByText(/Ley 1581 de 2012/)).toBeInTheDocument()
     expect(screen.getByText(/No emite facturas electrónicas ante la DIAN/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: WHATSAPP_DISPLAY })).toHaveAttribute('href', WHATSAPP_URL)
-    expect(screen.getByRole('link', { name: SUPPORT_EMAIL })).toHaveAttribute('href', `mailto:${SUPPORT_EMAIL}`)
+    expect(screen.getByRole('link', { name: SUPPORT_EMAIL })).toHaveAttribute('href', 'mailto:hola@servibox.co')
+    expect(screen.getByText(/Para hacerlo, escríbenos al correo/)).toBeInTheDocument()
+    expect(document.querySelector('a[href^="tel:"], a[href*="wa.me"]')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/WhatsApp|\+57/)
     expect(screen.getByRole('link', { name: 'Volver a la página principal' })).toHaveAttribute('href', '/')
     expect(document.title).toBe('Términos | ServiBox')
   })
@@ -283,7 +285,7 @@ const FORBIDDEN = [
 ]
 
 describe('paginas publicas', () => {
-  it.each(['/', '/login', '/registro', '/terminos'])('%s no usa frases prohibidas', async (path) => {
+  it.each(['/', '/login', '/registro', '/activar', '/terminos'])('%s no usa frases prohibidas', async (path) => {
     renderRoute(path)
     await screen.findByRole('heading', { level: 1 })
 
@@ -294,7 +296,8 @@ describe('paginas publicas', () => {
   it.each([
     ['/', 'ServiBox | Ventas, inventario y caja para servitecas'],
     ['/login', 'Iniciar sesión | ServiBox'],
-    ['/registro', 'Crear cuenta | ServiBox'],
+    ['/registro', 'Solicitar cuenta | ServiBox'],
+    ['/activar', 'Activar cuenta | ServiBox'],
     ['/terminos', 'Términos | ServiBox'],
   ])('%s fija el titulo %s', async (path, title) => {
     renderRoute(path)
@@ -309,7 +312,7 @@ describe('paginas publicas', () => {
     )
   })
 
-  it('contact.ts es la unica fuente del WhatsApp y del correo', () => {
+  it('contact.ts es la unica fuente del correo y no quedan los contactos de demostracion', () => {
     const files = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
         entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)],
@@ -317,9 +320,12 @@ describe('paginas publicas', () => {
     const offenders = files('src')
       .map((path) => relative('src', path).replaceAll('\\', '/'))
       .filter((file) => /\.(tsx?|css)$/.test(file) && !/\.test\.tsx?$/.test(file) && file !== 'config/contact.ts')
-      .filter((file) => /300 000 0000|573000000000|hola@servibox\.example/.test(readFileSync(join('src', file), 'utf-8')))
+      .filter((file) => /hola@servibox|300 000 0000|573000000000/.test(readFileSync(join('src', file), 'utf-8')))
     expect(offenders).toEqual([])
     expect(readFileSync('index.html', 'utf-8')).not.toMatch(/573000000000|hola@servibox/)
+    const contact = readFileSync('src/config/contact.ts', 'utf-8')
+    expect(contact).toContain("SUPPORT_EMAIL = 'hola@servibox.co'")
+    expect(contact).not.toMatch(/\.example|300 000 0000|573000000000/)
   })
 
   it('conserva el favicon compartido con el simbolo de marca', () => {

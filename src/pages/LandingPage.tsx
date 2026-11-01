@@ -42,7 +42,7 @@ const faqs = [
 export function LandingPage() {
   usePageMeta(LANDING_TITLE, LANDING_DESCRIPTION)
   const session = useSession()
-  const cta = session ? { to: '/inicio', label: 'Ir al panel' } : { to: '/registro', label: 'Crear mi serviteca' }
+  const cta = session ? { to: '/inicio', label: 'Ir al panel' } : { to: '/registro', label: 'Solicitar mi cuenta' }
 
   return (
     <div id="landing" className="min-h-screen bg-neutral-100">
@@ -67,7 +67,7 @@ export function LandingPage() {
               ) : (
                 <>
                   <Link to="/login" className={buttonClasses('text')} data-variant="text">Iniciar sesión</Link>
-                  <Link to="/registro" className={buttonClasses('primary')} data-variant="primary">Crear cuenta</Link>
+                  <Link to="/registro" className={buttonClasses('primary')} data-variant="primary">Solicitar cuenta</Link>
                 </>
               )}
             </div>
@@ -229,7 +229,7 @@ export function LandingPage() {
               <li><a href="#funciones" className={footerLink}>Producto</a></li>
               <li><Link to="/terminos" className={footerLink}>Términos y tratamiento de datos</Link></li>
               <li><Link to={session ? '/inicio' : '/login'} className={footerLink}>{session ? 'Ir al panel' : 'Iniciar sesión'}</Link></li>
-              {!session && <li><Link to="/registro" className={footerLink}>Crear cuenta</Link></li>}
+              {!session && <li><Link to="/registro" className={footerLink}>Solicitar cuenta</Link></li>}
             </ul>
           </nav>
         </div>

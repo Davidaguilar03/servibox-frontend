@@ -2,70 +2,84 @@ import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
-import { jsonResponse, makeToken, primaryActions, renderRoute, validToken } from '../test/utils'
-import { REGISTER_SUCCESS } from './RegisterPage'
+import { jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
-const token = makeToken({ sub: 'laura.gomez', role: 'ADMIN', exp: Math.floor(Date.now() / 1000) + 3600 })
+// Solicitud publica de cuenta (POST /api/registration-requests) con API simulada.
 
-const created = {
-  token,
-  user: { username: 'laura.gomez', role: 'ADMIN', fullName: 'Laura Gómez' },
-  tenant: { name: 'Serviteca El Roble', slug: 'el-roble' },
+const accepted = { requestId: 'r-1', status: 'PENDING', message: 'Solicitud recibida, pendiente de revision' }
+
+function retryResponse(error: string, status: number, retryAfter?: number) {
+  const response = jsonResponse({ error, status }, status)
+  if (retryAfter !== undefined) response.headers.set('Retry-After', String(retryAfter))
+  return response
 }
 
-/** El registro responde lo que se pida; el resto (el panel tras entrar) un 500. */
-function mockFetch(register: () => Promise<Response>) {
-  const fetchMock = vi.fn((url: string) =>
-    url === '/api/auth/register' ? register() : Promise.resolve(jsonResponse({ error: 'x', status: 500 }, 500)),
-  )
+/** La solicitud responde lo que se pida (una funcion por llamada, la ultima se repite); el resto un 500. */
+function mockFetch(...responses: Array<() => Promise<Response>>) {
+  let call = 0
+  const fetchMock = vi.fn((url: string) => {
+    if (url !== '/api/registration-requests') return Promise.resolve(jsonResponse({ error: 'x', status: 500 }, 500))
+    const respond = responses[Math.min(call, responses.length - 1)]!
+    call += 1
+    return respond()
+  })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
 }
 
-function registerCalls(fetchMock: ReturnType<typeof mockFetch>) {
-  return fetchMock.mock.calls.filter(([url]) => url === '/api/auth/register') as unknown as [string, RequestInit][]
+function requestCalls(fetchMock: ReturnType<typeof mockFetch>) {
+  return fetchMock.mock.calls.filter(([url]) => url === '/api/registration-requests') as unknown as [string, RequestInit][]
 }
+
+const keyOf = ([, init]: [string, RequestInit]) => (init.headers as Record<string, string>)['Idempotency-Key']
 
 async function fillForm(user = userEvent.setup()) {
   await user.type(await screen.findByLabelText('Nombre comercial'), '  Serviteca El Roble ')
-  await user.type(screen.getByLabelText('NIT'), '900123456-7')
+  await user.type(screen.getByLabelText('NIT'), '900.123.456-7')
   await user.type(screen.getByLabelText('Teléfono'), '300 123 4567')
   await user.type(screen.getByLabelText('Nombre completo'), 'Laura Gómez')
   await user.type(screen.getByLabelText('Correo'), 'laura@elroble.co')
-  await user.type(screen.getByLabelText('Usuario'), 'laura.gomez')
-  await user.type(screen.getByLabelText('Contraseña'), 'secreta123')
   await user.click(screen.getByRole('checkbox', { name: 'Acepto los términos de uso y el tratamiento de datos.' }))
   return user
 }
 
-const submit = () => screen.getByRole('button', { name: 'Crear serviteca' })
+const submit = () => screen.getByRole('button', { name: 'Enviar solicitud' })
 
-describe('registro de serviteca', () => {
-  it('tiene un unico h1, el titulo del formulario', async () => {
+describe('solicitud de cuenta', () => {
+  it('tiene un unico h1, los campos de la API y ninguno de usuario o contrasena', async () => {
     renderRoute('/registro')
 
     const headings = await screen.findAllByRole('heading', { level: 1 })
     expect(headings).toHaveLength(1)
-    expect(headings[0]).toHaveTextContent('Crea tu serviteca')
-    expect(screen.getByText(/La información de cada serviteca se guarda por separado\./)).toBeInTheDocument()
-    expect(screen.queryByText('Tu serviteca lista en minutos.')).not.toBeInTheDocument()
+    expect(headings[0]).toHaveTextContent('Solicita tu cuenta')
+    expect(screen.getByText(/Revisamos cada solicitud y, si la aprobamos, te enviamos un correo para activar la cuenta/)).toBeInTheDocument()
     expect(primaryActions()).toHaveLength(1)
     const business = screen.getByRole('group', { name: '1. Datos de la serviteca' })
     for (const label of ['Nombre comercial', 'NIT', 'Teléfono', 'Código de tu serviteca']) {
       expect(within(business).getByLabelText(label)).toBeInTheDocument()
     }
     const admin = screen.getByRole('group', { name: '2. Administrador' })
-    for (const label of ['Nombre completo', 'Correo', 'Usuario', 'Contraseña']) {
+    for (const label of ['Nombre completo', 'Correo']) {
       expect(within(admin).getByLabelText(label)).toBeInTheDocument()
     }
+    expect(screen.getByLabelText('Correo')).toHaveAccessibleDescription('Aquí te escribimos para activar la cuenta.')
+    expect(screen.queryByLabelText('Usuario')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument()
     expect(screen.getByText('Tu serviteca empieza aquí.')).toBeInTheDocument()
     const photo = document.querySelector('.register-photo')!
     expect(photo).toHaveAttribute('alt', '')
-    expect(photo).toHaveAttribute('width', '1122')
-    expect(photo).toHaveAttribute('height', '1402')
   })
 
-  it('sugiere el identificador desde el nombre comercial hasta que se edita a mano', async () => {
+  it('informa el uso de los datos sin enlazar una politica que no existe', async () => {
+    renderRoute('/registro')
+
+    const note = await screen.findByText('Al enviar la solicitud aceptas que usemos estos datos para evaluarla y contactarte.')
+    expect(note.closest('a')).toBeNull()
+    expect(within(note).queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.getByText(/Creas tu usuario y tu contraseña, y dejamos listas la Caja General/)).toBeInTheDocument()
+  })
+
+  it('sugiere el codigo desde el nombre comercial hasta que se edita a mano', async () => {
     const user = userEvent.setup()
     renderRoute('/registro')
     const name = await screen.findByLabelText('Nombre comercial')
@@ -82,101 +96,67 @@ describe('registro de serviteca', () => {
     expect(slug).toHaveValue('el-roble2')
   })
 
-  it('enviar vacio muestra todos los errores y lleva el foco al primero', async () => {
-    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
+  it('enviar vacio muestra todos los errores, lleva el foco al primero y no llama al backend', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(accepted, 202)))
     const user = userEvent.setup()
     renderRoute('/registro')
-    await user.click(await screen.findByRole('button', { name: 'Crear serviteca' }))
+    await user.click(await screen.findByRole('button', { name: 'Enviar solicitud' }))
 
     const name = screen.getByLabelText('Nombre comercial')
     expect(name).toHaveFocus()
     expect(name).toHaveAttribute('aria-invalid', 'true')
     expect(name).toHaveAccessibleDescription('Escribe el nombre comercial.')
-    expect(screen.getByRole('alert')).toHaveTextContent(/Revisa los \d+ campos marcados\./)
-    expect(registerCalls(fetchMock)).toHaveLength(0)
+    expect(screen.getByRole('alert')).toHaveTextContent('Revisa los 7 campos marcados.')
+    expect(requestCalls(fetchMock)).toHaveLength(0)
   })
 
-  it('muestra los errores al salir de cada campo', async () => {
+  it('valida como el backend al salir de cada campo: NIT, telefono, correo y codigo reservado', async () => {
     const user = userEvent.setup()
     renderRoute('/registro')
-    await user.click(await screen.findByLabelText('Nombre comercial'))
-    await user.tab()
-
-    expect(screen.getByText('Escribe el nombre comercial.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nombre comercial')).toHaveAttribute('aria-invalid', 'true')
-
-    await user.type(screen.getByLabelText('NIT'), '901234567-8X')
+    await user.type(await screen.findByLabelText('NIT'), '901234567-8X')
     await user.tab()
     expect(screen.getByText(/^El NIT solo admite dígitos/)).toBeInTheDocument()
 
-    await user.type(screen.getByLabelText('Contraseña'), 'corta')
     await user.tab()
-    expect(screen.getByText('Usa al menos 8 caracteres.')).toBeInTheDocument()
-    expect(screen.queryByText('Escribe tu correo.')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Teléfono')).toHaveAttribute('aria-invalid', 'true')
+
+    await user.type(screen.getByLabelText('Correo'), 'laura@')
+    await user.tab()
+    expect(screen.getByText('Escribe un correo válido, por ejemplo nombre@correo.com.')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Código de tu serviteca'), 'activar')
+    await user.tab()
+    expect(screen.getByText('Este identificador está reservado. Elige otro.')).toBeInTheDocument()
   })
 
-  it('sin aceptar los terminos no se envia: Guardar sigue habilitado y el foco va a la casilla', async () => {
-    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
+  it('sin aceptar los terminos no se envia y el foco va a la casilla', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(accepted, 202)))
     renderRoute('/registro')
     const user = await fillForm()
-    expect(submit()).toBeEnabled()
 
     await user.click(screen.getByRole('checkbox'))
-    await user.tab()
-
-    expect(submit()).toBeEnabled()
-    expect(screen.getByText('Acepta los términos de uso y el tratamiento de datos para continuar.')).toBeInTheDocument()
     await user.click(submit())
+
     expect(screen.getByRole('checkbox')).toHaveFocus()
-    expect(screen.getByRole('alert')).toHaveTextContent('Revisa el campo marcado.')
-    expect(registerCalls(fetchMock)).toHaveLength(0)
+    expect(screen.getByText('Acepta los términos de uso y el tratamiento de datos para continuar.')).toBeInTheDocument()
+    expect(requestCalls(fetchMock)).toHaveLength(0)
   })
 
-  it('el enlace de los terminos abre /terminos en una pestana nueva', async () => {
-    renderRoute('/registro')
-
-    const link = await screen.findByRole('link', { name: 'términos de uso y el tratamiento de datos' })
-    expect(link).toHaveAttribute('href', '/terminos')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener')
-    expect(
-      screen.getByText(/Dejamos listas la Caja General, las categorías base \(Llantas, Lubricantes y Baterías\), el IVA del 19 %/),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
-    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Términos y datos personales' })).toHaveAttribute('href', '/terminos')
-  })
-
-  it('el mensaje de exito lista solo lo que crea el backend', () => {
-    // TenantRegistrationService crea la Caja General, LLANTAS, LUBRICANTES y BATERIAS con margen
-    // objetivo 0 y el IVA del 19 %, ademas del administrador y el Consumidor final.
-    expect(REGISTER_SUCCESS).toBe(
-      'Serviteca creada. Dejamos listas tu Caja General, las categorías base y el IVA del 19 %. Solo falta configurar tus márgenes para el precio sugerido.',
-    )
-  })
-
-  it('NIT y telefono siguen siendo obligatorios', async () => {
-    const user = userEvent.setup()
-    renderRoute('/registro')
-    await user.click(await screen.findByLabelText('NIT'))
-    await user.tab()
-    await user.tab()
-
-    expect(screen.getByLabelText('NIT')).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByLabelText('Teléfono')).toHaveAttribute('aria-invalid', 'true')
-  })
-
-  it('envia el cuerpo exacto, guarda la sesion con fullName y entra a /inicio con el toast', async () => {
-    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
+  it('envia el cuerpo exacto con Idempotency-Key y tras el 202 explica lo que sigue sin prometer plazos', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(accepted, 202)))
     const router = renderRoute('/registro')
     const user = await fillForm()
 
     await user.click(submit())
 
-    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
-    const [url, init] = registerCalls(fetchMock)[0] as [string, RequestInit]
-    expect(url).toBe('/api/auth/register')
+    const heading = await screen.findByRole('heading', { level: 1, name: 'Recibimos tu solicitud' })
+    await waitFor(() => expect(heading).toHaveFocus())
+    const [call] = requestCalls(fetchMock)
+    const [url, init] = call!
+    expect(url).toBe('/api/registration-requests')
     expect(init.method).toBe('POST')
+    expect(keyOf(call!)).toMatch(/^[A-Za-z0-9._:-]{8,100}$/)
+    expect((init.headers as Record<string, string>).Authorization).toBeUndefined()
     expect(JSON.parse(init.body as string)).toEqual({
       businessName: 'Serviteca El Roble',
       nit: '900123456-7',
@@ -184,52 +164,61 @@ describe('registro de serviteca', () => {
       slug: 'serviteca-el-roble',
       adminFullName: 'Laura Gómez',
       adminEmail: 'laura@elroble.co',
-      adminUsername: 'laura.gomez',
-      password: 'secreta123',
       acceptTerms: true,
     })
-    expect(router.state.location.pathname).toBe('/inicio')
-    expect(router.state.historyAction).toBe('REPLACE')
-    expect(getToken()).toBe(token)
-    expect(localStorage.getItem('servibox.tenantSlug')).toBe('el-roble')
-    expect(JSON.parse(sessionStorage.getItem('servibox.identity') ?? '')).toEqual({
-      username: 'laura.gomez',
-      role: 'ADMIN',
-      tenantName: 'Serviteca El Roble',
-      tenantSlug: 'el-roble',
-      fullName: 'Laura Gómez',
-    })
-    // El menu de usuario de la barra superior se nombra con el nombre completo.
-    expect(screen.getByRole('button', { name: 'Menú de usuario de Laura Gómez' })).toBeInTheDocument()
-    expect(screen.getByText('LG')).toBeInTheDocument()
+    expect(screen.getByText(/Vamos a revisar los datos de/)).toHaveTextContent(
+      'Vamos a revisar los datos de Serviteca El Roble. Si la aprobamos, te enviaremos a laura@elroble.co un correo con el enlace para activar la cuenta y crear tu usuario.',
+    )
+    expect(screen.getByText(/revisa la carpeta de spam/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'hola@servibox.co' })).toHaveAttribute('href', 'mailto:hola@servibox.co')
+    expect(document.body).not.toHaveTextContent(/horas|días|minutos|garantiza|llegará/i)
+    expect(screen.queryByRole('form')).not.toBeInTheDocument()
+    // Sin sesion: la solicitud no crea serviteca ni usuario.
+    expect(router.state.location.pathname).toBe('/registro')
+    expect(getToken()).toBeNull()
+    expect(localStorage.getItem('servibox.tenantSlug')).toBeNull()
   })
 
-  it('un 409 queda bajo el identificador con el foco y conserva lo digitado', async () => {
-    mockFetch(() =>
-      Promise.resolve(jsonResponse({ error: 'Ya existe una serviteca con el identificador serviteca-el-roble', status: 409 }, 409)),
+  it('reintentar el mismo envio reutiliza la clave; cambiar los datos usa una nueva', async () => {
+    const fetchMock = mockFetch(
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      () => Promise.resolve(jsonResponse(accepted, 202)),
     )
     renderRoute('/registro')
     const user = await fillForm()
 
     await user.click(submit())
-
-    const slug = screen.getByLabelText('Código de tu serviteca')
-    expect(await screen.findByText('Ya existe una serviteca con el código serviteca-el-roble. Elige otro.')).toBeInTheDocument()
-    expect(slug).toHaveAttribute('aria-invalid', 'true')
-    await waitFor(() => expect(slug).toHaveFocus())
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Contraseña')).toHaveValue('secreta123')
-    // Con el 409 vigente, enviar no llama al backend y devuelve el foco al identificador.
-    expect(submit()).toBeEnabled()
+    await screen.findByRole('alert')
     await user.click(submit())
-    expect(slug).toHaveFocus()
+    await waitFor(() => expect(requestCalls(fetchMock)).toHaveLength(2))
+    const [first, second] = requestCalls(fetchMock)
+    expect(keyOf(second!)).toBe(keyOf(first!))
 
-    await user.type(slug, '-2')
-    expect(screen.queryByText(/Ya existe una serviteca/)).not.toBeInTheDocument()
-    expect(submit()).toBeEnabled()
+    await user.type(screen.getByLabelText('Teléfono'), '1')
+    await user.click(submit())
+    await screen.findByRole('heading', { level: 1, name: 'Recibimos tu solicitud' })
+    const third = requestCalls(fetchMock)[2]!
+    expect(keyOf(third)).not.toBe(keyOf(first!))
+    expect(JSON.parse(third[1].body as string).phone).toBe('300 123 45671')
   })
 
-  it('un 400 se muestra en el Alert sin perder lo digitado', async () => {
+  it('con la compuerta apagada (404) dice que el registro aun no esta disponible y como contactar', async () => {
+    mockFetch(() => Promise.resolve(jsonResponse({ error: 'Recurso no encontrado', status: 404 }, 404)))
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('El registro todavía no está disponible')
+    expect(alert).toHaveTextContent('Aún no estamos recibiendo solicitudes de cuenta. Si quieres usar ServiBox en tu serviteca, escríbenos a hola@servibox.co.')
+    expect(within(alert).getByRole('link', { name: 'hola@servibox.co' })).toHaveAttribute('href', 'mailto:hola@servibox.co')
+    expect(alert).not.toHaveTextContent(/WhatsApp|\+57/)
+    expect(screen.getByLabelText('Nombre comercial')).toHaveValue('  Serviteca El Roble ')
+  })
+
+  it('un 400 se muestra en el Alert con el mensaje mapeado sin perder lo digitado', async () => {
     mockFetch(() => Promise.resolve(jsonResponse({ error: 'El identificador demo esta reservado', status: 400 }, 400)))
     renderRoute('/registro')
     const user = await fillForm()
@@ -237,41 +226,106 @@ describe('registro de serviteca', () => {
     await user.click(submit())
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('No pudimos crear tu serviteca')
+    expect(alert).toHaveTextContent('No pudimos enviar la solicitud')
     expect(alert).toHaveTextContent('El código demo está reservado. Elige otro.')
     expect(screen.getByLabelText('Nombre comercial')).toHaveValue('  Serviteca El Roble ')
-    expect(getToken()).toBeNull()
   })
 
-  it('un 403 dice que el registro no esta disponible', async () => {
-    mockFetch(() =>
-      Promise.resolve(jsonResponse({ error: 'El registro de nuevas servitecas esta deshabilitado', status: 403 }, 403)),
+  it('un codigo no disponible (409) queda bajo el codigo con el foco y desaparece al cambiarlo', async () => {
+    mockFetch(() => Promise.resolve(jsonResponse({ error: 'El codigo solicitado no esta disponible', status: 409 }, 409)))
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+
+    const slug = screen.getByLabelText('Código de tu serviteca')
+    expect(await screen.findByText('Este código ya no está disponible. Elige otro.')).toBeInTheDocument()
+    expect(slug).toHaveAttribute('aria-invalid', 'true')
+    await waitFor(() => expect(slug).toHaveFocus())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    await user.type(slug, '-2')
+    expect(screen.queryByText('Este código ya no está disponible. Elige otro.')).not.toBeInTheDocument()
+  })
+
+  it('una clave reutilizada con otros datos (409) avisa y el siguiente envio usa una clave nueva', async () => {
+    const fetchMock = mockFetch(
+      () => Promise.resolve(jsonResponse({ error: 'La clave de reintento ya se uso con otros datos', status: 409 }, 409)),
+      () => Promise.resolve(jsonResponse(accepted, 202)),
     )
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos confirmar el envío porque los datos cambiaron. Envía la solicitud de nuevo.')
+    await user.click(submit())
+
+    await screen.findByRole('heading', { level: 1, name: 'Recibimos tu solicitud' })
+    const [first, second] = requestCalls(fetchMock)
+    expect(keyOf(second!)).not.toBe(keyOf(first!))
+  })
+
+  it.each([
+    [900, 'Recibimos demasiadas solicitudes desde esta conexión. Inténtalo de nuevo más tarde. Podrás intentarlo de nuevo en 15 minutos.'],
+    [undefined, 'Recibimos demasiadas solicitudes desde esta conexión. Inténtalo de nuevo más tarde.'],
+  ])('un 429 con Retry-After %s muestra el mensaje y el tiempo si viene', async (retryAfter, text) => {
+    mockFetch(() => Promise.resolve(retryResponse('Demasiadas solicitudes desde esta conexion, intenta de nuevo mas tarde', 429, retryAfter)))
     renderRoute('/registro')
     const user = await fillForm()
 
     await user.click(submit())
 
     const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('El registro no está disponible')
-    expect(alert).toHaveTextContent('Por ahora no estamos creando servitecas nuevas.')
+    expect(alert).toHaveTextContent('Espera antes de enviar de nuevo')
+    expect(alert).toHaveTextContent(text)
+    if (retryAfter === undefined) expect(alert).not.toHaveTextContent('Podrás intentarlo')
   })
 
-  it('un error de red o un 500 muestran el mensaje generico', async () => {
+  it('regresion: seis envios sin cambiar datos llegan al backend con la misma clave y el sexto muestra el 429', async () => {
+    // Antes, tras el 409 de codigo no disponible el formulario dejaba de enviar con el mismo
+    // codigo y el limite de 5 por hora del backend nunca se veia.
+    const slugTaken = () => Promise.resolve(jsonResponse({ error: 'El codigo solicitado no esta disponible', status: 409 }, 409))
+    const fetchMock = mockFetch(
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      slugTaken, slugTaken, slugTaken, slugTaken,
+      () => Promise.resolve(retryResponse('Demasiadas solicitudes desde esta conexion, intenta de nuevo mas tarde', 429, 2819)),
+    )
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+    await screen.findByRole('alert')
+    for (let sent = 2; sent <= 6; sent += 1) {
+      await user.click(submit())
+      await waitFor(() => expect(requestCalls(fetchMock)).toHaveLength(sent))
+      await waitFor(() => expect(submit()).toBeEnabled())
+    }
+
+    const calls = requestCalls(fetchMock)
+    expect(new Set(calls.map(keyOf)).size).toBe(1)
+    expect(new Set(calls.map(([, init]) => init.body)).size).toBe(1)
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Espera antes de enviar de nuevo')
+    expect(alert).toHaveTextContent('Recibimos demasiadas solicitudes desde esta conexión. Inténtalo de nuevo más tarde. Podrás intentarlo de nuevo en 47 minutos.')
+    expect(screen.queryByText('Este código ya no está disponible. Elige otro.')).not.toBeInTheDocument()
+  })
+
+  it('un error de red o un 500 muestran el mensaje generico sin contacto', async () => {
     mockFetch(() => Promise.reject(new TypeError('Failed to fetch')))
     renderRoute('/registro')
     const user = await fillForm()
 
     await user.click(submit())
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos completar la acción. Revisa tu conexión')
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos enviar la solicitud')
+    expect(alert).toHaveTextContent('No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.')
+    expect(alert).not.toHaveTextContent(/Failed|WhatsApp/)
 
     mockFetch(() => Promise.resolve(jsonResponse({ error: 'Error interno del servidor', status: 500 }, 500)))
     await user.click(submit())
-
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Revisa tu conexión e inténtalo de nuevo.'))
-    expect(screen.getByRole('alert')).not.toHaveTextContent('WhatsApp')
-    expect(screen.getByLabelText('Contraseña')).toHaveValue('secreta123')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('interno')
   })
 
   it('no envia dos veces y muestra el estado de carga', async () => {
@@ -282,59 +336,40 @@ describe('registro de serviteca', () => {
 
     await user.dblClick(submit())
 
-    const loading = await screen.findByRole('button', { name: 'Creando serviteca…' })
+    const loading = await screen.findByRole('button', { name: 'Enviando solicitud…' })
     expect(loading).toBeDisabled()
-    const form = screen.getByRole('form', { name: 'Crear serviteca' })
+    const form = screen.getByRole('form', { name: 'Solicitar cuenta' })
     expect(form).toHaveAttribute('aria-busy', 'true')
-    expect(within(loading).getByRole('status')).toHaveTextContent('Creando serviteca…')
     fireEvent.submit(form)
     fireEvent.submit(form)
-    expect(registerCalls(fetchMock)).toHaveLength(1)
-    resolve(jsonResponse(created, 201))
-    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
+    expect(requestCalls(fetchMock)).toHaveLength(1)
+    resolve(jsonResponse(accepted, 202))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Recibimos tu solicitud' })).toBeInTheDocument()
   })
 
-  it('mostrar y ocultar con teclado conserva la contrasena y Enter registra sin pasos adicionales', async () => {
-    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(created, 201)))
-    const router = renderRoute('/registro')
-    const user = await fillForm()
-    const password = screen.getByLabelText('Contraseña')
-    expect(password).toHaveAttribute('type', 'password')
-    expect(password).toHaveAttribute('autocomplete', 'new-password')
-    password.focus()
-    await user.tab()
-    expect(screen.getByRole('button', { name: 'Mostrar contraseña' })).toHaveFocus()
-    await user.keyboard('{Enter}')
-    expect(password).toHaveAttribute('type', 'text')
-    expect(password).toHaveValue('secreta123')
-    await user.keyboard(' ')
-    expect(password).toHaveAttribute('type', 'password')
-    expect(registerCalls(fetchMock)).toHaveLength(0)
-    password.focus()
-    await user.keyboard('{Enter}')
-    expect(await screen.findByText(REGISTER_SUCCESS)).toBeInTheDocument()
-    expect(registerCalls(fetchMock)).toHaveLength(1)
-    expect(router.state.location.pathname).toBe('/inicio')
-  })
-
-  it('un 409 tardio solo marca el codigo enviado y reaparece si se vuelve a ese codigo', async () => {
+  it('un 409 tardio solo marca el codigo enviado', async () => {
     let resolve: (response: Response) => void = () => {}
-    const fetchMock = mockFetch(() => new Promise<Response>((done) => (resolve = done)))
+    mockFetch(() => new Promise<Response>((done) => (resolve = done)))
     renderRoute('/registro')
     const user = await fillForm()
     await user.click(submit())
     const slug = screen.getByLabelText('Código de tu serviteca')
     await user.type(slug, '-2')
-    resolve(jsonResponse({ error: 'Ya existe una serviteca con el identificador serviteca-el-roble', status: 409 }, 409))
+    resolve(jsonResponse({ error: 'El codigo solicitado no esta disponible', status: 409 }, 409))
     await waitFor(() => expect(slug).toHaveFocus())
     expect(slug).not.toHaveAttribute('aria-invalid')
-    expect(screen.queryByText(/Ya existe una serviteca/)).not.toBeInTheDocument()
     await user.keyboard('{Backspace}{Backspace}')
     expect(slug).toHaveAttribute('aria-invalid', 'true')
-    expect(screen.getByText('Ya existe una serviteca con el código serviteca-el-roble. Elige otro.')).toBeInTheDocument()
-    await user.click(submit())
-    expect(registerCalls(fetchMock)).toHaveLength(1)
-    expect(slug).toHaveFocus()
+  })
+
+  it('el enlace de los terminos abre /terminos en una pestana nueva y hay vuelta al login', async () => {
+    renderRoute('/registro')
+
+    const link = await screen.findByRole('link', { name: 'términos de uso y el tratamiento de datos' })
+    expect(link).toHaveAttribute('href', '/terminos')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
+    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
   })
 
   it('con sesion redirige a /inicio', async () => {
@@ -348,11 +383,11 @@ describe('registro de serviteca', () => {
   it('fija el titulo del documento', async () => {
     renderRoute('/registro')
 
-    await screen.findByRole('heading', { name: 'Crea tu serviteca' })
-    expect(document.title).toBe('Crear cuenta | ServiBox')
+    await screen.findByRole('heading', { name: 'Solicita tu cuenta' })
+    expect(document.title).toBe('Solicitar cuenta | ServiBox')
     expect(document.querySelector('meta[name="description"]')).toHaveAttribute(
       'content',
-      expect.stringContaining('Registra tu serviteca'),
+      expect.stringContaining('Solicita la cuenta de tu serviteca'),
     )
   })
 })

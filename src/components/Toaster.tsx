@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CircleCheck, TriangleAlert, X } from 'lucide-react'
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
+import { SUPPORT_EMAIL, WHATSAPP } from '../config/contact'
 import { IconButton } from './IconButton'
 import { TOAST_DURATION_MS, dismissToast, useToasts, type ToastMessage } from './toast'
 import { iconSm } from './icons'
@@ -20,15 +20,22 @@ export function Toaster() {
   )
 }
 
-/** El WhatsApp de soporte dentro del texto (mensaje de red) va como enlace. */
+/** El contacto de soporte dentro del texto (mensaje de red) va como enlace: WhatsApp si existe, si no el correo. */
 function MessageWithContact({ text }: { text: string }) {
-  const [before, after] = text.split(WHATSAPP_DISPLAY)
+  const contact = WHATSAPP
+    ? { label: WHATSAPP.display, href: WHATSAPP.url, external: true }
+    : { label: SUPPORT_EMAIL, href: `mailto:${SUPPORT_EMAIL}`, external: false }
+  const [before, after] = text.split(contact.label)
   if (after === undefined) return text
   return (
     <>
       {before}
-      <a href={WHATSAPP_URL} target="_blank" rel="noopener" className="rounded-control font-semibold text-brand-ink hover:underline focus-ring">
-        {WHATSAPP_DISPLAY}
+      <a
+        href={contact.href}
+        {...(contact.external ? { target: '_blank', rel: 'noopener' } : {})}
+        className="rounded-control font-semibold text-brand-ink hover:underline focus-ring"
+      >
+        {contact.label}
       </a>
       {after}
     </>

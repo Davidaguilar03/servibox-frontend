@@ -12,11 +12,14 @@ export const GENERIC_ERROR_MESSAGE = 'Algo salió mal de nuestro lado. Intenta d
 /** Error del backend, que siempre responde `{"error": mensaje, "status": n}`. */
 export class ApiError extends Error {
   readonly status: number
+  /** Segundos de la cabecera Retry-After (429 de las rutas publicas y de los logins). */
+  readonly retryAfter?: number
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, retryAfter?: number) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.retryAfter = retryAfter
   }
 }
 
@@ -27,11 +30,13 @@ interface ApiOptions {
   auth?: boolean
   /** Usa el token de plataforma; su 401 cierra solo la sesion de plataforma. */
   platform?: boolean
+  /** Cabeceras extra, por ejemplo Idempotency-Key. */
+  headers?: Record<string, string>
 }
 
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true, platform = false } = options
-  const headers: Record<string, string> = { Accept: 'application/json' }
+  const headers: Record<string, string> = { Accept: 'application/json', ...options.headers }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
   const token = auth ? (platform ? getPlatformToken() : getToken()) : null
   if (token) headers.Authorization = `Bearer ${token}`
@@ -117,13 +122,20 @@ async function toDownloadError(response: Response): Promise<ApiError> {
   }
 }
 
+/** Retry-After en segundos; el backend no envia la forma de fecha HTTP. */
+function retryAfterOf(response: Response): number | undefined {
+  const seconds = Number(response.headers.get('Retry-After') ?? NaN)
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined
+}
+
 async function toApiError(response: Response): Promise<ApiError> {
+  const retryAfter = retryAfterOf(response)
   try {
     const data = (await response.json()) as { error?: unknown; status?: unknown }
     const message = typeof data.error === 'string' ? data.error : response.statusText
     const status = typeof data.status === 'number' ? data.status : response.status
-    return new ApiError(message, status)
+    return new ApiError(message, status, retryAfter)
   } catch {
-    return new ApiError(response.statusText, response.status)
+    return new ApiError(response.statusText, response.status, retryAfter)
   }
 }

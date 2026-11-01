@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '../lib/api'
-import { MESSAGES, mapBackendMessage, userMessage } from './errorMessages'
+import { MESSAGES, mapBackendMessage, retryAfterText, userMessage } from './errorMessages'
 
 const api = (message: string, status: number) => new ApiError(message, status)
 
@@ -10,6 +10,19 @@ const api = (message: string, status: number) => new ApiError(message, status)
  * de ejemplo en los parametricos. Cada uno debe pasar por el mapa con su texto final.
  */
 const BACKEND: Array<[string, string]> = [
+  // registration/RateLimitExceededException y auth/LoginThrottle (429 con Retry-After).
+  ['Demasiadas solicitudes desde esta conexion, intenta de nuevo mas tarde', 'Recibimos demasiadas solicitudes desde esta conexión. Inténtalo de nuevo más tarde.'],
+  ['Demasiados intentos de activacion, espera unos minutos e intenta de nuevo', 'Hiciste demasiados intentos de activación. Espera unos minutos e inténtalo de nuevo.'],
+  ['Demasiados intentos de inicio de sesion, espera unos minutos e intenta de nuevo', 'Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.'],
+  // registration/RegistrationRequestService y RegistrationRequestConflictException (solicitud publica).
+  ['La clave de reintento es obligatoria', 'No pudimos enviar la solicitud. Inténtalo de nuevo.'],
+  ['La clave de reintento no es valida', 'No pudimos enviar la solicitud. Inténtalo de nuevo.'],
+  ['La clave de reintento ya se uso con otros datos', 'No pudimos confirmar el envío porque los datos cambiaron. Envía la solicitud de nuevo.'],
+  ['La solicitud no admite contrasena', 'La solicitud no lleva contraseña: la creas al activar la cuenta.'],
+  // registration/ActivationException.
+  ['El enlace de activacion no es valido', 'El enlace de activación no es válido. Ábrelo de nuevo desde el correo, completo.'],
+  ['El enlace de activacion vencio o fue reemplazado', 'El enlace de activación venció o fue reemplazado por uno más reciente. Usa el último correo que te enviamos.'],
+  ['El enlace de activacion ya fue utilizado; inicia sesion', 'Este enlace de activación ya se usó. Inicia sesión con el código de tu serviteca.'],
   // platform/PlatformTenantService y PlatformTenantConflictException.
   ['Tenant no encontrado', 'No encontramos esta serviteca. Puede que ya no exista.'],
   ['Usuario no encontrado', 'No encontramos ese usuario en esta serviteca. Puede que ya no exista.'],
@@ -198,7 +211,37 @@ describe('texto por estado HTTP', () => {
     expect(userMessage(api('Conflict', 409))).toBe('Esto cambió mientras lo editabas. Recarga e inténtalo de nuevo.')
     expect(userMessage(api('Bad Gateway', 502))).toBe(MESSAGES.network)
     expect(userMessage(new TypeError('Failed to fetch'))).toBe(MESSAGES.network)
-    expect(MESSAGES.network).toContain('escríbenos por WhatsApp')
+    // Sin WhatsApp definido en contact.ts el mensaje de red invita al correo real.
+    expect(MESSAGES.network).toBe('No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo; si sigue pasando, escríbenos a hola@servibox.co.')
+  })
+
+  it('el contexto de la solicitud y de la activacion le habla a quien pide la cuenta', () => {
+    expect(userMessage(api('El codigo solicitado no esta disponible', 409), 'registration')).toBe('Este código ya no está disponible. Elige otro.')
+    expect(userMessage(api('El codigo solicitado no esta disponible', 409), 'activation'))
+      .toBe('El código de serviteca de tu solicitud ya no está disponible. Escríbenos a hola@servibox.co para revisarla.')
+    expect(userMessage(api('La solicitud ya no permite esta operacion', 409), 'activation'))
+      .toBe('Esta solicitud ya no se puede activar. Escríbenos a hola@servibox.co para revisarla.')
+    // Plataforma conserva sus textos.
+    expect(userMessage(api('El codigo solicitado no esta disponible', 409))).toBe('El código solicitado ya no está disponible. Actualiza la solicitud.')
+  })
+
+  it('429 muestra el mensaje del backend y, con Retry-After, el tiempo de espera', () => {
+    const login = 'Demasiados intentos de inicio de sesion, espera unos minutos e intenta de nuevo'
+    const mapped = 'Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.'
+    expect(userMessage(api(login, 429))).toBe(mapped)
+    expect(userMessage(new ApiError(login, 429, 898))).toBe(`${mapped} Podrás intentarlo de nuevo en 15 minutos.`)
+    expect(userMessage(api('Too Many Requests', 429))).toBe(MESSAGES.tooMany)
+  })
+
+  it('el tiempo de espera se redondea hacia arriba en segundos, minutos u horas', () => {
+    expect(retryAfterText(1)).toBe('Podrás intentarlo de nuevo en 1 segundo.')
+    expect(retryAfterText(30)).toBe('Podrás intentarlo de nuevo en 30 segundos.')
+    expect(retryAfterText(60)).toBe('Podrás intentarlo de nuevo en 1 minuto.')
+    expect(retryAfterText(61)).toBe('Podrás intentarlo de nuevo en 2 minutos.')
+    expect(retryAfterText(900)).toBe('Podrás intentarlo de nuevo en 15 minutos.')
+    expect(retryAfterText(3600)).toBe('Podrás intentarlo de nuevo en 1 hora.')
+    expect(retryAfterText(5400)).toBe('Podrás intentarlo de nuevo en 90 minutos.')
+    expect(retryAfterText(7200)).toBe('Podrás intentarlo de nuevo en 2 horas.')
   })
 
   it('nunca muestra JSON, trazas, clases ni ingles', () => {

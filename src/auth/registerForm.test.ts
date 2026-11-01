@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   EMPTY_REGISTER_VALUES,
   normalizeSlugInput,
+  passwordError,
   suggestSlug,
   toRegisterRequest,
+  usernameError,
   validateRegister,
   type RegisterValues,
 } from './registerForm'
@@ -16,8 +18,6 @@ const valid: RegisterValues = {
   slug: 'el-roble',
   adminFullName: 'Laura Gómez',
   adminEmail: 'laura@elroble.co',
-  adminUsername: 'laura.gomez',
-  password: 'secreta123',
   acceptTerms: true,
 }
 
@@ -63,7 +63,7 @@ describe('validacion del registro', () => {
 
   it('el formulario vacio marca todos los campos', () => {
     expect(Object.keys(validateRegister(EMPTY_REGISTER_VALUES)).sort()).toEqual(
-      ['acceptTerms', 'adminEmail', 'adminFullName', 'adminUsername', 'businessName', 'nit', 'password', 'phone', 'slug'].sort(),
+      ['acceptTerms', 'adminEmail', 'adminFullName', 'businessName', 'nit', 'phone', 'slug'].sort(),
     )
   })
 
@@ -99,6 +99,9 @@ describe('validacion del registro', () => {
     expect(errorOf({ slug: '-roble' }).slug).toBe('Quita el guion del inicio o del final.')
     expect(errorOf({ slug: 'roble-' }).slug).toBe('Quita el guion del inicio o del final.')
     expect(errorOf({ slug: 'demo' }).slug).toBe('Este identificador está reservado. Elige otro.')
+    // Los mismos de SLUGS_RESERVADOS del backend, que suma las rutas de plataforma y activacion.
+    expect(errorOf({ slug: 'plataforma' }).slug).toBe('Este identificador está reservado. Elige otro.')
+    expect(errorOf({ slug: 'activar' }).slug).toBe('Este identificador está reservado. Elige otro.')
   })
 
   it('nombre completo obligatorio y de hasta 150', () => {
@@ -114,21 +117,21 @@ describe('validacion del registro', () => {
 
   it('usuario de 3 a 50 con letras, numeros, punto, guion y guion bajo', () => {
     const message = 'Usa de 3 a 50 caracteres: letras, números, punto, guion y guion bajo.'
-    expect(errorOf({ adminUsername: 'ab' }).adminUsername).toBe(message)
-    expect(errorOf({ adminUsername: 'a_b-c.d' }).adminUsername).toBeUndefined()
-    expect(errorOf({ adminUsername: 'a'.repeat(50) }).adminUsername).toBeUndefined()
-    expect(errorOf({ adminUsername: 'a'.repeat(51) }).adminUsername).toBe(message)
-    expect(errorOf({ adminUsername: 'laura gomez' }).adminUsername).toBe(message)
-    expect(errorOf({ adminUsername: '' }).adminUsername).toBe('Escribe un usuario.')
+    expect(usernameError('ab')).toBe(message)
+    expect(usernameError('a_b-c.d')).toBeUndefined()
+    expect(usernameError('a'.repeat(50))).toBeUndefined()
+    expect(usernameError('a'.repeat(51))).toBe(message)
+    expect(usernameError('laura gomez')).toBe(message)
+    expect(usernameError('')).toBe('Escribe un usuario.')
   })
 
   it('contrasena de 8 a 72 caracteres y 72 bytes', () => {
-    expect(errorOf({ password: '' }).password).toBe('Escribe una contraseña.')
-    expect(errorOf({ password: 'a'.repeat(7) }).password).toBe('Usa al menos 8 caracteres.')
-    expect(errorOf({ password: 'a'.repeat(8) }).password).toBeUndefined()
-    expect(errorOf({ password: 'a'.repeat(72) }).password).toBeUndefined()
-    expect(errorOf({ password: 'a'.repeat(73) }).password).toBe('Usa máximo 72 caracteres.')
-    expect(errorOf({ password: 'ñ'.repeat(40) }).password).toBe('Usa máximo 72 caracteres.')
+    expect(passwordError('')).toBe('Escribe una contraseña.')
+    expect(passwordError('a'.repeat(7))).toBe('Usa al menos 8 caracteres.')
+    expect(passwordError('a'.repeat(8))).toBeUndefined()
+    expect(passwordError('a'.repeat(72))).toBeUndefined()
+    expect(passwordError('a'.repeat(73))).toBe('Usa máximo 72 caracteres.')
+    expect(passwordError('ñ'.repeat(40))).toBe('Usa máximo 72 caracteres.')
   })
 
   it('aceptar los terminos es obligatorio', () => {
@@ -137,14 +140,13 @@ describe('validacion del registro', () => {
 })
 
 describe('cuerpo del registro', () => {
-  it('recorta los textos, deja el slug en minusculas y la contrasena tal cual', () => {
+  it('recorta los textos, normaliza el NIT, deja el slug en minusculas y no lleva usuario ni contrasena', () => {
     expect(
       toRegisterRequest({
         ...valid,
         businessName: '  Serviteca El Roble ',
-        nit: ' 900123456-7 ',
-        adminUsername: ' laura.gomez ',
-        password: ' con espacios ',
+        nit: ' 900.123.456-7 ',
+        slug: ' el-roble ',
       }),
     ).toEqual({
       businessName: 'Serviteca El Roble',
@@ -153,8 +155,6 @@ describe('cuerpo del registro', () => {
       slug: 'el-roble',
       adminFullName: 'Laura Gómez',
       adminEmail: 'laura@elroble.co',
-      adminUsername: 'laura.gomez',
-      password: ' con espacios ',
       acceptTerms: true,
     })
   })

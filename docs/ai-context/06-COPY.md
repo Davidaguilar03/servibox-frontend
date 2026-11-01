@@ -83,7 +83,11 @@ Las cadenas que comparan con el backend (expresiones regulares) no son texto vis
 | 403 | No tienes permiso para hacer esto. |
 | 404 | No encontramos lo que buscas. Puede que ya no exista. |
 | 409 sin mapa | Esto cambio mientras lo editabas. Recarga e intentalo de nuevo. |
-| 5xx, red o respuesta no JSON | No pudimos completar la accion. Revisa tu conexion e intentalo de nuevo; si sigue pasando, escribenos por WhatsApp al (numero de `src/config/contact.ts`). |
+| 429 sin mapa | Hiciste demasiados intentos. Espera unos minutos e intentalo de nuevo. |
+| 5xx, red o respuesta no JSON | No pudimos completar la accion. Revisa tu conexion e intentalo de nuevo; si sigue pasando, escribenos a hola@servibox.co (o por WhatsApp al numero de `src/config/contact.ts` cuando exista). |
+
+Un 429 con Retry-After agrega "Podras intentarlo de nuevo en N segundos, minutos u horas."
+(`retryAfterText`, redondeo hacia arriba).
 
 Un 403 o 404 con mensaje conocido usa el mapa ("Solo un administrador puede editar...",
 "No encontramos esa factura. Puede que ya no exista.").
@@ -142,6 +146,13 @@ El acceso de plataforma sigue la misma regla con su propio texto de credenciales
 ("Revisa tu correo y tu contrasena."), sin mencionar el codigo de la serviteca.
 
 ## Validacion de contacto
+
+Solicitud de cuenta y activacion (2026-10-31): contextos `registration` y `activation` en
+userMessage para los mensajes compartidos con Solicitudes de plataforma (codigo no disponible,
+solicitud que ya no permite la operacion). Mensajes nuevos: los tres 429 (solicitudes,
+activacion y login), la clave de reintento (obligatoria, no valida, reutilizada), solicitud
+sin contrasena y los tres del enlace de activacion. Textos exactos en la nota de sesion
+public-registration-request. Las pantallas comparan con el backend por expresion regular.
 
 Solicitudes de plataforma (2026-10-31): mensajes exactos de revision, paginacion,
 version, estado y limites de reenvio agregados a errorMessages.ts. Formularios de

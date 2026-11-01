@@ -1,11 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, Navigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { MESSAGES } from '../api/errorMessages'
 import { reportError } from '../api/reportError'
 import workshopPhoto from '../assets/register/register-workshop-v1.webp'
-import { register, startSession } from '../auth/authApi'
+import { submitRegistrationRequest, type RegistrationRequestBody } from '../auth/authApi'
 import {
   EMPTY_REGISTER_VALUES,
   normalizeSlugInput,
@@ -15,14 +15,14 @@ import {
   type RegisterField,
   type RegisterValues,
 } from '../auth/registerForm'
-import { rememberTenantSlug, useSession } from '../auth/session'
+import { useSession } from '../auth/session'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { TextField } from '../components/TextField'
 import { iconSm } from '../components/icons'
-import { showToast } from '../components/toast'
+import { SUPPORT_EMAIL } from '../config/contact'
 import { GLOSSARY } from '../copy/glossary'
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
@@ -34,20 +34,25 @@ const linkClass =
 
 const legendClass = 'text-body font-semibold text-text'
 
-/** Lo que crea el backend al registrar (TenantRegistrationService), sin el administrador. */
-export const REGISTER_SUCCESS =
-  'Serviteca creada. Dejamos listas tu Caja General, las categorías base y el IVA del 19 %. Solo falta configurar tus márgenes para el precio sugerido.'
+/** Mensajes del backend (RegistrationRequestConflictException) que cambian lo que hace la pantalla. */
+const SLUG_TAKEN = /^El codigo solicitado no esta disponible$/
+const KEY_REUSED = /^La clave de reintento ya se uso con otros datos$/
 
-/** El 409 de un identificador repetido, atado al slug que lo provoco. */
+/** El 409 de un codigo no disponible, atado al slug que lo provoco. */
 interface SlugConflict {
   slug: string
   message: string
 }
 
+interface Submission {
+  body: RegistrationRequestBody
+  key: string
+}
+
 export function RegisterPage() {
   usePageMeta(
-    'Crear cuenta | ServiBox',
-    'Registra tu serviteca en ServiBox. Dejamos listas la Caja General, las categorías base y el IVA del 19 %.',
+    'Solicitar cuenta | ServiBox',
+    'Solicita la cuenta de tu serviteca en ServiBox. Revisamos cada solicitud y te escribimos al correo para activarla.',
   )
   const session = useSession()
   const [values, setValues] = useState<RegisterValues>(EMPTY_REGISTER_VALUES)
@@ -59,17 +64,18 @@ export function RegisterPage() {
   const slugRef = useRef<HTMLInputElement>(null)
   // Evita un segundo envio antes de que isPending llegue al boton.
   const submitting = useRef(false)
+  // Clave de reintento: la misma mientras los datos enviados no cambien, una nueva si cambian.
+  const attempt = useRef<{ key: string; fingerprint: string } | null>(null)
+  const [received, setReceived] = useState<RegistrationRequestBody | null>(null)
 
   const mutation = useMutation({
-    mutationFn: register,
-    onSuccess: (response) => {
-      rememberTenantSlug(response.tenant.slug)
-      showToast(REGISTER_SUCCESS)
-      startSession(response)
-    },
-    onError: (error, request) => {
-      if (error instanceof ApiError && error.status === 409) {
-        setSlugConflict({ slug: request.slug, message: reportError(error, { inlineOnly: true })! })
+    mutationFn: ({ body, key }: Submission) => submitRegistrationRequest(body, key),
+    onSuccess: (_response, { body }) => setReceived(body),
+    onError: (error, { body }) => {
+      if (!(error instanceof ApiError) || error.status !== 409) return
+      if (KEY_REUSED.test(error.message)) attempt.current = null
+      if (SLUG_TAKEN.test(error.message)) {
+        setSlugConflict({ slug: body.slug, message: reportError(error, { inlineOnly: true, context: 'registration' })! })
         slugRef.current?.focus()
       }
     },
@@ -78,7 +84,6 @@ export function RegisterPage() {
     },
   })
 
-  // Al guardar la sesion esta misma redireccion lleva a /inicio con replace.
   if (session) return <Navigate to="/inicio" replace />
 
   const errors = validateRegister(values)
@@ -106,34 +111,49 @@ export function RegisterPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (submitting.current) return
-    if (!valid || slugError) {
-      // Guardar no se deshabilita por errores: al enviar se muestran todos y el foco va al primero.
+    if (!valid) {
+      // Enviar no se deshabilita por errores: al enviar se muestran todos y el foco va al primero.
       revealErrors(() => {
         setSubmitted(true)
         setTouched(Object.fromEntries(Object.keys(values).map((field) => [field, true])))
       }, formRef.current)
       return
     }
+    // Un codigo no disponible no bloquea el reenvio: la reserva puede vencer y el backend
+    // decide (tambien su limite de tasa). La respuesta nueva reemplaza el aviso del campo.
+    setSlugConflict(null)
+    const body = toRegisterRequest(values)
+    const fingerprint = JSON.stringify(body)
+    if (attempt.current?.fingerprint !== fingerprint) attempt.current = { key: crypto.randomUUID(), fingerprint }
     submitting.current = true
-    mutation.mutate(toRegisterRequest(values))
+    mutation.mutate({ body, key: attempt.current.key })
   }
 
   const error = mutation.error
-  const reportedError = reportError(error, { inlineOnly: true })
-  const errorMessage = reportedError === MESSAGES.network
-    ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
-    : reportedError
-  const alert =
-    error instanceof ApiError && error.status === 409
+  const reportedError = reportError(error, { inlineOnly: true, context: 'registration' })
+  const status = error instanceof ApiError ? error.status : undefined
+  const alert: { title: string; body: ReactNode } | null =
+    // El codigo no disponible va bajo su campo.
+    !error || (status === 409 && SLUG_TAKEN.test(error.message))
       ? null
-      : error instanceof ApiError && error.status === 403
+      : status === 404
         ? {
-            title: 'El registro no está disponible',
-            body: 'Por ahora no estamos creando servitecas nuevas. Intenta de nuevo más tarde.',
+            title: 'El registro todavía no está disponible',
+            body: (
+              <>
+                Aún no estamos recibiendo solicitudes de cuenta. Si quieres usar ServiBox en tu serviteca, escríbenos a{' '}
+                <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>{SUPPORT_EMAIL}</a>.
+              </>
+            ),
           }
-        : error
-          ? { title: 'No pudimos crear tu serviteca', body: errorMessage }
-          : null
+        : status === 429
+          ? { title: 'Espera antes de enviar de nuevo', body: reportedError }
+          : {
+              title: 'No pudimos enviar la solicitud',
+              body: reportedError === MESSAGES.network
+                ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
+                : reportedError,
+            }
 
   return (
     <main id="register" className="bg-neutral-100 text-text">
@@ -153,15 +173,20 @@ export function RegisterPage() {
           </Link>
         </nav>
         <div className="register-content">
+        {received ? (
+          <RequestReceived body={received} />
+        ) : (
+        <>
         <p className="mb-4 flex items-center gap-3 text-label text-text-muted">
-          <span aria-hidden className="size-2 shrink-0 rounded-pill bg-brand" />CREA TU SERVITECA
+          <span aria-hidden className="size-2 shrink-0 rounded-pill bg-brand" />SOLICITA TU CUENTA
         </p>
-        <h1 className="register-title text-title text-text">Crea tu serviteca</h1>
+        <h1 className="register-title text-title text-text">Solicita tu cuenta</h1>
         <p className="mt-3 text-body text-text-muted">
-          Llena los datos del negocio y de quien lo administra. La información de cada serviteca se guarda por separado.
+          Cuéntanos de tu serviteca y de quien la administra. Revisamos cada solicitud y, si la aprobamos, te
+          enviamos un correo para activar la cuenta y crear tu usuario.
         </p>
 
-        <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-6" aria-label="Crear serviteca" aria-busy={mutation.isPending}>
+        <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-8 flex flex-col gap-6" aria-label="Solicitar cuenta" aria-busy={mutation.isPending}>
           {alert && (
             <Alert tone="error" title={alert.title}>
               {alert.body}
@@ -233,38 +258,18 @@ export function RegisterPage() {
                 name="adminEmail"
                 type="email"
                 autoComplete="email"
+                hint="Aquí te escribimos para activar la cuenta."
                 value={values.adminEmail}
                 error={fieldError('adminEmail')}
                 onChange={(event) => set('adminEmail', event.target.value)}
                 onBlur={() => blur('adminEmail')}
               />
-              <TextField
-                label="Usuario"
-                name="adminUsername"
-                autoComplete="username"
-                autoCapitalize="none"
-                value={values.adminUsername}
-                error={fieldError('adminUsername')}
-                onChange={(event) => set('adminUsername', event.target.value)}
-                onBlur={() => blur('adminUsername')}
-              />
-              <TextField
-                label="Contraseña"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                hint="Mínimo 8 caracteres."
-                value={values.password}
-                error={fieldError('password')}
-                onChange={(event) => set('password', event.target.value)}
-                onBlur={() => blur('password')}
-              />
             </div>
           </fieldset>
 
-          <Alert tone="info" title="Al crear la cuenta">
-            Dejamos listas la Caja General, las categorías base (Llantas, Lubricantes y Baterías), el IVA del 19 % y
-            el cliente Consumidor final.
+          <Alert tone="info" title="Al activar la cuenta">
+            Creas tu usuario y tu contraseña, y dejamos listas la Caja General, las categorías base (Llantas,
+            Lubricantes y Baterías), el IVA del 19 % y el cliente Consumidor final.
           </Alert>
 
           <div className="flex flex-col gap-1">
@@ -295,11 +300,18 @@ export function RegisterPage() {
           </div>
 
           <ErrorSummary count={submitted ? Object.keys(errors).length + (slugError ? 1 : 0) : 0} />
-          <Button type="submit" className="register-submit relative w-full" disabled={mutation.isPending} aria-busy={mutation.isPending || undefined}>
-            <span role="status">{mutation.isPending ? 'Creando serviteca…' : 'Crear serviteca'}</span>
-            <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button type="submit" className="register-submit relative w-full" disabled={mutation.isPending} aria-busy={mutation.isPending || undefined}>
+              <span role="status">{mutation.isPending ? 'Enviando solicitud…' : 'Enviar solicitud'}</span>
+              <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
+            </Button>
+            <p className="text-small text-text-muted">
+              Al enviar la solicitud aceptas que usemos estos datos para evaluarla y contactarte.
+            </p>
+          </div>
         </form>
+        </>
+        )}
 
         <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
           ¿Ya tienes cuenta?{' '}
@@ -314,5 +326,34 @@ export function RegisterPage() {
         </footer>
       </div>
     </main>
+  )
+}
+
+/** Acuse tras el 202: que sigue, sin prometer plazos ni la llegada del correo. */
+function RequestReceived({ body }: { body: RegistrationRequestBody }) {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => heading.current?.focus(), [])
+
+  return (
+    <section aria-labelledby="request-received-title">
+      <p className="mb-4 flex items-center gap-3 text-label text-text-muted">
+        <span aria-hidden className="size-2 shrink-0 rounded-pill bg-brand" />SOLICITUD ENVIADA
+      </p>
+      <h1 id="request-received-title" ref={heading} tabIndex={-1} className="register-title text-title text-text focus-ring rounded-control">
+        Recibimos tu solicitud
+      </h1>
+      <div className="mt-6 flex flex-col gap-4 text-body text-text">
+        <p>
+          Vamos a revisar los datos de <strong className="font-semibold">{body.businessName}</strong>. Si la aprobamos,
+          te enviaremos a <strong className="font-semibold">{body.adminEmail}</strong> un correo con el enlace para
+          activar la cuenta y crear tu usuario.
+        </p>
+        <p className="text-text-muted">
+          Si no lo ves en tu bandeja de entrada, revisa la carpeta de spam o de correo no deseado. ¿Tienes preguntas?
+          Escríbenos a{' '}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className={linkClass}>{SUPPORT_EMAIL}</a>.
+        </p>
+      </div>
+    </section>
   )
 }
