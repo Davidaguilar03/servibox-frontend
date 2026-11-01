@@ -600,9 +600,9 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
   y acceso sobre foto y contenido. Main comienza en el flujo de trabajo;
   SkipLink sigue apuntando a main#contenido, omitiendo la introduccion.
   El contenedor interior limita solo texto y producto. Tres pasos con
-  representaciones de venta, stock y resumen. Beneficios reutilizan
-  el mismo stock-panel y muestran saldos. Las seis imagenes product-visuals-v2
-  son representaciones generadas de funciones existentes, no capturas reales,
+  venta, stock y resumen. Funciones: utilidad y alertas, y una tarjeta unica de cuentas con panel de cuatro filas. Desde
+  2026-11-01: cuatro capturas de la interfaz con API simulada en product-screens y dos
+  ilustraciones en product-visuals-v2 (venta y stock); ver 03-DECISIONS,
   y no llevan rotulos visibles. Reportes conserva su descripcion accesible HTML.
   FAQ y cierre comparten un contexto ambiental con fotografia absoluta de
   llantas a la izquierda con panorama 1942x809, ancho completo desde lg y
@@ -616,12 +616,11 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
   controles dibujados dentro de las imagenes.
   LandingPage.css contiene escala, mascaras y contenedor fluido maximo de
   1760 px limitados a #landing: margen minimo de 16 px, 24 desde lg.
-  Recursos con limites propios: pasos 440/320 px, funciones 580/460,
-  reporte 520. Funciones sobre canvas a ancho de ventana, sin cambiar
-  el fondo de pasos; sus pistas de recursos tienen gap de 32 px desde lg.
+  Recursos con limites propios: pasos 440/320 px. Saldos y reporte toman el ancho de su
+  columna. Funciones sobre canvas a ancho de ventana, sin cambiar el fondo de pasos.
   La barra conserva su capa
   superior independiente, sin recorte. Recursos de producto
-  en WebP lossless con marcos de recorte propios a 20 px. Sin mencion al piloto.
+  en WebP con y sin perdida con marcos de recorte propios a 20 px. Sin mencion al piloto.
   No cambia el tamano raiz ni otras pantallas.
   Sin capturas antiguas ni contactos de demostracion. Con sesion las acciones de
   cuenta llevan a Inicio. `index.css` aplica desplazamiento suave solo con

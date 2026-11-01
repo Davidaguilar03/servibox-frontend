@@ -271,12 +271,13 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   integral", "solucion", "optimiza", "potencia", "revoluciona" y "todo en uno". Sin lemas en
   login ni registro. `LandingPage.test.tsx` busca estas frases (y "Proximamente", "Vista de
   ejemplo" y "Cliente 1") en `/`, `/login`, `/registro` y `/terminos`.
-* La landing solo promete lo que existe hoy. David autoriza seis representaciones
-  graficas de funciones existentes en `src/assets/landing/product-visuals-v2/` para
-  sustituir los recortes pequenos. No son capturas reales; documentacion y alt no
-  deben llamarlas asi. Por solicitud de David no llevan rotulos de referencia,
-  captura o ilustracion visibles. Los controles dibujados no son acciones HTML.
-  Stock usa un solo archivo tanto en los pasos como en funciones. Reportes tiene
+* La landing solo promete lo que existe hoy. Desde 2026-11-01 hay cuatro capturas de la interfaz con API
+  simulada y datos genericos en `src/assets/landing/product-screens/` y dos ilustraciones en
+  `product-visuals-v2/`. El texto
+  alternativo de las ilustraciones empieza por Ilustracion de; por solicitud de David ninguna
+  lleva rotulos visibles de referencia, captura o ilustracion. Los controles que se ven en ellas
+  no son acciones HTML.
+  Stock solo aparece en el paso 2. Reportes tiene
   alt breve y descripcion accesible HTML con las seis filas y formatos existentes.
   Las imagenes ambientales generadas no representan clientes reales. Las fuentes
   y recortes anteriores quedan documentados como historicos, eliminados del
