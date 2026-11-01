@@ -2,6 +2,29 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Rediseno del acceso y del shell de plataforma (tarea extra)
+
+* Reemplaza la entrada del Resumen de plataforma en lo que dice del shell (mismo AppShell)
+  y la del acceso de plataforma como tarjeta centrada sin foto.
+* Acceso: `LoginLayout` extrae la composicion de LoginPage sin cambiar su marcado; la usan
+  LoginPage y PlatformLoginPage. La de plataforma pasa foto propia (WebP 1122x1402, 103 KB,
+  calidad 85, sin metadatos, desde el PNG de David), sin mensaje sobre la foto (antes no
+  tenia textos comerciales) y conserva correo, contrasena, 401, 429, sesion vencida y ruta.
+  Tambien hereda Volver al inicio y el pie de terminos, partes de la composicion.
+* Shell: barra superior propia en PlatformShell en vez de AppShell, para no tocar el shell de
+  las servitecas. Ajuste de David el mismo dia: la barra usa exactamente los tokens de la
+  barra lateral de las servitecas (nav, nav-hover, nav-active, brand); se retiraron los
+  tokens propios `platform` y `platform-hover` y sus pares de contraste, porque los pares de
+  nav ya estan en la guarda. La diferencia queda en el rotulo PLATAFORMA y en la barra superior.
+* Movil: bajo lg desplegable disclosure (patron de UserMenu y ListHeader Mas) en vez del
+  panel lateral con trampa de foco de AppShell: son tres enlaces bajo la barra y no hace falta
+  bloquear el resto de la pagina. Corte lg, el mismo del menu movil del shell de serviteca.
+* UserMenu suma `placement` ('above' por defecto, sin cambio para las servitecas; 'below'
+  abre hacia abajo a la derecha, panel de 20 rem acotado al viewport, correo y rol completos
+  con salto de linea y Cerrar sesion de 48 px). El cambio de tamano va solo por esa prop.
+* AppShell queda intacto por instruccion: sus props items, home, settings, account y
+  headerInPage ya no tienen uso de plataforma. Retirarlas queda a decision de David.
+
 ## 2026-10-31: Solicitud publica de cuenta, activacion y contactos reales
 
 * Reemplaza el registro inmediato de 2026-10-22 (Registro que entra directo con la sesion
@@ -160,7 +183,9 @@ Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
   de los bloques siguen la regla de reportError y el estado de error de cada bloque.
 * Cache: claves bajo ['platform']; al quedar sin sesion de plataforma (cierre, 401 o
   vencimiento) PlatformRequireAuth borra solo esas. La cache de serviteca no se toca.
-* Shell: el mismo AppShell con props items, home, settings, account y headerInPage;
+* Reemplazado el 2026-10-31 (rediseno del shell de plataforma): PlatformShell ya no monta
+  AppShell; las props siguen en AppShell sin uso de plataforma.
+  Shell: el mismo AppShell con props items, home, settings, account y headerInPage;
   los valores por defecto conservan el shell de serviteca. Navegacion solo Resumen
   (/plataforma, activo exacto), sin Configuracion ni modulos comerciales, sin barra
   superior. UserMenu acepta una cuenta explicita (correo y Administrador de plataforma).

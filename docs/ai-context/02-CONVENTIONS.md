@@ -34,6 +34,8 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
   La barra lateral usa `nav-active` con acento lateral `brand` y texto blanco.
   Hover y activo del primario y del peligro se derivan con `color-mix` en el mismo
   archivo; el oscuro usa `nav-hover`.
+* La barra superior del panel de plataforma reutiliza los tokens de la barra lateral (`nav`,
+  `nav-hover`, `nav-active`, `brand`); no hay tokens propios de plataforma.
 * Texto rojo sobre fondo claro: `brand-ink`, no `brand` (contraste). Nunca `color-brand`
   como fondo de texto: queda para superficies sin texto pequeno, wordmark y foco.
 * Texto semantico sobre su fondo `-bg` y montos verdes: `success-ink`, `warning-ink`,

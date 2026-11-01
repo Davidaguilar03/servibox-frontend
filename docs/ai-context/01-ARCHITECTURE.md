@@ -185,9 +185,12 @@ Acceso, sesion, guard, shell y cache independientes de la serviteca. Decision en
   PLATFORM vigente es sesion. `PlatformRequireAuth` programa el cierre en `exp`, redirige a
   `/plataforma/login` y borra las consultas `['platform', ...]` al quedar sin sesion.
 * `apiFetch(path, { platform: true })` usa el token de plataforma; un 401 cierra solo esa sesion.
-* `PlatformShell` monta `AppShell` con navegacion propia (Resumen, Solicitudes y Servitecas), sin Configuracion ni
-  barra superior, y el menu de usuario con el correo. Consulta `/me`; un 403 muestra Acceso
-  denegado con Cerrar sesion.
+* `PlatformShell` (desde 2026-10-31) no usa `AppShell`: barra superior fija propia con marca,
+  rotulo Plataforma, Resumen, Solicitudes y Servitecas (desplegable bajo lg) y `UserMenu`
+  con el correo (placement below). SkipLink, main `#contenido`, Toaster y titulo del documento
+  desde el `handle` de la ruta; las paginas reciben `menuButton` null. Consulta `/me`; un 403
+  muestra Acceso denegado con Cerrar sesion. `PlatformLoginPage` y `LoginPage` comparten
+  `LoginLayout`.
 
 | Bloque | Endpoint | Clave |
 |-|-|-|
