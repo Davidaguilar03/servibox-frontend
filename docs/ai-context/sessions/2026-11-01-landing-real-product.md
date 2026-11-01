@@ -269,7 +269,8 @@ historicas.
 * Corridas con fallos, sin ocultar: 6 fallos en 3 archivos en la primera entrega, con backend y Vite
   encendidos (al menos dos por tiempo agotado en ReportsPage). Con todo apagado aparecio de forma
   intermitente 1 fallo en platformTenants, "401 del listado": validToken() calcula el vencimiento en
-  segundos y la prueba lo llama dos veces. Es anterior a esta tarea y no se toco.
+  segundos y la prueba lo llama dos veces. Es anterior a esta tarea y no se toco. Corregida despues, ver la
+  nota 2026-11-01-platform-tenants-flaky-test.
 * Nuevas en LandingPage.test (16): ambientales WebP (reemplaza a la retirada), 4 de captura con formato,
   dimensiones y 300 KB, 2 de ilustracion con VP8L y dimensiones, carpetas solo con archivos en uso,
   franja 2/3 con contenedor de reportes, rueda recortada y foto en telefono, textos alternativos y carga,

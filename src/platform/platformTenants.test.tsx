@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
 import { getToken, saveToken } from '../auth/session'
 import { userMessage } from '../api/errorMessages'
 import { ApiError } from '../lib/api'
@@ -219,6 +219,10 @@ describe('estados de servitecas', () => {
   })
 
   it('401 del listado cierra solo la sesion de plataforma', async () => {
+    // Reloj fijo: validToken calcula exp en segundos y esta prueba lo llama dos veces.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-30T15:00:00Z'))
+    onTestFinished(() => { vi.useRealTimers() })
     api({ [root]: () => fail('No autenticado', 401) })
     saveToken(validToken())
     signIn()

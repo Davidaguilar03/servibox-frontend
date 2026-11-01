@@ -2,6 +2,15 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Reloj fijo en la prueba "401 del listado" de platformTenants
+
+* Causa: validToken calcula exp en segundos y la prueba lo llamaba dos veces para comparar. Medido: 6 fallos en
+  50 corridas antes, 0 en 50 despues.
+* Decision: Date simulado con setSystemTime solo en esa prueba, el patron de reloj del repo. Aserciones iguales.
+* Descartado: exp fijo y lejano en validToken. RequireAuth y PlatformRequireAuth usan setTimeout hasta exp, y un
+  retardo mayor a 24,8 dias dispara a 1 ms: cerraria la sesion al montar.
+* Detalle en sessions/2026-11-01-platform-tenants-flaky-test.md.
+
 ## 2026-11-01: Landing con capturas e ilustraciones y afirmaciones verificadas (tarea extra)
 
 * Reemplaza, de 2026-10-27 y 2026-10-28, las representaciones generadas de hero, pago, saldos y
