@@ -178,7 +178,11 @@ Detalle de serviteca: acciones Suspender serviteca, Reactivar serviteca, Cerrar 
 sesiones y Cerrar sesiones (por usuario). Las confirmaciones dicen la consecuencia: al
 suspender nadie entra y las sesiones se cierran de inmediato; al reactivar hay que iniciar
 sesion de nuevo; cerrar sesiones no desactiva al usuario. Motivo con contador "N de 500
-caracteres". Seis mensajes nuevos del backend (Tenant no encontrado, Usuario no
+caracteres" (obligatorio al suspender, opcional al reactivar y al cerrar sesiones, donde
+la etiqueta es Motivo). Cerrar todas las sesiones dice cuantos usuarios activos afecta
+(sus N usuarios activos, su unico usuario activo, o que no tiene usuarios activos).
+Login de serviteca, 401: Revisa tus datos e intenta de nuevo. Si son correctos y aun no
+puedes entrar, puede que tu acceso no este disponible: escribenos al correo de soporte. Seis mensajes nuevos del backend (Tenant no encontrado, Usuario no
 encontrado, motivo obligatorio, motivo largo, ya suspendido, ya activo) y contexto
 `tenant` en userMessage para que version distinta y version obligatoria nombren la
 serviteca en vez de la solicitud. Textos exactos en la nota platform-tenant-detail.

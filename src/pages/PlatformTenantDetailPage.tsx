@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext, useParams, useSearchParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reportError, useReportedError } from '../api/reportError'
@@ -33,6 +33,12 @@ const actionTitles: Record<TenantAction['kind'], string> = {
   'revoke-all': 'Cerrar todas las sesiones',
   'revoke-user': 'Cerrar sesiones del usuario',
 }
+const reasonLabels: Record<TenantAction['kind'], string> = {
+  suspend: 'Motivo de la suspensión',
+  reactivate: 'Motivo de la reactivación',
+  'revoke-all': 'Motivo',
+  'revoke-user': 'Motivo',
+}
 const ROLES: TenantUserRole[] = ['ADMIN', 'MECANICO', 'CAJERO']
 const REASON_MAX = 500
 
@@ -44,13 +50,17 @@ function allowed(tenant: PlatformTenant, kind: TenantAction['kind']) {
 }
 
 const plural = (count: number, one: string, many: string) => `${count.toLocaleString('es-CO')} ${count === 1 ? one : many}`
+const activeUsers = (detail: PlatformTenantDetail) => detail.userCounts.filter((c) => c.active).reduce((sum, c) => sum + c.count, 0)
+/** Pagina de usuarios en la URL; pagina es del listado y viaja en la query string de vuelta. */
+const USERS_PAGE_PARAM = 'usuarios'
 
 export function PlatformTenantDetailPage() {
   const { id = '' } = useParams()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const { menuButton } = useOutletContext<AppShellContext>()
   const [action, setAction] = useState<TenantAction | null>(null)
-  const [usersPage, setUsersPage] = useState(1)
+  const rawUsersPage = Number(params.get(USERS_PAGE_PARAM) ?? 1)
+  const usersPage = Number.isInteger(rawUsersPage) && rawUsersPage > 0 && rawUsersPage <= 2147483647 ? rawUsersPage : 1
   const detail = useQuery({ queryKey: detailKey(id), queryFn: () => fetchPlatformTenant(id), retry: false })
   const missing = detail.error instanceof ApiError && detail.error.status === 404
   const error = useReportedError(missing ? null : detail.error, { context: 'tenant' })
@@ -62,7 +72,30 @@ export function PlatformTenantDetailPage() {
   })
   const usersError = useReportedError(users.error, { context: 'tenant' })
   const data = detail.data
-  const back = `/plataforma/servitecas${params.size ? `?${params}` : ''}`
+  const listParams = new URLSearchParams(params)
+  listParams.delete(USERS_PAGE_PARAM)
+  const back = `/plataforma/servitecas${listParams.size ? `?${listParams}` : ''}`
+  const usersData = users.data
+
+  function setUsersPage(page: number, replace = false) {
+    setParams((current) => {
+      const next = new URLSearchParams(current)
+      if (page > 1) next.set(USERS_PAGE_PARAM, String(page))
+      else next.delete(USERS_PAGE_PARAM)
+      return next
+    }, { replace })
+  }
+
+  // Una pagina de la URL fuera de rango se lleva a la ultima sin dejar otra entrada en el historial.
+  useEffect(() => {
+    if (!usersData || usersPage <= Math.max(1, usersData.totalPages)) return
+    setParams((current) => {
+      const next = new URLSearchParams(current)
+      if (usersData.totalPages > 1) next.set(USERS_PAGE_PARAM, String(usersData.totalPages))
+      else next.delete(USERS_PAGE_PARAM)
+      return next
+    }, { replace: true })
+  }, [usersData, usersPage, setParams])
 
   return (
     <div className="flex min-w-0 flex-col gap-6">
@@ -98,10 +131,10 @@ export function PlatformTenantDetailPage() {
                   )} />
                 </div>
                 {usersError && <p role="alert" className="mt-4 text-small text-error-ink">{usersError}</p>}
-                {users.data && !users.isError && <div className="mt-4"><Pagination itemLabel="usuarios" page={{ page: usersPage, totalPages: users.data.totalPages, total: users.data.totalElements, from: users.data.items.length ? users.data.page * users.data.size + 1 : 0, to: users.data.items.length ? users.data.page * users.data.size + users.data.items.length : 0 }} onPageChange={setUsersPage} /></div>}
+                {users.data && !users.isError && <div className="mt-4"><Pagination itemLabel="usuarios" page={{ page: usersPage, totalPages: users.data.totalPages, total: users.data.totalElements, from: users.data.items.length ? users.data.page * users.data.size + 1 : 0, to: users.data.items.length ? users.data.page * users.data.size + users.data.items.length : 0 }} onPageChange={(page) => setUsersPage(page)} /></div>}
               </section>
             </>}
-      {action && data && <TenantActionModal key={action.kind === 'revoke-user' ? `user/${action.user.id}` : action.kind} id={id} tenant={data.tenant} action={action} onClose={() => setAction(null)} />}
+      {action && data && <TenantActionModal key={action.kind === 'revoke-user' ? `user/${action.user.id}` : action.kind} id={id} tenant={data.tenant} activeUsers={activeUsers(data)} action={action} onClose={() => setAction(null)} />}
     </div>
   )
 }
@@ -173,10 +206,11 @@ function userColumns(tenant: PlatformTenant, onRevoke: (user: PlatformTenantUser
   ]
 }
 
-function TenantActionModal({ id, tenant: initial, action, onClose }: { id: string; tenant: PlatformTenant; action: TenantAction; onClose: () => void }) {
+function TenantActionModal({ id, tenant: initial, activeUsers: initialActive, action, onClose }: { id: string; tenant: PlatformTenant; activeUsers: number; action: TenantAction; onClose: () => void }) {
   const client = useQueryClient()
   // La confirmacion conserva la version revisada aunque la consulta se actualice en segundo plano.
   const [tenant, setTenant] = useState(initial)
+  const [active, setActive] = useState(initialActive)
   const [reason, setReason] = useState('')
   const [reasonError, setReasonError] = useState<string>()
   const [refreshing, setRefreshing] = useState(false)
@@ -185,7 +219,6 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
   const sending = useRef(false)
   const { kind } = action
   const user = action.kind === 'revoke-user' ? action.user : null
-  const withReason = kind === 'suspend' || kind === 'reactivate'
 
   function invalidate() {
     // Detalle, usuarios, listado de servitecas y metricas del Resumen; nunca la cache comercial.
@@ -196,8 +229,8 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
   const mutation = useMutation({
     mutationFn: async () => {
       if (kind === 'suspend' || kind === 'reactivate') { await changeTenantStatus(tenant, kind, reason); return 0 }
-      if (kind === 'revoke-all') return (await revokeTenantSessions(tenant.id)).revokedUsers
-      if (user) await revokeTenantUser(tenant.id, user.id)
+      if (kind === 'revoke-all') return (await revokeTenantSessions(tenant.id, reason)).revokedUsers
+      if (user) await revokeTenantUser(tenant.id, user.id, reason)
       return 0
     },
     retry: false,
@@ -241,6 +274,7 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
       void client.invalidateQueries({ queryKey: [PLATFORM_QUERY_KEY, 'metrics'] })
       client.setQueryData(detailKey(id), fresh)
       setTenant(fresh.tenant)
+      setActive(activeUsers(fresh))
     } catch (error) { setRefreshError(error) }
     finally { setRefreshing(false) }
   }
@@ -255,7 +289,7 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
 
   function submit() {
     if (sending.current || busy || stale || !allowed(tenant, kind)) return
-    if (withReason && !validateReason()) { inputRef.current?.focus(); return }
+    if (!validateReason()) { inputRef.current?.focus(); return }
     sending.current = true
     mutation.mutate()
   }
@@ -263,7 +297,9 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
   const consequence = {
     suspend: 'Los usuarios de esta serviteca no podrán entrar y sus sesiones activas se cerrarán de inmediato. Sus datos se conservan.',
     reactivate: 'Los usuarios podrán volver a entrar, pero deben iniciar sesión de nuevo: las sesiones cerradas al suspender no se recuperan.',
-    'revoke-all': 'Se cerrarán las sesiones abiertas de todos los usuarios de esta serviteca. Siguen activos y pueden volver a iniciar sesión.',
+    'revoke-all': active > 0
+      ? `Se cerrarán las sesiones abiertas de ${active === 1 ? 'su único usuario activo' : `sus ${active.toLocaleString('es-CO')} usuarios activos`}. Siguen activos y pueden volver a iniciar sesión.`
+      : 'Esta serviteca no tiene usuarios activos: nadie tiene una sesión que cerrar.',
     'revoke-user': `Se cerrarán las sesiones abiertas de ${user?.username}. El usuario sigue activo y puede volver a iniciar sesión.`,
   }[kind]
   const count = reason.trim().length
@@ -276,7 +312,7 @@ function TenantActionModal({ id, tenant: initial, action, onClose }: { id: strin
       <div className="flex flex-col gap-4">
         <p className="wrap-anywhere text-body text-text">{tenant.name} · {tenant.slug}{user ? ` · ${user.username}` : ''}</p>
         <p className="text-body text-text-muted">{consequence}</p>
-        {withReason && <TextField ref={inputRef} label={kind === 'suspend' ? 'Motivo de la suspensión' : 'Motivo de la reactivación'} hint={`${kind === 'suspend' ? 'Obligatorio' : 'Opcional'}. ${count} de ${REASON_MAX} caracteres.`} value={reason} onChange={(event) => { setReason(event.target.value); setReasonError(undefined) }} onBlur={validateReason} error={reasonError} disabled={busy} />}
+        <TextField ref={inputRef} label={reasonLabels[kind]} hint={`${kind === 'suspend' ? 'Obligatorio' : 'Opcional'}. ${count} de ${REASON_MAX} caracteres.`} value={reason} onChange={(event) => { setReason(event.target.value); setReasonError(undefined) }} onBlur={validateReason} error={reasonError} disabled={busy} />
         <ErrorSummary count={reasonError ? 1 : 0} />
         {message && <Alert tone="error" title={message} />}
         {refreshMessage && <><Alert tone="error" title={refreshMessage} /><Button variant="secondary" onClick={() => void reload()} disabled={busy}>Actualizar serviteca</Button></>}

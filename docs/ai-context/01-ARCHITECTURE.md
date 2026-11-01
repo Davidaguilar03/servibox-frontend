@@ -222,11 +222,12 @@ suspendidas. Cada fila enlaza a su detalle con la query string del listado.
 Detalle de serviteca (entrega 4): `GET /api/platform/tenants/{id}` (tenant, totalUsers,
 userCounts por rol y activo, registrationRequest o null) con clave
 `['platform', 'tenants', 'detail', id]` y `GET /{id}/users?page&size=25` (orden id asc)
-con clave `['platform', 'tenants', 'users', id, pagina]`; pagina de usuarios en estado
-local, no en la URL, para no chocar con la pagina del listado. Mutaciones POST
-`/{id}/suspend` y `/{id}/reactivate` con `{expectedVersion, reason}` (motivo omitido si
-esta vacio al reactivar), `/{id}/users/{userId}/revoke` y `/{id}/revoke-sessions` sin
-cuerpo. Tras exito invalida el prefijo `['platform', 'tenants']` (detalle, usuarios y
+con clave `['platform', 'tenants', 'users', id, pagina]`; pagina de usuarios en la URL
+como `usuarios` (la del listado sigue en `pagina` y viaja en la vuelta, que quita
+`usuarios`). Mutaciones POST `/{id}/suspend` y `/{id}/reactivate` con
+`{expectedVersion, reason}` (motivo omitido si esta vacio al reactivar),
+`/{id}/users/{userId}/revoke` y `/{id}/revoke-sessions` con `{reason}` opcional (sin
+cuerpo si el motivo recortado esta vacio). Tras exito invalida el prefijo `['platform', 'tenants']` (detalle, usuarios y
 listado) y `['platform', 'metrics']`. Un 409 relee el detalle dentro de la confirmacion.
 `userMessage` y `reportError` admiten contexto `tenant` para los mensajes compartidos con
 Solicitudes (version distinta y version obligatoria).

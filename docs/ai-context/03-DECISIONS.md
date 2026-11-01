@@ -2,6 +2,27 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Correcciones de calidad del panel de plataforma (tarea extra)
+
+* Reemplaza, de la entrega 4, "revoke con cuerpo opcional que no se envia" y "pagina de
+  usuarios en estado local".
+* Cerrar sesiones (por usuario y de toda la serviteca) tiene campo Motivo opcional con el
+  mismo TextField y contador de suspender ("Opcional. N de 500 caracteres."). Se envia
+  {reason} recortado solo si tiene contenido; vacio o solo espacios no envia cuerpo. Mas
+  de 500 tras recortar se valida en el frontend con el mismo mensaje del backend.
+* Pagina de usuarios en la URL con el parametro `usuarios` (la pagina del listado sigue en
+  `pagina` y viaja en la vuelta). Mismo saneo que el listado: entero positivo; lo invalido
+  se lee como 1. Fuera de rango se lleva a la ultima con replace. Cambiar de pagina agrega
+  historial; Volver a servitecas quita `usuarios` y conserva el resto.
+* Cerrar todas las sesiones nombra cuantos usuarios activos afecta, con userCounts del
+  detalle (y del detalle releido tras un 409). Con cero activos lo dice sin cifra. No se
+  usa revokedUsers antes de confirmar: el backend lo calcula al ejecutar y cuenta tambien
+  inactivos.
+* Login de serviteca: el 401 sigue sin distinguir serviteca suspendida (el backend devuelve
+  el mismo "Credenciales invalidas"). Solo cambia el texto: agrega que, si los datos son
+  correctos, el acceso puede no estar disponible y el correo de soporte. No nombra la
+  suspension ni permite enumerar codigos.
+
 ## 2026-10-31: Rediseno del acceso y del shell de plataforma (tarea extra)
 
 * Reemplaza la entrada del Resumen de plataforma en lo que dice del shell (mismo AppShell)
@@ -67,7 +88,8 @@ Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 * Contrato real (codigo backend): detalle {tenant, totalUsers, userCounts, registrationRequest};
   usuarios paginados {id, username, fullName, email, role, active, createdAt, updatedAt};
   suspend y reactivate con {expectedVersion, reason}; revoke de usuario y de serviteca con
-  cuerpo opcional (solo motivo), que no se envia. 409 de version: "El recurso cambio;
+  cuerpo opcional (solo motivo), que no se envia (Reemplazado: desde la tarea extra de
+  calidad se envia si el motivo opcional tiene contenido). 409 de version: "El recurso cambio;
   actualiza e intenta de nuevo", el mismo de Solicitudes.
 * Version e id no se muestran. Suspender solo si esta activa (motivo obligatorio, 500 tras
   recortar); reactivar solo si esta suspendida (motivo opcional, se omite si esta vacio).

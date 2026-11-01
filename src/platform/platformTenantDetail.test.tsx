@@ -192,7 +192,8 @@ describe('usuarios de la serviteca', () => {
     expect(await screen.findByText('26 a 26 de 30 usuarios')).toBeInTheDocument()
     expect((await usersTable()).getByText('ultimo.usuario')).toBeInTheDocument()
     expect(Object.fromEntries(new URL(String(calls(mock, `${root}/users`).at(-1)?.[0]), 'http://localhost').searchParams)).toEqual({ page: '1', size: '25' })
-    expect(router.state.location.search).toBe('?pagina=3')
+    // La pagina de usuarios va en su propio parametro y la del listado se conserva.
+    expect(router.state.location.search).toBe('?pagina=3&usuarios=2')
     expect(calls(mock, root)).toHaveLength(1)
   })
 
@@ -430,7 +431,7 @@ describe('suspender y reactivar', () => {
 })
 
 describe('cerrar sesiones', () => {
-  it('por usuario confirma, aclara que sigue activo y no envia cuerpo', async () => {
+  it('por usuario confirma, aclara que sigue activo y sin motivo no envia cuerpo', async () => {
     const mock = api({ [`${root}/users/11/revoke`]: () => jsonResponse(user()) })
     signIn()
     renderRoute(url)
@@ -438,7 +439,7 @@ describe('cerrar sesiones', () => {
     expect(dialog.getByRole('heading', { name: 'Cerrar sesiones del usuario' })).toBeInTheDocument()
     expect(dialog.getByText('Serviteca El Roble · elroble · camila.torres')).toBeInTheDocument()
     expect(dialog.getByText(/El usuario sigue activo/)).toBeInTheDocument()
-    expect(dialog.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(dialog.getByLabelText('Motivo')).toHaveValue('')
     await u.click(dialog.getByRole('button', { name: 'Cerrar sesiones del usuario' }))
     expect(await screen.findByText('Sesiones de camila.torres cerradas. El usuario sigue activo.')).toBeInTheDocument()
     expect(calls(mock, `${root}/users/11/revoke`)).toHaveLength(1)
@@ -536,5 +537,146 @@ describe('cache y sesion de plataforma', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/plataforma/login'))
     expect(getPlatformToken()).toBeNull()
     expect(getToken()).toBe(commercial)
+  })
+})
+
+describe('motivo opcional al cerrar sesiones', () => {
+  it('por usuario envia el motivo recortado con etiqueta y contador', async () => {
+    const mock = api({ [`${root}/users/11/revoke`]: () => jsonResponse(user()) })
+    signIn()
+    renderRoute(url)
+    const { u, dialog } = await open('Cerrar sesiones de camila.torres')
+    const input = dialog.getByRole('textbox', { name: 'Motivo' })
+    expect(dialog.getByText('Opcional. 0 de 500 caracteres.')).toBeInTheDocument()
+    await u.type(input, '  Equipo perdido  ')
+    expect(dialog.getByText('Opcional. 14 de 500 caracteres.')).toBeInTheDocument()
+    await u.click(dialog.getByRole('button', { name: 'Cerrar sesiones del usuario' }))
+    expect(await screen.findByText('Sesiones de camila.torres cerradas. El usuario sigue activo.')).toBeInTheDocument()
+    expect(bodies(mock, `${root}/users/11/revoke`)).toEqual([{ reason: 'Equipo perdido' }])
+  })
+
+  it('de toda la serviteca: solo espacios no envia cuerpo', async () => {
+    const mock = api({ [`${root}/revoke-sessions`]: () => jsonResponse({ tenantId: 7, revokedUsers: 4 }) })
+    signIn()
+    renderRoute(url)
+    const { u, dialog } = await open('Cerrar todas las sesiones')
+    await u.type(dialog.getByLabelText('Motivo'), '   ')
+    await u.click(dialog.getByRole('button', { name: 'Cerrar todas las sesiones' }))
+    expect(await screen.findByText('Sesiones cerradas: 4 usuarios. Siguen activos.')).toBeInTheDocument()
+    expect(bodies(mock, `${root}/revoke-sessions`)).toEqual([undefined])
+  })
+
+  it('de toda la serviteca respeta el limite de 500 tras recortar', async () => {
+    const mock = api({ [`${root}/revoke-sessions`]: () => jsonResponse({ tenantId: 7, revokedUsers: 4 }) })
+    signIn()
+    renderRoute(url)
+    const { u, dialog } = await open('Cerrar todas las sesiones')
+    const input = dialog.getByLabelText('Motivo')
+    await u.click(input)
+    await u.paste('x'.repeat(501))
+    await u.click(dialog.getByRole('button', { name: 'Cerrar todas las sesiones' }))
+    expect(dialog.getByText('El motivo no puede superar 500 caracteres.')).toBeInTheDocument()
+    expect(input).toHaveFocus()
+    expect(calls(mock, `${root}/revoke-sessions`)).toHaveLength(0)
+    await u.clear(input)
+    await u.paste(` ${'y'.repeat(500)} `)
+    expect(dialog.getByText('Opcional. 500 de 500 caracteres.')).toBeInTheDocument()
+    await u.click(dialog.getByRole('button', { name: 'Cerrar todas las sesiones' }))
+    expect(await screen.findByText('Sesiones cerradas: 4 usuarios. Siguen activos.')).toBeInTheDocument()
+    expect(bodies(mock, `${root}/revoke-sessions`)).toEqual([{ reason: 'y'.repeat(500) }])
+  })
+
+  it('el 400 de motivo largo del backend se muestra en la confirmacion', async () => {
+    api({ [`${root}/users/11/revoke`]: () => fail('El motivo no puede superar 500 caracteres', 400) })
+    signIn()
+    renderRoute(url)
+    const { u, dialog } = await open('Cerrar sesiones de camila.torres')
+    await u.type(dialog.getByLabelText('Motivo'), 'Motivo')
+    await u.click(dialog.getByRole('button', { name: 'Cerrar sesiones del usuario' }))
+    expect(await dialog.findByText('El motivo no puede superar 500 caracteres.')).toBeInTheDocument()
+    expect(dialog.getByLabelText('Motivo')).toHaveValue('Motivo')
+  })
+})
+
+describe('conteo al cerrar todas las sesiones', () => {
+  it.each([
+    [[{ role: 'ADMIN', active: true, count: 1 }, { role: 'CAJERO', active: true, count: 2 }, { role: 'MECANICO', active: false, count: 1 }], /de sus 3 usuarios activos\. Siguen activos/],
+    [[{ role: 'ADMIN', active: true, count: 1 }, { role: 'CAJERO', active: false, count: 5 }], /de su único usuario activo\. Siguen activos/],
+    [[{ role: 'ADMIN', active: false, count: 2 }], /no tiene usuarios activos: nadie tiene una sesión que cerrar/],
+  ] as const)('usa userCounts del detalle (%#)', async (userCounts, text) => {
+    const mock = api({ [root]: () => jsonResponse(detail(tenant(), { userCounts: userCounts.map((c) => ({ ...c })) })) })
+    signIn()
+    renderRoute(url)
+    const { dialog } = await open('Cerrar todas las sesiones')
+    expect(dialog.getByText(text)).toBeInTheDocument()
+    expect(mock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it('tras un 409 toma el conteo del detalle releido', async () => {
+    let reloaded = false
+    api({
+      [root]: () => jsonResponse(reloaded ? detail(tenant({ version: 5 }), { userCounts: [{ role: 'ADMIN', active: true, count: 7 }] }) : detail()),
+      [`${root}/revoke-sessions`]: () => { reloaded = true; return fail('El recurso cambio; actualiza e intenta de nuevo', 409) },
+    })
+    signIn()
+    renderRoute(url)
+    const { u, dialog } = await open('Cerrar todas las sesiones')
+    expect(dialog.getByText(/de sus 3 usuarios activos/)).toBeInTheDocument()
+    await u.click(dialog.getByRole('button', { name: 'Cerrar todas las sesiones' }))
+    expect(await dialog.findByText(/de sus 7 usuarios activos/)).toBeInTheDocument()
+  })
+})
+
+describe('pagina de usuarios en la URL', () => {
+  const paged = () => api({ [`${root}/users`]: (u) => {
+    const p = Number(u.searchParams.get('page'))
+    return jsonResponse(usersPage([user({ id: 100 + p, username: `usuario.${p + 1}` })], p, 60))
+  } })
+  const lastUsersPage = (mock: ReturnType<typeof api>) => new URL(String(calls(mock, `${root}/users`).at(-1)?.[0]), 'http://localhost').searchParams.get('page')
+
+  it('lee una pagina valida y conserva los parametros del listado en Volver', async () => {
+    const mock = paged()
+    signIn()
+    const router = renderRoute(`${url}?q=roble&estado=ACTIVE&pagina=2&usuarios=2`)
+    expect(await screen.findByText('26 a 26 de 60 usuarios')).toBeInTheDocument()
+    expect(lastUsersPage(mock)).toBe('1')
+    expect(screen.getByRole('link', { name: 'Volver a servitecas' })).toHaveAttribute('href', '/plataforma/servitecas?q=roble&estado=ACTIVE&pagina=2')
+    await userEvent.click(screen.getByRole('button', { name: 'Página anterior' }))
+    expect(await screen.findByText('1 a 1 de 60 usuarios')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?q=roble&estado=ACTIVE&pagina=2')
+  })
+
+  it.each(['abc', '0', '-1', '1.5', '99999999999'])('un valor invalido (%s) muestra la primera pagina', async (value) => {
+    const mock = paged()
+    signIn()
+    renderRoute(`${url}?usuarios=${value}`)
+    expect(await screen.findByText('1 a 1 de 60 usuarios')).toBeInTheDocument()
+    expect(lastUsersPage(mock)).toBe('0')
+  })
+
+  it('una pagina fuera de rango se lleva a la ultima sin agregar historial', async () => {
+    const mock = paged()
+    signIn()
+    const router = renderRoute(`${url}?pagina=2&usuarios=9`)
+    expect(await screen.findByText('51 a 51 de 60 usuarios')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?pagina=2&usuarios=3')
+    expect(router.state.historyAction).toBe('REPLACE')
+    expect(lastUsersPage(mock)).toBe('2')
+  })
+
+  it('atras y adelante recorren las paginas de usuarios', async () => {
+    paged()
+    signIn()
+    const router = renderRoute(`${url}?estado=ACTIVE`)
+    expect(await screen.findByText('1 a 1 de 60 usuarios')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Página siguiente' }))
+    expect(await screen.findByText('26 a 26 de 60 usuarios')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?estado=ACTIVE&usuarios=2')
+    await act(() => router.navigate(-1))
+    expect(await screen.findByText('1 a 1 de 60 usuarios')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?estado=ACTIVE')
+    await act(() => router.navigate(1))
+    expect(await screen.findByText('26 a 26 de 60 usuarios')).toBeInTheDocument()
+    expect((await usersTable()).getByText('usuario.2')).toBeInTheDocument()
   })
 })
