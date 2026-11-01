@@ -1,22 +1,26 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
+import { ArrowRight } from 'lucide-react'
 import { MESSAGES } from '../api/errorMessages'
 import { reportError } from '../api/reportError'
-import { Wordmark } from '../brand/Wordmark'
+import platformPhoto from '../assets/login/platform-login-v1.webp'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
+import { iconSm } from '../components/icons'
 import { ApiError } from '../lib/api'
 import { usePageMeta } from '../lib/usePageMeta'
 import { platformLogin, startPlatformSession } from '../platform/platformApi'
 import { takePlatformSessionExpired, usePlatformSession } from '../platform/platformSession'
 import { PLATFORM_HOME } from '../platform/PlatformShell'
+import { LoginLayout } from './LoginLayout'
 
 /**
  * Acceso del administrador de plataforma: correo y contrasena, sin codigo de serviteca,
  * registro ni recuperacion. No lo enlaza ninguna pagina publica. La sesion de serviteca no
- * interviene: ni la abre ni la cierra.
+ * interviene: ni la abre ni la cierra. Misma composicion que el login de serviteca (LoginLayout)
+ * con su propia foto y sin mensaje sobre ella.
  */
 export function PlatformLoginPage() {
   usePageMeta('Acceso de plataforma | ServiBox', 'Acceso para administradores de la plataforma ServiBox.')
@@ -50,44 +54,44 @@ export function PlatformLoginPage() {
     : reportedError
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-4 py-12 text-text">
-      <div className="w-full max-w-md rounded-surface border border-border bg-surface p-6 sm:p-8">
-        <Wordmark />
-        <h1 className="mt-8 text-title text-text">Acceso de plataforma</h1>
-        <p className="mt-2 text-body text-text-muted">Solo para administradores de ServiBox.</p>
-
-        <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6" aria-label="Iniciar sesión en la plataforma" aria-busy={mutation.isPending}>
-          {expired && !mutation.isError && <Alert tone="info" title={MESSAGES.session} />}
-          {mutation.isError && (
-            <Alert tone="error" title={invalidCredentials ? 'No pudimos iniciar sesión' : tooMany ? 'Espera antes de intentar de nuevo' : 'No pudimos conectar con ServiBox'}>
-              {invalidCredentials ? 'Revisa tu correo y tu contraseña.' : errorMessage}
-            </Alert>
-          )}
-          <TextField
-            label="Correo"
-            name="email"
-            type="email"
-            autoComplete="username"
-            autoCapitalize="none"
-            spellCheck={false}
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-          <TextField
-            label="Contraseña"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <Button type="submit" className="w-full" disabled={mutation.isPending}>
-            <span role="status">{mutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}</span>
-          </Button>
-        </form>
-      </div>
-    </main>
+    <LoginLayout
+      photo={platformPhoto}
+      eyebrow="ACCESO DE PLATAFORMA"
+      title="Acceso de plataforma"
+      subtitle="Solo para administradores de ServiBox."
+    >
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-6" aria-label="Iniciar sesión en la plataforma" aria-busy={mutation.isPending}>
+        {expired && !mutation.isError && <Alert tone="info" title={MESSAGES.session} />}
+        {mutation.isError && (
+          <Alert tone="error" title={invalidCredentials ? 'No pudimos iniciar sesión' : tooMany ? 'Espera antes de intentar de nuevo' : 'No pudimos conectar con ServiBox'}>
+            {invalidCredentials ? 'Revisa tu correo y tu contraseña.' : errorMessage}
+          </Alert>
+        )}
+        <TextField
+          label="Correo"
+          name="email"
+          type="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        <TextField
+          label="Contraseña"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        <Button type="submit" className="login-submit relative w-full" disabled={mutation.isPending}>
+          <span role="status">{mutation.isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}</span>
+          <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
+        </Button>
+      </form>
+    </LoginLayout>
   )
 }

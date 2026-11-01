@@ -23,8 +23,10 @@ export interface UserMenuAccount {
  * Menu de usuario del pie lateral, con el patron disclosure (no role=menu): el boton
  * muestra las iniciales, la serviteca y el rol; el panel, quien entro, su rol, la serviteca
  * y Cerrar sesion. Esc lo cierra y devuelve el foco; el clic fuera y el cambio de ruta tambien.
+ * Con placement below (barra superior de plataforma) el panel abre hacia abajo, alineado a la derecha,
+ * mas ancho y sin recortar: correo y rol hacen salto de linea. above conserva el panel del pie lateral.
  */
-export function UserMenu({ compact = false, account: accountProp }: { compact?: boolean; account?: UserMenuAccount }) {
+export function UserMenu({ compact = false, account: accountProp, placement = 'above' }: { compact?: boolean; account?: UserMenuAccount; placement?: 'above' | 'below' }) {
   const session = useSession()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
@@ -57,6 +59,7 @@ export function UserMenu({ compact = false, account: accountProp }: { compact?: 
     buttonRef.current?.focus()
   }
 
+  const below = placement === 'below'
   const account: UserMenuAccount | null = accountProp ?? (session ? {
     name: displayName(session),
     initials: initials(session),
@@ -108,19 +111,19 @@ export function UserMenu({ compact = false, account: accountProp }: { compact?: 
           ref={panelRef}
           id={panelId}
           tabIndex={-1}
-          className="absolute bottom-full left-0 z-50 mb-2 flex max-h-[calc(100dvh-96px)] w-[216px] flex-col gap-1 overflow-y-auto rounded-surface border border-border bg-surface p-2 shadow-raised outline-none"
+          className={`absolute ${below ? 'top-full right-0 mt-2 w-80 max-w-[calc(100vw-6rem)] p-3' : 'bottom-full left-0 mb-2 w-[216px] p-2'} z-50 flex max-h-[calc(100dvh-96px)] flex-col gap-1 overflow-y-auto rounded-surface border border-border bg-surface shadow-raised outline-none`}
         >
           <div className="flex flex-col px-3 py-2">
-            <span className="truncate text-body font-semibold text-text">{account.name}</span>
+            <span className={`${below ? 'break-all' : 'truncate'} text-body font-semibold text-text`}>{account.name}</span>
             {account.details.map((detail, index) => (
-              <span key={index} className="truncate text-small text-text-muted">{detail}</span>
+              <span key={index} className={`${below ? 'mt-1 break-words text-body' : 'truncate text-small'} text-text-muted`}>{detail}</span>
             ))}
           </div>
           <div className="border-t border-border pt-1">
             <button
               type="button"
               onClick={account.onSignOut}
-              className={`flex min-h-touch w-full items-center gap-2 rounded-control px-3 text-button text-text transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing}`}
+              className={`flex ${below ? 'min-h-12' : 'min-h-touch'} w-full items-center gap-2 rounded-control px-3 text-button text-text transition-colors duration-(--duration-fast) hover:bg-neutral-100 ${focusRing}`}
             >
               <LogOut {...iconSm} aria-hidden />
               Cerrar sesión

@@ -8,11 +8,31 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 
 ## Plataforma (2026-10-30)
 
-* Shell de plataforma: el mismo AppShell (sidebar oscuro, marca, compacto, movil, foco,
-  SkipLink y movimiento reducido) con navegacion propia y encabezado dentro del contenido.
-  Marca y favicon sin cambios; sin rotulo adicional bajo el logo.
-* Acceso de plataforma: tarjeta centrada en canvas con Wordmark, TextField, Button y Alert
-  existentes; sin fotografia ni textos comerciales.
+* Reemplazado el 2026-10-31 (rediseno del shell): el panel de plataforma ya no usa AppShell.
+  PlatformShell tiene barra superior fija (sticky, h-topbar, z30) con los mismos tokens que la
+  barra lateral de las servitecas: fondo `nav`, hover `nav-hover`, ventana activa `nav-active`
+  con acento `brand`, texto blanco o `neutral-300`, divisores `nav-hover` y foco brand. Los
+  pares ya estan en tokens.test.ts. La distingue de las servitecas el rotulo PLATAFORMA
+  (text-label neutral-300 tras un divisor) junto a la marca y la propia barra superior; sin
+  otros colores, gradientes, sombras ni adornos. Marca Wordmark onDark (solo simbolo bajo
+  sm) enlazada al Resumen, las tres ventanas con icono y menu de usuario compacto a la
+  derecha. Ventana activa: aria-current, borde inferior brand de 2 px e icono brand.
+  Los tokens propios `platform` y `platform-hover` de la primera version se retiraron.
+* Menu de usuario de plataforma (UserMenu placement below): panel hacia abajo alineado a la
+  derecha, w-80 (20 rem) con max-w calc(100vw - 6rem) para no salir de la pantalla con el
+  boton de menu a su derecha, p-3. Correo text-body semibold con break-all y rol text-body
+  muted con break-words: saltan de linea, sin elipsis. Cerrar sesion de 48 px de alto (min-h-12).
+  placement above (servitecas) conserva 216 px, p-2, truncado y 44 px.
+* Bajo lg (mismo corte del menu movil del shell de serviteca) las ventanas se agrupan en un
+  desplegable bajo la barra con el patron disclosure de UserMenu (aria-expanded y
+  aria-controls, Esc cierra y devuelve el foco, clic fuera y cambio de ruta cierran). Boton
+  Abrir menu al final de la barra, para que Tab pase directo a las ventanas. SkipLink y main
+  #contenido con tabIndex -1 como en AppShell; contenido mx-auto max-content con px-6 y
+  px-8 desde lg, sin el relleno de la barra lateral. Las paginas reciben menuButton null.
+* Acceso de plataforma (2026-10-31): misma composicion del Login mediante LoginLayout
+  (LoginPage.css bajo #login) con foto propia platform-login-v1.webp, decorativa (alt vacio),
+  1122x1402, fetchPriority high. Rotulo ACCESO DE PLATAFORMA, sin mensaje sobre la foto, sin
+  enlace de registro; conserva Volver al inicio y el pie de terminos del Login.
 * Resumen, correccion 2026-10-31: cuatro IndicatorCard compact de Productos (success,
   warning, brand-strong, info), icono izquierdo y titulo, cifra text-kpi y ayuda a la
   derecha. Rejilla con gap-4, una columna en movil, dos desde sm y cuatro desde 2xl;
@@ -121,6 +141,9 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   Revision visual aprobada por David el 2026-10-28.
 
 ## Login (2026-10-28)
+
+* Desde 2026-10-31 la composicion vive en `src/pages/LoginLayout.tsx` (foto, marca, regreso,
+  rotulo, titulo, subtitulo, formulario y pie) y la comparten LoginPage y PlatformLoginPage.
 
 * LoginPage.css acota todas las reglas bajo #login. Desde lg dos columnas
   iguales, foto ambiental a sangre con cover y posicion 50%/35%; degradado
