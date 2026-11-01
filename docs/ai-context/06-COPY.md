@@ -47,6 +47,18 @@ Ingresos y Egresos no redefinen reglas financieras. Facturas de venta y de compr
 sus conceptos, rutas y acciones. Cuenta, Nueva cuenta, nombres y grupos de cuentas reales
 no se renombran. Las migas de Ingresos/Egresos no enlazan a destinos ficticios.
 
+## Landing: afirmaciones de producto
+
+Revisadas contra el producto el 2026-11-01 (tabla en la nota landing-real-product):
+
+* Caja: no se promete "al instante". De contado el dinero entra a la cuenta elegida; a credito,
+  con cada abono.
+* Privacidad: dentro de la aplicacion, los datos operativos solo los ven los usuarios de la serviteca; el equipo de
+  ServiBox gestiona los datos de la cuenta (nombre, NIT, telefono, usuarios y correos).
+* Acceso: es por solicitud. Se conservan Solicitar cuenta y Solicitar mi cuenta, y el cierre
+  explica la revision y la activacion por correo.
+* Contador: se comparte el archivo descargado; no hay envio desde la aplicacion.
+
 ## Guarda de textos
 
 `src/copy/copy.test.ts` extrae con la API de TypeScript el texto visible de cada `.tsx` y

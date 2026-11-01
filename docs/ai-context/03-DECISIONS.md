@@ -2,6 +2,33 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Landing con capturas e ilustraciones y afirmaciones verificadas (tarea extra)
+
+* Reemplaza, de 2026-10-27 y 2026-10-28, las representaciones generadas de hero, pago, saldos y
+  reportes, el limite de 520 px de Reportes, las pistas 580/460 de Funciones. Tras la revision de David se descarto tambien la ilustracion intermedia del hero.
+* Cuatro capturas en `product-screens` (hero, step-payment, feature-balances, feature-reports),
+  tomadas de la interfaz real en desarrollo con una API simulada fuera del repo, datos genericos y
+  Edge a escala 2, para que el texto no se vea dentado. WebP con perdida, calidad 90, a 2x del ancho
+  maximo mostrado, menos de 300 KB. El hero muestra el logo real y deja de ser ilustracion, por eso
+  su texto alternativo ya no empieza por Ilustracion de.
+* Ilustraciones en `product-visuals-v2`: step-sale y stock-panel restauradas de main sin cambios,
+  lossless. Las marcas que muestran ya estaban publicadas; David las acepta.
+* Funciones (rondas 3 a 6 de David): se retira el stock-panel duplicado. Fila de dos tarjetas de texto
+  y una tarjeta unica de cuentas: texto e imagen a la izquierda, panel canvas con cuatro filas de icono y texto a
+  la derecha. El titulo de alertas pasa a Enterate antes
+  de quedarte sin stock, unico cambio de copy autorizado en esa ronda. Tus cuentas, al dia ya existia
+  como texto oculto y ahora es visible.
+* Filas del panel: icono mayor que icon-lg solo por CSS local de esta landing, porque el token maximo es
+  24 px y David pidio mas tamano; `text-wrap: balance` evita palabras sueltas.
+* Reportes: franja 2/3 desde lg y contenedor con padding y fondo canvas, igual al de la captura.
+  Bajo 640 px la imagen mide 640 y se desplaza dentro del contenedor, con degradado al borde.
+* Movil: foto del hero solo detras de la imagen, sin caja de fondo en el texto; barra en columnas.
+  La rueda del cierre bajo md asoma recortada por el borde inferior de la tarjeta, con un 62 % de su
+  alto visible, a pedido de David; reemplaza ocultarla (ronda 2) y mostrarla completa (ronda 4).
+* Copy: solo cambian las afirmaciones parciales (caja al instante, privacidad, inicio de uso y
+  envio al contador). Los llamados Solicitar cuenta y Solicitar mi cuenta ya reflejan el acceso por
+  solicitud y siguen el texto del registro; no se introduce Solicitar acceso.
+
 ## 2026-11-01: Consentimiento versionado y frontend listo para servibox.co (tarea extra)
 
 * Reemplaza, de 2026-10-31 (Solicitud publica), el consentimiento pendiente y sin version; de
