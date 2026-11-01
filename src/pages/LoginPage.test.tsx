@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
+import { SUPPORT_EMAIL } from '../config/contact'
 import { jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 async function fillAndSubmit() {
@@ -143,6 +144,17 @@ describe('formulario de login', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('No pudimos iniciar sesiónRevisa tus datos e intenta de nuevo.')
     expect(alert).not.toHaveTextContent(/suspendid|inactiv|espera/i)
+  })
+
+  it('el 401 orienta a soporte sin afirmar que la serviteca este suspendida', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ error: 'Credenciales invalidas', status: 401 }, 401)))
+    renderRoute('/login')
+
+    await fillAndSubmit()
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(`Si son correctos y aún no puedes entrar, puede que tu acceso no esté disponible: escríbenos a ${SUPPORT_EMAIL}.`)
+    expect(alert).not.toHaveTextContent(/suspendid|inactiv|motivo/i)
   })
 
   it('muestra la alerta ante un 401', async () => {

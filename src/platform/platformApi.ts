@@ -186,14 +186,17 @@ export function changeTenantStatus(tenant: PlatformTenant, action: 'suspend' | '
   })
 }
 
+/** Cuerpo opcional de revocar: el motivo recortado solo si tiene contenido; sin motivo no hay cuerpo. */
+const revokeBody = (reason: string) => (reason.trim() ? { body: { reason: reason.trim() } } : {})
+
 /** Cierra las sesiones de un usuario; sigue activo. Idempotente, devuelve el usuario. */
-export function revokeTenantUser(tenantId: number, userId: number) {
-  return apiFetch<PlatformTenantUser>(`${tenantPath(tenantId)}/users/${encodeURIComponent(userId)}/revoke`, { platform: true, method: 'POST' })
+export function revokeTenantUser(tenantId: number, userId: number, reason = '') {
+  return apiFetch<PlatformTenantUser>(`${tenantPath(tenantId)}/users/${encodeURIComponent(userId)}/revoke`, { platform: true, method: 'POST', ...revokeBody(reason) })
 }
 
 /** Cierra las sesiones de todos los usuarios de la serviteca; siguen activos. */
-export function revokeTenantSessions(tenantId: number) {
-  return apiFetch<{ tenantId: number; revokedUsers: number }>(`${tenantPath(tenantId)}/revoke-sessions`, { platform: true, method: 'POST' })
+export function revokeTenantSessions(tenantId: number, reason = '') {
+  return apiFetch<{ tenantId: number; revokedUsers: number }>(`${tenantPath(tenantId)}/revoke-sessions`, { platform: true, method: 'POST', ...revokeBody(reason) })
 }
 
 export type RegistrationAction = 'approve' | 'reject' | 'resend-activation'

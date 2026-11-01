@@ -11,10 +11,15 @@ import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { TextField } from '../components/TextField'
 import { iconSm } from '../components/icons'
+import { SUPPORT_EMAIL } from '../config/contact'
 import { GLOSSARY } from '../copy/glossary'
 import { ApiError } from '../lib/api'
 import { usePageMeta } from '../lib/usePageMeta'
 import { LoginLayout } from './LoginLayout'
+
+// El backend responde el mismo 401 si los datos no coinciden, el usuario esta inactivo o la
+// serviteca esta suspendida; el texto no afirma cual de los tres casos es.
+const INVALID_CREDENTIALS_HINT = `Revisa tus datos e intenta de nuevo. Si son correctos y aún no puedes entrar, puede que tu acceso no esté disponible: escríbenos a ${SUPPORT_EMAIL}.`
 
 const linkClass =
   'rounded-control font-semibold text-brand-ink hover:underline focus-ring'
@@ -72,7 +77,7 @@ export function LoginPage() {
             tone="error"
             title={invalidCredentials ? 'No pudimos iniciar sesión' : tooMany ? 'Espera antes de intentar de nuevo' : 'No pudimos conectar con ServiBox'}
           >
-            {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage}
+            {invalidCredentials ? INVALID_CREDENTIALS_HINT : errorMessage}
           </Alert>
         )}
         <TextField
