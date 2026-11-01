@@ -68,9 +68,10 @@ src/
 |-|-|-|
 | `/` | publica | `LandingPage`, la landing. Con sesion muestra "Ir al panel" en lugar de iniciar sesion y crear cuenta |
 | `/login` | publica | `LoginPage`. Con sesion activa redirige a la pagina pedida o a `/inicio` |
-| `/registro` | publica | `RegisterPage`, registro de serviteca. Con sesion activa redirige a `/inicio` |
+| `/registro` | publica | `RegisterPage`, solicitud de cuenta (POST /api/registration-requests). Con sesion activa redirige a `/inicio`. El registro inmediato se retiro el 2026-10-31 |
+| `/activar` | publica | `ActivationPage`, activacion con el enlace del correo (`/activar#token=...`); no inicia sesion |
 | `/terminos` | publica | `TermsPage` ("Proximamente") |
-| `/crear-cuenta` | publica | redirige a `/registro` (enlace viejo del login) |
+| `/crear-cuenta` | publica | redirige a `/registro` (enlace viejo del login), hoy la solicitud de cuenta |
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
 | `/ventas/nueva` | privada | `NewSaleInvoicePage`, Nueva factura de venta, dentro de `AppShell` |
@@ -110,13 +111,15 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
 
 ## Cliente API
 
-`lib/api.ts` expone `apiFetch<T>(path, { method, body, auth })`:
+`lib/api.ts` expone `apiFetch<T>(path, { method, body, auth, platform, headers })`:
 
 * Base `/api`. En desarrollo el proxy de Vite la envia al backend (ver Proxy).
 * Con `auth` (por defecto true) agrega `Authorization: Bearer <token>`.
 * Una respuesta no exitosa se convierte en `ApiError` con `message` y `status`, leidos del
   cuerpo que el backend devuelve siempre: `{"error": mensaje, "status": n}`. Si el cuerpo no
-  es JSON se usan `statusText` y el codigo HTTP.
+  es JSON se usan `statusText` y el codigo HTTP. `retryAfter` guarda los segundos de la
+  cabecera Retry-After (429 de la solicitud, la activacion y los logins).
+* `headers` agrega cabeceras extra (la solicitud de cuenta envia `Idempotency-Key`).
 * Un 401 con `auth` cierra la sesion; el guard redirige a `/login`. Las rutas publicas
   (login) usan `auth: false`: no envian token y su 401 no cierra nada, solo se muestra.
 
@@ -611,9 +614,13 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
   cuenta llevan a Inicio. `index.css` aplica desplazamiento suave solo con
   `#landing` montada y sin movimiento reducido. Recursos pendientes y secuencia
   restante del rediseno en la decision de Landing del 2026-10-27.
-* `RegisterPage`: reglas, sugerencia y normalizacion del identificador y cuerpo del POST en
-  `auth/registerForm.ts`. Errores del servidor segun
-  [03-DECISIONS.md](03-DECISIONS.md).
+* `RegisterPage`: solicitud de cuenta desde el 2026-10-31 (sin usuario ni contrasena).
+  Reglas, sugerencia y normalizacion del codigo y cuerpo del POST en `auth/registerForm.ts`,
+  que tambien exporta `usernameError` y `passwordError` para la activacion. Idempotency-Key
+  por intento, acuse tras el 202 y errores segun [03-DECISIONS.md](03-DECISIONS.md).
+* `ActivationPage`: lee el token del fragmento una vez, lo quita de la URL con replace, lo
+  guarda solo en memoria y agrega meta referrer no-referrer mientras esta montada. Reutiliza
+  la composicion y RegisterPage.css (`main#register`).
   RegisterPage.css acota la composicion a #register, foto ambiental 44% desde lg y
   formulario integrado con dos agrupaciones. Movil sin foto, altura natural;
   controles, marca y accesibilidad siguen los patrones del Login aprobado.

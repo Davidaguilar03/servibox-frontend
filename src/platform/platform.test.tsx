@@ -118,6 +118,29 @@ describe('acceso de plataforma', () => {
     expect(getPlatformToken()).toBeNull()
   })
 
+  it.each([898, undefined])('un 429 del acceso (Retry-After %s) muestra el mensaje del backend y el tiempo si viene', async (retryAfter) => {
+    const user = userEvent.setup()
+    defaultApi({
+      '/api/platform/auth/login': () => {
+        const response = jsonResponse({ error: 'Demasiados intentos de inicio de sesion, espera unos minutos e intenta de nuevo', status: 429 }, 429)
+        if (retryAfter) response.headers.set('Retry-After', String(retryAfter))
+        return response
+      },
+    })
+    renderRoute('/plataforma/login')
+
+    await user.type(await screen.findByLabelText('Correo'), 'operador@example.test')
+    await user.type(screen.getByLabelText('Contraseña'), 'correcta')
+    await user.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Espera antes de intentar de nuevo')
+    expect(alert).toHaveTextContent('Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.')
+    if (retryAfter) expect(alert).toHaveTextContent('Podrás intentarlo de nuevo en 15 minutos.')
+    else expect(alert).not.toHaveTextContent('Podrás intentarlo')
+    expect(getPlatformToken()).toBeNull()
+  })
+
   it('con sesion de plataforma el acceso lleva al Resumen', async () => {
     defaultApi()
     signInPlatform()

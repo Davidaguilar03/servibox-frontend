@@ -2,6 +2,41 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-10-31: Solicitud publica de cuenta, activacion y contactos reales
+
+* Reemplaza el registro inmediato de 2026-10-22 (Registro que entra directo con la sesion
+  devuelta, Errores del registro); la composicion visual de 2026-10-28 se conserva. /registro
+  es ahora la solicitud de cuenta contra
+  POST /api/registration-requests. La URL se conserva para no dejar enlaces ni rutas muertas
+  (landing, login y /crear-cuenta ya apuntaban ahi); con la compuerta encendida el registro
+  inmediato responde 403, por eso se retiro su pantalla y `register()` de authApi.
+* Campos de la API: businessName, nit, phone, slug, adminFullName, adminEmail, acceptTerms.
+  Sin usuario ni contrasena (el backend rechaza password). Validacion local igual que antes;
+  RESERVED_SLUGS suma plataforma y activar como el backend.
+* Idempotency-Key: crypto.randomUUID por intento; se reutiliza mientras el cuerpo enviado no
+  cambie y se descarta tras el 409 de clave reutilizada.
+* Errores: 404 (compuerta apagada) "El registro todavia no esta disponible" con el correo;
+  409 de codigo no disponible bajo el campo, sin bloquear el reenvio (el backend decide y
+  su limite de tasa debe verse); 400 y demas 409 en el Alert; 429 con el tiempo
+  de Retry-After; red sin contacto. Exito: acuse sin plazos, sugiere revisar spam.
+* Consentimiento: el backend exige acceptTerms true pero no lo guarda (solo entra en el hash
+  de idempotencia; sin version de terminos). Se mantiene la casilla porque la API la exige y
+  se agrega el texto informativo bajo el boton, sin enlace a una politica. Pendiente.
+* /activar: token del fragmento (`/activar#token=`, como lo arma el backend), validado con el
+  mismo formato de 43 caracteres, leido una vez, quitado con navigate replace y solo en
+  memoria; meta referrer no-referrer mientras esta montada. Usuario, contrasena y
+  confirmacion con las reglas del backend. Exito: codigo de la serviteca y usuario, enlace a
+  /login; sin JWT ni sesion; se recuerda el codigo con rememberTenantSlug para el login.
+  400 de enlace, 410 y 409 de enlace usado retiran el formulario; 409 usado enlaza al login.
+* Logins de serviteca y de plataforma: 429 con su titulo y el mensaje mapeado mas el tiempo
+  de espera. El 401 sigue generico (serviteca suspendida incluida).
+* ApiError.retryAfter y apiFetch headers. userMessage: caso 429 y contextos registration y
+  activation para textos compartidos con Solicitudes.
+* Contactos: SUPPORT_EMAIL hola@servibox.co; WHATSAPP opcional y hoy undefined, sin lineas de
+  telefono, tel: ni WhatsApp. Terminos y mensaje de red usan el correo.
+* CTAs: Crear cuenta y Crear mi serviteca pasan a Solicitar cuenta y Solicitar mi cuenta.
+  Evidencia en la nota de sesion public-registration-request.
+
 ## 2026-10-31: Detalle de serviteca de plataforma (entrega 4 de 4)
 
 * Reemplaza "sin detalle ni acciones" de la entrega 3: las filas del listado enlazan a
@@ -1557,6 +1592,8 @@ Formato de cada entrada:
 
 ## 2026-10-22: Registro que entra directo con la sesion devuelta
 
+(Reemplazado el 2026-10-31: /registro es la solicitud de cuenta; ver esa entrada.)
+
 * Decision: `POST /api/auth/register` responde lo mismo que el login; el 201 se guarda con
   `startSession` (la misma funcion del login), se recuerda el slug, se muestra el toast
   "Serviteca creada. Bienvenido a ServiBox." y la redireccion por sesion lleva a `/inicio`
@@ -1586,6 +1623,8 @@ Formato de cada entrada:
 * Motivo: el usuario ve el identificador que de verdad queda y no pierde lo que escribio.
 
 ## 2026-10-22: Errores del registro
+
+(Reemplazado el 2026-10-31: /registro es la solicitud de cuenta; ver esa entrada.)
 
 * Decision: 409 (identificador repetido) bajo el campo Identificador con el mensaje del
   backend, foco en el campo y boton deshabilitado hasta cambiarlo. 400 en un Alert arriba

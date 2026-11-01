@@ -1,4 +1,4 @@
-import { WHATSAPP_DISPLAY } from '../config/contact'
+import { SUPPORT_EMAIL, WHATSAPP } from '../config/contact'
 import { ApiError } from '../lib/api'
 import { formatCurrency, formatDate } from '../lib/format'
 import { NIT_FORMAT_MESSAGE, PHONE_FORMAT_MESSAGE } from '../lib/validation/contact'
@@ -13,8 +13,23 @@ export const MESSAGES = {
   forbidden: 'No tienes permiso para hacer esto.',
   notFound: 'No encontramos lo que buscas. Puede que ya no exista.',
   conflict: 'Esto cambió mientras lo editabas. Recarga e inténtalo de nuevo.',
-  network: `No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo; si sigue pasando, escríbenos por WhatsApp al ${WHATSAPP_DISPLAY}.`,
+  network: `No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo; si sigue pasando, escríbenos ${WHATSAPP ? `por WhatsApp al ${WHATSAPP.display}` : `a ${SUPPORT_EMAIL}`}.`,
+  tooMany: 'Hiciste demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
 } as const
+
+/** Texto del enlace de activacion no valido: tambien cuando el enlace llega sin token. */
+export const INVALID_ACTIVATION_LINK = 'El enlace de activación no es válido. Ábrelo de nuevo desde el correo, completo.'
+
+/** Tiempo de espera de un 429 con Retry-After: "Podrás intentarlo de nuevo en 15 minutos." */
+export function retryAfterText(seconds: number): string {
+  const minutes = Math.ceil(seconds / 60)
+  const wait = seconds < 60
+    ? `${Math.ceil(seconds)} ${Math.ceil(seconds) === 1 ? 'segundo' : 'segundos'}`
+    : minutes % 60 === 0
+      ? `${minutes / 60} ${minutes === 60 ? 'hora' : 'horas'}`
+      : `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`
+  return `Podrás intentarlo de nuevo en ${wait}.`
+}
 
 const STATUS_LABELS: Record<string, string> = { PENDIENTE: 'pendiente', PAGADA: 'pagada', ANULADA: 'anulada' }
 const ROLE_LABELS: Record<string, string> = { CLIENTE: 'cliente', PROVEEDOR: 'proveedor', AMBOS: 'cliente y proveedor' }
@@ -45,6 +60,19 @@ type Rule = [RegExp, string | ((...groups: string[]) => string)]
  * (errorMessages.test.ts) tienen la lista de origen.
  */
 const RULES: Rule[] = [
+  // Limites de tasa (429) de la solicitud de cuenta, la activacion y los dos logins.
+  [/^Demasiadas solicitudes desde esta conexion, intenta de nuevo mas tarde$/, 'Recibimos demasiadas solicitudes desde esta conexión. Inténtalo de nuevo más tarde.'],
+  [/^Demasiados intentos de activacion, espera unos minutos e intenta de nuevo$/, 'Hiciste demasiados intentos de activación. Espera unos minutos e inténtalo de nuevo.'],
+  [/^Demasiados intentos de inicio de sesion, espera unos minutos e intenta de nuevo$/, 'Hiciste demasiados intentos de inicio de sesión. Espera unos minutos e inténtalo de nuevo.'],
+  // Solicitud publica de cuenta y activacion con el enlace del correo.
+  [/^La clave de reintento es obligatoria$/, 'No pudimos enviar la solicitud. Inténtalo de nuevo.'],
+  [/^La clave de reintento no es valida$/, 'No pudimos enviar la solicitud. Inténtalo de nuevo.'],
+  [/^La clave de reintento ya se uso con otros datos$/, 'No pudimos confirmar el envío porque los datos cambiaron. Envía la solicitud de nuevo.'],
+  [/^La solicitud no admite contrasena$/, 'La solicitud no lleva contraseña: la creas al activar la cuenta.'],
+  [/^El enlace de activacion no es valido$/, INVALID_ACTIVATION_LINK],
+  [/^El enlace de activacion vencio o fue reemplazado$/, 'El enlace de activación venció o fue reemplazado por uno más reciente. Usa el último correo que te enviamos.'],
+  [/^El enlace de activacion ya fue utilizado; inicia sesion$/, 'Este enlace de activación ya se usó. Inicia sesión con el código de tu serviteca.'],
+
   // Revision de solicitudes y reenvio de activacion.
   [/^El filtro de texto no puede superar 100 caracteres$/, 'El filtro de texto no puede superar 100 caracteres.'],
   [/^La fecha debe tener formato AAAA-MM-DD$/, 'Escribe una fecha válida con formato AAAA-MM-DD.'],
@@ -205,6 +233,19 @@ const RULES: Rule[] = [
 ]
 
 /**
+ * Mensajes compartidos con Solicitudes de plataforma que en la solicitud publica
+ * ('registration') y en la activacion ('activation') le hablan a quien pide la cuenta. Se
+ * consultan antes del mapa general.
+ */
+const REGISTRATION_RULES: Rule[] = [
+  [/^El codigo solicitado no esta disponible$/, 'Este código ya no está disponible. Elige otro.'],
+]
+const ACTIVATION_RULES: Rule[] = [
+  [/^El codigo solicitado no esta disponible$/, `El código de serviteca de tu solicitud ya no está disponible. Escríbenos a ${SUPPORT_EMAIL} para revisarla.`],
+  [/^La solicitud ya no permite esta operacion$/, `Esta solicitud ya no se puede activar. Escríbenos a ${SUPPORT_EMAIL} para revisarla.`],
+]
+
+/**
  * Mensajes compartidos con Solicitudes que en Servitecas deben nombrar la serviteca. Se
  * consultan antes del mapa general cuando el contexto es 'tenant'.
  */
@@ -213,7 +254,13 @@ const TENANT_RULES: Rule[] = [
   [/^La version esperada es obligatoria$/, 'Actualiza la serviteca antes de continuar.'],
 ]
 
-export type MessageContext = 'tenant'
+export type MessageContext = 'tenant' | 'registration' | 'activation'
+
+const CONTEXT_RULES: Record<MessageContext, Rule[]> = {
+  tenant: TENANT_RULES,
+  registration: REGISTRATION_RULES,
+  activation: ACTIVATION_RULES,
+}
 
 /** Palabras que delatan un texto sin tildes o en ingles: ese texto no se muestra crudo. */
 const UNREADABLE_WORDS =
@@ -231,7 +278,8 @@ function readable(message: string): string | null {
 
 /** El mensaje del backend pasado por el mapa; null si no es uno conocido. */
 export function mapBackendMessage(message: string, context?: MessageContext): string | null {
-  for (const [pattern, output] of context === 'tenant' ? [...TENANT_RULES, ...RULES] : RULES) {
+  const first = context ? CONTEXT_RULES[context] : []
+  for (const [pattern, output] of [...first, ...RULES]) {
     const match = pattern.exec(message.trim())
     if (match) return typeof output === 'string' ? output : output(...match.slice(1))
   }
@@ -256,6 +304,10 @@ export function userMessage(error: unknown, context?: MessageContext): string {
       return mapped ?? MESSAGES.notFound
     case 409:
       return mapped ?? MESSAGES.conflict
+    case 429: {
+      const wait = error.retryAfter ? ` ${retryAfterText(error.retryAfter)}` : ''
+      return `${mapped ?? MESSAGES.tooMany}${wait}`
+    }
     default:
       return error.status >= 500 ? MESSAGES.network : (mapped ?? MESSAGES.invalid)
   }

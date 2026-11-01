@@ -51,6 +51,8 @@ export function LoginPage() {
   }
 
   const invalidCredentials = mutation.error instanceof ApiError && mutation.error.status === 401
+  // 429 de LoginThrottle: el mensaje del backend y, con Retry-After, el tiempo de espera.
+  const tooMany = mutation.error instanceof ApiError && mutation.error.status === 429
   const reportedError = reportError(mutation.error, { inlineOnly: true })
   const errorMessage = reportedError === MESSAGES.network
     ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
@@ -85,7 +87,7 @@ export function LoginPage() {
           {mutation.isError && (
             <Alert
               tone="error"
-              title={invalidCredentials ? 'No pudimos iniciar sesión' : 'No pudimos conectar con ServiBox'}
+              title={invalidCredentials ? 'No pudimos iniciar sesión' : tooMany ? 'Espera antes de intentar de nuevo' : 'No pudimos conectar con ServiBox'}
             >
               {invalidCredentials ? 'Revisa tus datos e intenta de nuevo.' : errorMessage}
             </Alert>
@@ -127,7 +129,7 @@ export function LoginPage() {
         <p className="mt-6 border-t border-border pt-6 text-center text-small text-text-muted">
           ¿Tu serviteca aún no usa ServiBox?{' '}
           <Link to="/registro" className={linkClass}>
-            Crear cuenta
+            Solicitar cuenta
           </Link>
         </p>
         </div>

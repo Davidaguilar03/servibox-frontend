@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { saveToken } from '../auth/session'
-import { WHATSAPP_DISPLAY, WHATSAPP_URL } from '../config/contact'
+import { SUPPORT_EMAIL } from '../config/contact'
 import { Toaster } from '../components/Toaster'
 import { ApiError } from '../lib/api'
 import { CONTACT_TOO_LONG_MESSAGE, NIT_FORMAT_MESSAGE, nitError, normalizeNit, phoneError } from '../lib/validation/contact'
@@ -23,8 +23,9 @@ describe('reportError', () => {
     const toast = screen.getByRole('alert')
     expect(toast).toHaveTextContent(MESSAGES.network)
     expect(screen.getByRole('button', { name: 'Cerrar aviso' })).toBeInTheDocument()
-    // El WhatsApp del mensaje de red es un enlace a src/config/contact.ts.
-    expect(screen.getByRole('link', { name: WHATSAPP_DISPLAY })).toHaveAttribute('href', WHATSAPP_URL)
+    // Sin WhatsApp en src/config/contact.ts el contacto del mensaje de red es el correo, como enlace.
+    expect(screen.getByRole('link', { name: SUPPORT_EMAIL })).toHaveAttribute('href', `mailto:${SUPPORT_EMAIL}`)
+    expect(screen.queryByRole('link', { name: /WhatsApp|\+57/ })).not.toBeInTheDocument()
 
     act(() => {
       reportError(new ApiError('Factura no encontrada: 9', 404))

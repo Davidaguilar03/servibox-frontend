@@ -281,10 +281,12 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   repositorio cuando no tienen uso. Nada de testimonios, cifras comerciales ni logos
   inventados. Lo que no existe (facturacion electronica DIAN, recuperar contrasena, roles,
   precio publicado) no se menciona como funcion.
-* Contactos: `src/config/contact.ts` (`WHATSAPP_DISPLAY`, `WHATSAPP_URL`, `SUPPORT_EMAIL`) es
-  la unica fuente; la interfaz los importa de ahi y ningun archivo repite el numero ni el
-  correo (lo comprueba `LandingPage.test.tsx`). Hoy son demostrativos: reemplazar antes de
-  publicar. La landing omite estos contactos y cualquier accion que dependa de ellos.
+* Contactos: `src/config/contact.ts` (`SUPPORT_EMAIL` y `WHATSAPP` opcional con `display` y
+  `url`) es la unica fuente; la interfaz los importa de ahi y ningun archivo repite el correo
+  (lo comprueba `LandingPage.test.tsx`). Correo real hola@servibox.co desde el 2026-10-31. El
+  telefono aun no existe: con `WHATSAPP` undefined no se muestra ninguna linea de telefono,
+  enlace tel: ni WhatsApp (terminos y mensaje de red usan el correo). La landing omite los
+  contactos.
 * Un concepto, un rotulo: los de `src/copy/glossary.ts` (Forma de pago, Medio de pago, Otros
   ingresos, Codigo de tu serviteca, Stock bajo, Restaurar...). Tabla, guarda de tildes y jerga
   (`src/copy/copy.test.ts`) y mensajes de error en [06-COPY.md](06-COPY.md).

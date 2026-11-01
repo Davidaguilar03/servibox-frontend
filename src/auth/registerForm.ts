@@ -1,7 +1,8 @@
 import { nitError, normalizeNit, phoneError } from '../lib/validation/contact'
-import type { RegisterRequest } from './authApi'
+import type { RegistrationRequestBody } from './authApi'
 
-// Reglas del registro, espejo de TenantRegistrationService del backend. Ver 03-DECISIONS.md.
+// Reglas de la solicitud de cuenta y de la activacion, espejo de TenantRegistrationService del
+// backend (RegistrationRequestService y RegistrationActivationService las reutilizan). Ver 03-DECISIONS.md.
 
 export interface RegisterValues {
   businessName: string
@@ -10,8 +11,6 @@ export interface RegisterValues {
   slug: string
   adminFullName: string
   adminEmail: string
-  adminUsername: string
-  password: string
   acceptTerms: boolean
 }
 
@@ -26,8 +25,6 @@ export const EMPTY_REGISTER_VALUES: RegisterValues = {
   slug: '',
   adminFullName: '',
   adminEmail: '',
-  adminUsername: '',
-  password: '',
   acceptTerms: false,
 }
 
@@ -38,6 +35,7 @@ export const RESERVED_SLUGS = new Set([
   'api', 'admin', 'www', 'app', 'login', 'registro', 'register', 'servibox', 'soporte',
   'static', 'assets', 'health',
   'auth', 'inventory', 'treasury', 'counterparties', 'sales', 'purchases', 'reporting', 'demo',
+  'plataforma', 'activar',
 ])
 
 const SLUG = /^[a-z0-9-]{3,30}$/
@@ -98,20 +96,6 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
     errors.adminEmail = 'Escribe un correo válido, por ejemplo nombre@correo.com.'
   }
 
-  const username = values.adminUsername.trim()
-  if (!username) errors.adminUsername = 'Escribe un usuario.'
-  else if (!USERNAME.test(username)) {
-    errors.adminUsername = 'Usa de 3 a 50 caracteres: letras, números, punto, guion y guion bajo.'
-  }
-
-  // BCrypt usa solo 72 bytes: el backend tambien mide la contrasena en bytes UTF-8.
-  const { password } = values
-  if (!password) errors.password = 'Escribe una contraseña.'
-  else if (password.length < 8) errors.password = 'Usa al menos 8 caracteres.'
-  else if (password.length > 72 || new TextEncoder().encode(password).length > 72) {
-    errors.password = 'Usa máximo 72 caracteres.'
-  }
-
   if (!values.acceptTerms) errors.acceptTerms = 'Acepta los términos de uso y el tratamiento de datos para continuar.'
 
   for (const field of Object.keys(errors) as RegisterField[]) {
@@ -120,8 +104,24 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
   return errors
 }
 
-/** Cuerpo del POST: textos sin espacios a los lados, el slug en minusculas y la contrasena tal cual. */
-export function toRegisterRequest(values: RegisterValues): RegisterRequest {
+/** Usuario del administrador, el que se crea al activar la cuenta. */
+export function usernameError(value: string): string | undefined {
+  const username = value.trim()
+  if (!username) return 'Escribe un usuario.'
+  if (!USERNAME.test(username)) return 'Usa de 3 a 50 caracteres: letras, números, punto, guion y guion bajo.'
+  return undefined
+}
+
+/** BCrypt usa solo 72 bytes: el backend tambien mide la contrasena en bytes UTF-8. */
+export function passwordError(password: string): string | undefined {
+  if (!password) return 'Escribe una contraseña.'
+  if (password.length < 8) return 'Usa al menos 8 caracteres.'
+  if (password.length > 72 || new TextEncoder().encode(password).length > 72) return 'Usa máximo 72 caracteres.'
+  return undefined
+}
+
+/** Cuerpo del POST: textos sin espacios a los lados, el NIT normalizado y el slug en minusculas. */
+export function toRegisterRequest(values: RegisterValues): RegistrationRequestBody {
   return {
     businessName: values.businessName.trim(),
     nit: normalizeNit(values.nit),
@@ -129,8 +129,6 @@ export function toRegisterRequest(values: RegisterValues): RegisterRequest {
     slug: values.slug.trim().toLowerCase(),
     adminFullName: values.adminFullName.trim(),
     adminEmail: values.adminEmail.trim(),
-    adminUsername: values.adminUsername.trim(),
-    password: values.password,
     acceptTerms: true,
   }
 }
