@@ -35,4 +35,8 @@ export const GLOSSARY = {
   annul: 'Anular',
   restore: 'Restaurar',
   trash: 'Papelera',
+  /** Textos legales: nombre completo en la casilla de aceptacion, corto en los pies. */
+  privacyPolicy: 'Política de tratamiento de datos personales',
+  privacyPolicyShort: 'Política de datos',
+  terms: 'Términos y condiciones',
 } as const

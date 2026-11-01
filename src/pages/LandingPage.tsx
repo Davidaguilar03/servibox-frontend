@@ -6,6 +6,7 @@ import { buttonClasses } from '../components/buttonStyles'
 import { iconLg, iconSm } from '../components/icons'
 import { SkipLink } from '../components/SkipLink'
 import { GLOSSARY } from '../copy/glossary'
+import { PRIVACY_POLICY_PATH, TERMS_PATH } from '../legal/legalContent'
 import { usePageMeta } from '../lib/usePageMeta'
 import heroWorkshop from '../assets/landing/hero-workshop-mechanic-v2.webp'
 import faqWorkshop from '../assets/landing/faq-workshop-panorama-v2.webp'
@@ -227,7 +228,8 @@ export function LandingPage() {
           <nav aria-label="Pie de página">
             <ul className="flex flex-wrap gap-x-6 gap-y-2 text-small">
               <li><a href="#funciones" className={footerLink}>Producto</a></li>
-              <li><Link to="/terminos" className={footerLink}>Términos y tratamiento de datos</Link></li>
+              <li><Link to={PRIVACY_POLICY_PATH} className={footerLink}>{GLOSSARY.privacyPolicyShort}</Link></li>
+              <li><Link to={TERMS_PATH} className={footerLink}>{GLOSSARY.terms}</Link></li>
               <li><Link to={session ? '/inicio' : '/login'} className={footerLink}>{session ? 'Ir al panel' : 'Iniciar sesión'}</Link></li>
               {!session && <li><Link to="/registro" className={footerLink}>Solicitar cuenta</Link></li>}
             </ul>

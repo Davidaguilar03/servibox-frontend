@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { iconSm } from '../components/icons'
+import { LegalLinks } from '../legal/LegalLinks'
 import './LoginPage.css'
 
 interface LoginLayoutProps {
@@ -51,7 +52,7 @@ export function LoginLayout({ photo, statement, eyebrow, title, subtitle, childr
         </div>
         <footer className="text-right text-small text-text-muted">
           <p className="mb-1">ServiBox · Colombia</p>
-          <Link to="/terminos" className="inline-flex min-h-touch items-center rounded-control underline focus-ring">Términos y datos personales</Link>
+          <LegalLinks />
         </footer>
       </div>
     </main>

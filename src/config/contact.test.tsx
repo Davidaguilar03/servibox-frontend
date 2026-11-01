@@ -13,13 +13,14 @@ vi.mock('./contact', () => ({
 }))
 
 describe('contactos con telefono definido', () => {
-  it('terminos muestra WhatsApp y correo', async () => {
+  it('el texto legal de terminos no cambia: enlaza el correo y no agrega el telefono', async () => {
     renderRoute('/terminos')
 
     await screen.findByRole('heading', { level: 1 })
-    expect(screen.getByRole('link', { name: '+57 310 555 0101' })).toHaveAttribute('href', 'https://wa.me/573105550101')
-    expect(screen.getByRole('link', { name: 'hola@servibox.co' })).toHaveAttribute('href', 'mailto:hola@servibox.co')
-    expect(screen.getByText(/escríbenos por WhatsApp al/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '+57 310 555 0101' })).not.toBeInTheDocument()
+    for (const link of screen.getAllByRole('link', { name: 'hola@servibox.co' })) {
+      expect(link).toHaveAttribute('href', 'mailto:hola@servibox.co')
+    }
   })
 
   it('el mensaje de red invita al WhatsApp con enlace', () => {

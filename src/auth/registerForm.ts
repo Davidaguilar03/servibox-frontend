@@ -1,3 +1,4 @@
+import { POLICY_VERSION } from '../legal/legalContent'
 import { nitError, normalizeNit, phoneError } from '../lib/validation/contact'
 import type { RegistrationRequestBody } from './authApi'
 
@@ -96,7 +97,7 @@ export function validateRegister(values: RegisterValues): RegisterErrors {
     errors.adminEmail = 'Escribe un correo válido, por ejemplo nombre@correo.com.'
   }
 
-  if (!values.acceptTerms) errors.acceptTerms = 'Acepta los términos de uso y el tratamiento de datos para continuar.'
+  if (!values.acceptTerms) errors.acceptTerms = 'Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.'
 
   for (const field of Object.keys(errors) as RegisterField[]) {
     if (!errors[field]) delete errors[field]
@@ -130,5 +131,6 @@ export function toRegisterRequest(values: RegisterValues): RegistrationRequestBo
     adminFullName: values.adminFullName.trim(),
     adminEmail: values.adminEmail.trim(),
     acceptTerms: true,
+    policyVersion: POLICY_VERSION,
   }
 }

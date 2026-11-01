@@ -2,6 +2,32 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Consentimiento versionado y frontend listo para servibox.co (tarea extra)
+
+* Reemplaza, de 2026-10-31 (Solicitud publica), el consentimiento pendiente y sin version; de
+  2026-10-18 y 2026-10-29, el mismo origen como unica via de produccion.
+* URL: `apiUrl` en lib/api.ts lee VITE_API_BASE_URL y agrega /api; sin definir es relativa y
+  el desarrollo no cambia. `.env.production` versionado con https://api.servibox.co. La lee en
+  cada llamada, no en una constante, para poder probar los dos casos con vi.stubEnv. Una prueba
+  falla si otro archivo de src llama a fetch. La imagen Docker sigue relativa: `.dockerignore`
+  excluye `.env*`, y es lo correcto para su proxy Nginx.
+* Textos legales: `legal/legalContent.ts` con POLICY_VERSION y las secciones, y copia en
+  docs/legal. La prueba compara titulos y tambien cada parrafo, no solo titulos como pedia la
+  tarea, porque una diferencia de texto invalida el registro. `/terminos` ya existia: se
+  reemplaza su texto y se conserva su composicion en `LegalPage`. Su WhatsApp opcional se
+  retira: el texto aprobado solo nombra el correo.
+* Casilla: ya existia (`acceptTerms`). Se cambian la etiqueta y los enlaces, se conserva
+  acceptTerms true en el cuerpo y se agrega policyVersion. Idempotency-Key, 404, 409 y 429 sin
+  cambios: policyVersion entra en la huella del cuerpo, y un mismo envio conserva su clave.
+  Se retira el texto informativo bajo el boton de 2026-10-31: la autorizacion se da en la casilla.
+* Recargar: boton `Button` secundario en el Alert para los tres 400 de la politica, no solo el
+  de politica actualizada, porque los tres se resuelven igual. Recargar borra lo digitado.
+* Prueba intermitente de platformTenants: leia el boton Reintentar con getByRole justo despues
+  de act. TanStack Query notifica con setTimeout(0) y act de React cede con setImmediate; en
+  Node el orden entre los dos no es fijo. Medido: 6 fallos en 60 repeticiones contra 0 en 60 con
+  findByRole. Sin subir tiempos ni quitar aserciones. platformRequests y platformTenantDetail ya
+  usaban findByRole en el mismo punto.
+
 ## 2026-10-31: Correcciones de calidad del panel de plataforma (tarea extra)
 
 * Reemplaza, de la entrega 4, "revoke con cuerpo opcional que no se envia" y "pagina de
@@ -260,6 +286,8 @@ Permanecen los limites y pendientes de [DEPLOYMENT](../DEPLOYMENT.md).
 
 ## 2026-10-29: Frontend compilado y proxy privado preparados sin publicar
 
+* Reemplazado en produccion el 2026-11-01: Caddy sirve dist y la API va en otro origen. La
+  imagen Docker queda sin uso de publicacion.
 * Docker desde raiz Git: npm ci con lockfile, build Node 24.15.0 y Nginx 1.30.2,
   bases por digest y UID/GID 101. Sin dependencias npm nuevas ni cambios de aplicacion.
 * PORT con fallback 8080; BACKEND_UPSTREAM http://hostname:port sin ruta ni credenciales.
@@ -2666,6 +2694,8 @@ ampliacion autorizada de Movimientos. Los contratos financieros posteriores sigu
 
 ## 2026-10-18: Proxy de Vite en desarrollo, sin CORS
 
+* Reemplazado en produccion el 2026-11-01 (API en otro origen, con CORS). El proxy de desarrollo
+  sigue igual.
 * Decision: en desarrollo el navegador llama a `/api` en el mismo origen y el proxy de Vite
   lo reenvia al backend (`API_PROXY_TARGET`, por defecto `http://localhost:8080`). En
   produccion un proxy inverso sirve el frontend y el backend en el mismo origen. El backend

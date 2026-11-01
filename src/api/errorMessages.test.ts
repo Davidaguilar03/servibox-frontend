@@ -38,7 +38,11 @@ const BACKEND: Array<[string, string]> = [
   ['Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial', 'Saldo insuficiente en Banco prueba: faltan $ 10.000 para cambiar el saldo inicial.'],
   ['Saldo insuficiente en Banco prueba: faltan $ 10.000,50 para cambiar el saldo inicial', 'Saldo insuficiente en Banco prueba: faltan $ 10.001 para cambiar el saldo inicial.'],
   // auth/TenantRegistrationService, auth/*Exception
-  ['Debe aceptar los terminos y condiciones', 'Acepta los términos de uso y el tratamiento de datos para continuar.'],
+  ['Debe aceptar los terminos y condiciones', 'Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.'],
+  // Solicitud publica, version de la politica aceptada (400).
+  ['La version de la politica es obligatoria', 'No pudimos registrar la versión de la política que aceptaste. Recarga la página e inténtalo de nuevo.'],
+  ['La version de la politica no es valida', 'La versión de la política que aceptaste no es válida. Recarga la página e inténtalo de nuevo.'],
+  ['La politica fue actualizada; recarga la pagina para continuar', 'Actualizamos la política de datos. Recarga la página para continuar.'],
   ['El NIT solo admite digitos y un guion con el digito de verificacion, por ejemplo 900123456-7', 'El NIT solo admite dígitos y un guion con el dígito de verificación, por ejemplo 900123456-7.'],
   ['El telefono solo admite digitos, espacios, +, - y parentesis', 'El teléfono solo admite dígitos, espacios, +, - y paréntesis.'],
   ['El correo del administrador no es valido', 'El correo del administrador no es válido.'],

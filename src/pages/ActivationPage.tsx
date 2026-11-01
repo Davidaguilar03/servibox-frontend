@@ -16,6 +16,7 @@ import { TextField } from '../components/TextField'
 import { buttonClasses } from '../components/buttonStyles'
 import { iconSm } from '../components/icons'
 import { SUPPORT_EMAIL } from '../config/contact'
+import { LegalLinks } from '../legal/LegalLinks'
 import { GLOSSARY } from '../copy/glossary'
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
@@ -197,7 +198,7 @@ export function ActivationPage() {
         <div className="register-content">{content}</div>
         <footer className="text-right text-small text-text-muted">
           <p className="mb-1">ServiBox · Colombia</p>
-          <Link to="/terminos" className="inline-flex min-h-touch items-center rounded-control underline focus-ring">Términos y datos personales</Link>
+          <LegalLinks />
         </footer>
       </div>
     </main>

@@ -196,7 +196,7 @@ describe('casillas y radios', () => {
     const checkbox = await screen.findByRole('checkbox')
     const label = document.querySelector(`label[for="${checkbox.id}"]`) as HTMLElement
     expect(classes(label)).toContain('min-h-touch')
-    expect(label).toHaveTextContent('Acepto los términos de uso y el tratamiento de datos.')
+    expect(label).toHaveTextContent('Acepto la Política de tratamiento de datos personales y los Términos y condiciones')
   })
 
   it('impuestos de categoria y tarjetas de reporte envuelven su control en el rotulo', () => {

@@ -196,7 +196,8 @@ describe('estados de servitecas', () => {
     expect(screen.getByRole('table').querySelector('tbody')).toHaveAttribute('aria-busy', 'true')
     await act(async () => resolve(fail('Fallo', 500)))
     first = false
-    await userEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+    // act no espera a TanStack Query: notifica con setTimeout(0) y act solo cede un setImmediate.
+    await userEvent.click(await screen.findByRole('button', { name: 'Reintentar' }))
     expect((await table()).getByText('Serviteca El Roble')).toBeInTheDocument()
   })
 

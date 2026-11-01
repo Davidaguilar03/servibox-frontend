@@ -24,6 +24,8 @@ import { TextField } from '../components/TextField'
 import { iconSm } from '../components/icons'
 import { SUPPORT_EMAIL } from '../config/contact'
 import { GLOSSARY } from '../copy/glossary'
+import { LegalLinks } from '../legal/LegalLinks'
+import { PRIVACY_POLICY_PATH, TERMS_PATH } from '../legal/legalContent'
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
 import { usePageMeta } from '../lib/usePageMeta'
@@ -37,6 +39,8 @@ const legendClass = 'text-body font-semibold text-text'
 /** Mensajes del backend (RegistrationRequestConflictException) que cambian lo que hace la pantalla. */
 const SLUG_TAKEN = /^El codigo solicitado no esta disponible$/
 const KEY_REUSED = /^La clave de reintento ya se uso con otros datos$/
+/** Los tres 400 de la version de la politica: se resuelven recargando la pagina. */
+const POLICY_RELOAD = /^La (?:version de la politica (?:es obligatoria|no es valida)|politica fue actualizada; recarga la pagina para continuar)$/
 
 /** El 409 de un codigo no disponible, atado al slug que lo provoco. */
 interface SlugConflict {
@@ -148,12 +152,22 @@ export function RegisterPage() {
           }
         : status === 429
           ? { title: 'Espera antes de enviar de nuevo', body: reportedError }
-          : {
-              title: 'No pudimos enviar la solicitud',
-              body: reportedError === MESSAGES.network
-                ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
-                : reportedError,
-            }
+          : status === 400 && POLICY_RELOAD.test(error.message)
+            ? {
+                title: 'No pudimos enviar la solicitud',
+                body: (
+                  <>
+                    <p>{reportedError}</p>
+                    <Button variant="secondary" className="mt-3" onClick={() => window.location.reload()}>Recargar la página</Button>
+                  </>
+                ),
+              }
+            : {
+                title: 'No pudimos enviar la solicitud',
+                body: reportedError === MESSAGES.network
+                  ? 'No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo.'
+                  : reportedError,
+              }
 
   return (
     <main id="register" className="bg-neutral-100 text-text">
@@ -285,11 +299,14 @@ export function RegisterPage() {
                 className="mt-4 size-4 shrink-0 accent-brand focus-ring"
               />
               <label htmlFor="acceptTerms" className="min-h-touch flex-1 cursor-pointer py-3 text-small text-text">
-                Acepto los{' '}
-                <Link to="/terminos" target="_blank" rel="noopener" className={linkClass}>
-                  términos de uso y el tratamiento de datos
+                Acepto la{' '}
+                <Link to={PRIVACY_POLICY_PATH} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {GLOSSARY.privacyPolicy}
                 </Link>
-                .
+                {' '}y los{' '}
+                <Link to={TERMS_PATH} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {GLOSSARY.terms}
+                </Link>
               </label>
             </div>
             {fieldError('acceptTerms') && (
@@ -305,9 +322,6 @@ export function RegisterPage() {
               <span role="status">{mutation.isPending ? 'Enviando solicitud…' : 'Enviar solicitud'}</span>
               <ArrowRight {...iconSm} aria-hidden className="absolute right-5" />
             </Button>
-            <p className="text-small text-text-muted">
-              Al enviar la solicitud aceptas que usemos estos datos para evaluarla y contactarte.
-            </p>
           </div>
         </form>
         </>
@@ -322,7 +336,7 @@ export function RegisterPage() {
         </div>
         <footer className="text-right text-small text-text-muted">
           <p className="mb-1">ServiBox · Colombia</p>
-          <Link to="/terminos" className="inline-flex min-h-touch items-center rounded-control underline focus-ring">Términos y datos personales</Link>
+          <LegalLinks />
         </footer>
       </div>
     </main>

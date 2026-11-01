@@ -1,7 +1,63 @@
+/// <reference types="node" />
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, FALLBACK_FILE_NAME, GENERIC_ERROR_MESSAGE, apiDownload, apiFetch, fileNameFrom } from './api'
+import { ApiError, FALLBACK_FILE_NAME, GENERIC_ERROR_MESSAGE, apiDownload, apiFetch, apiUrl, fileNameFrom } from './api'
 import { getToken, saveToken } from '../auth/session'
 import { jsonResponse, validToken } from '../test/utils'
+
+describe('URL de la API', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('sin VITE_API_BASE_URL la ruta es relativa, para el proxy de Vite', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([]))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await apiFetch('/inventory/products')
+
+    expect(apiUrl('/sales')).toBe('/api/sales')
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/inventory/products')
+  })
+
+  it('con VITE_API_BASE_URL apiFetch llama a la URL absoluta', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.servibox.co')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await apiFetch('/registration-requests', { method: 'POST', body: {}, auth: false })
+
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.servibox.co/api/registration-requests')
+  })
+
+  it('con VITE_API_BASE_URL apiDownload llama a la URL absoluta', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.servibox.co')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ error: 'Recurso no encontrado', status: 404 }, 404))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(apiDownload('/reporting/export?type=MOVIMIENTOS')).rejects.toMatchObject({ status: 404 })
+
+    expect(fetchMock.mock.calls[0]![0]).toBe('https://api.servibox.co/api/reporting/export?type=MOVIMIENTOS')
+  })
+
+  it('una barra final en la variable no duplica la barra', () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.servibox.co/')
+    expect(apiUrl('/sales')).toBe('https://api.servibox.co/api/sales')
+  })
+
+  it('.env.production apunta a la API publica y solo api.ts llama a fetch', () => {
+    expect(readFileSync('.env.production', 'utf-8')).toMatch(/^VITE_API_BASE_URL=https:\/\/api\.servibox\.co\r?$/m)
+    const files = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory() ? files(join(dir, entry.name)) : [join(dir, entry.name)],
+      )
+    const callers = files('src')
+      .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file))
+      .filter((file) => /(^|[^.\w])fetch\(/.test(readFileSync(file, 'utf-8')))
+      .map((file) => file.replaceAll('\\', '/'))
+    expect(callers).toEqual(['src/lib/api.ts'])
+  })
+})
 
 describe('apiFetch', () => {
   it('envia el token como Bearer con la base /api', async () => {

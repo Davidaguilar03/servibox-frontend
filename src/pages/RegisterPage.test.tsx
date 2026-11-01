@@ -39,7 +39,7 @@ async function fillForm(user = userEvent.setup()) {
   await user.type(screen.getByLabelText('Teléfono'), '300 123 4567')
   await user.type(screen.getByLabelText('Nombre completo'), 'Laura Gómez')
   await user.type(screen.getByLabelText('Correo'), 'laura@elroble.co')
-  await user.click(screen.getByRole('checkbox', { name: 'Acepto los términos de uso y el tratamiento de datos.' }))
+  await user.click(screen.getByRole('checkbox', { name: 'Acepto la Política de tratamiento de datos personales y los Términos y condiciones' }))
   return user
 }
 
@@ -70,13 +70,11 @@ describe('solicitud de cuenta', () => {
     expect(photo).toHaveAttribute('alt', '')
   })
 
-  it('informa el uso de los datos sin enlazar una politica que no existe', async () => {
+  it('la autorizacion se da solo en la casilla: no hay nota de aceptacion bajo el boton', async () => {
     renderRoute('/registro')
 
-    const note = await screen.findByText('Al enviar la solicitud aceptas que usemos estos datos para evaluarla y contactarte.')
-    expect(note.closest('a')).toBeNull()
-    expect(within(note).queryByRole('link')).not.toBeInTheDocument()
-    expect(screen.getByText(/Creas tu usuario y tu contraseña, y dejamos listas la Caja General/)).toBeInTheDocument()
+    expect(await screen.findByText(/Creas tu usuario y tu contraseña, y dejamos listas la Caja General/)).toBeInTheDocument()
+    expect(screen.queryByText(/Al enviar la solicitud aceptas/)).not.toBeInTheDocument()
   })
 
   it('sugiere el codigo desde el nombre comercial hasta que se edita a mano', async () => {
@@ -138,7 +136,7 @@ describe('solicitud de cuenta', () => {
     await user.click(submit())
 
     expect(screen.getByRole('checkbox')).toHaveFocus()
-    expect(screen.getByText('Acepta los términos de uso y el tratamiento de datos para continuar.')).toBeInTheDocument()
+    expect(screen.getByText('Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.')).toBeInTheDocument()
     expect(requestCalls(fetchMock)).toHaveLength(0)
   })
 
@@ -165,6 +163,7 @@ describe('solicitud de cuenta', () => {
       adminFullName: 'Laura Gómez',
       adminEmail: 'laura@elroble.co',
       acceptTerms: true,
+      policyVersion: '2026-11-01',
     })
     expect(screen.getByText(/Vamos a revisar los datos de/)).toHaveTextContent(
       'Vamos a revisar los datos de Serviteca El Roble. Si la aprobamos, te enviaremos a laura@elroble.co un correo con el enlace para activar la cuenta y crear tu usuario.',
@@ -362,14 +361,100 @@ describe('solicitud de cuenta', () => {
     expect(slug).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('el enlace de los terminos abre /terminos en una pestana nueva y hay vuelta al login', async () => {
+  it('los enlaces de la casilla abren en una pestana nueva sin referrer y hay vuelta al login', async () => {
     renderRoute('/registro')
 
-    const link = await screen.findByRole('link', { name: 'términos de uso y el tratamiento de datos' })
-    expect(link).toHaveAttribute('href', '/terminos')
-    expect(link).toHaveAttribute('target', '_blank')
+    await screen.findByRole('checkbox')
+    const label = within(document.querySelector('label[for="acceptTerms"]') as HTMLElement)
+    const policy = label.getByRole('link', { name: 'Política de tratamiento de datos personales' })
+    const terms = label.getByRole('link', { name: 'Términos y condiciones' })
+    expect(policy).toHaveAttribute('href', '/politica-de-datos')
+    expect(terms).toHaveAttribute('href', '/terminos')
+    for (const link of [policy, terms]) {
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
     expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
+  })
+
+  it('la casilla empieza sin marcar, sin error y sin descripcion', async () => {
+    renderRoute('/registro')
+
+    const checkbox = await screen.findByRole('checkbox', { name: 'Acepto la Política de tratamiento de datos personales y los Términos y condiciones' })
+    expect(checkbox).not.toBeChecked()
+    expect(checkbox).not.toHaveAttribute('aria-invalid')
+    expect(checkbox).not.toHaveAttribute('aria-describedby')
+  })
+
+  it('sin marcar la casilla el error queda asociado al campo y el teclado llega a los enlaces', async () => {
+    const fetchMock = mockFetch(() => Promise.resolve(jsonResponse(accepted, 202)))
+    renderRoute('/registro')
+    const user = await fillForm()
+    const checkbox = screen.getByRole('checkbox')
+
+    await user.click(checkbox)
+    await user.click(submit())
+
+    expect(checkbox).toHaveFocus()
+    expect(checkbox).toHaveAttribute('aria-invalid', 'true')
+    expect(checkbox).toHaveAccessibleDescription('Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.')
+    expect(requestCalls(fetchMock)).toHaveLength(0)
+    const label = within(document.querySelector('label[for="acceptTerms"]') as HTMLElement)
+    await user.tab()
+    expect(label.getByRole('link', { name: 'Política de tratamiento de datos personales' })).toHaveFocus()
+    await user.tab()
+    expect(label.getByRole('link', { name: 'Términos y condiciones' })).toHaveFocus()
+  })
+
+  it('la version de la politica viaja tambien al reintentar, con la misma clave', async () => {
+    const fetchMock = mockFetch(
+      () => Promise.reject(new TypeError('Failed to fetch')),
+      () => Promise.resolve(jsonResponse(accepted, 202)),
+    )
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+    await screen.findByRole('alert')
+    await user.click(submit())
+    await screen.findByRole('heading', { level: 1, name: 'Recibimos tu solicitud' })
+
+    const [first, second] = requestCalls(fetchMock)
+    expect(keyOf(second!)).toBe(keyOf(first!))
+    expect(JSON.parse(second![1].body as string).policyVersion).toBe('2026-11-01')
+  })
+
+  it.each([
+    ['La version de la politica es obligatoria', 'No pudimos registrar la versión de la política que aceptaste. Recarga la página e inténtalo de nuevo.'],
+    ['La version de la politica no es valida', 'La versión de la política que aceptaste no es válida. Recarga la página e inténtalo de nuevo.'],
+    ['La politica fue actualizada; recarga la pagina para continuar', 'Actualizamos la política de datos. Recarga la página para continuar.'],
+  ])('el 400 "%s" muestra su mensaje con un boton para recargar sin perder lo digitado', async (backend, text) => {
+    const reload = vi.fn()
+    vi.stubGlobal('location', { ...window.location, reload })
+    mockFetch(() => Promise.resolve(jsonResponse({ error: backend, status: 400 }, 400)))
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos enviar la solicitud')
+    expect(alert).toHaveTextContent(text)
+    expect(screen.getByLabelText('Nombre comercial')).toHaveValue('  Serviteca El Roble ')
+    expect(primaryActions()).toHaveLength(1)
+    await user.click(within(alert).getByRole('button', { name: 'Recargar la página' }))
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('otro 400 no ofrece recargar la pagina', async () => {
+    mockFetch(() => Promise.resolve(jsonResponse({ error: 'El identificador demo esta reservado', status: 400 }, 400)))
+    renderRoute('/registro')
+    const user = await fillForm()
+
+    await user.click(submit())
+
+    expect(within(await screen.findByRole('alert')).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('con sesion redirige a /inicio', async () => {

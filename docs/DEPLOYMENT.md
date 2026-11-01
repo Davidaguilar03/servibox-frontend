@@ -1,4 +1,46 @@
-# Frontend y proxy en contenedor
+# Publicacion del frontend
+
+## Publicar en servibox.co (Caddy, via vigente)
+
+Caddy sirve la carpeta dist como archivos estaticos en https://servibox.co, con fallback a
+index.html para las rutas SPA. La API esta en https://api.servibox.co, otro origen. La subida
+la hace David:
+
+```powershell
+npm ci
+npm test
+npm run build
+```
+
+`npm run build` toma VITE_API_BASE_URL de `.env.production`. Subir el contenido de dist (no la
+carpeta) a deploy/frontend del servidor, reemplazando lo anterior. dist usa rutas absolutas
+desde la raiz (`/assets/...`), asi que debe servirse en la raiz del dominio. La unica cadena
+localhost de dist es la base interna de react-router para interpretar URL; no es una peticion.
+
+Comprobar despues de publicar, porque las pruebas usan API simulada:
+
+```powershell
+curl.exe -i -X OPTIONS https://api.servibox.co/api/registration-requests -H "Origin: https://servibox.co" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,idempotency-key"
+```
+
+* El preflight debe permitir el origen y las cabeceras content-type, idempotency-key y
+  authorization.
+* `Access-Control-Expose-Headers` debe incluir Content-Disposition y Retry-After. Sin la primera
+  las descargas se guardan como `archivo`, sin extension; sin la segunda el 429 no dice cuanto
+  esperar.
+* index.html no debe quedar en cache larga: un index viejo enviaria una POLICY_VERSION vencida.
+
+## Publicar una version nueva de la politica o los terminos
+
+1. Cambiar POLICY_VERSION y el texto en `src/legal/legalContent.ts`.
+2. Agregar `docs/legal/AAAA-MM-DD-politica-datos.md` y `docs/legal/AAAA-MM-DD-terminos.md`. Los
+   archivos anteriores no se editan: son el registro de lo que se acepto. `legal.test.tsx` falla
+   si faltan o si difieren del modulo.
+3. Coordinar con REGISTRATION_POLICY_VERSION del backend, segun docs/deploy/VPS.md de ese repo.
+   Mientras difieran, el backend rechaza las solicitudes con `La politica fue actualizada` si el
+   navegador tiene la version anterior, y la pantalla ofrece recargar.
+
+## Imagen Docker con Nginx (sin uso de publicacion)
 
 Preparacion local sin publicar, tarea 3 parte B. Desde la raiz Git frontend:
 
@@ -123,9 +165,8 @@ permiten otras etiquetas ya construidas. Scripts externos son evidencia local, n
 
 ## Pendientes antes de entrega publica
 
-Confirmar y sustituir contactos demostrativos de src/config/contact.ts: WhatsApp
-+57 300 000 0000 y hola@servibox.example. Aun consumidos por TermsPage, Toaster y
-errorMessages; no son soporte real. Landing ya los omite; esta rama no publica contactos.
+Reemplazado el 2026-11-01 en lo que toca a contactos y dominio: correo real hola@servibox.co,
+sin telefono, y publicacion en servibox.co con Caddy (seccion inicial).
 Pendientes revision manual de David durante la regresion del nuevo bloque, antes de
 publicar, QA/configuracion Railway, servibox.co
 aun sin comprar, TLS publico, backups/restauracion, secretos, politica de registro y

@@ -287,8 +287,8 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   `url`) es la unica fuente; la interfaz los importa de ahi y ningun archivo repite el correo
   (lo comprueba `LandingPage.test.tsx`). Correo real hola@servibox.co desde el 2026-10-31. El
   telefono aun no existe: con `WHATSAPP` undefined no se muestra ninguna linea de telefono,
-  enlace tel: ni WhatsApp (terminos y mensaje de red usan el correo). La landing omite los
-  contactos.
+  enlace tel: ni WhatsApp (el mensaje de red usa el correo). La landing omite los contactos.
+  Los textos legales enlazan solo el correo: su contenido no cambia si aparece un telefono.
 * Un concepto, un rotulo: los de `src/copy/glossary.ts` (Forma de pago, Medio de pago, Otros
   ingresos, Codigo de tu serviteca, Stock bajo, Restaurar...). Tabla, guarda de tildes y jerga
   (`src/copy/copy.test.ts`) y mensajes de error en [06-COPY.md](06-COPY.md).
@@ -296,7 +296,8 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Un error le dice al usuario que paso y que hacer (`Revisa los datos e intentalo de nuevo.`).
 * La interfaz no ofrece funciones que no existen: nada de enlaces, pestanas, opciones ni
   textos "Proximamente" para algo que hoy no funciona. Si una funcion no esta, no se muestra;
-  se agrega cuando exista. `/terminos` ya tiene su texto (pendiente de revision legal).
+  se agrega cuando exista. Politica y terminos salen de `legal/legalContent.ts`, con copia
+  inmutable por version en `docs/legal`; no se redactan en las paginas.
 * Un solo verbo de mostrador por accion, igual en el boton primario, el estado vacio, los
   menus y los iconos que llevan a ella: `Registrar venta` (`/ventas/nueva`) y `Registrar
   compra` (`/compras/nueva`). Los titulos de las pantallas (`Nueva factura de venta`, `Nueva
