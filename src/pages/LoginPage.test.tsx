@@ -215,7 +215,8 @@ describe('formulario de login', () => {
 
     expect(await screen.findByRole('link', { name: 'Solicitar cuenta' })).toHaveAttribute('href', '/registro')
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: 'Términos y datos personales' })).toHaveAttribute('href', '/terminos')
+    expect(screen.getByRole('link', { name: 'Términos y condiciones' })).toHaveAttribute('href', '/terminos')
+    expect(screen.getByRole('link', { name: 'Política de datos' })).toHaveAttribute('href', '/politica-de-datos')
     for (const link of screen.getAllByRole('link', { name: 'ServiBox, ir a la página principal' })) {
       expect(link).toHaveAttribute('href', '/')
     }

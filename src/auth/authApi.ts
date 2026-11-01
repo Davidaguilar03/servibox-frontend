@@ -18,8 +18,8 @@ export interface LoginResponse {
 }
 
 /**
- * `RegistrationRequestBody` del backend: la serviteca, su responsable y la aceptacion de los
- * terminos. Sin usuario ni contrasena: se crean al activar la cuenta.
+ * `RegistrationRequestBody` del backend: la serviteca, su responsable, la aceptacion de los
+ * terminos y la version de la politica aceptada. Sin usuario ni contrasena: se crean al activar la cuenta.
  */
 export interface RegistrationRequestBody {
   businessName: string
@@ -29,6 +29,7 @@ export interface RegistrationRequestBody {
   adminFullName: string
   adminEmail: string
   acceptTerms: boolean
+  policyVersion: string
 }
 
 /** `ActivationAcknowledgment`: sin JWT; el usuario sigue al login con el codigo de la serviteca. */

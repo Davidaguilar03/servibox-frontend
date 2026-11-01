@@ -37,6 +37,9 @@ texto de ahi; nunca se escribe a mano otro sinonimo.
 | `platformTenants` | Servitecas | navegacion y titulo de plataforma | |
 | `tenantStatuses` | Activa, Suspendida | estado de servitecas en plataforma | |
 | `registrationStatuses` | Pendiente, Aprobada, Rechazada, Cancelada, Activada | filtros y estados de solicitudes | |
+| `privacyPolicy` | Politica de tratamiento de datos personales | casilla del registro | Tratamiento de datos |
+| `privacyPolicyShort` | Politica de datos | pies y enlace entre textos legales | Terminos y datos personales |
+| `terms` | Terminos y condiciones | casilla, pies y enlace entre textos legales | Terminos de uso, Terminos y tratamiento de datos |
 
 Un concepto nuevo con mas de un sinonimo posible se agrega aqui antes de usarlo en pantalla.
 
@@ -146,6 +149,19 @@ El acceso de plataforma sigue la misma regla con su propio texto de credenciales
 ("Revisa tu correo y tu contrasena."), sin mencionar el codigo de la serviteca.
 
 ## Validacion de contacto
+
+Politica en la solicitud de cuenta (2026-11-01). Los tres son 400 y van en el Alert con el
+boton Recargar la pagina:
+
+* `La version de la politica es obligatoria`: No pudimos registrar la version de la politica
+  que aceptaste. Recarga la pagina e intentalo de nuevo.
+* `La version de la politica no es valida`: La version de la politica que aceptaste no es
+  valida. Recarga la pagina e intentalo de nuevo.
+* `La politica fue actualizada; recarga la pagina para continuar`: Actualizamos la politica de
+  datos. Recarga la pagina para continuar.
+
+Casilla sin marcar y `Debe aceptar los terminos y condiciones`: Acepta la Politica de
+tratamiento de datos personales y los Terminos y condiciones para continuar.
 
 Solicitud de cuenta y activacion (2026-10-31): contextos `registration` y `activation` en
 userMessage para los mensajes compartidos con Solicitudes de plataforma (codigo no disponible,

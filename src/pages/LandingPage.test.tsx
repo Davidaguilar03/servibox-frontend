@@ -194,7 +194,8 @@ describe('landing', () => {
       expect(within(area).queryByRole('link', { name: SUPPORT_EMAIL })).not.toBeInTheDocument()
     }
     const footer = screen.getByRole('contentinfo')
-    expect(within(footer).getByRole('link', { name: 'Términos y tratamiento de datos' })).toHaveAttribute('href', '/terminos')
+    expect(within(footer).getByRole('link', { name: 'Términos y condiciones' })).toHaveAttribute('href', '/terminos')
+    expect(within(footer).getByRole('link', { name: 'Política de datos' })).toHaveAttribute('href', '/politica-de-datos')
     expect(within(footer).getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login')
     expect(within(footer).getByRole('link', { name: 'Solicitar cuenta' })).toHaveAttribute('href', '/registro')
     expect(primaryLinks(footer)).toHaveLength(0)
@@ -227,7 +228,7 @@ describe('landing', () => {
       expect(href).not.toBe('#')
       expect(href).not.toMatch(/\.example|wa\.me|mailto:/)
       if (href.startsWith('#')) expect(document.getElementById(href.slice(1))).toBeVisible()
-      else expect(['/', '/login', '/registro', '/terminos']).toContain(href)
+      else expect(['/', '/login', '/registro', '/terminos', '/politica-de-datos']).toContain(href)
     }
     expect(document.querySelector('img[src*="hero-inicio"], img[src*="flujo-"]')).not.toBeInTheDocument()
     expect(document.body).not.toHaveTextContent(/prueba gratis|garantizado|%|\$|300 000 0000|\.example/i)
@@ -245,32 +246,6 @@ describe('landing', () => {
   })
 })
 
-describe('terminos', () => {
-  it('tiene titulo, fecha, las cinco secciones, la Ley 1581 y el correo, sin telefono mientras no exista', async () => {
-    renderRoute('/terminos')
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Términos de uso y tratamiento de datos' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Última actualización: 25 de octubre de 2026')).toBeInTheDocument()
-    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
-      'Qué es ServiBox',
-      'Tu cuenta',
-      'Qué datos tratamos y para qué',
-      'Tus derechos',
-      'Seguridad y cambios',
-    ])
-    expect(screen.getByText(/Ley 1581 de 2012/)).toBeInTheDocument()
-    expect(screen.getByText(/No emite facturas electrónicas ante la DIAN/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: SUPPORT_EMAIL })).toHaveAttribute('href', 'mailto:hola@servibox.co')
-    expect(screen.getByText(/Para hacerlo, escríbenos al correo/)).toBeInTheDocument()
-    expect(document.querySelector('a[href^="tel:"], a[href*="wa.me"]')).not.toBeInTheDocument()
-    expect(document.body).not.toHaveTextContent(/WhatsApp|\+57/)
-    expect(screen.getByRole('link', { name: 'Volver a la página principal' })).toHaveAttribute('href', '/')
-    expect(document.title).toBe('Términos | ServiBox')
-  })
-})
-
 const FORBIDDEN = [
   'Tu negocio en buenas manos',
   'plataforma integral',
@@ -285,7 +260,7 @@ const FORBIDDEN = [
 ]
 
 describe('paginas publicas', () => {
-  it.each(['/', '/login', '/registro', '/activar', '/terminos'])('%s no usa frases prohibidas', async (path) => {
+  it.each(['/', '/login', '/registro', '/activar', '/terminos', '/politica-de-datos'])('%s no usa frases prohibidas', async (path) => {
     renderRoute(path)
     await screen.findByRole('heading', { level: 1 })
 
@@ -299,6 +274,7 @@ describe('paginas publicas', () => {
     ['/registro', 'Solicitar cuenta | ServiBox'],
     ['/activar', 'Activar cuenta | ServiBox'],
     ['/terminos', 'Términos | ServiBox'],
+    ['/politica-de-datos', 'Política de datos | ServiBox'],
   ])('%s fija el titulo %s', async (path, title) => {
     renderRoute(path)
     await screen.findByRole('heading', { level: 1 })

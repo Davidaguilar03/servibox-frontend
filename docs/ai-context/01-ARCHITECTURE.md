@@ -23,7 +23,8 @@ src/
   routes.tsx          tabla de rutas, la usan App y las pruebas
   index.css           Tailwind, tokens y estilos base
   styles/tokens.css   tokens del manual de estilos (bloque @theme)
-  lib/api.ts          cliente API y ApiError
+  lib/api.ts          cliente API, ApiError y apiUrl (unico punto que arma la URL)
+  legal/              texto y version de la politica y los terminos, LegalPage y LegalLinks
   lib/errorMessage.ts texto de error para el usuario segun el estado (ver 02-CONVENTIONS)
   lib/format.ts       formatos de moneda, fecha y valor vacio
   lib/stock.ts        estado de stock (umbrales de Autollantas)
@@ -70,7 +71,8 @@ src/
 | `/login` | publica | `LoginPage`. Con sesion activa redirige a la pagina pedida o a `/inicio` |
 | `/registro` | publica | `RegisterPage`, solicitud de cuenta (POST /api/registration-requests). Con sesion activa redirige a `/inicio`. El registro inmediato se retiro el 2026-10-31 |
 | `/activar` | publica | `ActivationPage`, activacion con el enlace del correo (`/activar#token=...`); no inicia sesion |
-| `/terminos` | publica | `TermsPage` ("Proximamente") |
+| `/terminos` | publica | `TermsPage`, Terminos y condiciones (`LegalPage`, texto de `legal/legalContent.ts`). Tambien con sesion |
+| `/politica-de-datos` | publica | `PrivacyPolicyPage`, Politica de tratamiento de datos personales (`LegalPage`). Tambien con sesion |
 | `/crear-cuenta` | publica | redirige a `/registro` (enlace viejo del login), hoy la solicitud de cuenta |
 | `/inicio` | privada | `DashboardPage`, el panel de control, dentro de `AppShell` |
 | `/ventas` | privada | `SalesInvoicesPage`, Facturas de venta, dentro de `AppShell` |
@@ -113,7 +115,10 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
 
 `lib/api.ts` expone `apiFetch<T>(path, { method, body, auth, platform, headers })`:
 
-* Base `/api`. En desarrollo el proxy de Vite la envia al backend (ver Proxy).
+* La URL sale de `apiUrl(path)`, usada por `apiFetch` y `apiDownload`: origen de
+  `VITE_API_BASE_URL` mas `/api` mas la ruta. Sin definir (desarrollo, pruebas y la imagen
+  Docker) es relativa y la atiende el proxy; `.env.production` la fija en
+  https://api.servibox.co para `npm run build`. Ver [DEPLOYMENT](../DEPLOYMENT.md).
 * Con `auth` (por defecto true) agrega `Authorization: Bearer <token>`.
 * Una respuesta no exitosa se convierte en `ApiError` con `message` y `status`, leidos del
   cuerpo que el backend devuelve siempre: `{"error": mensaje, "status": n}`. Si el cuerpo no
@@ -133,6 +138,10 @@ reemplaza con `useBreadcrumbTail` (`layout/breadcrumb.ts`) mientras esta montada
   enlace temporal con `download`, libera la URL en la siguiente vuelta y devuelve el nombre.
 
 ## Proxy de produccion
+
+Produccion real desde 2026-11-01: archivos de dist en Caddy (servibox.co) y API en otro
+origen (api.servibox.co), con CORS, sin este proxy. Lo que sigue es la imagen Docker con Nginx,
+que ya no es la via de publicacion y conserva /api relativo (.dockerignore excluye `.env*`).
 
 Produccion local preparada con Dockerfile multietapa Node 24.15.0 y Nginx 1.30.2,
 bases por digest, usuario 101. /api relativo llega al backend por red privada;
@@ -619,6 +628,8 @@ recuperar y texto del modal. Logica pura en `src/trash/trashList.ts`; reglas en
   `#landing` montada y sin movimiento reducido. Recursos pendientes y secuencia
   restante del rediseno en la decision de Landing del 2026-10-27.
 * `RegisterPage`: solicitud de cuenta desde el 2026-10-31 (sin usuario ni contrasena).
+  El cuerpo lleva `policyVersion` (`POLICY_VERSION`). Casilla con enlaces a politica y terminos
+  en pestana nueva; los tres 400 de la version de la politica ofrecen Recargar la pagina.
   Reglas, sugerencia y normalizacion del codigo y cuerpo del POST en `auth/registerForm.ts`,
   que tambien exporta `usernameError` y `passwordError` para la activacion. Idempotency-Key
   por intento, acuse tras el 202 y errores segun [03-DECISIONS.md](03-DECISIONS.md).

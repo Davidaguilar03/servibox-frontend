@@ -99,7 +99,10 @@ const RULES: Rule[] = [
   [/^El color debe tener el formato #RRGGBB$/, 'El color debe tener el formato #RRGGBB.'],
   [/^El precio unitario admite como maximo dos decimales$/, 'El precio unitario admite como máximo dos decimales.'],
   // Registro y sesion.
-  [/^Debe aceptar los terminos y condiciones$/, 'Acepta los términos de uso y el tratamiento de datos para continuar.'],
+  [/^Debe aceptar los terminos y condiciones$/, 'Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.'],
+  [/^La version de la politica es obligatoria$/, 'No pudimos registrar la versión de la política que aceptaste. Recarga la página e inténtalo de nuevo.'],
+  [/^La version de la politica no es valida$/, 'La versión de la política que aceptaste no es válida. Recarga la página e inténtalo de nuevo.'],
+  [/^La politica fue actualizada; recarga la pagina para continuar$/, 'Actualizamos la política de datos. Recarga la página para continuar.'],
   [/^El NIT solo admite digitos/, NIT_FORMAT_MESSAGE],
   [/^El telefono solo admite digitos/, PHONE_FORMAT_MESSAGE],
   [/^El correo del administrador no es valido$/, 'El correo del administrador no es válido.'],

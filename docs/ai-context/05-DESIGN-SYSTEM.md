@@ -6,6 +6,14 @@ en `src/index.css` y constantes de icono en `src/components/icons.ts`. La guarda
 se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tokens.test.ts`
 (incluidos los nuevos pares de seleccion lateral).
 
+## Paginas legales (2026-11-01)
+
+* `LegalPage` conserva la composicion de la `TermsPage` anterior: tarjeta `surface` sobre
+  `canvas`, ancho `max-w-2xl`, h1 `text-title`, secciones h2 `text-section`, texto `text-body`,
+  version `text-small text-muted`. Sin tokens nuevos: los pares ya estan en tokens.test.ts.
+  `break-words` evita desbordes por correos y direcciones en movil.
+* `LegalLinks` usa el estilo del pie que ya tenian login, registro y activacion (44 px).
+
 ## Plataforma (2026-10-30)
 
 * Reemplazado el 2026-10-31 (rediseno del shell): el panel de plataforma ya no usa AppShell.

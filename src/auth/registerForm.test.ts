@@ -135,7 +135,7 @@ describe('validacion del registro', () => {
   })
 
   it('aceptar los terminos es obligatorio', () => {
-    expect(errorOf({ acceptTerms: false }).acceptTerms).toBe('Acepta los términos de uso y el tratamiento de datos para continuar.')
+    expect(errorOf({ acceptTerms: false }).acceptTerms).toBe('Acepta la Política de tratamiento de datos personales y los Términos y condiciones para continuar.')
   })
 })
 
@@ -156,6 +156,7 @@ describe('cuerpo del registro', () => {
       adminFullName: 'Laura Gómez',
       adminEmail: 'laura@elroble.co',
       acceptTerms: true,
+      policyVersion: '2026-11-01',
     })
   })
 })

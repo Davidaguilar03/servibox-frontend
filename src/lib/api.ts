@@ -1,7 +1,15 @@
 import { clearSession, getToken } from '../auth/session'
 import { clearPlatformSession, getPlatformToken } from '../platform/platformSession'
 
-const BASE_URL = '/api'
+/**
+ * Unico punto que arma la URL de una llamada al backend. VITE_API_BASE_URL es el origen de la API
+ * en el build de produccion (.env.production); sin definir, la ruta es relativa y en desarrollo
+ * la atiende el proxy de Vite.
+ */
+export function apiUrl(path: string): string {
+  const origin = ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').trim().replace(/\/+$/, '')
+  return `${origin}/api${path}`
+}
 
 /**
  * Mensaje para cualquier error HTTP que no sea de validacion ni de conflicto, 5xx incluido.
@@ -41,7 +49,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   const token = auth ? (platform ? getPlatformToken() : getToken()) : null
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const response = await fetch(BASE_URL + path, {
+  const response = await fetch(apiUrl(path), {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -73,7 +81,7 @@ export async function apiDownload(path: string): Promise<string> {
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const response = await fetch(BASE_URL + path, { headers })
+  const response = await fetch(apiUrl(path), { headers })
   if (!response.ok) {
     if (response.status === 401) clearSession(true)
     throw await toDownloadError(response)

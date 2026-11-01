@@ -21,6 +21,7 @@ import { PlatformRequireAuth } from './platform/PlatformRequireAuth'
 import { PlatformShell } from './platform/PlatformShell'
 import { OccasionalIncomePage } from './pages/OccasionalIncomePage'
 import { OperationalExpensesPage } from './pages/OperationalExpensesPage'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { PurchaseDetailPage } from './pages/PurchaseDetailPage'
@@ -59,6 +60,7 @@ export const routes: RouteObject[] = [
   { path: '/registro', element: <RegisterPage /> },
   { path: '/activar', element: <ActivationPage /> },
   { path: '/terminos', element: <TermsPage /> },
+  { path: '/politica-de-datos', element: <PrivacyPolicyPage /> },
   { path: '/crear-cuenta', element: <Navigate to="/registro" replace /> },
   // Plataforma: acceso, guard, shell y cache propios; la sesion de serviteca no cuenta aqui.
   { path: '/plataforma/login', element: <PlatformLoginPage /> },

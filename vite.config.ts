@@ -2,8 +2,8 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// El backend se alcanza por el proxy de Vite: el navegador solo habla con el mismo
-// origen y el backend no necesita CORS. Ver docs/ai-context/03-DECISIONS.md.
+// En desarrollo el backend se alcanza por el proxy de Vite, en el mismo origen. En produccion
+// la URL de la API sale de VITE_API_BASE_URL (.env.production). Ver docs/ai-context/03-DECISIONS.md.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
