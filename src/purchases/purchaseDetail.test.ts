@@ -58,7 +58,7 @@ describe('pago a una compra', () => {
 
   it('un pago dentro del saldo, del rango y de la cuenta es valido, en los limites incluidos', () => {
     expect(validatePayment(draft, 597938.28, range, account).valid).toBe(true)
-    expect(validatePayment({ ...draft, amount: '597938.28', date: '2026-10-05' }, 597938.28, range, account).valid).toBe(true)
+    expect(validatePayment({ ...draft, amount: '597.938,28', date: '2026-10-05' }, 597938.28, range, account).valid).toBe(true)
   })
 
   it('el valor debe ser mayor que cero', () => {
@@ -70,7 +70,7 @@ describe('pago a una compra', () => {
   })
 
   it('no puede superar el saldo pendiente', () => {
-    expect(validatePayment({ ...draft, amount: '597938.29' }, 597938.28, range, account).errors.amount).toBe(
+    expect(validatePayment({ ...draft, amount: '597.938,29' }, 597938.28, range, account).errors.amount).toBe(
       'No puede superar el saldo pendiente de $ 597.938',
     )
   })
@@ -96,5 +96,6 @@ describe('pago a una compra', () => {
 
   it('el cuerpo del POST lleva cuenta, valor y fecha', () => {
     expect(buildCollectionRequest(draft)).toEqual({ accountId: 10, amount: 500000, date: '2026-10-18' })
+    expect(buildCollectionRequest({ ...draft, amount: '1.500.000,5' }).amount).toBe(1500000.5)
   })
 })

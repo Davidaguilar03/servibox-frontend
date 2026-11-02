@@ -134,20 +134,37 @@ describe('nueva factura de compra', () => {
     vi.useRealTimers()
   })
 
+  it('escribe el precio con punto de miles, calcula en vivo y envia el numero', async () => {
+    const { user, fetchMock } = await setup()
+    await chooseSupplier(user, 'distri')
+    await user.type(screen.getByLabelText('N.º factura del proveedor'), 'MILES-1')
+    await addProduct(user, 'BAT-004')
+    const price = screen.getByLabelText('Precio sin IVA')
+    await user.clear(price)
+    await user.type(price, '1500000')
+    expect(price).toHaveValue('1.500.000')
+    expect(within(screen.getByRole('listitem', { name: /^Línea / })).getByText(/^\$\s1\.500\.000$/)).toBeInTheDocument()
+    await user.type(price, ',5')
+    expect(price).toHaveValue('1.500.000,5')
+    await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
+    await waitFor(() => expect(posts(fetchMock, '/api/purchases')).toHaveLength(1))
+    expect(posts(fetchMock, '/api/purchases')[0]?.details).toEqual([{ productId: 1 + 1, quantity: 1, price: 1500000.5 }])
+  })
+
   it('muestra precision invalida en el campo sin crear y acepta ceros finales', async () => {
     const { user, fetchMock } = await setup()
     await chooseSupplier(user, 'distri')
     await user.type(screen.getByLabelText('N.º factura del proveedor'), 'CENT-1')
     await addProduct(user, 'BAT-004')
     const price = screen.getByLabelText('Precio sin IVA')
-    for (const value of ['0.005', '0.0100000000000000000001']) {
+    for (const value of ['0,005', '0,0100000000000000000001']) {
       fireEvent.change(price, { target: { value } })
       await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
       expect(price).toHaveAttribute('aria-invalid', 'true')
       expect(price).toHaveAccessibleDescription('El precio unitario admite como máximo dos decimales.')
       expect(posts(fetchMock, '/api/purchases')).toHaveLength(0)
     }
-    fireEvent.change(price, { target: { value: '0.0100' } })
+    fireEvent.change(price, { target: { value: '0,0100' } })
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
     await waitFor(() => expect(posts(fetchMock, '/api/purchases')).toHaveLength(1))
     expect(posts(fetchMock, '/api/purchases')[0]?.details).toEqual([{ productId: 1 + 1, quantity: 1, price: 0.01 }])
@@ -157,8 +174,8 @@ describe('nueva factura de compra', () => {
     const { user, fetchMock } = await setup({ ...fullRoutes(), 'GET /api/treasury/accounts': () => jsonResponse([{ ...accounts[1], currentBalance: balance }]) })
     await chooseSupplier(user, 'distri')
     await user.type(screen.getByLabelText('N.º factura del proveedor'), 'CENT-2')
-    await addProduct(user, 'LL-004', '1', '0.01')
-    await addProduct(user, 'BAT-004', '1', '0.01')
+    await addProduct(user, 'LL-004', '1', '0,01')
+    await addProduct(user, 'BAT-004', '1', '0,01')
     expect(summaryValue('Total')).toHaveTextContent('$ 0')
     await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
     await waitFor(() => expect(posts(fetchMock, '/api/purchases')).toHaveLength(balance === 0.02 ? 1 : 0))
@@ -224,7 +241,7 @@ describe('nueva factura de compra', () => {
     await user.type(screen.getByLabelText('N.º factura del proveedor'), ' DB-18452 ')
 
     await addProduct(user, 'pirelli', '12')
-    expect(screen.getByLabelText('Precio sin IVA')).toHaveValue(168000)
+    expect(screen.getByLabelText('Precio sin IVA')).toHaveValue('168.000')
     await addProduct(user, 'VAL-001', '3')
 
     const pirelli = screen.getByRole('listitem', { name: 'Línea LL-004' })

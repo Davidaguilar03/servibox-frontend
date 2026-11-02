@@ -3,6 +3,7 @@ import type { TreasuryMovement } from '../accounts/accountsApi'
 import { accountMovements, periodRange } from '../accounts/accountsView'
 import type { Account } from '../dashboard/dashboardApi'
 import { parseAmount } from '../inventory/productForm'
+import { amountTextFromNumber } from '../lib/amountInput'
 import { defaultCashAccount } from '../lib/accountPayment'
 import { formatCurrency } from '../lib/format'
 import { normalizeText } from '../lib/text'
@@ -127,7 +128,7 @@ export function formFromMovement(movement: TreasuryMovement): ManualFormValues {
     concept: movement.concept,
     date: movement.date,
     accountId: movement.accountId === null ? '' : String(movement.accountId),
-    amount: String(movement.amount).replace('.', ','),
+    amount: amountTextFromNumber(movement.amount),
     notes: movement.notes ?? '',
   }
 }

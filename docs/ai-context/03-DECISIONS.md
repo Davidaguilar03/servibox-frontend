@@ -2,6 +2,23 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Todos los montos en pesos con punto de miles automatico (feat/58)
+
+* Saldo inicial (nueva y editar cuenta), Monto (transferencia, ingreso y gasto), Valor del abono, Valor del pago y Precio de
+  linea (venta y compra) pasan a `AmountField`. Porcentajes, por mil, cantidades y stock no son dinero y no cambian.
+* Reemplaza "input numerico con punto decimal" de los precios de linea y el `type="number"` de abonos y pagos: esos campos
+  pasan a coma decimal y un punto escrito se ignora, como en el resto. Reglas, mensajes y cuerpos de la API sin cambios.
+  David lo confirmo sin aviso nuevo, aunque `1500.5` quede `15.005` y el precio de linea no tenga tope.
+* `AmountField` no cambia: ya aceptaba `inputMode` y no limita decimales, eso lo decide cada validacion. Los campos con decimales
+  pasan `inputMode="decimal"` para que el teclado movil ofrezca la coma.
+* `TextField compact` y no un campo aparte: el precio de linea conserva su etiqueta oculta desde xl y su valor a la derecha sin
+  duplicar la logica de formato. `LineNumberInput` queda solo para Cantidad.
+* `amountToDecimalText` y no `parseAmount` en el precio: `unitPriceError` mide los decimales en el texto, y con `1.000,` a medio
+  escribir `parseAmount` da NaN y el total en vivo saltaria a cero.
+* `amountTextFromNumber` conserva el signo: un saldo inicial heredado negativo sigue visible y bloqueado. Sin el signo, renombrar
+  esa cuenta habria enviado el saldo como positivo.
+* Detalle en sessions/2026-11-01-amount-field-everywhere.md.
+
 ## 2026-11-01: Sin accesos duplicados del menu lateral en los listados (feat/57)
 
 * El menu lateral ya lleva a Clientes, Otros ingresos, Proveedores y Gastos operativos: se quitan esos botones de
@@ -17,7 +34,8 @@ Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 ## 2026-11-01: Costo de producto con punto de miles automatico (feat/56, ronda 2)
 
 * No habia un campo de dinero con separador en el repo: se crea `AmountField` y `lib/amountInput.ts`, sin
-  dependencias. Solo lo usa el costo de producto, el unico monto que se digita en ese formulario.
+  dependencias. Solo lo usa el costo de producto, el unico monto que se digita en ese formulario (reemplazado: desde
+  feat/58 lo usan todos los montos).
 * El formulario guarda el texto formateado y `parseAmount`, que ya entendia el punto de miles, da el numero. Asi
   no cambian `validateProduct`, los cuerpos de la API ni el panel.
 * La coma no se filtra aunque el costo sea en pesos enteros: el campo admite un costo guardado con decimales y, si

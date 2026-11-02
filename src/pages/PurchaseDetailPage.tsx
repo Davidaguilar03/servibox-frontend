@@ -14,13 +14,16 @@ import { DataTable, type Column } from '../components/DataTable'
 import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge } from '../components/StatusBadge'
+import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts, type Account } from '../dashboard/dashboardApi'
 import { useBreadcrumbTail } from '../layout/breadcrumb'
 import { defaultCashAccount } from '../lib/accountPayment'
+import { amountTextFromNumber } from '../lib/amountInput'
 import { ApiError } from '../lib/api'
+import { parseAmount } from '../inventory/productForm'
 import { businessToday } from '../lib/businessDate'
 import { revealErrors } from '../lib/formErrors'
 import { EMPTY_VALUE, formatCurrency, formatDate } from '../lib/format'
@@ -378,7 +381,7 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
   const range = collectionDateRange(purchase.invoiceDate, today)
   const [draft, setDraft] = useState<Omit<PaymentDraft, 'accountId'> & { accountId: number | null | undefined }>({
     accountId: undefined,
-    amount: String(purchase.pendingBalance),
+    amount: amountTextFromNumber(purchase.pendingBalance),
     date: today,
   })
   const submitting = useRef(false)
@@ -416,7 +419,7 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
   // Validacion al salir de cada campo; al enviar, todos.
   const shown = (field: 'account' | 'amount' | 'date') => (submitted || touched.has(field) ? errors[field] : undefined)
   const touch = (field: string) => () => setTouched((current) => new Set(current).add(field))
-  const dirty = draft.accountId !== undefined || draft.amount !== String(purchase.pendingBalance) || draft.date !== today
+  const dirty = draft.accountId !== undefined || draft.amount !== amountTextFromNumber(purchase.pendingBalance) || draft.date !== today
 
   return (
     <DiscardableModal
@@ -460,7 +463,7 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
         {account && insufficient && (
           <Alert
             tone="error"
-            title={`Saldo insuficiente en ${account.name}: disponible ${formatCurrency(account.currentBalance)}, necesitas ${formatCurrency(Number(draft.amount))}`}
+            title={`Saldo insuficiente en ${account.name}: disponible ${formatCurrency(account.currentBalance)}, necesitas ${formatCurrency(parseAmount(draft.amount))}`}
           />
         )}
         {accounts.isError ? (
@@ -485,14 +488,11 @@ function PaymentModal({ purchase, accounts, onClose, onSaved, onRejected }: Paym
           />
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
+          <AmountField
             label="Valor del pago"
-            type="number"
             inputMode="decimal"
-            min={0}
-            step="any"
             value={draft.amount}
-            onChange={(event) => setDraft({ ...draft, amount: event.target.value })}
+            onValueChange={(amount) => setDraft({ ...draft, amount })}
             onBlur={touch('amount')}
             error={shown('amount')}
           />

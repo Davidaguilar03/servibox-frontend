@@ -92,7 +92,7 @@ describe('abono', () => {
   })
 
   it('no puede superar el saldo pendiente', () => {
-    expect(validateCollection({ ...draft, amount: '1880000.01' }, 1880000, range).errors.amount).toBe(
+    expect(validateCollection({ ...draft, amount: '1.880.000,01' }, 1880000, range).errors.amount).toBe(
       'No puede superar el saldo pendiente de $ 1.880.000',
     )
   })
@@ -110,5 +110,7 @@ describe('abono', () => {
 
   it('el cuerpo del POST lleva cuenta, valor y fecha', () => {
     expect(buildCollectionRequest(draft)).toEqual({ accountId: 10, amount: 500000, date: '2026-10-18' })
+    expect(buildCollectionRequest({ ...draft, amount: '1.500.000,5' }).amount).toBe(1500000.5)
+    expect(validateCollection({ ...draft, amount: '1.500.000,5' }, 1500000.5, range).valid).toBe(true)
   })
 })

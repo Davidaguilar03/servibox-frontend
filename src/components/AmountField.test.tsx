@@ -110,6 +110,26 @@ describe('AmountField', () => {
     expect(input.selectionStart).toBe(7)
   })
 
+  it('con teclado decimal conserva la coma y sus decimales', async () => {
+    const user = userEvent.setup()
+    function Decimal() {
+      const [value, setValue] = useState('')
+      return <AmountField label="Monto" inputMode="decimal" value={value} onValueChange={setValue} />
+    }
+    render(<Decimal />)
+    const input = screen.getByLabelText<HTMLInputElement>('Monto')
+    expect(input).toHaveAttribute('inputmode', 'decimal')
+    await user.type(input, '1500000,50')
+    expect(input).toHaveValue('1.500.000,50')
+  })
+
+  it('compact deja la etiqueta solo para lectores desde xl y el valor a la derecha', () => {
+    render(<AmountField compact label="Precio" value="1.000" onValueChange={() => {}} />)
+    const input = screen.getByLabelText('Precio')
+    expect(input).toHaveClass('text-right', 'monto')
+    expect(screen.getByText('Precio')).toHaveClass('xl:sr-only')
+  })
+
   it('conserva la etiqueta, la ayuda, el teclado numerico y el rol de dinero', () => {
     const { input } = setup('1.000')
     expect(input).toHaveAccessibleDescription('En pesos.')

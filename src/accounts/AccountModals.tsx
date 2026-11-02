@@ -7,9 +7,11 @@ import { Button } from '../components/Button'
 import { DiscardableModal } from '../components/DiscardableModal'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { SelectField } from '../components/SelectField'
+import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import { showToast } from '../components/toast'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
+import { amountTextFromNumber } from '../lib/amountInput'
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
 import { formatCurrency } from '../lib/format'
@@ -134,12 +136,11 @@ export function NewAccountModal({ onClose, onCreated }: { onClose: () => void; o
           onChange={(event) => change('type')(event.target.value)}
         />
         <AccountColorField value={values.color} onChange={change('color')} />
-        <TextField
+        <AmountField
           label="Saldo inicial"
           inputMode="decimal"
-          valueRole="monto"
           value={values.initialBalance}
-          onChange={(event) => change('initialBalance')(event.target.value)}
+          onValueChange={change('initialBalance')}
           onBlur={touch('initialBalance')}
           error={shown('initialBalance')}
           hint="El dinero con el que abre la cuenta. Queda como saldo actual y no aparece como movimiento."
@@ -154,7 +155,7 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
   const queryClient = useQueryClient()
   const [initial] = useState<AccountEditValues>(() => ({
     name: account.name,
-    initialBalance: String(account.initialBalance).replace('.', ','),
+    initialBalance: amountTextFromNumber(account.initialBalance),
     color: accountColor(account),
   }))
   const [values, setValues] = useState(initial)
@@ -245,8 +246,8 @@ export function EditAccountModal({ account, onClose }: { account: Account; onClo
           onBlur={() => setTouched((current) => new Set(current).add('name'))} error={shown('name')} />
         <TextField label="Tipo" value={ACCOUNT_TYPE_LABELS[account.type]} readOnly />
         <AccountColorField value={values.color} onChange={(color) => change('color', color)} />
-        <TextField label="Saldo inicial" inputMode="decimal" valueRole="monto" value={values.initialBalance} required
-          onChange={(event) => change('initialBalance', event.target.value)}
+        <AmountField label="Saldo inicial" inputMode="decimal" value={values.initialBalance} required
+          onValueChange={(value) => change('initialBalance', value)}
           onBlur={() => setTouched((current) => new Set(current).add('initialBalance'))} error={shown('initialBalance')}
           hint="Cambiar el saldo inicial ajusta el saldo actual y no registra un ingreso. Usa coma para los decimales." />
       </div>
@@ -366,12 +367,11 @@ export function TransferModal({ accounts, defaultOriginId, onClose }: TransferMo
           onBlur={touch('destinationAccountId')}
           error={shown('destinationAccountId')}
         />
-        <TextField
+        <AmountField
           label="Monto"
           inputMode="decimal"
-          valueRole="monto"
           value={values.amount}
-          onChange={(event) => change('amount')(event.target.value)}
+          onValueChange={change('amount')}
           onBlur={touch('amount')}
           error={shown('amount')}
           hint={origin ? `Saldo disponible en ${origin.name}: ${formatCurrency(origin.currentBalance)}.` : undefined}

@@ -1,5 +1,6 @@
 import type { AccountType, Category, Product, Sale } from '../dashboard/dashboardApi'
 import { accountPaymentMethods } from '../lib/accountPayment'
+import { amountToDecimalText } from '../lib/amountInput'
 import { ApiError } from '../lib/api'
 import { addMoney, moneyProduct, unitPriceError } from '../lib/money'
 export { round2 } from '../lib/money'
@@ -110,7 +111,7 @@ export function validateSale(form: SaleForm, productsById: Map<number, Product>)
     } else if (product && quantity > (product.quantity ?? 0)) {
       errors.quantity = `Solo hay ${product.quantity ?? 0} unidades disponibles.`
     }
-    errors.price = unitPriceError(line.price)
+    errors.price = unitPriceError(amountToDecimalText(line.price))
     if (errors.product || errors.quantity || errors.price) lines[line.key] = errors
   }
 
@@ -126,7 +127,7 @@ export function buildSaleRequest(form: SaleForm): SaleRequest {
     details: form.lines.map((line) => ({
       productId: line.productId ?? 0,
       quantity: Number(line.quantity),
-      price: Number(line.price),
+      price: Number(amountToDecimalText(line.price)),
     })),
   }
   if (form.paymentType === 'CREDITO') {

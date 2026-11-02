@@ -124,12 +124,16 @@ describe('formulario', () => {
     expect(emptyManualForm('INGRESO_OCASIONAL', today, accounts).accountId).toBe('')
   })
 
+  it('precarga un monto grande con punto de miles y coma decimal', () => {
+    expect(formFromMovement(expense(4, { amount: 1500000.5 })).amount).toBe('1.500.000,5')
+  })
+
   it('precarga de la edicion', () => {
     expect(formFromMovement(expense(4, { amount: 75000, notes: 'Recibo 12' }))).toEqual({
       concept: 'Gasto 4',
       date: '2026-10-10',
       accountId: '1',
-      amount: '75000',
+      amount: '75.000',
       notes: 'Recibo 12',
     })
   })
