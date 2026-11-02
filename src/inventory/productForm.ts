@@ -1,4 +1,5 @@
 import { ApiError } from '../lib/api'
+import { formatAmountText } from '../lib/amountInput'
 import type { InventoryProduct, ProductRequest, ProductUpdateRequest } from './inventoryApi'
 
 // Formulario de producto: valores como texto, validacion y cuerpos del POST y del PUT. El IVA y
@@ -32,7 +33,7 @@ export function productToForm(product: InventoryProduct): ProductFormValues {
     code: product.code,
     description: product.description,
     categoryId: product.categoryId === null ? '' : String(product.categoryId),
-    purchaseCost: String(product.purchaseCost).replace('.', ','),
+    purchaseCost: formatAmountText(String(product.purchaseCost).replace('.', ',')),
     quantity: String(product.quantity ?? 0),
   }
 }

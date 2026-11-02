@@ -1,7 +1,7 @@
 import { GLOSSARY } from '../copy/glossary'
 import type { ReactNode } from 'react'
 import { Boxes, PackageCheck, TriangleAlert, Warehouse } from 'lucide-react'
-import { Link, useOutletContext, useSearchParams } from 'react-router'
+import { Link, Outlet, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
@@ -71,21 +71,17 @@ const PRODUCTS_TABLE_FULL = 940
 
 const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
 
-/** Lo que el formulario necesita para volver al listado con los mismos filtros. */
-export interface ListState {
-  listSearch: string
-}
-
 function units(count: number) {
   return count === 1 ? '1 unidad' : `${count} unidades`
 }
 
-/** Productos: indicadores, filtros en la URL y listado paginado. */
+/** Productos: indicadores, filtros en la URL y listado paginado. Nuevo y Editar se abren en un modal sobre el listado. */
 export function ProductsPage() {
   const { menuButton } = useOutletContext<AppShellContext>()
   const [searchParams, setSearchParams] = useSearchParams()
   const filters = parseProductFilters(searchParams)
-  const listState: ListState = { listSearch: searchParams.size ? `?${searchParams.toString()}` : '' }
+  // Las rutas del modal conservan los filtros: el listado de atras no cambia y al cerrar se vuelve igual.
+  const listSearch = searchParams.size ? `?${searchParams.toString()}` : ''
 
   const products = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts })
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
@@ -114,7 +110,7 @@ export function ProductsPage() {
             title="Productos"
             subtitle="Catálogo de productos con alertas de stock. Costos y precios sin IVA."
             primary={
-              <Link to="/inventario/nuevo" state={listState} className={buttonClasses('primary')} data-variant="primary">
+              <Link to={`/inventario/nuevo${listSearch}`} className={buttonClasses('primary')} data-variant="primary">
                 Nuevo producto
               </Link>
             }
@@ -242,11 +238,12 @@ export function ProductsPage() {
             if (categories.isError) void categories.refetch()
           }}
           filters={filters}
-          listState={listState}
+          listSearch={listSearch}
           onPageChange={(pagina) => setSearchParams(productFiltersToParams({ ...filters, pagina }))}
           onClear={clearFilters}
         />
       </div>
+      <Outlet />
     </div>
   )
 }
@@ -258,15 +255,15 @@ interface ProductsTableProps {
   error: boolean
   onRetry: () => void
   filters: ProductFilters
-  listState: ListState
+  listSearch: string
   onPageChange: (page: number) => void
   onClear: () => void
 }
 
-function ProductsTable({ products, byId, loading, error, onRetry, filters, listState, onPageChange, onClear }: ProductsTableProps) {
+function ProductsTable({ products, byId, loading, error, onRetry, filters, listSearch, onPageChange, onClear }: ProductsTableProps) {
   const [sectionRef, width] = useElementWidth<HTMLElement>()
   const editLink = (product: InventoryProduct) => (
-    <CellLink to={`/inventario/${product.id}/editar`} state={listState} aria-label={`Editar ${product.code}`}>
+    <CellLink to={`/inventario/${product.id}/editar${listSearch}`} aria-label={`Editar ${product.code}`}>
       Editar
     </CellLink>
   )
@@ -321,7 +318,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
     content = (
       <EmptyState
         message="Aún no tienes productos. Crea el primero."
-        action={{ label: 'Nuevo producto', to: '/inventario/nuevo', state: listState }}
+        action={{ label: 'Nuevo producto', to: `/inventario/nuevo${listSearch}` }}
       />
     )
   } else {

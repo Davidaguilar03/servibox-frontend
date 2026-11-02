@@ -54,7 +54,7 @@ radio, sombra y puntos de corte, asi que una utilidad como `bg-red-500` no exist
 | Tipografia | `font-display` (Montserrat), `font-body` (Inter); tamanos de contenido `title`, `body`, `small` y de componente `label`, `button`, con su interlineado y peso; roles `monto` y `codigo` (IBM Plex Mono) | `text-title`, `monto`, `codigo` |
 | Espaciado | base de 4 px: `p-1` 4, `p-2` 8, `p-3` 12, `p-4` 16, `p-6` 24, `p-8` 32, `p-12` 48, `p-16` 64 | `gap-4` |
 | Radios | `control` 8, `surface` 12, `pill` 999 | `rounded-surface` |
-| Sombras | `raised` (menus, toasts, barra fija), `overlay` (modales, menu movil); solo lo que flota | `shadow-raised` |
+| Sombras | `raised` (menus, toasts), `overlay` (modales, menu movil); solo lo que flota | `shadow-raised` |
 | Layout | `sidebar` 240, `sidebar-collapsed` 72, `topbar` 64, `control` 40, `row` 48, `touch` 44, `button-x` 22, `content` 1440 | `w-sidebar`, `max-w-content` |
 | Puntos de corte | `sm` 640, `md` 768, `lg` 1024, `xl` 1280, `2xl` 1536 | `lg:flex` |
 | Movimiento | `duration-fast` 120 ms (hover y foco), `duration-base` 200 ms (menus y toasts), `duration-slow` 320 ms (modales), `ease-standard` | `duration-(<token>)` |
@@ -81,13 +81,15 @@ Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `d
 `secondary`, `text`, `danger`, mas el estado deshabilitado; el rojo de `danger` es solo
 para confirmar una accion destructiva dentro de un modal; sus clases viven en
 `buttonStyles.ts` para los enlaces que se ven como boton), `TextField` (reposo, foco,
-error, deshabilitado; con mostrar u ocultar si es contrasena), `Alert` (tonos `success`,
+error, deshabilitado; con mostrar u ocultar si es contrasena), `AmountField` (`TextField` de dinero
+con punto de miles automatico y cursor estable; hoy solo el costo de producto), `Alert` (tonos `success`,
 `warning`, `error`, `info`), `IndicatorCard` (con texto secundario, variacion opcional y su propio error con
 reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
 `SelectField` (selector nativo, con ayuda o error opcional), `CategoryDot` (punto con el
 color de una categoria), `ComboboxField` (selector con
 busqueda, patron combobox de ARIA), `Modal` (Esc, foco atrapado y devuelto, fondo
-`overlay`, sombra `overlay`), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
+`overlay`, sombra `overlay`; `size="wide"` para formularios en dos columnas: 672 px, cuerpo
+desplazable y pie siempre visible), `Toaster` con `showToast` (entra en `duration-base`, se cierra a
 los 5 s, `aria-live`), `Pagination` (anterior, numeros, siguiente y el texto
 "1 a 25 de 231") y los estados `Skeleton`, `EmptyState` (con accion opcional, secundaria por defecto) y
 `ErrorState` (`states.tsx`) y `UnsavedChangesGuard` (modal "Descartar cambios" con
@@ -179,12 +181,14 @@ necesite, no antes.
   anuncia.
 * Guardian de cambios: todo modal con campos usa `DiscardableModal` (cerrar con cambios por
   Esc, la X, Cancelar o clic fuera pide confirmar; sin cambios cierra; tras guardar no
-  pregunta). Las paginas con formulario (nueva venta, nueva compra, producto, Configuracion)
-  usan `UnsavedChangesGuard`: `useBlocker` para la navegacion interna y `beforeunload` para
-  cerrar o recargar la pestana.
+  pregunta). Las paginas con formulario (nueva venta, nueva compra, Configuracion) usan
+  `UnsavedChangesGuard`: `useBlocker` para la navegacion interna y `beforeunload` para cerrar o
+  recargar la pestana. Excepcion: el modal de producto vive en su propia ruta, cerrarlo es
+  navegar, y por eso usa `Modal` dentro de `UnsavedChangesGuard`, que lo reemplaza por el aviso.
 * Costo de producto en pesos enteros: digitos con o sin punto de miles; con decimales escritos,
   "Escribe el costo en pesos, sin centavos." Un costo guardado con decimales que no se toca se
-  envia tal cual.
+  envia tal cual. El campo es `AmountField`: formatea con punto de miles mientras se escribe y
+  guarda el texto formateado; `parseAmount` lo convierte al numero que se envia y que usa el panel.
 * La formula del precio sugerido vive en el backend (`InventoryService.aplicarPrecios`).
   `inventory/pricing.ts` la copia solo para el panel del formulario; `pricing.test.ts` la liga
   a los casos verificados del backend. Si cambia la formula alla, cambia aqui.

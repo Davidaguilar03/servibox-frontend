@@ -122,16 +122,15 @@ export const routes: RouteObject[] = [
           { path: 'reportes', element: <ReportsPage />, handle: handle(['Reportes']) },
           // El ultimo tramo lo reemplaza la pagina por la cuenta seleccionada.
           { path: 'cuentas', element: <AccountsPage />, handle: handle([GLOSSARY.treasury]) },
-          { path: 'inventario', element: <ProductsPage />, handle: handle(['Inventario', 'Productos']) },
           {
-            path: 'inventario/nuevo',
-            element: <ProductFormPage />,
-            handle: handle(['Inventario', 'Productos', 'Nuevo producto']),
-          },
-          {
-            path: 'inventario/:id/editar',
-            element: <ProductFormPage />,
-            handle: handle(['Inventario', 'Productos', 'Editar producto']),
+            path: 'inventario',
+            element: <ProductsPage />,
+            handle: handle(['Inventario', 'Productos']),
+            // El formulario es un modal sobre el listado, que sigue montado detras.
+            children: [
+              { path: 'nuevo', element: <ProductFormPage />, handle: handle(['Inventario', 'Productos', 'Nuevo producto']) },
+              { path: ':id/editar', element: <ProductFormPage />, handle: handle(['Inventario', 'Productos', 'Editar producto']) },
+            ],
           },
           { path: 'inventario/categorias', element: <CategoriesPage />, handle: handle(['Inventario', 'Categorías']) },
           { path: 'configuracion', element: <SettingsPage />, handle: handle(['Configuración']) },

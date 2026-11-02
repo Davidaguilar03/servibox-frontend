@@ -1,13 +1,15 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useId, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { PackageSearch } from 'lucide-react'
 import { userMessage } from '../api/errorMessages'
 import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
+import { AmountField } from '../components/AmountField'
 import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { ErrorSummary } from '../components/ErrorSummary'
+import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
@@ -38,32 +40,35 @@ import {
 import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
-import type { ListState } from './ProductsPage'
 import { iconLg } from '../components/icons'
 
-const card = 'rounded-surface border border-border bg-surface p-6'
-
-/** Ruta del listado con los filtros que tenia al entrar al formulario. */
+/** Ruta del listado con los filtros que tiene detras del modal. */
 function useListPath() {
-  const state = useLocation().state as Partial<ListState> | null
-  return `/inventario${state?.listSearch ?? ''}`
+  return `/inventario${useLocation().search}`
 }
 
 function NotFound() {
+  const navigate = useNavigate()
   const listPath = useListPath()
   return (
-    <div className={`${card} flex flex-col items-center gap-3 py-12 text-center`}>
-      <PackageSearch {...iconLg} className="text-text-subtle" aria-hidden />
-      <h1 className="text-title text-text">Producto no encontrado</h1>
-      <p className="text-small text-text-muted">Revisa el enlace o búscalo en el listado.</p>
-      <Link to={listPath} className={buttonClasses('secondary')} data-variant="secondary">
-        Volver a Productos
-      </Link>
-    </div>
+    <Modal
+      title="Producto no encontrado"
+      onClose={() => void navigate(listPath)}
+      footer={
+        <Link to={listPath} className={buttonClasses('secondary')} data-variant="secondary">
+          Volver a Productos
+        </Link>
+      }
+    >
+      <div className="flex flex-col items-center gap-3 text-center">
+        <PackageSearch {...iconLg} className="text-text-subtle" aria-hidden />
+        <p className="text-small text-text-muted">Revisa el enlace o búscalo en el listado.</p>
+      </div>
+    </Modal>
   )
 }
 
-/** Nuevo producto (`/inventario/nuevo`) o edicion (`/inventario/:id/editar`). */
+/** Nuevo producto (`/inventario/nuevo`) o edicion (`/inventario/:id/editar`), en un modal sobre el listado. */
 export function ProductFormPage() {
   const { id } = useParams()
   if (id === undefined) return <ProductEditor key="nuevo" product={undefined} />
@@ -73,23 +78,24 @@ export function ProductFormPage() {
 }
 
 function EditProduct({ productId }: { productId: number }) {
+  const navigate = useNavigate()
+  const listPath = useListPath()
   const product = useQuery({ queryKey: [...PRODUCTS_KEY, productId], queryFn: () => fetchInventoryProduct(productId) })
 
   if (product.error instanceof ApiError && product.error.status === 404) return <NotFound />
-  if (product.isError) {
+  if (product.isError || product.isPending) {
     return (
-      <div className={card}>
-        <ErrorState message="No pudimos cargar el producto." onRetry={() => void product.refetch()} />
-      </div>
-    )
-  }
-  if (product.isPending) {
-    return (
-      <div className="flex max-w-2xl flex-col gap-6" aria-busy>
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
+      <Modal title="Editar producto" size="wide" onClose={() => void navigate(listPath)}>
+        {product.isError ? (
+          <ErrorState message="No pudimos cargar el producto." onRetry={() => void product.refetch()} />
+        ) : (
+          <div className="flex flex-col gap-4" aria-busy>
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        )}
+      </Modal>
     )
   }
   return <ProductEditor product={product.data} />
@@ -101,6 +107,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const listPath = useListPath()
+  const formId = useId()
   const [initial] = useState<ProductFormValues>(() => (product ? productToForm(product) : EMPTY_PRODUCT_FORM))
   const [values, setValues] = useState(initial)
   const [touched, setTouched] = useState<Set<ProductField>>(() => new Set())
@@ -162,6 +169,11 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
     save.mutate(values)
   }
 
+  // Cerrar es navegar al listado: con cambios, el guardian de la ruta pregunta (Esc, la X, Cancelar, clic fuera y atras).
+  function close() {
+    if (!save.isPending) void navigate(listPath)
+  }
+
   const costError = errors.purchaseCost
   const cost = values.purchaseCost.trim() && !costError ? parseAmount(values.purchaseCost) : null
   const category = categories.data?.find((item) => String(item.id) === values.categoryId)
@@ -169,31 +181,35 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   const generalError = save.isError && !isCodeConflict(save.error)
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      noValidate
-      className="grid items-start gap-6 lg:max-w-6xl lg:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]"
-    >
-      <div className="flex min-w-0 flex-col gap-6">
-        <div>
-          <h1 className="text-title text-text">{creating ? 'Nuevo producto' : 'Editar producto'}</h1>
-          <p className="mt-1 text-small text-text-muted">
+    <UnsavedChangesGuard dirty={dirty} allowLeave={allowLeave} message="Si sales ahora, se pierde lo que digitaste en este producto.">
+      <Modal
+        title={creating ? 'Nuevo producto' : 'Editar producto'}
+        size="wide"
+        onClose={close}
+        footer={
+          <>
+            <Button variant="secondary" onClick={close}>
+              Cancelar
+            </Button>
+            {/* Regla de Guardar: solo se deshabilita al enviar y, al editar, sin cambios. */}
+            <Button type="submit" form={formId} disabled={save.isPending || (!creating && !dirty)} aria-busy={save.isPending || undefined}>
+              {save.isPending ? 'Guardando…' : 'Guardar producto'}
+            </Button>
+          </>
+        }
+      >
+        <form id={formId} ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          <p className="text-small text-text-muted">
             El IVA y el precio sugerido los calcula ServiBox con el costo y el margen de la categoría.
           </p>
-        </div>
 
-        {saveError && generalError && (
-          <Alert tone="error" title="No pudimos guardar el producto">
-            {saveError}
-          </Alert>
-        )}
+          {saveError && generalError && (
+            <Alert tone="error" title="No pudimos guardar el producto">
+              {saveError}
+            </Alert>
+          )}
 
-        <section className={card} aria-labelledby="product-data-title">
-          <h2 id="product-data-title" className="mb-4 text-section text-text">
-            Datos del producto
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid items-start gap-4 sm:grid-cols-2">
             <TextField
               ref={codeRef}
               label="Código"
@@ -235,32 +251,15 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
                 required
               />
             </div>
-          </div>
-        </section>
-
-        <section className={card} aria-labelledby="product-price-title">
-          <h2 id="product-price-title" className="mb-4 text-section text-text">
-            Costo
-          </h2>
-          <div className="sm:max-w-md">
-            <TextField
+            <AmountField
               label="Costo de compra sin IVA"
-              inputMode="numeric"
               value={values.purchaseCost}
-              onChange={(event) => change('purchaseCost')(event.target.value)}
+              onValueChange={change('purchaseCost')}
               onBlur={touch('purchaseCost')}
               error={shown('purchaseCost')}
               hint="Costo de compra antes de IVA, en pesos colombianos."
               required
             />
-          </div>
-        </section>
-
-        <section className={card} aria-labelledby="product-stock-title">
-          <h2 id="product-stock-title" className="mb-4 text-section text-text">
-            Inventario
-          </h2>
-          <div className="sm:max-w-md">
             {!product ? (
               <TextField
                 label="Stock inicial"
@@ -281,25 +280,11 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
               />
             )}
           </div>
-        </section>
 
-        <div className="sticky bottom-0 z-10 flex flex-wrap justify-end gap-3 rounded-surface border border-border bg-surface p-4 shadow-raised">
-          <Button variant="secondary" onClick={() => void navigate(listPath)}>
-            Cancelar
-          </Button>
-          {/* Regla de Guardar: solo se deshabilita al enviar y, al editar, sin cambios. */}
-          <Button type="submit" disabled={save.isPending || (!creating && !dirty)} aria-busy={save.isPending || undefined}>
-            {save.isPending ? 'Guardando…' : 'Guardar producto'}
-          </Button>
-        </div>
-        <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
-      </div>
-
-      <div className="flex flex-col gap-6 lg:sticky lg:top-24">
-        <PricePanel cost={cost} category={category} settings={financial.data} />
-      </div>
-
-      <UnsavedChangesGuard dirty={dirty} allowLeave={allowLeave} message="Si sales ahora, se pierde lo que digitaste en este producto." />
-    </form>
+          <PricePanel cost={cost} category={category} settings={financial.data} />
+          <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
+        </form>
+      </Modal>
+    </UnsavedChangesGuard>
   )
 }

@@ -30,32 +30,32 @@ export function PricePanel({ cost, category, settings }: PricePanelProps) {
   const margin = category?.targetMargin ?? null
 
   return (
-    <aside className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-6" aria-labelledby="price-panel-title">
-      <h2 id="price-panel-title" className="text-section text-text">
+    <aside className="rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-4" aria-labelledby="price-panel-title">
+      <h3 id="price-panel-title" className="text-section text-text">
         Cómo se calcula el precio
-      </h2>
-      <dl className="mt-4 flex flex-col gap-3 text-body" aria-live="polite">
-        <div className="flex flex-wrap justify-between gap-x-4">
-          <dt className="text-text-muted">Costo de compra</dt>
+      </h3>
+      <dl className="mt-3 grid gap-3 text-body sm:grid-cols-3 sm:gap-x-6" aria-live="polite">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 sm:flex-col">
+          <dt className="text-small text-text-muted">Costo de compra</dt>
           <dd className="monto text-text">{cost === null ? EMPTY_VALUE : formatCurrency(cost)}</dd>
         </div>
-        <div className="flex flex-wrap justify-between gap-x-4">
-          <dt className="text-text-muted">IVA del costo</dt>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 sm:flex-col">
+          <dt className="text-small text-text-muted">IVA del costo</dt>
           <dd className="monto text-text">{result ? formatCurrency(result.taxAmount) : EMPTY_VALUE}</dd>
         </div>
-        <div className="flex flex-wrap justify-between gap-x-4">
-          <dt className="text-text-muted">Margen de la categoría</dt>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 sm:flex-col">
+          <dt className="text-small text-text-muted">Margen de la categoría</dt>
           <dd className="tabular text-text">{category ? `${fractionToPercent(margin ?? 0)} %` : EMPTY_VALUE}</dd>
         </div>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-t border-border pt-3 sm:col-span-3">
           <dt className="font-semibold text-text">Precio sugerido sin IVA</dt>
           <dd className="monto text-figure wrap-anywhere text-text">{result ? formatCurrency(result.suggestedPrice).replace('$ ', '$\u00a0') : EMPTY_VALUE}</dd>
         </div>
       </dl>
       {!ready && (
-        <p className="mt-4 text-small text-text-muted">Elige una categoría y escribe el costo para ver el precio sugerido.</p>
+        <p className="mt-3 text-small text-text-muted">Elige una categoría y escribe el costo para ver el precio sugerido.</p>
       )}
-      <p className="mt-4 text-small text-text-muted">El precio se recalcula al guardar con tu configuración actual.</p>
+      <p className="mt-1 text-small text-text-muted">El precio se recalcula al guardar con tu configuración actual.</p>
     </aside>
   )
 }

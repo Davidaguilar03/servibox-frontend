@@ -53,6 +53,14 @@ describe('formulario de producto', () => {
     expect(update).not.toHaveProperty('quantity')
   })
 
+  it('carga el costo de un producto guardado con punto de miles', () => {
+    const product = { id: 1, code: 'A', description: 'B', purchaseCost: 1234567, quantity: 1, taxAmount: 0, suggestedPrice: 0, categoryId: 1, categoryName: 'C' }
+    const values = productToForm(product as Parameters<typeof productToForm>[0])
+    expect(values.purchaseCost).toBe('1.234.567')
+    expect(buildUpdateRequest(values).purchaseCost).toBe(1234567)
+    expect(validateProduct(values, false, values.purchaseCost).purchaseCost).toBeUndefined()
+  })
+
   it('carga un producto guardado con coma decimal en el costo', () => {
     expect(
       productToForm({
@@ -66,7 +74,7 @@ describe('formulario de producto', () => {
         categoryId: 4,
         categoryName: 'REPUESTOS DEMO',
       }),
-    ).toEqual({ code: 'DEMO-001', description: 'Aceite', categoryId: '4', purchaseCost: '30000,5', quantity: '50' })
+    ).toEqual({ code: 'DEMO-001', description: 'Aceite', categoryId: '4', purchaseCost: '30.000,5', quantity: '50' })
   })
 
   it('solo acepta ids de ruta enteros positivos', () => {

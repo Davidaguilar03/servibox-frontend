@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, type ReactNode, type RefObject } from 'react'
 import { useBlocker } from 'react-router'
 import { DiscardChangesModal } from './DiscardChangesModal'
 
@@ -8,6 +8,8 @@ interface UnsavedChangesGuardProps {
   allowLeave: RefObject<boolean>
   /** Texto del aviso; por defecto el de una factura nueva. */
   message?: string
+  /** Un formulario en modal: se oculta mientras se muestra el aviso, para no tener dos dialogos abiertos. */
+  children?: ReactNode
 }
 
 /**
@@ -18,6 +20,7 @@ export function UnsavedChangesGuard({
   dirty,
   allowLeave,
   message = 'Si sales ahora, se pierde lo que digitaste en esta factura.',
+  children,
 }: UnsavedChangesGuardProps) {
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -31,6 +34,6 @@ export function UnsavedChangesGuard({
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  if (blocker.state !== 'blocked') return null
+  if (blocker.state !== 'blocked') return children ?? null
   return <DiscardChangesModal message={message} onKeepEditing={() => blocker.reset()} onDiscard={() => blocker.proceed()} />
 }

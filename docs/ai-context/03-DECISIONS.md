@@ -2,6 +2,35 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Costo de producto con punto de miles automatico (feat/56, ronda 2)
+
+* No habia un campo de dinero con separador en el repo: se crea `AmountField` y `lib/amountInput.ts`, sin
+  dependencias. Solo lo usa el costo de producto, el unico monto que se digita en ese formulario.
+* El formulario guarda el texto formateado y `parseAmount`, que ya entendia el punto de miles, da el numero. Asi
+  no cambian `validateProduct`, los cuerpos de la API ni el panel.
+* La coma no se filtra aunque el costo sea en pesos enteros: el campo admite un costo guardado con decimales y, si
+  se ignorara, escribir `98500,50` daria `9.850.050` sin aviso. Se ve y sale el error de siempre (sin centavos).
+* Un punto escrito se ignora, porque en el evento no se distingue de los puntos del formato al borrar en medio.
+  Pegado si se interpreta: con tres digitos despues es de miles y con otra cantidad es decimal.
+* El texto y el cursor se escriben en el campo dentro del propio evento: despues de renderizar, el cursor ya saltaria al final.
+
+## 2026-11-01: Formulario de producto en modal, sobre el listado (feat/56)
+
+* Reemplaza la pagina completa de producto: su barra superior, sus tarjetas por seccion, la barra de
+  acciones fija y el panel lateral. Tambien reemplaza `listSearch` en `state`.
+* Rutas conservadas como hijas de `/inventario`: enlaces directos, atras del navegador y titulo de
+  pestana siguen funcionando, y `ProductsPage` queda montada detras. Descartado: modal por estado en
+  `ProductsPage` como en Otros ingresos, porque atras saldria del listado y perderia lo digitado sin avisar.
+* Filtros en la URL del modal, no en `state`: el listado de atras debe seguir filtrado mientras esta abierto.
+* `Modal size="wide"` (opcional): los demas modales no cambian. Cuerpo desplazable y pie fijo, que el modal
+  por defecto no tiene porque su dialogo entero se desplaza.
+* `UnsavedChangesGuard` con `children` y no `DiscardableModal`: cerrar es navegar y el bloqueador ya atiende
+  Esc, la X, Cancelar, clic fuera y atras. Los dos a la vez mostrarian dos avisos o dos dialogos abiertos.
+* Se quitan los titulos Datos del producto, Costo e Inventario: en una rejilla de cinco campos no aportan.
+  Sin textos nuevos. No hay campo de precio: el precio sugerido sigue calculado en PricePanel.
+* `FLOATING_SHADOWS` conserva la entrada de `pages/ProductFormPage.tsx`, ya sin uso, porque esta tarea no
+  modifica las guardas. Detalle en sessions/2026-11-01-product-form-modal.md.
+
 ## 2026-11-01: Reloj fijo en la prueba "401 del listado" de platformTenants
 
 * Causa: validToken calcula exp en segundos y la prueba lo llamaba dos veces para comparar. Medido: 6 fallos en

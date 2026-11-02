@@ -358,8 +358,9 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 ## Inventario (2026-10-26)
 
 * Correccion visual de David: Productos conserva ListHeader pero no monta barra superior;
-  el boton movil del shell va en su encabezado, sin hueco reservado. Categorias y
-  formularios conservan breadcrumb. El titulo de pestana sigue viniendo del shell.
+  el boton movil del shell va en su encabezado, sin hueco reservado. Categorias
+  conserva breadcrumb; los modales de producto no lo muestran (2026-11-01). El titulo de pestana
+  sigue viniendo del shell.
 * Categoria deja TabList y pasa a SelectField dentro de FilterBar, junto a Buscar.
   La opcion inicial es Todas las categorias; las demas son ids reales ordenados por
   nombre. El parametro `categoria` en URL y su comportamiento no cambian. TabList
@@ -382,10 +383,12 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
   contorno, encabezado y columnas por prioridad. Las tarjetas moviles muestran
   costo, precio y accion Editar.
 * Categorias mantiene DataTable y modal compartidos; nombres extensos pueden envolver.
-  El modal apila umbrales para que rotulos y ayudas tengan espacio. En alta y edicion,
-  codigo y categoria comparten fila desde sm, descripcion ocupa el ancho disponible,
-  costo y stock se acotan, y PricePanel queda junto al formulario desde lg y debajo
-  en movil. El panel usa un borde superior tenue para distinguir los importes calculados.
+  El modal apila umbrales para que rotulos y ayudas tengan espacio.
+  Reemplazado el 2026-11-01: alta y edicion de producto son un `Modal size="wide"` (672 px como
+  maximo, margen de 16 px a los lados). Rejilla de una columna bajo sm y dos desde sm: codigo y
+  categoria, descripcion a todo el ancho, costo y stock; todos con la altura de control del
+  sistema. PricePanel va debajo de los campos. Cuerpo desplazable, separador `border` y pie
+  siempre visible. El panel usa un borde superior tenue para distinguir los importes calculados.
 * Revision visual pendiente de David. Estas reglas CSS no demuestran ausencia de
   desbordes en un navegador.
 
@@ -518,7 +521,7 @@ Alcance: toda la app, tambien la landing, el login, el registro y `/terminos` de
 
 | Token | Valor | Uso |
 |-|-|-|
-| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox, menu de usuario), toasts, tooltips, barra fija del formulario de producto, enlace "Saltar al contenido" (shell y landing) |
+| `--shadow-raised` | `0 4px 12px rgb(0 0 0 / 10%)` | Menus desplegables (combobox, menu de usuario), toasts, tooltips, enlace "Saltar al contenido" (shell y landing) |
 | `--shadow-overlay` | `0 16px 40px rgb(0 0 0 / 16%)` | Modales y menu movil abierto (`lg:shadow-none` en escritorio) |
 
 Tarjetas, tablas, paneles, tarjetas de indicador y estados no llevan sombra: se separan con
@@ -702,9 +705,9 @@ Categorias):
   las celdas pasan a relleno de 8 (`DataTable dense`). Numero, tercero, estado, total, saldo
   pendiente y acciones siempre se ven. Columnas en `components/invoiceColumns.tsx`.
 * Panel de margen del producto (`inventory/PricePanel.tsx`): "Como se calcula el precio" con
-  Costo de compra, IVA del costo, Margen de la categoria y Precio sugerido sin IVA en
-  `text-figure`; borde sin sombra; a la derecha y `sticky` desde lg, debajo por debajo. Sin
-  datos muestra "—" y la nota para completarlos.
+  Costo de compra, IVA del costo y Margen de la categoria (en fila desde sm, apilados debajo) y
+  Precio sugerido sin IVA en `text-figure`; borde sin sombra; dentro del modal de producto,
+  debajo de los campos. Sin datos muestra la raya de valor vacio y la nota para completarlos.
 * Confirmacion de descartar (`DiscardChangesModal`): titulo "¿Descartar los cambios?",
   "Seguir editando" primario y con el foco (Esc tambien sigue editando) y "Descartar"
   secundario. La usan `DiscardableModal`, `UnsavedChangesGuard`, Categorias y Configuracion.
