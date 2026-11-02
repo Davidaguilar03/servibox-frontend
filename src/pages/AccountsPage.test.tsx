@@ -613,7 +613,8 @@ describe('cuentas', () => {
     await user.type(name, 'Nequi')
     await user.selectOptions(within(dialog).getByLabelText('Tipo'), 'DIGITAL')
     await user.clear(within(dialog).getByLabelText('Saldo inicial'))
-    await user.type(within(dialog).getByLabelText('Saldo inicial'), '150.000')
+    await user.type(within(dialog).getByLabelText('Saldo inicial'), '150000')
+    expect(within(dialog).getByLabelText('Saldo inicial')).toHaveValue('150.000')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cuenta' }))
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
@@ -662,7 +663,8 @@ describe('cuentas', () => {
     expect(posts(fetchMock, '/api/treasury/transfers')).toHaveLength(0)
 
     await user.clear(within(dialog).getByLabelText('Monto'))
-    await user.type(within(dialog).getByLabelText('Monto'), '500.000')
+    await user.type(within(dialog).getByLabelText('Monto'), '500000')
+    expect(within(dialog).getByLabelText('Monto')).toHaveValue('500.000')
     await user.type(within(dialog).getByLabelText('Concepto (opcional)'), 'Consignación')
     await user.click(within(dialog).getByRole('button', { name: 'Registrar transferencia' }))
     expect(within(dialog).getByRole('button', { name: 'Registrando…' })).toBeDisabled()
@@ -691,6 +693,6 @@ describe('cuentas', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Registrar transferencia' }))
 
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Saldo insuficiente en Caja General')
-    expect(within(dialog).getByLabelText('Monto')).toHaveValue('500000')
+    expect(within(dialog).getByLabelText('Monto')).toHaveValue('500.000')
   })
 })

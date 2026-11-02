@@ -226,6 +226,7 @@ describe('Gastos operativos', () => {
     )
     await user.clear(within(dialog).getByLabelText('Monto'))
     await user.type(within(dialog).getByLabelText('Monto'), '150000')
+    expect(within(dialog).getByLabelText('Monto')).toHaveValue('150.000')
     await user.type(within(dialog).getByLabelText('Observaciones (opcional)'), 'Recibo 44')
     const save = within(dialog).getByRole('button', { name: 'Guardar gasto' })
     expect(save).toBeEnabled()
@@ -298,11 +299,12 @@ describe('Gastos operativos', () => {
     expect(within(dialog).getByLabelText('Concepto')).toHaveValue('Pago de energía')
     expect(within(dialog).getByLabelText('Fecha')).toHaveValue('2026-10-05')
     expect(within(dialog).getByLabelText('Cuenta')).toHaveValue('1')
-    expect(within(dialog).getByLabelText('Monto')).toHaveValue('80000')
+    expect(within(dialog).getByLabelText('Monto')).toHaveValue('80.000')
     expect(within(dialog).getByLabelText('Observaciones (opcional)')).toHaveValue('Factura de octubre')
     // Ya salieron 80.000 de la caja: con el saldo de 100.000 caben 180.000.
     await user.clear(within(dialog).getByLabelText('Monto'))
     await user.type(within(dialog).getByLabelText('Monto'), '180000')
+    expect(within(dialog).getByLabelText('Monto')).toHaveValue('180.000')
     expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
     await user.selectOptions(within(dialog).getByLabelText('Cuenta'), '2')
 

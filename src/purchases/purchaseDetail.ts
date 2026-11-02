@@ -1,4 +1,5 @@
 import type { Account } from '../dashboard/dashboardApi'
+import { parseAmount } from '../inventory/productForm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { round2 } from '../sales/newSale'
 import type { Purchase } from './purchasesApi'
@@ -40,7 +41,7 @@ export function validatePayment(
 ) {
   const errors: PaymentErrors = {}
   if (draft.accountId === null) errors.account = 'Elige la cuenta de la que sale el dinero.'
-  const amount = round2(Number(draft.amount))
+  const amount = round2(parseAmount(draft.amount))
   const validAmount = draft.amount.trim() !== '' && Number.isFinite(amount) && amount > 0
   if (!validAmount) {
     errors.amount = 'El valor debe ser mayor que cero.'

@@ -8,6 +8,7 @@ import { DiscardableModal } from '../components/DiscardableModal'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
+import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import type { Account } from '../dashboard/dashboardApi'
 import { revealErrors } from '../lib/formErrors'
@@ -146,11 +147,11 @@ export function ManualMovementFormModal({ config, accounts, today, movement, onC
             error={shown('date')}
             required
           />
-          <TextField
+          <AmountField
             label="Monto"
             inputMode="decimal"
             value={values.amount}
-            onChange={(event) => change('amount')(event.target.value)}
+            onValueChange={change('amount')}
             onBlur={touch('amount')}
             error={shown('amount')}
             required

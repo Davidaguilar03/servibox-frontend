@@ -17,6 +17,20 @@ export function formatAmountText(text: string): string {
 }
 
 /**
+ * Valor numerico de la API como texto del campo: `1234567.5` da `1.234.567,5`. Conserva el signo
+ * de un saldo inicial heredado negativo, que `parseAmount` rechaza: asi no se guarda como positivo.
+ */
+export function amountTextFromNumber(value: number): string {
+  const text = formatAmountText(String(value).replace('.', ','))
+  return value < 0 ? `-${text}` : text
+}
+
+/** Texto del campo con punto decimal y sin miles, para validar sus digitos: `1.234,50` da `1234.50`. */
+export function amountToDecimalText(text: string): string {
+  return text.replace(/\./g, '').replace(',', '.')
+}
+
+/**
  * Posicion del cursor en el texto ya formateado: queda detras del mismo digito que tenia
  * antes, sin contar los puntos de miles.
  */

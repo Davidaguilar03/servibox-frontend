@@ -107,19 +107,34 @@ describe('nueva factura de venta', () => {
     vi.useRealTimers()
   })
 
+  it('escribe el precio con punto de miles, calcula en vivo y envia el numero', async () => {
+    const { user, fetchMock } = await setup()
+    await addProduct(user, 'michelin')
+    const price = screen.getByLabelText('Precio')
+    await user.clear(price)
+    await user.type(price, '1500000')
+    expect(price).toHaveValue('1.500.000')
+    expect(within(screen.getByRole('listitem', { name: /^Línea / })).getByText(/^\$\s1\.500\.000$/)).toBeInTheDocument()
+    await user.type(price, ',5')
+    expect(price).toHaveValue('1.500.000,5')
+    await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
+    await waitFor(() => expect(posts(fetchMock, '/api/sales')).toHaveLength(1))
+    expect(posts(fetchMock, '/api/sales')[0]?.details).toEqual([{ productId: 1, quantity: 1, price: 1500000.5 }])
+  })
+
   it('muestra precision invalida en el campo sin crear y acepta ceros finales', async () => {
     const { user, fetchMock } = await setup()
 
     await addProduct(user, 'michelin')
     const price = screen.getByLabelText('Precio')
-    for (const value of ['0.005', '0.0100000000000000000001']) {
+    for (const value of ['0,005', '0,0100000000000000000001']) {
       fireEvent.change(price, { target: { value } })
       await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
       expect(price).toHaveAttribute('aria-invalid', 'true')
       expect(price).toHaveAccessibleDescription('El precio unitario admite como máximo dos decimales.')
       expect(posts(fetchMock, '/api/sales')).toHaveLength(0)
     }
-    fireEvent.change(price, { target: { value: '0.0100' } })
+    fireEvent.change(price, { target: { value: '0,0100' } })
     await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
     await waitFor(() => expect(posts(fetchMock, '/api/sales')).toHaveLength(1))
     expect(posts(fetchMock, '/api/sales')[0]?.details).toEqual([{ productId: 1, quantity: 1, price: 0.01 }])
@@ -202,7 +217,7 @@ describe('nueva factura de venta', () => {
 
     await addProduct(user, 'michelin', '2')
     const row = screen.getByRole('listitem', { name: 'Línea LL-001' })
-    expect(within(row).getByLabelText('Precio')).toHaveValue(180000)
+    expect(within(row).getByLabelText('Precio')).toHaveValue('180.000')
     expect(within(row).getByText('Disponible: 50')).toBeInTheDocument()
     expect(within(row).getByText('$ 68.400')).toBeInTheDocument()
     expect(within(row).getByText('$ 360.000')).toBeInTheDocument()

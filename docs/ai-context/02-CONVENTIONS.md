@@ -82,7 +82,7 @@ Solo existen los que usa alguna pantalla. Hoy: `Button` (variantes `primary`, `d
 para confirmar una accion destructiva dentro de un modal; sus clases viven en
 `buttonStyles.ts` para los enlaces que se ven como boton), `TextField` (reposo, foco,
 error, deshabilitado; con mostrar u ocultar si es contrasena), `AmountField` (`TextField` de dinero
-con punto de miles automatico y cursor estable; hoy solo el costo de producto), `Alert` (tonos `success`,
+con punto de miles automatico y cursor estable; todo monto en pesos que se digita; `compact` para la linea de factura), `Alert` (tonos `success`,
 `warning`, `error`, `info`), `IndicatorCard` (con texto secundario, variacion opcional y su propio error con
 reintentar), `StatusBadge`, `DataTable`, `SearchField` (con la lupa de Lucide),
 `SelectField` (selector nativo, con ayuda o error opcional), `CategoryDot` (punto con el
@@ -249,9 +249,13 @@ En `src/lib/format.ts`, nunca a mano en un componente:
 * Facturas nuevas: producto decimal de precio por cantidad, luego base e IVA definitivos
   por linea (HALF_UP a dos decimales); resumen suma esas lineas. lib/money.ts comparte
   aritmetica con el racional de Inventario sin cambiar su redondeo a pesos enteros.
-* Precios de linea: input numerico con punto decimal, maximo dos decimales significativos
-  comprobados desde el texto; 0.005 invalido, 0.01 y 0.0100 validos. Otros montos conservan
-  sus separadores y normalizacion HALF_UP del servidor, sin ese rechazo de precision.
+* Montos que se digitan: `AmountField`, con punto de miles y coma decimal; un punto escrito se
+  ignora. El formulario guarda el texto formateado. Para precargar, `amountTextFromNumber`; para
+  el numero, `parseAmount` (`amountToDecimalText` en el precio de linea). Solo el costo de producto
+  rechaza decimales y conserva `inputMode` numeric; los demas pasan `inputMode="decimal"`.
+* Precios de linea: maximo dos decimales significativos comprobados desde el texto; 0,005
+  invalido, 0,01 y 0,0100 validos. Otros montos conservan su normalizacion HALF_UP del servidor,
+  sin ese rechazo de precision.
 * No recalcular documentos historicos: detalles y listados usan cifras guardadas de API.
   Las sumas y restas monetarias derivadas usan centavos definitivos, sin EPSILON.
 * Fecha en tablas: `formatDate`, dd/mm/aaaa a partir de la fecha ISO del backend, sin pasar

@@ -1,6 +1,7 @@
 import type { AccountType } from '../dashboard/dashboardApi'
 import type { InventoryProduct } from '../inventory/inventoryApi'
 import { accountPaymentMethods } from '../lib/accountPayment'
+import { amountToDecimalText } from '../lib/amountInput'
 import { ApiError } from '../lib/api'
 import { round2, unitPriceError } from '../lib/money'
 import { invoiceTotals } from '../sales/newSale'
@@ -89,7 +90,7 @@ export function validatePurchase(form: PurchaseForm, productsById: Map<number, I
     if (line.quantity.trim() === '' || !Number.isInteger(quantity) || quantity <= 0) {
       errors.quantity = 'Escribe una cantidad entera mayor que cero.'
     }
-    errors.price = unitPriceError(line.price)
+    errors.price = unitPriceError(amountToDecimalText(line.price))
     if (errors.product || errors.quantity || errors.price) lines[line.key] = errors
   }
 
@@ -106,7 +107,7 @@ export function buildPurchaseRequest(form: PurchaseForm): PurchaseRequest {
     details: form.lines.map((line) => ({
       productId: line.productId ?? 0,
       quantity: Number(line.quantity),
-      price: Number(line.price),
+      price: Number(amountToDecimalText(line.price)),
     })),
   }
   if (form.paymentType === 'CREDITO') {

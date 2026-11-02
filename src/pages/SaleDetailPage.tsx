@@ -13,12 +13,14 @@ import { DataTable, type Column } from '../components/DataTable'
 import { Modal } from '../components/Modal'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge } from '../components/StatusBadge'
+import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
 import { fetchAccounts } from '../dashboard/dashboardApi'
 import { useBreadcrumbTail } from '../layout/breadcrumb'
 import { defaultCashAccount } from '../lib/accountPayment'
+import { amountTextFromNumber } from '../lib/amountInput'
 import { ApiError } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
 import { revealErrors } from '../lib/formErrors'
@@ -363,7 +365,7 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
   const accounts = useQuery({ queryKey: ['treasury', 'accounts'], queryFn: fetchAccounts })
   const [draft, setDraft] = useState<Omit<CollectionDraft, 'accountId'> & { accountId: number | null | undefined }>({
     accountId: undefined,
-    amount: String(sale.pendingBalance),
+    amount: amountTextFromNumber(sale.pendingBalance),
     date: today,
   })
   const submitting = useRef(false)
@@ -399,7 +401,7 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
   // Validacion al salir de cada campo; al enviar, todos.
   const shown = (field: 'account' | 'amount' | 'date') => (submitted || touched.has(field) ? errors[field] : undefined)
   const touch = (field: string) => () => setTouched((current) => new Set(current).add(field))
-  const dirty = draft.accountId !== undefined || draft.amount !== String(sale.pendingBalance) || draft.date !== today
+  const dirty = draft.accountId !== undefined || draft.amount !== amountTextFromNumber(sale.pendingBalance) || draft.date !== today
 
   return (
     <DiscardableModal
@@ -458,14 +460,11 @@ function CollectionModal({ sale, onClose, onSaved, onRejected }: ActionModalProp
           />
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField
+          <AmountField
             label="Valor del abono"
-            type="number"
             inputMode="decimal"
-            min={0}
-            step="any"
             value={draft.amount}
-            onChange={(event) => setDraft({ ...draft, amount: event.target.value })}
+            onValueChange={(amount) => setDraft({ ...draft, amount })}
             onBlur={touch('amount')}
             error={shown('amount')}
           />

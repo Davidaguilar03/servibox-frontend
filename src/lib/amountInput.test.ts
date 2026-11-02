@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { caretAfterFormat, formatAmountText, normalizePastedAmount } from './amountInput'
+import { amountTextFromNumber, amountToDecimalText, caretAfterFormat, formatAmountText, normalizePastedAmount } from './amountInput'
+
+describe('conversion entre la API y el campo', () => {
+  it.each([
+    [1500000, '1.500.000'],
+    [397938.28, '397.938,28'],
+    [0, '0'],
+    [-5000, '-5.000'],
+  ])('%s se muestra como %s', (value, text) => {
+    expect(amountTextFromNumber(value)).toBe(text)
+  })
+
+  it.each([
+    ['1.500.000', '1500000'],
+    ['1.234,50', '1234.50'],
+    ['1.000,', '1000.'],
+    ['', ''],
+  ])('%s se valida como %s', (text, decimal) => {
+    expect(amountToDecimalText(text)).toBe(decimal)
+  })
+})
 
 describe('formatAmountText', () => {
   it.each([

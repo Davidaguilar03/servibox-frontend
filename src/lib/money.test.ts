@@ -7,7 +7,7 @@ import { buildCollectionRequest, saleSummary, validateCollection } from '../sale
 import { addMoney, round2 } from './money'
 
 const range = { min: '2026-10-01', max: '2026-10-25' }
-const draft = { accountId: 1, amount: '0.105', date: range.max }
+const draft = { accountId: 1, amount: '0,105', date: range.max }
 
 describe('normalizacion monetaria', () => {
   it('suma las lineas definitivas igual al resumen de venta y compra', () => {
@@ -41,8 +41,8 @@ describe('normalizacion monetaria', () => {
     expect(validateCollection(draft, 0.11, range).valid).toBe(true)
     expect(validateCollection(draft, 0.10, range).valid).toBe(false)
     expect(buildCollectionRequest(draft).amount).toBe(0.105)
-    expect(validatePayment({ ...draft, amount: '0.004' }, 1, range, { currentBalance: 1 }).valid).toBe(false)
-    expect(validateCollection({ ...draft, amount: '0.004' }, 1, range).valid).toBe(false)
+    expect(validatePayment({ ...draft, amount: '0,004' }, 1, range, { currentBalance: 1 }).valid).toBe(false)
+    expect(validateCollection({ ...draft, amount: '0,004' }, 1, range).valid).toBe(false)
   })
 
   it('transferencias normalizan para comparar fondos y conservan el envio al servidor', () => {

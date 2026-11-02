@@ -15,6 +15,7 @@ import { ErrorSummary } from '../components/ErrorSummary'
 import { IconButton } from '../components/IconButton'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
+import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -31,6 +32,7 @@ import {
 } from '../inventory/inventoryApi'
 import { revealErrors } from '../lib/formErrors'
 import { defaultCashAccount } from '../lib/accountPayment'
+import { amountTextFromNumber, amountToDecimalText } from '../lib/amountInput'
 import { CREDIT_DAY_OPTIONS, addDays, businessToday, defaultDueDate } from '../lib/businessDate'
 import { EMPTY_VALUE, formatCurrency } from '../lib/format'
 import {
@@ -138,7 +140,7 @@ export function NewPurchaseInvoicePage() {
   const totals = purchaseTotals(
     form.lines.map((line) => ({
       quantity: Number(line.quantity) || 0,
-      price: Number(line.price) || 0,
+      price: Number(amountToDecimalText(line.price)) || 0,
       rate: rateOf(line.productId === null ? undefined : productsById.get(line.productId)),
     })),
   )
@@ -594,7 +596,7 @@ function LinesBlock({
           const lineErrors = product || showAllErrors ? errors[line.key] : undefined
           const amounts = lineAmounts({
             quantity: Number(line.quantity) || 0,
-            price: Number(line.price) || 0,
+            price: Number(amountToDecimalText(line.price)) || 0,
             rate: rateOf(product),
           })
           const options: ComboboxOption[] = all
@@ -618,7 +620,7 @@ function LinesBlock({
                 value={line.productId}
                 onChange={(productId) => {
                   const chosen = productsById.get(productId)
-                  onChange(line.key, { productId, price: chosen?.purchaseCost ? String(chosen.purchaseCost) : '' })
+                  onChange(line.key, { productId, price: chosen?.purchaseCost ? amountTextFromNumber(chosen.purchaseCost) : '' })
                 }}
                 placeholder="Busca por código o descripción"
                 error={lineErrors?.product}
@@ -631,12 +633,12 @@ function LinesBlock({
                 onChange={(quantity) => onChange(line.key, { quantity })}
                 error={lineErrors?.quantity}
               />
-              <LineNumberInput
+              <AmountField
+                compact
                 label="Precio sin IVA"
+                inputMode="decimal"
                 value={line.price}
-                min={0}
-                step="any"
-                onChange={(price) => onChange(line.key, { price })}
+                onValueChange={(price) => onChange(line.key, { price })}
                 error={lineErrors?.price}
               />
               <span className="monto flex justify-between text-small text-text xl:block xl:pt-2 xl:text-right xl:text-body">
@@ -673,7 +675,7 @@ interface LineNumberInputProps {
   label: string
   value: string
   min?: number
-  step: number | 'any'
+  step: number
   onChange: (value: string) => void
   error?: string
 }
@@ -689,7 +691,7 @@ function LineNumberInput({ label, value, min, step, onChange, error }: LineNumbe
       <input
         id={id}
         type="number"
-        inputMode={step === 1 ? 'numeric' : 'decimal'}
+        inputMode="numeric"
         min={min}
         step={step}
         value={value}

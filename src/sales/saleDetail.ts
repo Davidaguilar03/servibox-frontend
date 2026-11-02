@@ -1,4 +1,5 @@
 import { addMoney } from '../lib/money'
+import { parseAmount } from '../inventory/productForm'
 import { formatCurrency, formatDate } from '../lib/format'
 import { round2 } from './newSale'
 import type { Movement, SaleDetail } from './salesApi'
@@ -64,7 +65,7 @@ export interface CollectionErrors {
 export function validateCollection(draft: CollectionDraft, pending: number, range: { min: string; max: string }) {
   const errors: CollectionErrors = {}
   if (draft.accountId === null) errors.account = 'Elige la cuenta donde entra el dinero.'
-  const amount = round2(Number(draft.amount))
+  const amount = round2(parseAmount(draft.amount))
   if (draft.amount.trim() === '' || !Number.isFinite(amount) || amount <= 0) {
     errors.amount = 'El valor debe ser mayor que cero.'
   } else if (round2(amount) > round2(pending)) {
@@ -78,5 +79,5 @@ export function validateCollection(draft: CollectionDraft, pending: number, rang
 
 /** Cuerpo exacto de `POST /api/sales/{id}/collections`. */
 export function buildCollectionRequest(draft: CollectionDraft) {
-  return { accountId: draft.accountId ?? 0, amount: Number(draft.amount), date: draft.date }
+  return { accountId: draft.accountId ?? 0, amount: parseAmount(draft.amount), date: draft.date }
 }

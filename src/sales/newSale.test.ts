@@ -245,15 +245,15 @@ describe('isDuplicateNumberError', () => {
     expect(invoiceTotals(lines)).toEqual({ subtotal, iva, total })
   })
 
-  it.each(['0.005', '0.0100000000000000000001', '1e-3', '1.2340'])('rechaza precio %s desde el texto', (price) => {
+  it.each(['0,005', '0,0100000000000000000001', '1e-3', '1,2340'])('rechaza precio %s desde el texto', (price) => {
     const result = validateSale(form({ lines: [line(1, 1, '1', price)] }), productsById)
     expect(result.valid).toBe(false)
     expect(result.lines[1]?.price).toBe('El precio unitario admite como máximo dos decimales.')
   })
 
-  it.each(['0.01', '0.0100', '1.000', '1e-2'])('acepta precio equivalente %s y envia el mismo valor', (price) => {
+  it.each(['0,01', '0,0100', '1,000', '1e-2'])('acepta precio equivalente %s y envia el mismo valor', (price) => {
     const values = form({ lines: [line(1, 1, '3', price)] })
     expect(validateSale(values, productsById).valid).toBe(true)
-    expect(buildSaleRequest(values).details[0]?.price).toBe(Number(price))
+    expect(buildSaleRequest(values).details[0]?.price).toBe(Number(price.replace(',', '.')))
   })
 })

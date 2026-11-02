@@ -117,7 +117,7 @@ describe('editar cuenta', () => {
   it('precarga nombre, decimales y tipo de solo lectura; volver al original deshabilita guardar', async () => {
     const { user, fetchMock } = setup()
     expect(name()).toHaveValue('Banco prueba')
-    expect(balance()).toHaveValue('100000,57')
+    expect(balance()).toHaveValue('100.000,57')
     expect(screen.getByLabelText('Tipo')).toHaveValue('Banco')
     expect(screen.getByLabelText('Tipo')).toHaveAttribute('readonly')
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
@@ -134,8 +134,6 @@ describe('editar cuenta', () => {
     ['name', '', 'Escribe el nombre de la cuenta.'],
     ['name', 'a'.repeat(101), 'El nombre admite hasta 100 caracteres.'],
     ['initialBalance', '', 'Escribe el saldo inicial.'],
-    ['initialBalance', 'abc', 'El saldo inicial debe ser un número finito mayor o igual a cero.'],
-    ['initialBalance', '-1', 'El saldo inicial debe ser un número finito mayor o igual a cero.'],
     ['initialBalance', '9'.repeat(310), 'El saldo inicial debe ser un número finito mayor o igual a cero.'],
   ])('valida %s = %s al salir y al enviar, con foco y resumen', async (field, value, message) => {
     const { user, fetchMock } = setup()
@@ -162,6 +160,25 @@ describe('editar cuenta', () => {
     expect(await screen.findByText('Cuenta actualizada')).toBeInTheDocument()
     keys.slice(0, 4).forEach((key) => expect(client.getQueryState(key)?.isInvalidated).toBe(true))
     expect(client.getQueryState(keys[4]!)?.isInvalidated).toBe(false)
+  })
+
+  it('escribe con punto de miles, envia el numero y al volver al original no hay cambios', async () => {
+    const { user, fetchMock, onClose } = setup()
+    await user.clear(balance())
+    await user.type(balance(), '1500000')
+    expect(balance()).toHaveValue('1.500.000')
+    expect(save()).toBeEnabled()
+    await user.clear(balance())
+    await user.type(balance(), '100000,57')
+    expect(balance()).toHaveValue('100.000,57')
+    expect(save()).toBeDisabled()
+    await user.clear(balance())
+    await user.type(balance(), '1500000,5')
+    await user.click(save())
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce())
+    expect(fetchMock).toHaveBeenCalledWith('/api/treasury/accounts/2', expect.objectContaining({
+      body: JSON.stringify({ name: account.name, initialBalance: 1500000.5, color: account.color }),
+    }))
   })
 
   it('permite renombrar con saldo actual negativo sin cambiar el inicial', async () => {
@@ -194,7 +211,7 @@ describe('editar cuenta', () => {
     await waitFor(() => expect(input).toHaveAccessibleDescription(message))
     expect(input).toHaveFocus()
     expect(name()).toHaveValue('Banco nuevo')
-    expect(balance()).toHaveValue('50000,57')
+    expect(balance()).toHaveValue('50.000,57')
     expect(screen.getByRole('alert')).toHaveTextContent('Revisa el campo marcado.')
     fireEvent.change(input, { target: { value: field === 'name' ? 'Banco unico' : '70000,57' } })
     expect(input).not.toHaveAttribute('aria-invalid')
@@ -276,4 +293,10 @@ it('valida saldo vacio distinto de cero en edicion y conserva decimales admitido
   expect(validateAccountEdit({ name: 'Banco', initialBalance: '', color: '#4B5563' })).toHaveProperty('initialBalance')
   expect(validateAccountEdit({ name: 'Banco', initialBalance: '0', color: '#4B5563' })).toEqual({})
   expect(validateAccountEdit({ name: 'Banco', initialBalance: '100.000,57', color: '#4B5563' })).toEqual({})
+  // El campo ya no deja escribir letras ni signo, pero la regla sigue: un heredado negativo llega aqui.
+  for (const initialBalance of ['abc', '-1']) {
+    expect(validateAccountEdit({ name: 'Banco', initialBalance, color: '#4B5563' }).initialBalance).toBe(
+      'El saldo inicial debe ser un número finito mayor o igual a cero.',
+    )
+  }
 })
