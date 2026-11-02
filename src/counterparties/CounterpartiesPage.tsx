@@ -1,9 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useOutletContext, useSearchParams } from 'react-router'
+import { useOutletContext, useSearchParams } from 'react-router'
 import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import { FilePlus, HandCoins, Pencil, TriangleAlert, Users, Wallet } from 'lucide-react'
 import { Button } from '../components/Button'
-import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
 import { FilterBar } from '../components/FilterBar'
 import { IconButton, IconLink } from '../components/IconButton'
@@ -43,9 +42,6 @@ export interface CounterpartiesConfig {
   /** "cliente" o "proveedor", para los textos. */
   singular: string
   plural: string
-  /** Ruta del listado de facturas del modulo y su nombre, para el enlace de regreso. */
-  listPath: string
-  listLabel: string
   counterpartiesKey: QueryKey
   fetchCounterparties: () => Promise<Counterparty[]>
   invoicesKey: QueryKey
@@ -252,11 +248,6 @@ export function CounterpartiesPage({ config }: { config: CounterpartiesConfig })
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>Nuevo {config.singular}</Button>}
-        secondary={[
-          <Link key="volver" to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
-            Volver a {config.listLabel}
-          </Link>,
-        ]}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">

@@ -2,6 +2,18 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-01: Sin accesos duplicados del menu lateral en los listados (feat/57)
+
+* El menu lateral ya lleva a Clientes, Otros ingresos, Proveedores y Gastos operativos: se quitan esos botones de
+  Facturas de venta y de compra, y Volver a Facturas de esas cuatro pantallas. Rutas y pantallas no cambian.
+* Se retiran `listPath` y `listLabel` de `ManualMovementsConfig` y `CounterpartiesConfig`, que solo servian al enlace
+  de regreso. El acento del indicador de Otros ingresos y Gastos sale de `category`. `TrashConfig` los conserva.
+* Papelera sigue en los listados de facturas: no esta en el menu lateral. Con una sola secundaria, bajo lg ya no hay
+  menu Mas y Papelera queda a la vista.
+* Categorias deja la barra superior y su miga, con el mismo mecanismo del shell (`headerInPage`). Reemplaza "Categorias
+  conserva breadcrumb". Copia la composicion de Productos, no `leading`, para que sus acciones queden alineadas igual.
+* Volver a Productos se conserva: la tarea pide no cambiar la funcionalidad ni los textos de Categorias.
+
 ## 2026-11-01: Costo de producto con punto de miles automatico (feat/56, ronda 2)
 
 * No habia un campo de dinero con separador en el repo: se crea `AmountField` y `lib/amountInput.ts`, sin
@@ -880,7 +892,8 @@ Formato de cada entrada:
 ## 2026-10-26: Correcciones visuales de Productos solicitadas por David
 
 * Decision: el listado de Productos omite la barra superior como Inicio y recibe el
-  boton movil del shell en su encabezado. Categorias y formularios conservan la barra.
+  boton movil del shell en su encabezado. Categorias y formularios conservan la barra
+  (reemplazado el 2026-11-01: ni los modales de producto ni Categorias la montan).
   IndicatorCard tiene variante compact solo para sus cuatro KPIs: icono a la izquierda
   centrado verticalmente; titulo, cifra y ayuda alineados a la izquierda del bloque
   derecho. La rejilla usa tres columnas iguales y una de 1,35 para dinero desde 2xl;

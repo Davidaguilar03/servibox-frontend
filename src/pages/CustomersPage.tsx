@@ -8,8 +8,6 @@ const config: CounterpartiesConfig = {
   subtitle: 'Las personas y empresas a las que les vendes, con lo que te deben.',
   singular: 'cliente',
   plural: 'clientes',
-  listPath: '/ventas',
-  listLabel: 'Facturas de venta',
   counterpartiesKey: CUSTOMERS_KEY,
   fetchCounterparties: fetchCustomers,
   invoicesKey: ['sales'],

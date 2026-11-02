@@ -64,7 +64,9 @@ describe('categorias', () => {
     await setup()
 
     expect(screen.getByRole('heading', { name: 'Categorías' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
+    expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+    expect(within(document.getElementById('menu-lateral')!).getByText('Inventario').closest('a')).toHaveAttribute('aria-current', 'page')
     const row = within(screen.getByRole('table')).getByText('REPUESTOS DEMO').closest('tr') as HTMLElement
     expect(await within(row).findByText('2')).toBeInTheDocument()
     expect(within(row).getByText('10')).toBeInTheDocument()

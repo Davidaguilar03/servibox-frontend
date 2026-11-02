@@ -95,7 +95,7 @@ describe('Gastos operativos', () => {
     expect(screen.getByText('Total del período').parentElement).toHaveTextContent('$ 530.000')
     expect(screen.getByText('Movimientos').parentElement).toHaveTextContent('2')
     expect(screen.queryByRole('banner')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
+    expect(screen.queryByRole('link', { name: 'Volver a Facturas de compra' })).not.toBeInTheDocument()
   })
 
   it('filtra por cuenta y concepto en la URL y recalcula los indicadores', async () => {
@@ -347,8 +347,7 @@ describe('Otros ingresos', () => {
     expect((await screen.findAllByText('+$ 180.000'))[0]).toHaveClass('text-success-ink')
     expect(requests(fetchMock, 'GET', '/api/treasury/movements')[0]?.url).toContain('category=INGRESO_OCASIONAL')
     expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
-    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
+    expect(screen.queryByRole('link', { name: 'Volver a Facturas de venta' })).not.toBeInTheDocument()
   })
 
   it('vacio: el unico primario es Nuevo ingreso del encabezado', async () => {
@@ -415,20 +414,28 @@ describe('Otros ingresos', () => {
 })
 
 describe('botones de los listados de facturas', () => {
-  it('Facturas de compra enlaza a Gastos operativos', async () => {
+  it('Facturas de compra no repite Gastos operativos: se llega desde el menu lateral', async () => {
     mockApi(routes(expenses, { 'GET /api/purchases': () => jsonResponse([]) }))
     const router = renderRoute('/compras')
 
-    await userEvent.click(await within(screen.getByRole('main')).findByRole('link', { name: 'Gastos operativos' }))
+    const main = within(screen.getByRole('main'))
+    await main.findByRole('link', { name: 'Papelera' })
+    expect(main.queryByRole('link', { name: 'Gastos operativos' })).not.toBeInTheDocument()
+
+    fireEvent.click(within(document.getElementById('menu-lateral')!).getByText('Gastos operativos'))
     expect(router.state.location.pathname).toBe('/compras/gastos')
     expect(await screen.findByRole('heading', { level: 1, name: 'Gastos operativos' })).toBeInTheDocument()
   })
 
-  it('Facturas de venta enlaza a Ingresos ocasionales', async () => {
+  it('Facturas de venta no repite Otros ingresos: se llega desde el menu lateral', async () => {
     mockApi(routes(incomes, { 'GET /api/sales': () => jsonResponse([]) }))
     const router = renderRoute('/ventas')
 
-    await userEvent.click(await within(screen.getByRole('main')).findByRole('link', { name: 'Otros ingresos' }))
+    const main = within(screen.getByRole('main'))
+    await main.findByRole('link', { name: 'Papelera' })
+    expect(main.queryByRole('link', { name: 'Otros ingresos' })).not.toBeInTheDocument()
+
+    fireEvent.click(within(document.getElementById('menu-lateral')!).getByText('Otros ingresos'))
     expect(router.state.location.pathname).toBe('/ventas/ingresos')
     expect(await screen.findByRole('heading', { level: 1, name: 'Otros ingresos' })).toBeInTheDocument()
   })

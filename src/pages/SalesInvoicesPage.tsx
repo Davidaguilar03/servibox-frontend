@@ -1,4 +1,3 @@
-import { GLOSSARY } from '../copy/glossary'
 import { useState, type ReactNode } from 'react'
 import { Link, useOutletContext, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
@@ -94,12 +93,6 @@ export function SalesInvoicesPage() {
           </Link>
         }
         secondary={[
-          <Link key="clientes" to="/ventas/clientes" className={buttonClasses('secondary')} data-variant="secondary">
-            Clientes
-          </Link>,
-          <Link key="ingresos" to="/ventas/ingresos" className={buttonClasses('secondary')} data-variant="secondary">
-            {GLOSSARY.otherIncome}
-          </Link>,
           <Link key="papelera" to="/ventas/papelera" className={buttonClasses('secondary')} data-variant="secondary">
             Papelera
           </Link>,

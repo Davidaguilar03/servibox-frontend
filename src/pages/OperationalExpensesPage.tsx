@@ -4,8 +4,6 @@ const config: ManualMovementsConfig = {
   category: 'GASTO_OPERATIVO',
   title: 'Gastos operativos',
   subtitle: 'Gastos que no vienen de una factura de compra: arriendo, servicios, papelería.',
-  listPath: '/compras',
-  listLabel: 'Facturas de compra',
   singular: 'gasto',
   newLabel: 'Nuevo gasto',
   createdToast: 'Gasto registrado',

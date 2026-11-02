@@ -5,8 +5,6 @@ const config: ManualMovementsConfig = {
   category: 'INGRESO_OCASIONAL',
   title: GLOSSARY.otherIncome,
   subtitle: 'Ingresos que no vienen de una venta: reintegros, venta de chatarra, aportes.',
-  listPath: '/ventas',
-  listLabel: 'Facturas de venta',
   singular: 'ingreso',
   newLabel: GLOSSARY.newOtherIncome,
   createdToast: 'Ingreso registrado',

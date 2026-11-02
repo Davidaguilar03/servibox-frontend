@@ -8,8 +8,6 @@ const config: CounterpartiesConfig = {
   subtitle: 'Las personas y empresas a las que les compras, con lo que les debes.',
   singular: 'proveedor',
   plural: 'proveedores',
-  listPath: '/compras',
-  listLabel: 'Facturas de compra',
   counterpartiesKey: SUPPLIERS_KEY,
   fetchCounterparties: fetchSuppliers,
   invoicesKey: PURCHASES_KEY,

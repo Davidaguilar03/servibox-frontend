@@ -1,6 +1,6 @@
 import { GLOSSARY } from '../copy/glossary'
 import { useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useOutletContext } from 'react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Check } from 'lucide-react'
 import { userMessage } from '../api/errorMessages'
@@ -48,6 +48,7 @@ import { useElementWidth } from '../lib/useElementWidth'
 import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import { iconSm } from '../components/icons'
+import type { AppShellContext } from '../layout/AppShell'
 
 const card = 'rounded-surface border border-border bg-surface'
 const linkClass = 'hit-area rounded-control font-semibold text-brand-ink hover:underline focus-ring'
@@ -64,6 +65,7 @@ function taxLabel(tax: TaxType) {
 
 /** Categorias: umbrales de stock, margen objetivo e impuestos de cada una. */
 export function CategoriesPage() {
+  const { menuButton } = useOutletContext<AppShellContext>()
   const [target, setTarget] = useState<ModalTarget>(null)
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   const products = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts })
@@ -187,17 +189,22 @@ export function CategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ListHeader
-        title="Categorías"
-        subtitle="Cada categoría define cuándo avisar por stock bajo, el margen del precio sugerido y sus impuestos."
-        primary={<Button onClick={() => setTarget('new')}>Nueva categoría</Button>}
-        secondary={[
-          <Link key="volver" to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
-            <ArrowLeft {...iconSm} aria-hidden />
-            Volver a Productos
-          </Link>,
-        ]}
-      />
+      <div className="flex min-w-0 items-start gap-3">
+        {menuButton}
+        <div className="min-w-0 flex-1">
+          <ListHeader
+            title="Categorías"
+            subtitle="Cada categoría define cuándo avisar por stock bajo, el margen del precio sugerido y sus impuestos."
+            primary={<Button onClick={() => setTarget('new')}>Nueva categoría</Button>}
+            secondary={[
+              <Link key="volver" to="/inventario" className={buttonClasses('secondary')} data-variant="secondary">
+                <ArrowLeft {...iconSm} aria-hidden />
+                Volver a Productos
+              </Link>,
+            ]}
+          />
+        </div>
+      </div>
 
       {financialAtZero && (
         <Alert tone="info" title="Tu configuración financiera está en 0 %, por eso el precio sugerido es igual al costo.">

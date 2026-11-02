@@ -200,6 +200,8 @@ describe('facturas de venta', () => {
     expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar venta' })).toHaveAttribute('href', '/ventas/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/ventas/papelera')
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Clientes' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Otros ingresos' })).not.toBeInTheDocument()
 
     expect(await within(indicator('Ventas del mes')).findByText('$ 635.000')).toBeInTheDocument()
     expect(await within(indicator('Por cobrar')).findByText('$ 2.530.000')).toBeInTheDocument()
