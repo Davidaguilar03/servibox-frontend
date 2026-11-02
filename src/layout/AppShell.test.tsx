@@ -380,7 +380,7 @@ describe('shell', () => {
       expect(document.title).toBe('Inicio · ServiBox')
     })
 
-    it('Productos omite la barra y conserva menu movil; Categorias y formulario mantienen breadcrumb', async () => {
+    it('Productos y su modal omiten la barra y conservan menu movil; Categorias mantiene breadcrumb', async () => {
       stubViewport(false)
       const user = userEvent.setup()
       const router = renderRoute('/inventario')
@@ -398,7 +398,9 @@ describe('shell', () => {
       await act(() => router.navigate('/inventario/categorias'))
       expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
       await act(() => router.navigate('/inventario/nuevo'))
-      expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Productos/Nuevo producto')
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
+      expect(document.title).toBe('Nuevo producto · ServiBox')
       await act(() => router.navigate('/inventario'))
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()

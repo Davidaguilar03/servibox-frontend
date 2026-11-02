@@ -83,8 +83,8 @@ src/
 | `/ventas/clientes` | privada | `CustomersPage`, Clientes (`CounterpartiesPage` con el rol CLIENTE) |
 | `/reportes` | privada | `ReportsPage`, Reportes, dentro de `AppShell` |
 | `/inventario` | privada | `ProductsPage`, Productos, dentro de `AppShell` |
-| `/inventario/nuevo` | privada | `ProductFormPage`, Nuevo producto |
-| `/inventario/:id/editar` | privada | `ProductFormPage`, Editar producto; un id no numerico o un 404 muestran "Producto no encontrado" |
+| `/inventario/nuevo` | privada | Ruta hija de `/inventario`: `ProductFormPage`, modal Nuevo producto sobre el listado |
+| `/inventario/:id/editar` | privada | Ruta hija de `/inventario`: `ProductFormPage`, modal Editar producto; un id no numerico o un 404 muestran el modal "Producto no encontrado" |
 | `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
 | `/cuentas` | privada | `AccountsPage`, Tesoreria: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
 | `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
@@ -268,7 +268,8 @@ el area de contenido (ancho maximo 1440 px):
   buscador ni campana. Inicio, el listado de Productos y las rutas bajo /ventas y /compras no
   montan la barra; Reportes y Configuracion tampoco la montan. El boton de menu movil se entrega por contexto de Outlet a sus
   encabezados. Conserva estado, referencia, foco, SkipLink y titulo de pestana del
-  shell. Categorias, formularios de Inventario y las demas rutas conservan la barra.
+  shell. Los modales de producto (`/inventario/nuevo` y `/inventario/:id/editar`) tampoco la
+  montan, para que el listado de atras no se mueva. Categorias y las demas rutas conservan la barra.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 
@@ -446,14 +447,18 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
   `SIN_STOCK`), `orden` (`descripcion`, `stock-asc`, `stock-desc`, `precio`; sin el
   parametro es `codigo`) y `pagina`. Solo se escriben los valores distintos de los de por
   defecto.
-* Los enlaces al formulario llevan en `state` la query string del listado (`listSearch`);
-  al guardar o cancelar se vuelve a `/inventario` con ella. Sin `state` se vuelve sin filtros.
+* El formulario es un modal en una ruta hija de `/inventario`: `ProductsPage` sigue montada y
+  lo pinta con `Outlet`. Los enlaces conservan la query string del listado en la URL del
+  modal, asi el listado de atras no cambia y al guardar o cerrar se vuelve con los mismos
+  filtros. Una URL directa abre el modal sobre el listado.
 * Indicadores no dependen del selector de categoria ni de los filtros. Cada
   bloque (indicadores, categoria, tabla) carga y falla por separado: los indicadores que solo
   usan productos siguen visibles si fallan las categorias.
 * Bajo `md` la tabla pasa a tarjetas apiladas que enlazan al formulario.
 * Cambios sin guardar en el formulario de producto: el mismo patron de Nueva factura
-  (`useBlocker` y `beforeunload`). En el modal de categoria, Esc, la X o Cancelar con datos
+  (`UnsavedChangesGuard`, con `useBlocker` y `beforeunload`), que reemplaza el modal por el
+  aviso. Cerrar es navegar, asi que Esc, la X, Cancelar, clic fuera y atras pasan por el mismo
+  aviso. En el modal de categoria, Esc, la X o Cancelar con datos
   digitados cambian el contenido del modal a "Descartar cambios".
 
 ## Tesoreria

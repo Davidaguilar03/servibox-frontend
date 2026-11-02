@@ -216,7 +216,9 @@ describe('productos', () => {
 
     await user.click(within(screen.getByRole('table')).getByRole('link', { name: 'Editar LL-001' }))
     expect(router.state.location.pathname).toBe('/inventario/4/editar')
-    expect(router.state.location.state).toEqual({ listSearch: '?orden=stock-desc&estado=NORMAL' })
+    expect(router.state.location.search).toBe('?orden=stock-desc&estado=NORMAL')
+    // El listado de atras del modal sigue con sus filtros.
+    expect(codes()).toEqual(['LL-001'])
   })
 
   it('escribir sin pausa filtra con todo el texto; Limpiar lo vacia y atras lo restaura', async () => {

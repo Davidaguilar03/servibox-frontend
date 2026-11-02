@@ -9,6 +9,8 @@ interface ModalProps {
   children: ReactNode
   /** Botones del pie, alineados a la derecha. */
   footer?: ReactNode
+  /** `wide`: mas ancho, para formularios en dos columnas; el cuerpo se desplaza y el pie queda siempre visible. */
+  size?: 'default' | 'wide'
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -17,7 +19,8 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * Dialogo modal del manual: fondo `overlay`, sombra `modal`, se cierra con Esc o con la X,
  * atrapa el foco mientras esta abierto y lo devuelve al cerrarse.
  */
-export function Modal({ title, onClose, children, footer }: ModalProps) {
+export function Modal({ title, onClose, children, footer, size = 'default' }: ModalProps) {
+  const wide = size === 'wide'
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -78,9 +81,11 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-surface bg-surface p-6 shadow-overlay outline-none"
+        className={`w-full rounded-surface bg-surface shadow-overlay outline-none ${
+          wide ? 'flex max-h-[90dvh] max-w-2xl flex-col' : 'max-h-[90vh] max-w-md overflow-y-auto p-6'
+        }`}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className={`flex items-start justify-between gap-4 ${wide ? 'px-4 pt-6 sm:px-6' : ''}`}>
           <h2 id={titleId} className="text-section text-text">
             {title}
           </h2>
@@ -88,11 +93,11 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
             <X {...iconMd} aria-hidden />
           </IconButton>
         </div>
-        <div ref={bodyRef} className="mt-4">
+        <div ref={bodyRef} className={`mt-4 ${wide ? 'min-h-0 flex-1 overflow-y-auto px-4 pb-6 sm:px-6' : ''}`}>
           {children}
         </div>
         {footer && (
-          <div ref={footerRef} className="mt-6 flex flex-wrap justify-end gap-3">
+          <div ref={footerRef} className={`flex flex-wrap justify-end gap-3 ${wide ? 'border-t border-border px-4 py-4 sm:px-6' : 'mt-6'}`}>
             {footer}
           </div>
         )}

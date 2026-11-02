@@ -19,7 +19,6 @@ export interface EmptyStateAction {
   variant?: 'primary' | 'secondary'
   /** Con `to` la accion es un enlace; si no, un boton con `onClick`. */
   to?: string
-  state?: unknown
   onClick?: () => void
 }
 
@@ -33,7 +32,7 @@ export function EmptyState({ message, action }: { message: string; action?: Empt
       {action && (
         <div className="mt-2">
           {action.to ? (
-            <Link to={action.to} state={action.state} className={buttonClasses(variant)} data-variant={variant}>
+            <Link to={action.to} className={buttonClasses(variant)} data-variant={variant}>
               {action.label}
             </Link>
           ) : (
