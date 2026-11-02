@@ -157,7 +157,7 @@ export function AppShell({
   if (navigation.location !== location) {
     setNavigation({ location, groups: { ...navigation.groups, ...(activeGroup ? { [activeGroup]: true } : {}) } })
   }
-  const headerInPage = allHeadersInPage || /^\/(inicio|inventario|cuentas|reportes|configuracion)\/?$/.test(pathname) || /^\/inventario\/(?:nuevo|[^/]+\/editar)\/?$/.test(pathname) || /^\/(ventas|compras)(?:\/|$)/.test(pathname)
+  const headerInPage = allHeadersInPage || /^\/(inicio|inventario|cuentas|reportes|configuracion)\/?$/.test(pathname) || /^\/inventario\/(?:nuevo|categorias|[^/]+\/editar)\/?$/.test(pathname) || /^\/(ventas|compras)(?:\/|$)/.test(pathname)
   const isWide = useMediaQuery(WIDE_QUERY, true)
   const [sidebarChoice, setSidebarChoice] = useState(readSidebarChoice)
   const collapsed = sidebarChoice ? sidebarChoice === 'collapsed' : !isWide

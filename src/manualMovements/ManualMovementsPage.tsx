@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useOutletContext, useSearchParams } from 'react-router'
+import { useOutletContext, useSearchParams } from 'react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Coins, Pencil, ReceiptText, Trash2 } from 'lucide-react'
 import { ACCOUNTS_KEY, type TreasuryMovement } from '../accounts/accountsApi'
 import { formatSignedAmount } from '../accounts/accountsView'
 import { Button } from '../components/Button'
-import { buttonClasses } from '../components/buttonStyles'
 import { DataTable, type Column } from '../components/DataTable'
 import { FilterBar } from '../components/FilterBar'
 import { IconButton } from '../components/IconButton'
@@ -43,9 +42,6 @@ export interface ManualMovementsConfig {
   category: ManualCategory
   title: string
   subtitle: string
-  /** Ruta del listado de facturas del modulo y su nombre, para el enlace de regreso. */
-  listPath: string
-  listLabel: string
   /** "gasto" o "ingreso", para los textos. */
   singular: string
   /** "Nuevo gasto": boton y titulo del modal de alta. */
@@ -66,7 +62,6 @@ type Dialog = { kind: 'create' } | { kind: 'edit'; movement: TreasuryMovement } 
 /** Gastos operativos u Otros ingresos: indicadores, filtros en la URL, tabla y modales. */
 export function ManualMovementsPage({ config }: { config: ManualMovementsConfig }) {
   const { menuButton } = useOutletContext<AppShellContext>()
-  const isSales = config.listPath === '/ventas'
   const queryClient = useQueryClient()
   const [today] = useState(() => businessToday())
   const [searchParams, setSearchParams] = useSearchParams()
@@ -218,18 +213,13 @@ export function ManualMovementsPage({ config }: { config: ManualMovementsConfig 
         title={config.title}
         subtitle={config.subtitle}
         primary={<Button onClick={() => setDialog({ kind: 'create' })}>{config.newLabel}</Button>}
-        secondary={[
-          <Link key="volver" to={config.listPath} className={buttonClasses('secondary')} data-variant="secondary">
-            Volver a {config.listLabel}
-          </Link>,
-        ]}
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <IndicatorCard
           compact
           icon={Coins}
-          accent={isSales ? 'success' : 'warning'}
+          accent={config.category === 'INGRESO_OCASIONAL' ? 'success' : 'warning'}
           label="Total del período"
           value={totals ? formatCurrency(totals.amount) : undefined}
           error={movements.isError}

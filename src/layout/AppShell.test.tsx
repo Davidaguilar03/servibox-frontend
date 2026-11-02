@@ -200,8 +200,7 @@ describe('shell', () => {
       ['/compras/papelera', 'Egresos', 'Facturas de compra'],
       ['/compras/gastos', 'Egresos', 'Gastos operativos'],
       ['/compras/proveedores', 'Egresos', 'Proveedores'],
-    ])('la entrada directa %s abre %s con un solo hijo activo', (path, group, child) => {
-      stubViewport(true)
+    ])('la entrada directa %s abre %s con un solo hijo activo', (path, group, child) => {      stubViewport(true)
       const router = renderRoute(path)
       const nav = screen.getByRole('navigation', { name: 'Principal' })
       const parent = within(nav).getByRole('button', { name: group })
@@ -380,7 +379,7 @@ describe('shell', () => {
       expect(document.title).toBe('Inicio · ServiBox')
     })
 
-    it('Productos y su modal omiten la barra y conservan menu movil; Categorias mantiene breadcrumb', async () => {
+    it('Productos, su modal y Categorias omiten la barra y conservan menu movil', async () => {
       stubViewport(false)
       const user = userEvent.setup()
       const router = renderRoute('/inventario')
@@ -396,7 +395,11 @@ describe('shell', () => {
       await waitFor(() => expect(button).toHaveFocus())
 
       await act(() => router.navigate('/inventario/categorias'))
-      expect(screen.getByRole('navigation', { name: 'Ruta de navegación' })).toHaveTextContent('Inventario/Categorías')
+      expect(screen.queryByRole('banner')).not.toBeInTheDocument()
+      expect(screen.queryByRole('navigation', { name: 'Ruta de navegación' })).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Categorías' })).toBeInTheDocument()
+      expect(within(screen.getByRole('main')).getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
+      expect(document.title).toBe('Categorías · ServiBox')
       await act(() => router.navigate('/inventario/nuevo'))
       expect(screen.queryByRole('banner')).not.toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()

@@ -115,6 +115,8 @@ describe('facturas de compra', () => {
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar compra' })).toHaveAttribute('href', '/compras/nueva')
     expect(screen.getByRole('link', { name: 'Papelera' })).toHaveAttribute('href', '/compras/papelera')
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Proveedores' })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Gastos operativos' })).not.toBeInTheDocument()
 
     expect(await within(indicator('Compras del mes')).findByText('$ 6.592.600')).toBeInTheDocument()
     expect(await within(indicator('Por pagar')).findByText('$ 2.530.000')).toBeInTheDocument()

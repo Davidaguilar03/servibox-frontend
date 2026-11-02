@@ -358,8 +358,9 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 ## Inventario (2026-10-26)
 
 * Correccion visual de David: Productos conserva ListHeader pero no monta barra superior;
-  el boton movil del shell va en su encabezado, sin hueco reservado. Categorias
-  conserva breadcrumb; los modales de producto no lo muestran (2026-11-01). El titulo de pestana
+  el boton movil del shell va en su encabezado, sin hueco reservado. Los modales de producto
+  no muestran breadcrumb y, desde 2026-11-01, Categorias tampoco: su encabezado es el de Productos,
+  con el boton movil al lado y las acciones alineadas al titulo. El titulo de pestana
   sigue viniendo del shell.
 * Categoria deja TabList y pasa a SelectField dentro de FilterBar, junto a Buscar.
   La opcion inicial es Todas las categorias; las demas son ids reales ordenados por

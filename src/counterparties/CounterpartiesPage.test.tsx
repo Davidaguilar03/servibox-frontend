@@ -162,7 +162,7 @@ describe('Clientes', () => {
       'href',
       '/ventas/nueva?cliente=1',
     )
-    expect(screen.getByRole('link', { name: 'Volver a Facturas de venta' })).toHaveAttribute('href', '/ventas')
+    expect(screen.queryByRole('link', { name: 'Volver a Facturas de venta' })).not.toBeInTheDocument()
   })
 
   it('busca sin tildes ni mayusculas, filtra por saldo y ordena, todo en la URL', async () => {
@@ -485,7 +485,7 @@ describe('Proveedores', () => {
       'href',
       '/compras/nueva?proveedor=5',
     )
-    expect(screen.getByRole('link', { name: 'Volver a Facturas de compra' })).toHaveAttribute('href', '/compras')
+    expect(screen.queryByRole('link', { name: 'Volver a Facturas de compra' })).not.toBeInTheDocument()
   })
 
   it('vacio sin proveedores invita a crear', async () => {
@@ -562,19 +562,21 @@ describe('Proveedores', () => {
 })
 
 describe('Botones de los encabezados', () => {
-  it('Facturas de venta lleva a Clientes y Facturas de compra a Proveedores', async () => {
+  it('Facturas de venta y de compra no repiten Clientes ni Proveedores: se llega desde el menu lateral', async () => {
     mockApi({ ...customerRoutes(), 'GET /api/purchases': () => jsonResponse(purchases) })
-    const user = userEvent.setup()
+    const sidebar = () => within(document.getElementById('menu-lateral')!)
     const router = renderRoute('/ventas')
     await screen.findByRole('heading', { name: 'Facturas de venta' })
 
-    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Clientes' }))
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Clientes' })).not.toBeInTheDocument()
+    fireEvent.click(sidebar().getByText('Clientes'))
     expect(router.state.location.pathname).toBe('/ventas/clientes')
     expect(await screen.findByRole('heading', { name: 'Clientes' })).toBeInTheDocument()
 
     await router.navigate('/compras')
     await screen.findByRole('heading', { name: 'Facturas de compra' })
-    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Proveedores' }))
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Proveedores' })).not.toBeInTheDocument()
+    fireEvent.click(sidebar().getByText('Proveedores'))
     expect(router.state.location.pathname).toBe('/compras/proveedores')
     expect(await screen.findByRole('heading', { name: 'Proveedores' })).toBeInTheDocument()
   })

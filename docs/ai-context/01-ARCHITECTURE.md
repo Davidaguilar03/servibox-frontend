@@ -269,7 +269,8 @@ el area de contenido (ancho maximo 1440 px):
   montan la barra; Reportes y Configuracion tampoco la montan. El boton de menu movil se entrega por contexto de Outlet a sus
   encabezados. Conserva estado, referencia, foco, SkipLink y titulo de pestana del
   shell. Los modales de producto (`/inventario/nuevo` y `/inventario/:id/editar`) tampoco la
-  montan, para que el listado de atras no se mueva. Categorias y las demas rutas conservan la barra.
+  montan, para que el listado de atras no se mueva. Categorias tampoco (2026-11-01): con ella, ninguna
+  ruta de la serviteca monta hoy la barra.
 * Por debajo de `lg` la barra lateral se oculta y se abre como menu sobre el contenido
   desde la barra superior; el bloque de usuario va dentro de ese menu.
 

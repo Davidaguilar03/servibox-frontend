@@ -83,12 +83,6 @@ export function PurchaseInvoicesPage() {
           </Link>
         }
         secondary={[
-          <Link key="proveedores" to="/compras/proveedores" className={buttonClasses('secondary')} data-variant="secondary">
-            Proveedores
-          </Link>,
-          <Link key="gastos" to="/compras/gastos" className={buttonClasses('secondary')} data-variant="secondary">
-            Gastos operativos
-          </Link>,
           <Link key="papelera" to="/compras/papelera" className={buttonClasses('secondary')} data-variant="secondary">
             Papelera
           </Link>,
