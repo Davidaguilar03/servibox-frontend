@@ -236,6 +236,19 @@ necesite, no antes.
   y la aprobacion visual de David son necesarias para el cierre; no se declara ausencia de
   desbordes ni aprobacion visual sin esa revision. AGENTS.md no se modifica.
 
+## Versionado
+
+* Versionado semantico (MAJOR.MINOR.PATCH). La version vive solo en `package.json` y debe
+  coincidir con la del `pom.xml` del backend.
+* `vite.config.ts` la lee de `package.json` y la inyecta como `__APP_VERSION__`;
+  `src/config/version.ts` exporta `APP_VERSION` y `APP_VERSION_LABEL` (`v1.1.0`). Ningun
+  componente la escribe a mano. Se ve al pie del menu lateral, del acceso (login de serviteca y
+  de plataforma), del panel de plataforma y de la landing.
+* No se consulta `GET /api/version` del backend: la interfaz muestra su propia version.
+* Cada version desplegada se etiqueta `vX.Y.Z` en los dos repos.
+* Cada tarea que cambie comportamiento agrega una linea a `CHANGELOG.md` (Keep a Changelog,
+  en espanol) dentro de la version en desarrollo.
+
 ## Formatos
 
 En `src/lib/format.ts`, nunca a mano en un componente:

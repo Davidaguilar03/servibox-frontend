@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+
+// La version de la app sale del package.json en tiempo de compilacion. Ver src/config/version.ts.
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
 
 // En desarrollo el backend se alcanza por el proxy de Vite, en el mismo origen. En produccion
 // la URL de la API sale de VITE_API_BASE_URL (.env.production). Ver docs/ai-context/03-DECISIONS.md.
@@ -8,6 +12,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [react(), tailwindcss()],
+    define: { __APP_VERSION__: JSON.stringify(version) },
     // Las dependencias van en su propio archivo: el codigo de la app paso de 500 kB en un solo
     // chunk. Ver docs/ai-context/03-DECISIONS.md.
     build: {

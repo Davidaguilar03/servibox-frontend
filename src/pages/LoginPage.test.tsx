@@ -4,6 +4,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { getToken, saveToken } from '../auth/session'
 import { SUPPORT_EMAIL } from '../config/contact'
+import { APP_VERSION } from '../config/version'
 import { jsonResponse, primaryActions, renderRoute, validToken } from '../test/utils'
 
 async function fillAndSubmit() {
@@ -82,6 +83,13 @@ describe('formulario de login', () => {
     expect(screen.getByText('Entra y continúa con tu negocio.')).toBeInTheDocument()
     expect(screen.getByText('Ventas, inventario y caja conectados.')).toBeInTheDocument()
     expect(primaryActions()).toHaveLength(1)
+  })
+
+  it('muestra la version de la app en el pie', async () => {
+    renderRoute('/login')
+
+    const footer = await screen.findByRole('contentinfo')
+    expect(footer).toHaveTextContent(`ServiBox v${APP_VERSION} · Colombia`)
   })
 
   it('rotula el codigo de la serviteca con su ayuda y omite el contacto demostrativo', async () => {

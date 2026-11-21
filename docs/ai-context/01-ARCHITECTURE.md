@@ -251,7 +251,8 @@ el area de contenido (ancho maximo 1440 px):
   abajo, Configuracion separada y UserMenu unico. El control de usuario
   muestra iniciales, serviteca y rol; en compacto solo iniciales con nombre accesible.
   Su panel abre hacia arriba con nombre real, rol, serviteca y Cerrar sesion.
-  `displayName` e `initials` viven en `auth/session.ts`.
+  `displayName` e `initials` viven en `auth/session.ts`. Bajo el usuario, la version de la app
+  (`ServiBox v1.1.0`; solo `v1.1.0` en compacto), ver Versionado en 02-CONVENTIONS.md.
 * Orden operativo: Inicio; Ingresos (Facturas de venta, Otros ingresos, Clientes);
   Egresos (Facturas de compra, Gastos operativos, Proveedores); Inventario; Tesoreria;
   Reportes. Los padres son botones con aria-expanded/aria-controls y listas anidadas;

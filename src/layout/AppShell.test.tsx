@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { saveToken } from '../auth/session'
+import { APP_VERSION } from '../config/version'
 import { jsonResponse, renderRoute, validToken } from '../test/utils'
 import type { RouteHandle } from './AppShell'
 
@@ -30,6 +31,11 @@ describe('shell', () => {
   beforeEach(() => {
     saveToken(validToken())
     pendingApi()
+  })
+
+  it('muestra la version de la app al pie del menu lateral', async () => {
+    renderRoute('/inicio')
+    expect(within(aside()).getByText(`v${APP_VERSION}`, { exact: false })).toHaveTextContent(`ServiBox v${APP_VERSION}`)
   })
 
   describe('menu movil', () => {
