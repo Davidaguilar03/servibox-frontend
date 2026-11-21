@@ -9,6 +9,7 @@ import { Button } from '../components/Button'
 import { SkipLink } from '../components/SkipLink'
 import { Toaster } from '../components/Toaster'
 import { iconLg, iconMd, iconSm } from '../components/icons'
+import { APP_VERSION_LABEL } from '../config/version'
 import { GLOSSARY } from '../copy/glossary'
 import type { AppShellContext, NavItem, RouteHandle } from '../layout/AppShell'
 import { UserMenu, type UserMenuAccount } from '../layout/UserMenu'
@@ -73,6 +74,7 @@ export function PlatformShell() {
       <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-content flex-1 px-6 py-6 outline-none lg:px-8 lg:py-8">
         <Outlet context={{ menuButton: null } satisfies AppShellContext} />
       </main>
+      <footer className="mx-auto w-full max-w-content px-6 pb-6 text-small text-text-muted lg:px-8">ServiBox {APP_VERSION_LABEL}</footer>
       <Toaster />
     </div>
   )

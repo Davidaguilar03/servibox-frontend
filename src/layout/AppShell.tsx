@@ -27,6 +27,7 @@ import { DESKTOP_QUERY, useMediaQuery } from '../lib/useMediaQuery'
 import { UserMenu, type UserMenuAccount } from './UserMenu'
 import { iconMd } from '../components/icons'
 import { GLOSSARY } from '../copy/glossary'
+import { APP_VERSION_LABEL } from '../config/version'
 
 export interface NavItem {
   to: string
@@ -357,6 +358,9 @@ export function AppShell({
 
         <div className="mx-3 shrink-0 border-t border-nav-hover py-3">
           <UserMenu compact={collapsed && isDesktop} account={account} />
+          <p className={`mt-2 px-2 text-small text-text-subtle ${collapsed ? 'lg:px-0 lg:text-center' : ''}`}>
+            <span className={collapsed ? 'lg:sr-only' : ''}>ServiBox </span>{APP_VERSION_LABEL}
+          </p>
         </div>
       </aside>
 

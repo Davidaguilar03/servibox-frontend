@@ -2,6 +2,18 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Versionado semantico y version visible (chore/59)
+
+* Se adopta SemVer en los dos repos. `package.json` pasa de 0.0.0 a 1.1.0, la version en desarrollo, igual al
+  `pom.xml` del backend. La etiqueta `v1.0.0` marca lo desplegado en produccion desde el 2026-11-01.
+* La version se inyecta en compilacion desde `package.json` (`define` de Vite) y no se consulta
+  `GET /api/version`: produccion sigue en 1.0.0 y esa ruta no existe alli todavia.
+* Se muestra discreta al pie del menu lateral (solo `v1.1.0` en compacto), del acceso, del panel de
+  plataforma y de la landing. Responde a la observacion de la evaluacion externa de que la app no mostraba su version.
+* `package-lock.json` solo cambia en la version del paquete raiz: `npm install --package-lock-only` agregaba
+  entradas de dependencias opcionales y se descarto.
+* Nace `CHANGELOG.md` (Keep a Changelog, en espanol). Reglas en 02-CONVENTIONS.md, seccion Versionado.
+
 ## 2026-11-01: Todos los montos en pesos con punto de miles automatico (feat/58)
 
 * Saldo inicial (nueva y editar cuenta), Monto (transferencia, ingreso y gasto), Valor del abono, Valor del pago y Precio de

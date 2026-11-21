@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { WordmarkLink } from '../brand/WordmarkLink'
 import { iconSm } from '../components/icons'
+import { APP_VERSION_LABEL } from '../config/version'
 import { LegalLinks } from '../legal/LegalLinks'
 import './LoginPage.css'
 
@@ -51,7 +52,7 @@ export function LoginLayout({ photo, statement, eyebrow, title, subtitle, childr
           {children}
         </div>
         <footer className="text-right text-small text-text-muted">
-          <p className="mb-1">ServiBox · Colombia</p>
+          <p className="mb-1">ServiBox {APP_VERSION_LABEL} · Colombia</p>
           <LegalLinks />
         </footer>
       </div>

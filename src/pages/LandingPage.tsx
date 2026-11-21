@@ -6,6 +6,7 @@ import { buttonClasses } from '../components/buttonStyles'
 import { iconLg, iconSm } from '../components/icons'
 import { SkipLink } from '../components/SkipLink'
 import { GLOSSARY } from '../copy/glossary'
+import { APP_VERSION_LABEL } from '../config/version'
 import { PRIVACY_POLICY_PATH, TERMS_PATH } from '../legal/legalContent'
 import { usePageMeta } from '../lib/usePageMeta'
 import heroWorkshop from '../assets/landing/hero-workshop-mechanic-v2.webp'
@@ -237,6 +238,7 @@ export function LandingPage() {
           <div>
             <WordmarkLink onDark />
             <p className="mt-3 text-small text-neutral-300">Ventas, inventario y caja para tu serviteca.</p>
+            <p className="mt-1 text-small text-text-subtle">ServiBox {APP_VERSION_LABEL}</p>
           </div>
           <nav aria-label="Pie de página">
             <ul className="flex flex-wrap gap-x-6 gap-y-2 text-small">
