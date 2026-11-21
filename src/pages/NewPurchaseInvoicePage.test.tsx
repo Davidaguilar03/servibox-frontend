@@ -546,3 +546,46 @@ describe('nueva factura de compra', () => {
     expect(router.state.location.pathname).toBe('/compras/nueva')
   })
 })
+
+describe('servicios en la compra', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-23T03:00:00Z'))
+    saveToken(validToken())
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  const service = { ...product(20, 'SV-01', 'Alineación', 0, 1), itemType: 'SERVICIO' }
+  const withService = (): Routes => ({
+    ...fullRoutes(),
+    'GET /api/inventory/products': () => jsonResponse([...products.map((item) => ({ ...item, itemType: 'PRODUCTO' })), service]),
+  })
+
+  it('no ofrece servicios al elegir los items', async () => {
+    const { user } = await setup(withService())
+    await user.click(await screen.findByRole('button', { name: 'Agregar producto' }))
+    const combo = screen.getByRole('combobox', { name: 'Producto' })
+    await user.click(combo)
+    const listbox = screen.getByRole('listbox')
+    const offered = within(listbox).getAllByRole('option').map((option) => option.textContent)
+    expect(offered).toHaveLength(3)
+    expect(offered.join(' ')).not.toContain('SV-01')
+    await user.type(screen.getByRole('combobox', { name: 'Producto' }), 'alinea')
+    expect(screen.queryByRole('option', { name: /Alineación/ })).not.toBeInTheDocument()
+  })
+
+  it('si el backend rechaza un servicio, el error se muestra mapeado', async () => {
+    const { user } = await setup({
+      ...withService(),
+      'POST /api/purchases': () => jsonResponse({ error: 'No se puede comprar un servicio: Alineacion', status: 400 }, 400),
+    })
+    await fillValid(user)
+    await user.click(screen.getByRole('button', { name: 'Guardar compra' }))
+
+    const alert = await screen.findByText('Alineacion es un servicio y no se puede comprar. Quítalo de la factura.')
+    expect(alert.closest('[role="alert"]')).toHaveTextContent('No pudimos guardar la factura')
+  })
+})

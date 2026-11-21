@@ -82,6 +82,11 @@ const BACKEND: Array<[string, string]> = [
   // inventory/service/InventoryService, *Exception
   ['Ya existe una categoria con el nombre LLANTAS', 'Ya existe una categoría con el nombre LLANTAS.'],
   ['Ya existe un producto con el codigo LL-001', 'Ya existe un producto con el código LL-001.'],
+  // Servicios del backend (feat/59-services, 400).
+  ['El precio de venta del servicio debe ser mayor a cero', 'Escribe un precio de venta del servicio mayor que cero.'],
+  ['El tipo de un item no se puede cambiar despues de crearlo', 'No se puede cambiar un producto a servicio ni un servicio a producto después de crearlo.'],
+  // Compra con una linea de servicio (feat/59-services, 400).
+  ['No se puede comprar un servicio: Alineacion', 'Alineacion es un servicio y no se puede comprar. Quítalo de la factura.'],
   ['El codigo del producto admite hasta 50 caracteres', 'El código del producto admite hasta 50 caracteres.'],
   ['El costo de compra no puede ser negativo', 'El costo de compra no puede ser negativo.'],
   ['El margen debe estar entre 0 y menos de 100%', 'El margen debe estar entre 0 y menos de 100 %.'],

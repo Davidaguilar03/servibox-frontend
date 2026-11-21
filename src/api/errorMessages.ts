@@ -147,6 +147,9 @@ const RULES: Rule[] = [
   [/^Ya existe un producto con el codigo (.+)$/, (code) => `Ya existe un producto con el código ${code}.`],
   [/^El codigo del producto admite hasta (\d+) caracteres$/, (n) => `El código del producto admite hasta ${n} caracteres.`],
   [/^El costo de compra no puede ser negativo$/, 'El costo de compra no puede ser negativo.'],
+  // Servicios (feat/59-services del backend).
+  [/^El precio de venta del servicio debe ser mayor a cero$/, 'Escribe un precio de venta del servicio mayor que cero.'],
+  [/^El tipo de un item no se puede cambiar despues de crearlo$/, 'No se puede cambiar un producto a servicio ni un servicio a producto después de crearlo.'],
   [/^El margen debe estar entre 0 y menos de 100%$/, 'El margen debe estar entre 0 y menos de 100 %.'],
   [/^El nombre de la categoria admite hasta (\d+) caracteres$/, (n) => `El nombre de la categoría admite hasta ${n} caracteres.`],
   [/^El umbral amarillo no puede ser negativo$/, 'El aviso de stock bajo no puede ser negativo.'],
@@ -205,6 +208,7 @@ const RULES: Rule[] = [
   [/^Una compra de contado necesita la cuenta de la que sale el dinero$/, 'Elige la cuenta de la que sale el dinero.'],
   [/^Una compra necesita un proveedor/, 'Elige el proveedor.'],
   [/^Una factura de compra necesita al menos una linea$/, 'Agrega al menos un producto.'],
+  [/^No se puede comprar un servicio: (.+)$/, (item) => `${item} es un servicio y no se puede comprar. Quítalo de la factura.`],
 
   // Cuentas y movimientos.
   [/^El tipo de una cuenta no se puede cambiar$/, 'El tipo de una cuenta no se puede cambiar.'],

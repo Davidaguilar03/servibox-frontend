@@ -1,12 +1,22 @@
 import { ApiError } from '../lib/api'
-import { formatAmountText } from '../lib/amountInput'
-import type { InventoryProduct, ProductRequest, ProductUpdateRequest } from './inventoryApi'
+import { amountTextFromNumber, amountToDecimalText, formatAmountText } from '../lib/amountInput'
+import { unitPriceError } from '../lib/money'
+import type {
+  InventoryProduct,
+  ItemType,
+  ProductRequest,
+  ProductUpdateRequest,
+  ServiceRequest,
+  ServiceUpdateRequest,
+} from './inventoryApi'
 
 // Formulario de producto: valores como texto, validacion y cuerpos del POST y del PUT. El IVA y
 // el precio sugerido los guarda el backend; el panel del formulario los anticipa con
 // `pricing.ts`, una copia de su formula.
 
 export interface ProductFormValues {
+  /** Se elige al crear; al editar queda fijo. */
+  itemType: ItemType
   code: string
   description: string
   /** Id de la categoria como texto; vacio es sin elegir. */
@@ -14,27 +24,39 @@ export interface ProductFormValues {
   purchaseCost: string
   /** Solo al crear. */
   quantity: string
+  /** Solo servicios: precio de venta sin IVA, admite centavos. */
+  salePrice: string
+  /** Solo servicios. */
+  vatApplies: boolean
 }
 
 export type ProductField = keyof ProductFormValues
 export type ProductErrors = Partial<Record<ProductField, string>>
 
 export const EMPTY_PRODUCT_FORM: ProductFormValues = {
+  itemType: 'PRODUCTO',
   code: '',
   description: '',
   categoryId: '',
   purchaseCost: '',
   quantity: '0',
+  salePrice: '',
+  vatApplies: true,
 }
 
 /** Valores del formulario a partir de un producto guardado, para editarlo. */
 export function productToForm(product: InventoryProduct): ProductFormValues {
+  const service = product.itemType === 'SERVICIO'
   return {
+    itemType: product.itemType,
     code: product.code,
     description: product.description,
     categoryId: product.categoryId === null ? '' : String(product.categoryId),
     purchaseCost: formatAmountText(String(product.purchaseCost).replace('.', ',')),
     quantity: String(product.quantity ?? 0),
+    // El precio de un servicio llega como suggestedPrice y el IVA solo se ve en taxAmount.
+    salePrice: service && product.suggestedPrice !== null ? amountTextFromNumber(product.suggestedPrice) : '',
+    vatApplies: service ? (product.taxAmount ?? 0) > 0 : true,
   }
 }
 
@@ -61,6 +83,16 @@ export function isWholePesos(text: string): boolean {
  */
 export function validateProduct(values: ProductFormValues, creating: boolean, initialCost = ''): ProductErrors {
   const errors: ProductErrors = {}
+  if (values.itemType === 'SERVICIO') {
+    if (!values.code.trim()) errors.code = 'Escribe el código del servicio.'
+    if (!values.description.trim()) errors.description = 'Escribe la descripción del servicio.'
+    if (!values.salePrice.trim()) errors.salePrice = 'Escribe el precio de venta.'
+    else {
+      const priceError = unitPriceError(amountToDecimalText(values.salePrice))
+      if (priceError) errors.salePrice = priceError
+    }
+    return errors
+  }
   if (!values.code.trim()) errors.code = 'Escribe el código del producto.'
   if (!values.description.trim()) errors.description = 'Escribe la descripción del producto.'
   if (!values.categoryId) errors.categoryId = 'Elige una categoría.'
@@ -84,13 +116,24 @@ function commonFields(values: ProductFormValues): ProductUpdateRequest {
   }
 }
 
-export function buildCreateRequest(values: ProductFormValues): ProductRequest {
+/** Un servicio solo lleva codigo, descripcion, precio e IVA: el backend ignora lo demas. */
+function serviceFields(values: ProductFormValues): ServiceUpdateRequest {
+  return {
+    code: values.code.trim(),
+    description: values.description.trim(),
+    salePrice: Number(amountToDecimalText(values.salePrice)),
+    vatApplies: values.vatApplies,
+  }
+}
+
+export function buildCreateRequest(values: ProductFormValues): ProductRequest | ServiceRequest {
+  if (values.itemType === 'SERVICIO') return { itemType: 'SERVICIO', ...serviceFields(values) }
   return { ...commonFields(values), quantity: Number(values.quantity.trim()) }
 }
 
-/** Sin quantity: el backend la ignoraria y el stock solo cambia con ventas y compras. */
-export function buildUpdateRequest(values: ProductFormValues): ProductUpdateRequest {
-  return commonFields(values)
+/** Sin quantity: el backend la ignoraria y el stock solo cambia con ventas y compras. Sin itemType: no cambia. */
+export function buildUpdateRequest(values: ProductFormValues): ProductUpdateRequest | ServiceUpdateRequest {
+  return values.itemType === 'SERVICIO' ? serviceFields(values) : commonFields(values)
 }
 
 /**

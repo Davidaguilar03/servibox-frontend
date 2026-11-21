@@ -269,7 +269,7 @@ describe('nueva factura de venta', () => {
 
     await addProduct(user, 'LL-001')
     expect(
-      within(summary()).getByText('Al guardar se descuentan 1 unidad del inventario y la factura queda pendiente de abono.'),
+      within(summary()).getByText('Al guardar se descuenta 1 unidad del inventario y la factura queda pendiente de abono.'),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
 
@@ -351,6 +351,19 @@ describe('nueva factura de venta', () => {
     await addProduct(user, 'willard', '3')
     expect(screen.getByText('BAT-007 quedará con 1 unidad después de esta venta.')).toBeInTheDocument()
     expect(screen.getByText('Stock crítico')).toBeInTheDocument()
+  })
+
+  it('el aviso de inventario concuerda en singular y plural', async () => {
+    const { user } = await setup()
+
+    await user.selectOptions(await screen.findByLabelText('Cuenta'), 'Caja General')
+    await addProduct(user, 'michelin')
+    expect(within(summary()).getByText(/^Al guardar se descuenta 1 unidad del inventario/)).toBeInTheDocument()
+
+    const quantity = screen.getByLabelText('Cantidad')
+    await user.clear(quantity)
+    await user.type(quantity, '3')
+    expect(within(summary()).getByText(/^Al guardar se descuentan 3 unidades del inventario/)).toBeInTheDocument()
   })
 
   it('un 409 de stock se muestra sin perder lo digitado', async () => {
@@ -534,5 +547,76 @@ describe('nueva factura de venta', () => {
     renderRoute('/ventas')
     const [link] = await screen.findAllByRole('link', { name: 'Registrar venta' })
     expect(link).toHaveAttribute('href', '/ventas/nueva')
+  })
+})
+
+describe('servicios en la venta', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-18T15:00:00Z'))
+    saveToken(validToken())
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // Sin stock: los servicios siempre llegan con cantidad 0. Balanceo sin IVA llega con taxAmount 0.
+  const services = [
+    { id: 20, code: 'SV-01', description: 'Alineación', itemType: 'SERVICIO', quantity: 0, taxAmount: 6650, suggestedPrice: 35000, categoryId: 1 },
+    { id: 21, code: 'SV-02', description: 'Balanceo', itemType: 'SERVICIO', quantity: 0, taxAmount: 0, suggestedPrice: 20000, categoryId: 1 },
+  ]
+  const routes = (): Routes => ({ ...fullRoutes(), 'GET /api/inventory/products': () => jsonResponse([...products, ...services]) })
+
+  it('mezcla una llanta y un servicio sin stock, sin validar stock del servicio y distinguiendolo', async () => {
+    const { fetchMock, user } = await setup(routes())
+
+    await user.click(await screen.findByRole('button', { name: 'Agregar producto' }))
+    const combo = screen.getByRole('combobox', { name: 'Producto' })
+    await user.click(combo)
+    await user.type(combo, 'alinea')
+    expect(screen.getByRole('option', { name: /Alineación/ })).toHaveTextContent('SV-01 · Servicio')
+    expect(screen.getByRole('option', { name: /Alineación/ })).not.toHaveTextContent('disponibles')
+    await user.keyboard('{Enter}')
+    const quantity = screen.getByLabelText('Cantidad')
+    await user.clear(quantity)
+    await user.type(quantity, '3')
+
+    await addProduct(user, 'michelin', '1')
+
+    const serviceLine = screen.getByRole('listitem', { name: 'Línea SV-01, servicio' })
+    expect(within(serviceLine).getByText('Servicio')).toBeInTheDocument()
+    expect(within(serviceLine).queryByText(/Disponible/)).not.toBeInTheDocument()
+    expect(within(serviceLine).queryByText(/unidades disponibles/)).not.toBeInTheDocument()
+    expect(within(serviceLine).getByText('$ 19.950')).toBeInTheDocument()
+    const tireLine = screen.getByRole('listitem', { name: 'Línea LL-001' })
+    expect(within(tireLine).queryByText('Servicio')).not.toBeInTheDocument()
+    expect(within(tireLine).getByText('Disponible: 50')).toBeInTheDocument()
+    // Solo la llanta descuenta inventario.
+    expect(
+      within(summary()).getByText('Al guardar se descuenta 1 unidad del inventario y se acreditan $ 339.150 en Caja General.'),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
+    await waitFor(() => expect(posts(fetchMock, '/api/sales')).toHaveLength(1))
+    expect(posts(fetchMock, '/api/sales')[0]?.details).toEqual([
+      { productId: 20, quantity: 3, price: 35000 },
+      { productId: 1, quantity: 1, price: 180000 },
+    ])
+  })
+
+  it('a credito con solo un servicio sin IVA', async () => {
+    const { fetchMock, user } = await setup(routes())
+    await user.click(await screen.findByRole('radio', { name: 'Crédito' }))
+    await addProduct(user, 'balanceo')
+
+    // Subtotal y total iguales: el IVA es cero.
+    expect(within(summary()).getAllByText('$ 20.000', { selector: 'dd' })).toHaveLength(2)
+    expect(within(summary()).getByText('$ 0', { selector: 'dd' })).toBeInTheDocument()
+    expect(within(summary()).queryByText(/descuentan/)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Guardar factura' }))
+    await waitFor(() => expect(posts(fetchMock, '/api/sales')).toHaveLength(1))
+    expect(posts(fetchMock, '/api/sales')[0]).toMatchObject({ paymentType: 'CREDITO', details: [{ productId: 21, quantity: 1, price: 20000 }] })
   })
 })

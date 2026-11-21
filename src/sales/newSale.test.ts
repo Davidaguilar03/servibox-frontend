@@ -6,7 +6,9 @@ import {
   buildSaleRequest,
   invoiceTotals,
   isDuplicateNumberError,
+  isSellable,
   lineAmounts,
+  lineVatRate,
   paymentMethodsFor,
   round2,
   stockWarnings,
@@ -20,7 +22,9 @@ const product = (id: number, quantity: number, categoryId = 1): Product => ({
   id,
   code: `P-${id}`,
   description: `Producto ${id}`,
+  itemType: 'PRODUCTO',
   quantity,
+  taxAmount: 190,
   suggestedPrice: 1000,
   categoryId,
 })
@@ -222,6 +226,26 @@ describe('stockWarnings', () => {
     expect(stockWarnings([line(1, 9, '3', '1')], noCategory, categoriesById)[0]?.title).toBe('Stock bajo')
     expect(stockWarnings([line(1, 9, '6', '1')], noCategory, categoriesById)[0]?.title).toBe('Stock crítico')
     expect(stockWarnings([line(1, 9, '2', '1')], noCategory, categoriesById)).toEqual([])
+  })
+})
+
+describe('servicios', () => {
+  const service = (id: number, taxAmount: number): Product => ({ ...product(id, 0, 1), itemType: 'SERVICIO', taxAmount })
+  const withServices = new Map([...productsById, [8, service(8, 6650)], [9, service(9, 0)]])
+
+  it('un servicio sin stock se vende sin limite de cantidad y no avisa de stock', () => {
+    const sale = form({ lines: [line(1, 8, '30', '35000'), line(2, 1, '2', '180000')] })
+    expect(validateSale(sale, withServices).valid).toBe(true)
+    expect(stockWarnings(sale.lines, withServices, categoriesById)).toEqual([])
+    expect(isSellable(service(8, 0))).toBe(true)
+    expect(isSellable(product(4, 0))).toBe(false)
+  })
+
+  it('el IVA de un servicio sale de su categoria, o es cero si llega sin IVA', () => {
+    const category = categoriesById.get(1)
+    expect(lineVatRate(service(8, 6650), category)).toBe(0.19)
+    expect(lineVatRate(service(9, 0), category)).toBe(0)
+    expect(lineVatRate(product(1, 5), category)).toBe(0.19)
   })
 })
 

@@ -2,6 +2,32 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Servicios en inventario, ventas y compras (feat/60)
+
+* Contrato del backend feat/59-services (V15): `itemType` PRODUCTO o SERVICIO en cada item. El tipo se elige al crear con
+  un `SegmentedControl` Producto / Servicio en el modal y despues queda fijo como texto (no campo, asi el foco inicial al
+  editar sigue en Codigo). Al crear, el foco inicial es el selector de tipo.
+* Servicio: codigo, descripcion, precio de venta sin IVA (`AmountField`, admite centavos, validado con `unitPriceError`) y
+  "Aplica IVA" (casilla con `role="switch"` y el patron de casillas del sistema; no hay componente interruptor). POST con
+  `itemType: 'SERVICIO'`; PUT sin `itemType`. El POST de producto no cambia (sin `itemType`).
+* La respuesta no trae `salePrice` ni `vatApplies`: el precio llega en `suggestedPrice` y el IVA se deduce de `taxAmount`
+  (mayor que 0 es con IVA). Al editar se envia siempre `vatApplies` con ese valor deducido.
+* La categoria SERVICIOS la crea el backend y trae el IVA del tenant; se oculta del selector de categoria de productos
+  por nombre (`SERVICES_CATEGORY_NAME`). Sigue visible en Categorias y en el filtro del listado.
+* Listado: filtro Tipo (Todos, Productos, Servicios) en la URL (`tipo`) y con `?itemType=` en el backend. Indicadores y
+  alertas salen siempre del catalogo completo y solo cuentan productos. Un servicio muestra "No aplica" en Stock y Costo,
+  la etiqueta neutral "Servicio" en Estado (variante nueva de `StatusBadge`) y no entra en el filtro de estado de stock.
+  La etiqueta va solo en los servicios: el producto es el caso comun y no se rotula.
+* Ventas (contado y credito): los servicios se ofrecen siempre (`isSellable`), sin tope ni aviso de stock, con "Servicio"
+  en la opcion del buscador y en la linea. Tasa de IVA de la linea (`lineVatRate`): la de la categoria, o 0 en un servicio
+  con `taxAmount` 0; asi lo calcula el backend. "Se descuenta 1 unidad" o "Se descuentan N unidades" cuenta solo productos. El boton del listado dice "Nuevo item".
+* Compras: el selector filtra servicios en el cliente sobre la misma respuesta de `['inventory', 'products']` (equivale a
+  `itemType=PRODUCTO` sin una segunda peticion). El 400 "No se puede comprar un servicio: X" queda mapeado igual.
+* `lib/stock.ts` descarta servicios en `stockAlerts`, que usan Inicio e Inventario; `productIndicators` (total, en stock,
+  valor) tambien. KPIs del periodo vienen del backend y no cambian: los servicios suman en ventas con costo 0.
+* Mensajes nuevos en el mapa: precio del servicio, cambio de tipo y compra de un servicio.
+* Detalle en sessions/2026-11-21-services.md.
+
 ## 2026-11-21: Versionado semantico y version visible (chore/59)
 
 * Se adopta SemVer en los dos repos. `package.json` pasa de 0.0.0 a 1.1.0, la version en desarrollo, igual al

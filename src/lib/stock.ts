@@ -28,6 +28,8 @@ export function stockStatus(quantity: number | null, thresholds?: StockThreshold
 interface StockProduct {
   quantity: number | null
   categoryId: number | null
+  /** Un SERVICIO no tiene stock: nunca entra en las alertas. */
+  itemType?: 'PRODUCTO' | 'SERVICIO'
 }
 
 interface StockCategory extends StockThresholds {
@@ -36,7 +38,7 @@ interface StockCategory extends StockThresholds {
 
 /**
  * Productos con alerta de stock (sin stock, criticos o bajos), de menor a mayor stock, con su
- * estado. Inicio e Inventario cuentan sus alertas con esta misma funcion.
+ * estado; los servicios no cuentan. Inicio e Inventario cuentan sus alertas con esta misma funcion.
  */
 export function stockAlerts<P extends StockProduct>(
   products: P[],
@@ -44,6 +46,7 @@ export function stockAlerts<P extends StockProduct>(
 ): Array<P & { status: StockStatus }> {
   const byId = new Map(categories.map((category) => [category.id, category]))
   return products
+    .filter((product) => product.itemType !== 'SERVICIO')
     .map((product) => ({
       ...product,
       status: stockStatus(product.quantity, product.categoryId === null ? undefined : byId.get(product.categoryId)),

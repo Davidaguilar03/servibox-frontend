@@ -10,6 +10,7 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 ### Agregado
 
 - Versionado semántico; la versión se muestra en el menú lateral, el inicio de sesión y el pie de la landing.
+- Servicios: registro con precio fijo e IVA opcional, filtro por tipo en inventario, venta junto con productos y exclusión de alertas y valorización de inventario.
 
 ## [1.0.0] - 2026-11-01
 

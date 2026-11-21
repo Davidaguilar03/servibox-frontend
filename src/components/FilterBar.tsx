@@ -18,7 +18,7 @@ interface FilterBarProps {
   onClear: () => void
   /** Dentro de una superficie que tambien contiene el listado. */
   embedded?: boolean
-  /** Cuatro filtros de Inventario: dos columnas hasta que quepa una fila completa. */
+  /** Cinco filtros de Inventario (el tipo a su ancho): dos columnas hasta que quepa una fila completa. */
   inventory?: boolean
   /** Ventas: el periodo personalizado ocupa una fila amplia para las dos fechas. */
   salesCustom?: boolean
@@ -36,7 +36,7 @@ export function FilterBar({ children, active, onClear, embedded = false, invento
     ? salesCustom
       ? active ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_auto]' : 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))]'
       : active ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_minmax(0,1.25fr)_auto]' : 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))_minmax(0,1.25fr)]'
-    : inventory ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]' : LG_COLUMNS[children.length] ?? LG_COLUMNS[4]
+    : inventory ? 'lg:grid-cols-2 2xl:grid-cols-[minmax(0,2fr)_auto_repeat(3,minmax(0,1fr))_auto]' : LG_COLUMNS[children.length] ?? LG_COLUMNS[4]
   return (
     <div
       className={`grid gap-4 bg-surface p-4 sm:grid-cols-2 lg:items-start ${embedded ? 'border-b border-border' : 'rounded-surface border border-border'} ${columns}`}

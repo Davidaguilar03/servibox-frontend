@@ -17,6 +17,7 @@ export type BadgeStatus =
   | 'ACTIVATED'
   | 'ACTIVE'
   | 'SUSPENDED'
+  | 'SERVICIO'
 
 const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   APPROVED: { label: GLOSSARY.registrationStatuses.APPROVED, tone: 'bg-info-bg text-info-ink' },
@@ -37,6 +38,8 @@ const badges: Record<BadgeStatus, { label: string; tone: string }> = {
   INACTIVO: { label: 'Inactivo', tone: 'bg-neutral-200 text-text-muted' },
   INGRESO: { label: 'Ingreso', tone: 'bg-success-bg text-success-ink' },
   EGRESO: { label: 'Egreso', tone: 'bg-error-bg text-error-ink' },
+  // Tipo de item, no estado: neutral para que sea discreto junto al de stock.
+  SERVICIO: { label: 'Servicio', tone: 'bg-neutral-200 text-text-muted' },
 }
 
 /** Etiqueta de estado: siempre lleva texto, el color solo acompana. */
