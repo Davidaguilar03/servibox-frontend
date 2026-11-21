@@ -32,6 +32,7 @@ const product = (id: number, fields: Partial<InventoryProduct>): InventoryProduc
   suggestedPrice: 1500,
   categoryId: 1,
   categoryName: 'LLANTAS',
+  itemType: 'PRODUCTO',
   ...fields,
 })
 
@@ -109,12 +110,19 @@ describe('query string', () => {
   it('lee los filtros y descarta los valores desconocidos', () => {
     expect(parseProductFilters(new URLSearchParams('q=llanta&categoria=2&estado=BAJO&orden=precio&pagina=3'))).toEqual({
       q: 'llanta',
+      tipo: '',
       categoria: 2,
       estado: 'BAJO',
       orden: 'precio',
       pagina: 3,
     })
     expect(parseProductFilters(new URLSearchParams('categoria=x&estado=OTRO&orden=nada&pagina=-1'))).toEqual(DEFAULT_PRODUCT_FILTERS)
+  })
+
+  it('lee y escribe el tipo; un tipo desconocido es Todos', () => {
+    expect(parseProductFilters(new URLSearchParams('tipo=SERVICIO')).tipo).toBe('SERVICIO')
+    expect(parseProductFilters(new URLSearchParams('tipo=otro')).tipo).toBe('')
+    expect(productFiltersToParams(filters({ tipo: 'PRODUCTO' })).toString()).toBe('tipo=PRODUCTO')
   })
 
   it('solo escribe los valores distintos de los de por defecto', () => {
@@ -132,6 +140,16 @@ describe('indicadores y pestanas', () => {
       inStock: 4,
       inventoryValue: 24 * 118000 + 2 * 210000 + 3 * 105000 + 5 * 265000,
     })
+  })
+
+  it('los servicios no cuentan en total, stock ni valorizacion', () => {
+    const service = product(9, { itemType: 'SERVICIO', quantity: 0, purchaseCost: 0, categoryId: 3 })
+    expect(productIndicators([...products, service])).toEqual(productIndicators(products))
+  })
+
+  it('el filtro de estado de stock deja fuera los servicios', () => {
+    const service = product(9, { itemType: 'SERVICIO', quantity: 0 })
+    expect(codes(filterProducts([product(1, { quantity: 0 }), service], filters({ estado: 'SIN_STOCK' }), byId))).toEqual(['P-1'])
   })
 
   it('una cantidad negativa o nula no suma al valor', () => {

@@ -10,6 +10,7 @@ import { Button } from '../components/Button'
 import { buttonClasses } from '../components/buttonStyles'
 import { ErrorSummary } from '../components/ErrorSummary'
 import { Modal } from '../components/Modal'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
@@ -18,11 +19,13 @@ import { showToast } from '../components/toast'
 import {
   CATEGORIES_KEY,
   PRODUCTS_KEY,
+  SERVICES_CATEGORY_NAME,
   createProduct,
   fetchInventoryCategories,
   fetchInventoryProduct,
   updateProduct,
   type InventoryProduct,
+  type ItemType,
 } from '../inventory/inventoryApi'
 import { PricePanel } from '../inventory/PricePanel'
 import {
@@ -41,6 +44,11 @@ import { ApiError } from '../lib/api'
 import { revealErrors } from '../lib/formErrors'
 import { FINANCIAL_SETTINGS_KEY, fetchFinancialSettings } from '../settings/settingsApi'
 import { iconLg } from '../components/icons'
+
+const ITEM_TYPE_OPTIONS = [
+  { value: 'PRODUCTO' as const, label: 'Producto' },
+  { value: 'SERVICIO' as const, label: 'Servicio' },
+]
 
 /** Ruta del listado con los filtros que tiene detras del modal. */
 function useListPath() {
@@ -121,13 +129,17 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   // Misma clave que Configuracion y Productos: una sola peticion en cache.
   const financial = useQuery({ queryKey: FINANCIAL_SETTINGS_KEY, queryFn: fetchFinancialSettings })
+  // SERVICIOS es la categoria que el backend da a los servicios: un producto no la lleva.
   const categoryOptions = [
     { value: '', label: 'Elige una categoría' },
-    ...[...(categories.data ?? [])]
+    ...(categories.data ?? [])
+      .filter((category) => category.name !== SERVICES_CATEGORY_NAME)
       .sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
       .map((category) => ({ value: String(category.id), label: category.name })),
   ]
 
+  const service = values.itemType === 'SERVICIO'
+  const noun = service ? 'servicio' : 'producto'
   const errors = validateProduct(values, creating, initial.purchaseCost)
   const shown = (field: ProductField) => (touched.has(field) ? errors[field] : undefined)
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
@@ -137,7 +149,7 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
       product ? updateProduct(product.id, buildUpdateRequest(form)) : createProduct(buildCreateRequest(form)),
     onSuccess: () => {
       allowLeave.current = true
-      showToast('Producto guardado')
+      showToast(service ? 'Servicio guardado' : 'Producto guardado')
       void queryClient.invalidateQueries({ queryKey: ['inventory'] })
       void navigate(listPath)
     },
@@ -150,10 +162,11 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   })
   const saveError = useReportedError(save.error)
 
-  const change = (field: ProductField) => (value: string) => {
+  const change = (field: Exclude<ProductField, 'itemType' | 'vatApplies'>) => (value: string) => {
     if (field === 'code') setCodeConflict(null)
     setValues((current) => ({ ...current, [field]: value }))
   }
+  const changeType = (itemType: ItemType) => setValues((current) => ({ ...current, itemType }))
   const touch = (field: ProductField) => () => setTouched((current) => new Set(current).add(field))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -181,9 +194,9 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
   const generalError = save.isError && !isCodeConflict(save.error)
 
   return (
-    <UnsavedChangesGuard dirty={dirty} allowLeave={allowLeave} message="Si sales ahora, se pierde lo que digitaste en este producto.">
+    <UnsavedChangesGuard dirty={dirty} allowLeave={allowLeave} message={`Si sales ahora, se pierde lo que digitaste en este ${noun}.`}>
       <Modal
-        title={creating ? 'Nuevo producto' : 'Editar producto'}
+        title={`${creating ? 'Nuevo' : 'Editar'} ${noun}`}
         size="wide"
         onClose={close}
         footer={
@@ -193,22 +206,89 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
             </Button>
             {/* Regla de Guardar: solo se deshabilita al enviar y, al editar, sin cambios. */}
             <Button type="submit" form={formId} disabled={save.isPending || (!creating && !dirty)} aria-busy={save.isPending || undefined}>
-              {save.isPending ? 'Guardando…' : 'Guardar producto'}
+              {save.isPending ? 'Guardando…' : `Guardar ${noun}`}
             </Button>
           </>
         }
       >
         <form id={formId} ref={formRef} onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          {creating ? (
+            <div className="flex flex-col gap-2">
+              <span id={`${formId}-tipo`} className="text-label text-text">
+                Tipo
+              </span>
+              <SegmentedControl
+                aria-labelledby={`${formId}-tipo`}
+                options={ITEM_TYPE_OPTIONS}
+                value={values.itemType}
+                onChange={changeType}
+                className="grid grid-cols-2 sm:max-w-80"
+              />
+            </div>
+          ) : (
+            // Texto y no campo: el tipo es fijo y el foco inicial sigue en Codigo.
+            <p className="text-small text-text-muted">
+              Tipo: <span className="font-semibold text-text">{service ? 'Servicio' : 'Producto'}</span>. No se cambia después de crear el ítem.
+            </p>
+          )}
+
           <p className="text-small text-text-muted">
-            El IVA y el precio sugerido los calcula ServiBox con el costo y el margen de la categoría.
+            {service
+              ? 'Un servicio tiene precio fijo: no lleva stock, costo ni compras.'
+              : 'El IVA y el precio sugerido los calcula ServiBox con el costo y el margen de la categoría.'}
           </p>
 
           {saveError && generalError && (
-            <Alert tone="error" title="No pudimos guardar el producto">
+            <Alert tone="error" title={`No pudimos guardar el ${noun}`}>
               {saveError}
             </Alert>
           )}
 
+          {service ? (
+            <div className="grid items-start gap-4 sm:grid-cols-2">
+              <TextField
+                ref={codeRef}
+                label="Código"
+                valueRole="codigo"
+                value={values.code}
+                onChange={(event) => change('code')(event.target.value)}
+                onBlur={touch('code')}
+                error={codeConflict ?? shown('code')}
+                autoComplete="off"
+                required
+              />
+              <AmountField
+                label="Precio de venta sin IVA"
+                inputMode="decimal"
+                value={values.salePrice}
+                onValueChange={change('salePrice')}
+                onBlur={touch('salePrice')}
+                error={shown('salePrice')}
+                hint="Precio fijo antes de IVA, en pesos colombianos."
+                required
+              />
+              <div className="sm:col-span-2">
+                <TextField
+                  label="Descripción"
+                  value={values.description}
+                  onChange={(event) => change('description')(event.target.value)}
+                  onBlur={touch('description')}
+                  error={shown('description')}
+                  required
+                />
+              </div>
+              <label className="flex min-h-touch cursor-pointer items-center gap-3 text-body text-text sm:col-span-2">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  checked={values.vatApplies}
+                  onChange={(event) => setValues((current) => ({ ...current, vatApplies: event.target.checked }))}
+                  className="size-4 accent-brand"
+                />
+                Aplica IVA
+              </label>
+            </div>
+          ) : (
           <div className="grid items-start gap-4 sm:grid-cols-2">
             <TextField
               ref={codeRef}
@@ -280,8 +360,9 @@ function ProductEditor({ product }: { product: InventoryProduct | undefined }) {
               />
             )}
           </div>
+          )}
 
-          <PricePanel cost={cost} category={category} settings={financial.data} />
+          {!service && <PricePanel cost={cost} category={category} settings={financial.data} />}
           <ErrorSummary count={submitted ? Object.keys(errors).length : 0} />
         </form>
       </Modal>

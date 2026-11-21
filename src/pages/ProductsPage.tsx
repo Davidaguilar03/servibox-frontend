@@ -14,6 +14,7 @@ import { IndicatorCard } from '../components/IndicatorCard'
 import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
 import { SearchField } from '../components/SearchField'
+import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { StatusBadge, type BadgeStatus } from '../components/StatusBadge'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -21,7 +22,10 @@ import {
   CATEGORIES_KEY,
   PRODUCTS_KEY,
   fetchInventoryCategories,
+  fetchInventoryItems,
   fetchInventoryProducts,
+  isService,
+  itemsKey,
   type InventoryProduct,
 } from '../inventory/inventoryApi'
 import {
@@ -58,6 +62,15 @@ const statusOptions = [
   { value: 'SIN_STOCK', label: 'Sin stock' },
 ]
 
+const typeOptions = [
+  { value: '' as const, label: 'Todos' },
+  { value: 'PRODUCTO' as const, label: 'Productos' },
+  { value: 'SERVICIO' as const, label: 'Servicios' },
+]
+
+/** Stock y costo de un servicio: no tiene. */
+const NOT_APPLICABLE = 'No aplica'
+
 const sortOptions = [
   { value: 'codigo', label: 'Código' },
   { value: 'descripcion', label: 'Descripción' },
@@ -83,7 +96,15 @@ export function ProductsPage() {
   // Las rutas del modal conservan los filtros: el listado de atras no cambia y al cerrar se vuelve igual.
   const listSearch = searchParams.size ? `?${searchParams.toString()}` : ''
 
+  // Indicadores y alertas salen de todo el catalogo; la tabla, del tipo elegido (filtrado en el backend).
   const products = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts })
+  const typeFilter = filters.tipo || 'PRODUCTO'
+  const typed = useQuery({
+    queryKey: itemsKey(typeFilter),
+    queryFn: () => fetchInventoryItems(typeFilter),
+    enabled: filters.tipo !== '',
+  })
+  const listed = filters.tipo ? typed : products
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories })
   const byId = categories.data ? categoriesById(categories.data) : undefined
   const indicators = products.data ? productIndicators(products.data) : undefined
@@ -108,10 +129,10 @@ export function ProductsPage() {
         <div className="min-w-0 flex-1">
           <ListHeader
             title="Productos"
-            subtitle="Catálogo de productos con alertas de stock. Costos y precios sin IVA."
+            subtitle="Catálogo de productos y servicios, con alertas de stock. Costos y precios sin IVA."
             primary={
               <Link to={`/inventario/nuevo${listSearch}`} className={buttonClasses('primary')} data-variant="primary">
-                Nuevo producto
+                Nuevo ítem
               </Link>
             }
             secondary={[
@@ -183,11 +204,22 @@ export function ProductsPage() {
         <FilterBar
           embedded
           inventory
-          active={(['q', 'categoria', 'estado', 'orden'] as const).some((key) => filters[key] !== DEFAULT_PRODUCT_FILTERS[key])}
+          active={(['q', 'tipo', 'categoria', 'estado', 'orden'] as const).some((key) => filters[key] !== DEFAULT_PRODUCT_FILTERS[key])}
           onClear={clearFilters}
         >
           {[
             <SearchField key="q" label="Buscar" placeholder="Código o descripción" {...search} />,
+            <div key="tipo" className="flex flex-col gap-2">
+              <span id="filtro-tipo" className="text-label text-text">
+                Tipo
+              </span>
+              <SegmentedControl
+                aria-labelledby="filtro-tipo"
+                options={typeOptions}
+                value={filters.tipo}
+                onChange={(tipo) => updateFilters({ tipo })}
+              />
+            </div>,
             <div key="categoria" className="min-w-0 w-full max-w-60">
               {categories.isError ? (
                 <div role="alert" className="flex flex-wrap items-center gap-2">
@@ -229,12 +261,12 @@ export function ProductsPage() {
         </FilterBar>
 
         <ProductsTable
-          products={products.data}
+          products={listed.data}
           byId={byId}
-          loading={products.isPending || categories.isPending}
-          error={products.isError || categories.isError}
+          loading={listed.isPending || categories.isPending}
+          error={listed.isError || categories.isError}
           onRetry={() => {
-            if (products.isError) void products.refetch()
+            if (listed.isError) void listed.refetch()
             if (categories.isError) void categories.refetch()
           }}
           filters={filters}
@@ -286,7 +318,12 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
           <span className="flex flex-col">
             <span className="wrap-anywhere">{p.description}</span>
             <span className="flex flex-wrap items-center gap-x-2 text-small text-text-muted">
-              {category(p)} · Costo <span className="monto">{formatCurrency(p.purchaseCost)}</span>
+              {category(p)}
+              {!isService(p) && (
+                <>
+                  {' '}· Costo <span className="monto">{formatCurrency(p.purchaseCost)}</span>
+                </>
+              )}
             </span>
           </span>
         ) : (
@@ -297,13 +334,18 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
     {
       header: 'Stock',
       align: 'right',
-      render: (p) => <span className={(p.quantity ?? 0) <= 0 ? 'font-semibold text-brand-ink' : ''}>{p.quantity ?? 0}</span>,
+      render: (p) =>
+        isService(p) ? (
+          <span className="text-text-muted">{NOT_APPLICABLE}</span>
+        ) : (
+          <span className={(p.quantity ?? 0) <= 0 ? 'font-semibold text-brand-ink' : ''}>{p.quantity ?? 0}</span>
+        ),
     },
     ...(compact
       ? []
-      : [{ header: 'Costo sin IVA', align: 'right' as const, render: (p: InventoryProduct) => <span className="monto whitespace-nowrap">{formatCurrency(p.purchaseCost)}</span> }]),
+      : [{ header: 'Costo sin IVA', align: 'right' as const, render: (p: InventoryProduct) => isService(p) ? <span className="text-text-muted">{NOT_APPLICABLE}</span> : <span className="monto whitespace-nowrap">{formatCurrency(p.purchaseCost)}</span> }]),
     { header: 'Precio sugerido sin IVA', align: 'right', render: (p) => <span className="monto whitespace-nowrap">{formatCurrency(p.suggestedPrice)}</span> },
-    { header: 'Estado', render: (p) => byId && <StatusBadge status={badgeFor[productStatus(p, byId)]} /> },
+    { header: 'Estado', render: (p) => byId && <StatusBadge status={isService(p) ? 'SERVICIO' : badgeFor[productStatus(p, byId)]} /> },
     { header: '', render: editLink },
   ]
 
@@ -318,7 +360,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
     content = (
       <EmptyState
         message="Aún no tienes productos. Crea el primero."
-        action={{ label: 'Nuevo producto', to: `/inventario/nuevo${listSearch}` }}
+        action={{ label: 'Nuevo ítem', to: `/inventario/nuevo${listSearch}` }}
       />
     )
   } else {
@@ -349,14 +391,14 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="tabular text-body font-semibold text-text">{units(product.quantity ?? 0)}</span>
-                    <StatusBadge status={badgeFor[productStatus(product, byId)]} />
+                    {!isService(product) && <span className="tabular text-body font-semibold text-text">{units(product.quantity ?? 0)}</span>}
+                    <StatusBadge status={isService(product) ? 'SERVICIO' : badgeFor[productStatus(product, byId)]} />
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-border pt-3">
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-small">
-                    <span className="text-text-muted">Costo sin IVA <span className="monto wrap-anywhere text-text">{formatCurrency(product.purchaseCost).replace('$ ', '$\u00a0')}</span></span>
-                    <span className="text-text-muted">Precio sugerido sin IVA <span className="monto wrap-anywhere text-text">{formatCurrency(product.suggestedPrice).replace('$ ', '$\u00a0')}</span></span>
+                    {isService(product) ? <span className="text-text-muted">Costo sin IVA <span className="text-text">{NOT_APPLICABLE}</span></span> : <span className="text-text-muted">Costo sin IVA <span className="monto wrap-anywhere text-text">{formatCurrency(product.purchaseCost).replace('$ ', '$\u00a0')}</span></span>}
+                    <span className="text-text-muted">{isService(product) ? 'Precio sin IVA' : 'Precio sugerido sin IVA'} <span className="monto wrap-anywhere text-text">{formatCurrency(product.suggestedPrice).replace('$ ', '$\u00a0')}</span></span>
                   </div>
                   {editLink(product)}
                 </div>

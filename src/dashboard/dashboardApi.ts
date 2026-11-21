@@ -48,7 +48,11 @@ export interface Product {
   id: number
   code: string
   description: string
+  /** Un SERVICIO no tiene stock: se vende sin descontar inventario. */
+  itemType: 'PRODUCTO' | 'SERVICIO'
   quantity: number | null
+  /** IVA del precio; en un servicio, 0 si no aplica IVA. */
+  taxAmount: number | null
   /** Precio de venta sugerido, sin IVA. */
   suggestedPrice: number | null
   categoryId: number | null

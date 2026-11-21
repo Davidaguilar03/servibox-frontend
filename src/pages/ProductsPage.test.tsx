@@ -78,7 +78,7 @@ describe('productos', () => {
     expect(await screen.findByRole('heading', { name: 'Productos' })).toBeInTheDocument()
     expect(screen.queryByRole('banner')).not.toBeInTheDocument()
     expect(document.title).toBe('Productos · ServiBox')
-    expect(screen.getByRole('link', { name: 'Nuevo producto' })).toHaveAttribute('href', '/inventario/nuevo')
+    expect(screen.getByRole('link', { name: 'Nuevo ítem' })).toHaveAttribute('href', '/inventario/nuevo')
     expect(screen.getByRole('link', { name: 'Categorías' })).toHaveAttribute('href', '/inventario/categorias')
 
     expect(await within(indicator('Total de productos')).findByText('4')).toBeInTheDocument()
@@ -272,16 +272,16 @@ describe('productos', () => {
     expect(within(indicator('Total de productos')).getByText('0')).toBeInTheDocument()
   })
 
-  it('sin productos el unico primario es Nuevo producto del encabezado', async () => {
+  it('sin productos el unico primario es Nuevo ítem del encabezado', async () => {
     mockApi(fullRoutes([]))
     renderRoute('/inventario')
 
     expect(await screen.findByText('Aún no tienes productos. Crea el primero.')).toBeInTheDocument()
     const [primary, ...rest] = primaryActions()
     expect(rest).toHaveLength(0)
-    expect(primary).toHaveTextContent('Nuevo producto')
+    expect(primary).toHaveTextContent('Nuevo ítem')
     expect(emptyStateOf('Aún no tienes productos. Crea el primero.')).not.toContainElement(primary ?? null)
-    expect(within(emptyStateOf('Aún no tienes productos. Crea el primero.')).getByRole('link', { name: 'Nuevo producto' })).toHaveAttribute('data-variant', 'secondary')
+    expect(within(emptyStateOf('Aún no tienes productos. Crea el primero.')).getByRole('link', { name: 'Nuevo ítem' })).toHaveAttribute('data-variant', 'secondary')
   })
 
   it('sin resultados por filtros ofrece limpiarlos', async () => {
@@ -350,5 +350,77 @@ describe('aviso de configuracion financiera', () => {
       expect(screen.queryByText(/Tu configuración financiera está en 0 %/)).not.toBeInTheDocument()
       cleanup()
     }
+  })
+})
+
+describe('servicios en el listado', () => {
+  beforeEach(() => {
+    saveToken(validToken())
+  })
+
+  const services = [
+    product(20, { code: 'SV-01', description: 'Alineación', itemType: 'SERVICIO', quantity: 0, purchaseCost: 0, taxAmount: 6650, suggestedPrice: 35000, categoryId: 3, categoryName: 'SERVICIOS' }),
+  ]
+  const items: Array<Record<string, unknown>> = [...products.map((item) => ({ ...item, itemType: 'PRODUCTO' })), ...services]
+
+  /** Responde segun el itemType de la query string, como el backend. */
+  function mockTyped() {
+    const fetchMock = vi.fn((url: string) => {
+      const [path, query = ''] = url.split('?')
+      const itemType = new URLSearchParams(query).get('itemType')
+      if (path === '/api/inventory/products') return Promise.resolve(jsonResponse(itemType ? items.filter((item) => item.itemType === itemType) : items))
+      if (path === '/api/inventory/categories') return Promise.resolve(jsonResponse(categories))
+      return Promise.resolve(jsonResponse({ error: 'No encontrado', status: 404 }, 404))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+  const typedCalls = (fetchMock: ReturnType<typeof mockTyped>) =>
+    fetchMock.mock.calls.map(([url]) => url).filter((url) => url.includes('itemType='))
+
+  it('el servicio lleva su etiqueta, No aplica en stock y costo, y no cuenta en indicadores ni alertas', async () => {
+    mockTyped()
+    renderRoute('/inventario')
+    await loaded()
+
+    expect(await within(indicator('Total de productos')).findByText('4')).toBeInTheDocument()
+    expect(within(indicator('En stock')).getByText('3')).toBeInTheDocument()
+    expect(await within(indicator('Con alerta de stock')).findByText('3')).toBeInTheDocument()
+    expect(within(indicator('Valor en inventario')).getByText('$ 3.777.000')).toBeInTheDocument()
+
+    const row = within(screen.getByRole('table')).getByText('SV-01').closest('tr') as HTMLElement
+    expect(within(row).getByText('Servicio')).toBeInTheDocument()
+    // Stock y Costo sin IVA.
+    expect(within(row).getAllByText('No aplica')).toHaveLength(2)
+    expect(within(row).queryByText('Sin stock')).not.toBeInTheDocument()
+    expect(row).not.toHaveTextContent('$ 0')
+    const card = within(screen.getByRole('list', { name: 'Productos' })).getByText('SV-01').closest('li') as HTMLElement
+    expect(card).toHaveTextContent('Costo sin IVA No aplica')
+    expect(card).toHaveTextContent('Precio sin IVA $ 35.000')
+    expect(card).not.toHaveTextContent('unidades')
+  })
+
+  it('el filtro de tipo envia itemType al backend y se guarda en la URL', async () => {
+    const fetchMock = mockTyped()
+    const user = userEvent.setup()
+    const router = renderRoute('/inventario')
+    await loaded()
+    expect(typedCalls(fetchMock)).toEqual([])
+    expect(screen.getByRole('radio', { name: 'Todos' })).toHaveAttribute('aria-checked', 'true')
+
+    await user.click(screen.getByRole('radio', { name: 'Servicios' }))
+    await waitFor(() => expect(codes()).toEqual(['SV-01']))
+    expect(router.state.location.search).toBe('?tipo=SERVICIO')
+    expect(typedCalls(fetchMock)).toEqual(['/api/inventory/products?itemType=SERVICIO'])
+
+    await user.click(screen.getByRole('radio', { name: 'Productos' }))
+    await waitFor(() => expect(codes()).toEqual(['BAT-004', 'LL-001', 'LL-003', 'LL-004']))
+    expect(typedCalls(fetchMock)).toContain('/api/inventory/products?itemType=PRODUCTO')
+    // Los indicadores siguen sobre todo el catalogo.
+    expect(within(indicator('Total de productos')).getByText('4')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    await waitFor(() => expect(codes()).toHaveLength(5))
+    expect(router.state.location.search).toBe('')
   })
 })

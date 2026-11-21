@@ -27,6 +27,7 @@ import {
   PRODUCTS_KEY,
   fetchInventoryCategories,
   fetchInventoryProducts,
+  isService,
   type InventoryCategory,
   type InventoryProduct,
 } from '../inventory/inventoryApi'
@@ -567,11 +568,12 @@ function LinesBlock({
       </div>
     )
   }
-  if (!products.data || products.data.length === 0) {
+  // Un servicio no se compra: no se ofrece.
+  const all = (products.data ?? []).filter((product) => !isService(product))
+  if (all.length === 0) {
     return <EmptyState message="Aún no tienes productos en el inventario. Créalos en Inventario para comprarlos." />
   }
 
-  const all = products.data
   const used = new Set(lines.map((line) => line.productId))
 
   return (

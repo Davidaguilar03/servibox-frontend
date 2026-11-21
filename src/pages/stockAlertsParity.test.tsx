@@ -32,9 +32,9 @@ const products = [
   product(8, 'LU-001', 40, 3),
 ]
 
-function mockApi() {
+function mockApi(list: unknown[] = products) {
   const routes: Record<string, unknown> = {
-    '/api/inventory/products': products,
+    '/api/inventory/products': list,
     '/api/inventory/categories': categories,
   }
   vi.stubGlobal(
@@ -62,5 +62,22 @@ describe('alertas de stock en Inicio e Inventario', () => {
     const card = (await screen.findByText('Con alerta de stock')).parentElement as HTMLElement
     expect(await within(card).findByText('5')).toBeInTheDocument()
     expect(within(card).getByText('1 sin stock')).toBeInTheDocument()
+  })
+
+  it('un servicio, que siempre llega con stock 0, no aparece ni cuenta en ninguna de las dos', async () => {
+    const withService = [...products, { ...product(9, 'SV-01', 0, 1), itemType: 'SERVICIO', categoryName: 'SERVICIOS' }]
+    mockApi(withService)
+    renderRoute('/inicio')
+    expect(await screen.findByText('Con alerta de stock: 5 · 1 sin stock')).toBeInTheDocument()
+    expect(screen.queryByText('Producto SV-01')).not.toBeInTheDocument()
+    cleanup()
+
+    mockApi(withService)
+    renderRoute('/inventario')
+    const card = (await screen.findByText('Con alerta de stock')).parentElement as HTMLElement
+    expect(await within(card).findByText('5')).toBeInTheDocument()
+    expect(within(card).getByText('1 sin stock')).toBeInTheDocument()
+    const total = screen.getByText('Total de productos').parentElement as HTMLElement
+    expect(within(total).getByText('8')).toBeInTheDocument()
   })
 })

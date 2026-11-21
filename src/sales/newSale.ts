@@ -34,6 +34,20 @@ export function vatRate(category: Pick<Category, 'taxTypes'> | undefined): numbe
   return (category?.taxTypes ?? []).reduce((sum, tax) => (tax.isVat && tax.rate !== null ? sum + tax.rate : sum), 0)
 }
 
+export const isServiceItem = (product: Pick<Product, 'itemType'> | undefined) => product?.itemType === 'SERVICIO'
+
+/**
+ * Tasa de IVA de la linea: la de la categoria, salvo un servicio sin IVA. La respuesta no trae
+ * vatApplies; un servicio sin IVA llega con taxAmount 0 y el backend no le cobra IVA en la venta.
+ */
+export function lineVatRate(product: Product | undefined, category: Pick<Category, 'taxTypes'> | undefined): number {
+  if (isServiceItem(product) && !((product?.taxAmount ?? 0) > 0)) return 0
+  return vatRate(category)
+}
+
+/** Se puede facturar: un producto con stock o cualquier servicio. */
+export const isSellable = (product: Product) => isServiceItem(product) || (product.quantity ?? 0) > 0
+
 export interface PricedLine {
   quantity: number
   price: number
@@ -108,7 +122,7 @@ export function validateSale(form: SaleForm, productsById: Map<number, Product>)
     const quantity = Number(line.quantity)
     if (line.quantity.trim() === '' || !Number.isInteger(quantity) || quantity <= 0) {
       errors.quantity = 'Escribe una cantidad entera mayor que cero.'
-    } else if (product && quantity > (product.quantity ?? 0)) {
+    } else if (product && !isServiceItem(product) && quantity > (product.quantity ?? 0)) {
       errors.quantity = `Solo hay ${product.quantity ?? 0} unidades disponibles.`
     }
     errors.price = unitPriceError(amountToDecimalText(line.price))
@@ -149,7 +163,7 @@ export interface StockWarning {
 
 /**
  * Productos que quedarian sin stock, en stock critico o bajo despues de la venta, con la
- * misma regla de `stockStatus`. Lineas con una cantidad invalida no avisan.
+ * misma regla de `stockStatus`. Lineas con una cantidad invalida y servicios no avisan.
  */
 export function stockWarnings(
   lines: SaleLine[],
@@ -160,7 +174,7 @@ export function stockWarnings(
   for (const line of lines) {
     const product = line.productId === null ? undefined : productsById.get(line.productId)
     const quantity = Number(line.quantity)
-    if (!product || !Number.isInteger(quantity) || quantity <= 0 || quantity > (product.quantity ?? 0)) continue
+    if (!product || isServiceItem(product) || !Number.isInteger(quantity) || quantity <= 0 || quantity > (product.quantity ?? 0)) continue
     const remaining = (product.quantity ?? 0) - quantity
     const category = product.categoryId === null ? undefined : categoriesById.get(product.categoryId)
     const status = stockStatus(remaining, category)

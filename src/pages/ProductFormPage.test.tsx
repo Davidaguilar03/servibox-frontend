@@ -113,7 +113,7 @@ describe('formulario de producto', () => {
     const user = userEvent.setup()
     const router = renderRoute('/inventario?estado=BAJO')
     await screen.findByRole('heading', { name: 'Productos' })
-    await user.click(screen.getByRole('link', { name: 'Nuevo producto' }))
+    await user.click(screen.getByRole('link', { name: 'Nuevo ítem' }))
     await screen.findByRole('heading', { name: 'Nuevo producto' })
 
     await fillNew(user)
@@ -404,7 +404,7 @@ describe('modal de producto', () => {
   async function openNew(user: ReturnType<typeof userEvent.setup>, path = '/inventario') {
     const router = renderRoute(path)
     await screen.findByRole('heading', { name: 'Productos' })
-    const opener = screen.getByRole('link', { name: 'Nuevo producto' })
+    const opener = screen.getByRole('link', { name: 'Nuevo ítem' })
     await user.click(opener)
     await screen.findByRole('dialog', { name: 'Nuevo producto' })
     return { router, opener }
@@ -417,7 +417,8 @@ describe('modal de producto', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Productos' })).toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
-    expect(screen.getByLabelText('Código')).toHaveFocus()
+    // Al crear, el primer campo es el tipo.
+    expect(formDialog().getByRole('radio', { name: 'Producto' })).toHaveFocus()
     // Abrir no marca errores: el campo aun no se ha tocado.
     expect(screen.getByLabelText('Código')).not.toHaveAttribute('aria-invalid')
     const dialog = screen.getByRole('dialog')
@@ -481,7 +482,7 @@ describe('modal de producto', () => {
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
     await user.click(within(discard).getByRole('button', { name: 'Seguir editando' }))
     expect(screen.getByLabelText('Descripción')).toHaveValue('Algo')
-    expect(screen.getByLabelText('Código')).toHaveFocus()
+    expect(formDialog().getByRole('radio', { name: 'Producto' })).toHaveFocus()
 
     await user.keyboard('{Escape}')
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Descartar' }))
@@ -558,5 +559,116 @@ describe('modal de producto', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Editar producto' })
     expect(await within(dialog).findByText('No pudimos cargar el producto.', {}, { timeout: 5000 })).toBeInTheDocument()
     expect(within(dialog).getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+})
+
+describe('servicios en el modal', () => {
+  beforeEach(() => {
+    saveToken(validToken())
+  })
+
+  const servicesCategory = { id: 7, name: 'SERVICIOS', color: '#3498db', yellowStockMin: 0, redStockMin: 0, targetMargin: 0, taxTypes: [] }
+  const alignment = {
+    id: 2,
+    code: 'SV-01',
+    description: 'Alineación',
+    purchaseCost: 0,
+    quantity: 0,
+    taxAmount: 0,
+    suggestedPrice: 20000.5,
+    categoryId: 7,
+    categoryName: 'SERVICIOS',
+    itemType: 'SERVICIO',
+  }
+  const serviceRoutes = (): Routes => ({
+    ...fullRoutes(),
+    'GET /api/inventory/categories': () => jsonResponse([...categories, servicesCategory]),
+    'GET /api/inventory/products/2': () => jsonResponse(alignment),
+    'PUT /api/inventory/products/2': (body) => jsonResponse({ ...alignment, ...(body as object) }),
+  })
+
+  it('al crear empieza en Producto y SERVICIOS no se ofrece como categoria', async () => {
+    mockApi(serviceRoutes())
+    renderRoute('/inventario/nuevo')
+    await screen.findByRole('dialog', { name: 'Nuevo producto' })
+    expect(formDialog().getByRole('radio', { name: 'Producto' })).toHaveAttribute('aria-checked', 'true')
+    const select = await formDialog().findByLabelText('Categoría')
+    const labels = within(select).getAllByRole('option').map((option) => option.textContent)
+    expect(labels).toEqual(['Elige una categoría', 'LLANTAS', 'REPUESTOS DEMO'])
+  })
+
+  it('en modo Servicio solo muestra codigo, descripcion, precio e IVA, y envia el cuerpo del servicio', async () => {
+    const fetchMock = mockApi(serviceRoutes())
+    const user = userEvent.setup()
+    renderRoute('/inventario/nuevo')
+    await screen.findByRole('dialog', { name: 'Nuevo producto' })
+
+    await user.click(formDialog().getByRole('radio', { name: 'Servicio' }))
+    const dialog = screen.getByRole('dialog', { name: 'Nuevo servicio' })
+    expect(within(dialog).queryByLabelText('Categoría')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Costo de compra sin IVA')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Stock inicial')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('Cómo se calcula el precio')).not.toBeInTheDocument()
+    const vat = within(dialog).getByRole('switch', { name: 'Aplica IVA' })
+    expect(vat).toBeChecked()
+
+    await user.type(within(dialog).getByLabelText('Código'), 'SV-02')
+    await user.type(within(dialog).getByLabelText('Descripción'), 'Balanceo')
+    await user.type(within(dialog).getByLabelText('Precio de venta sin IVA'), '20000')
+    await user.click(vat)
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar servicio' }))
+
+    expect(await screen.findByText('Servicio guardado')).toBeInTheDocument()
+    expect(bodies(fetchMock, 'POST')).toEqual([
+      { itemType: 'SERVICIO', code: 'SV-02', description: 'Balanceo', salePrice: 20000, vatApplies: false },
+    ])
+  })
+
+  it('al editar un servicio el tipo es fijo, el formulario abre en modo servicio y el PUT no lleva tipo', async () => {
+    const fetchMock = mockApi(serviceRoutes())
+    const user = userEvent.setup()
+    renderRoute('/inventario/2/editar')
+    const dialog = await screen.findByRole('dialog', { name: 'Editar servicio' })
+
+    expect(within(dialog).queryByRole('radiogroup')).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument()
+    expect(dialog).toHaveTextContent('Tipo: Servicio. No se cambia después de crear el ítem.')
+    expect(within(dialog).getByLabelText('Precio de venta sin IVA')).toHaveValue('20.000,5')
+    expect(within(dialog).getByRole('switch', { name: 'Aplica IVA' })).not.toBeChecked()
+    expect(within(dialog).queryByLabelText('Categoría')).not.toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('switch', { name: 'Aplica IVA' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar servicio' }))
+    await waitFor(() =>
+      expect(bodies(fetchMock, 'PUT')).toEqual([{ code: 'SV-01', description: 'Alineación', salePrice: 20000.5, vatApplies: true }]),
+    )
+  })
+
+  it('el tipo de un producto tambien queda fijo al editarlo', async () => {
+    mockApi(serviceRoutes())
+    renderRoute('/inventario/1/editar')
+    await screen.findByLabelText('Costo de compra sin IVA')
+    const dialog = screen.getByRole('dialog', { name: 'Editar producto' })
+    expect(dialog).toHaveTextContent('Tipo: Producto.')
+    expect(within(dialog).queryByRole('radio')).not.toBeInTheDocument()
+  })
+
+  it('el error del backend de precio del servicio se muestra mapeado', async () => {
+    mockApi({
+      ...serviceRoutes(),
+      'POST /api/inventory/products': () => jsonResponse({ error: 'El precio de venta del servicio debe ser mayor a cero', status: 400 }, 400),
+    })
+    const user = userEvent.setup()
+    renderRoute('/inventario/nuevo')
+    await screen.findByRole('dialog', { name: 'Nuevo producto' })
+    await user.click(formDialog().getByRole('radio', { name: 'Servicio' }))
+    await user.type(formDialog().getByLabelText('Código'), 'SV-03')
+    await user.type(formDialog().getByLabelText('Descripción'), 'Montaje')
+    await user.type(formDialog().getByLabelText('Precio de venta sin IVA'), '1000')
+    await user.click(formDialog().getByRole('button', { name: 'Guardar servicio' }))
+
+    const alert = await formDialog().findByRole('alert')
+    expect(alert).toHaveTextContent('No pudimos guardar el servicio')
+    expect(alert).toHaveTextContent('Escribe un precio de venta del servicio mayor que cero.')
   })
 })

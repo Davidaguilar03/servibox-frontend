@@ -1,7 +1,7 @@
 import { addMoney, moneyProduct } from '../lib/money'
 import { stockStatus, type StockStatus } from '../lib/stock'
 import { normalizeText } from '../lib/text'
-import type { InventoryCategory, InventoryProduct } from './inventoryApi'
+import { isService, type InventoryCategory, type InventoryProduct, type ItemType } from './inventoryApi'
 
 // Logica del listado de productos. Reglas en docs/ai-context/03-DECISIONS.md.
 
@@ -9,6 +9,8 @@ export type ProductSort = 'codigo' | 'descripcion' | 'stock-asc' | 'stock-desc' 
 
 export interface ProductFilters {
   q: string
+  /** Todos (vacio), Productos o Servicios: lo filtra el backend con `itemType`. */
+  tipo: ItemType | ''
   /** Id de la categoria de la pestana; null es Todas. */
   categoria: number | null
   estado: StockStatus | ''
@@ -16,9 +18,10 @@ export interface ProductFilters {
   pagina: number
 }
 
-export const DEFAULT_PRODUCT_FILTERS: ProductFilters = { q: '', categoria: null, estado: '', orden: 'codigo', pagina: 1 }
+export const DEFAULT_PRODUCT_FILTERS: ProductFilters = { q: '', tipo: '', categoria: null, estado: '', orden: 'codigo', pagina: 1 }
 
 const statuses: StockStatus[] = ['NORMAL', 'BAJO', 'CRITICO', 'SIN_STOCK']
+const itemTypes: ItemType[] = ['PRODUCTO', 'SERVICIO']
 const sorts: ProductSort[] = ['codigo', 'descripcion', 'stock-asc', 'stock-desc', 'precio']
 
 /** Filtros leidos de la query string; un valor desconocido vale lo de por defecto. */
@@ -27,8 +30,10 @@ export function parseProductFilters(params: URLSearchParams): ProductFilters {
   const category = Number(params.get('categoria'))
   const estado = params.get('estado') as StockStatus
   const orden = params.get('orden') as ProductSort
+  const tipo = params.get('tipo') as ItemType
   return {
     q: params.get('q') ?? '',
+    tipo: itemTypes.includes(tipo) ? tipo : '',
     categoria: Number.isInteger(category) && category > 0 ? category : null,
     estado: statuses.includes(estado) ? estado : '',
     orden: sorts.includes(orden) ? orden : DEFAULT_PRODUCT_FILTERS.orden,
@@ -40,6 +45,7 @@ export function parseProductFilters(params: URLSearchParams): ProductFilters {
 export function productFiltersToParams(filters: ProductFilters): URLSearchParams {
   const params = new URLSearchParams()
   if (filters.q) params.set('q', filters.q)
+  if (filters.tipo) params.set('tipo', filters.tipo)
   if (filters.categoria !== null) params.set('categoria', String(filters.categoria))
   if (filters.estado) params.set('estado', filters.estado)
   if (filters.orden !== DEFAULT_PRODUCT_FILTERS.orden) params.set('orden', filters.orden)
@@ -84,7 +90,7 @@ export function filterProducts(
     products.filter(
       (product) =>
         (filters.categoria === null || product.categoryId === filters.categoria) &&
-        (!filters.estado || productStatus(product, byId) === filters.estado) &&
+        (!filters.estado || (!isService(product) && productStatus(product, byId) === filters.estado)) &&
         (!query || normalizeText(product.code).includes(query) || normalizeText(product.description).includes(query)),
     ),
     filters.orden,
@@ -118,8 +124,9 @@ export function productCounts(products: InventoryProduct[]): Map<number, number>
   return counts
 }
 
-/** Indicadores sobre todo el inventario, sin pestana ni filtros. */
-export function productIndicators(products: InventoryProduct[]) {
+/** Indicadores sobre todo el inventario, sin pestana ni filtros. Solo productos: un servicio no tiene stock ni costo. */
+export function productIndicators(items: InventoryProduct[]) {
+  const products = items.filter((item) => !isService(item))
   return {
     total: products.length,
     /** Con al menos una unidad, cualquiera sea su estado. */

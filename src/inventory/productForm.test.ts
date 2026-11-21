@@ -9,7 +9,7 @@ import {
   validateProduct,
 } from './productForm'
 
-const filled = { code: ' LL-020 ', description: ' Llanta Hankook 185/65 R14 ', categoryId: '3', purchaseCost: '98.500', quantity: '6' }
+const filled = { ...EMPTY_PRODUCT_FORM, code: ' LL-020 ', description: ' Llanta Hankook 185/65 R14 ', categoryId: '3', purchaseCost: '98.500', quantity: '6' }
 
 describe('formulario de producto', () => {
   it('exige codigo, descripcion, categoria y costo mayor que cero', () => {
@@ -54,10 +54,10 @@ describe('formulario de producto', () => {
   })
 
   it('carga el costo de un producto guardado con punto de miles', () => {
-    const product = { id: 1, code: 'A', description: 'B', purchaseCost: 1234567, quantity: 1, taxAmount: 0, suggestedPrice: 0, categoryId: 1, categoryName: 'C' }
+    const product = { id: 1, code: 'A', description: 'B', purchaseCost: 1234567, quantity: 1, taxAmount: 0, suggestedPrice: 0, categoryId: 1, categoryName: 'C', itemType: 'PRODUCTO' }
     const values = productToForm(product as Parameters<typeof productToForm>[0])
     expect(values.purchaseCost).toBe('1.234.567')
-    expect(buildUpdateRequest(values).purchaseCost).toBe(1234567)
+    expect(buildUpdateRequest(values)).toHaveProperty('purchaseCost', 1234567)
     expect(validateProduct(values, false, values.purchaseCost).purchaseCost).toBeUndefined()
   })
 
@@ -73,8 +73,39 @@ describe('formulario de producto', () => {
         suggestedPrice: 42857.14,
         categoryId: 4,
         categoryName: 'REPUESTOS DEMO',
+        itemType: 'PRODUCTO',
       }),
-    ).toEqual({ code: 'DEMO-001', description: 'Aceite', categoryId: '4', purchaseCost: '30.000,5', quantity: '50' })
+    ).toEqual({ ...EMPTY_PRODUCT_FORM, code: 'DEMO-001', description: 'Aceite', categoryId: '4', purchaseCost: '30.000,5', quantity: '50' })
+  })
+
+  const service = { ...EMPTY_PRODUCT_FORM, itemType: 'SERVICIO' as const, code: ' SV-01 ', description: ' Alineación ', salePrice: '35.000' }
+
+  it('un servicio solo exige codigo, descripcion y precio de venta mayor que cero', () => {
+    expect(validateProduct({ ...EMPTY_PRODUCT_FORM, itemType: 'SERVICIO' }, true)).toEqual({
+      code: 'Escribe el código del servicio.',
+      description: 'Escribe la descripción del servicio.',
+      salePrice: 'Escribe el precio de venta.',
+    })
+    expect(validateProduct({ ...service, salePrice: '0' }, true).salePrice).toBe('El precio debe ser mayor que cero.')
+    expect(validateProduct({ ...service, salePrice: '35.000,505' }, true).salePrice).toBe('El precio unitario admite como máximo dos decimales.')
+    expect(validateProduct({ ...service, salePrice: '35.000,50' }, true)).toEqual({})
+  })
+
+  it('el POST de un servicio lleva itemType, precio e IVA, sin costo, stock ni categoria; el PUT sin itemType', () => {
+    expect(buildCreateRequest({ ...service, vatApplies: false, salePrice: '20.000,5' })).toEqual({
+      itemType: 'SERVICIO',
+      code: 'SV-01',
+      description: 'Alineación',
+      salePrice: 20000.5,
+      vatApplies: false,
+    })
+    expect(buildUpdateRequest(service)).toEqual({ code: 'SV-01', description: 'Alineación', salePrice: 35000, vatApplies: true })
+  })
+
+  it('carga un servicio guardado: el precio viene en suggestedPrice y el IVA se lee de taxAmount', () => {
+    const saved = { id: 9, code: 'SV-02', description: 'Balanceo', purchaseCost: 0, quantity: 0, suggestedPrice: 20000.5, categoryId: 4, categoryName: 'SERVICIOS', itemType: 'SERVICIO' as const }
+    expect(productToForm({ ...saved, taxAmount: 0 })).toMatchObject({ itemType: 'SERVICIO', salePrice: '20.000,5', vatApplies: false })
+    expect(productToForm({ ...saved, taxAmount: 3800 }).vatApplies).toBe(true)
   })
 
   it('solo acepta ids de ruta enteros positivos', () => {

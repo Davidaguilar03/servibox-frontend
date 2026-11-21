@@ -438,14 +438,14 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 
 | Pantalla | Endpoints |
 |-|-|
-| Productos (`/inventario`) | `GET /api/inventory/products`, `GET /api/inventory/categories` |
+| Productos (`/inventario`) | `GET /api/inventory/products` (indicadores y Todos), `GET /api/inventory/products?itemType=PRODUCTO\|SERVICIO` (tabla con tipo elegido), `GET /api/inventory/categories` |
 | Formulario de producto | `GET /api/inventory/products/{id}` (al editar), `GET /api/inventory/categories`, `POST /api/inventory/products`, `PUT /api/inventory/products/{id}` |
 | Categorias (`/inventario/categorias`) | `GET /api/inventory/categories`, `GET /api/inventory/products` (conteo), `GET /api/inventory/tax-types`, `POST /api/inventory/categories`, `PUT /api/inventory/categories/{id}` |
 
 * Claves de TanStack Query `['inventory', 'products']` y `['inventory', 'categories']`, las
   mismas del panel y de Nueva factura (es la misma respuesta). Guardar un producto o una
   categoria invalida `['inventory']`.
-* Query string de Productos: `q`, `categoria` (id), `estado` (`NORMAL`, `BAJO`, `CRITICO`,
+* Query string de Productos: `q`, `tipo` (`PRODUCTO`, `SERVICIO`; sin el parametro es Todos), `categoria` (id), `estado` (`NORMAL`, `BAJO`, `CRITICO`,
   `SIN_STOCK`), `orden` (`descripcion`, `stock-asc`, `stock-desc`, `precio`; sin el
   parametro es `codigo`) y `pagina`. Solo se escriben los valores distintos de los de por
   defecto.
@@ -453,6 +453,8 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
   lo pinta con `Outlet`. Los enlaces conservan la query string del listado en la URL del
   modal, asi el listado de atras no cambia y al guardar o cerrar se vuelve con los mismos
   filtros. Una URL directa abre el modal sobre el listado.
+* El tipo se filtra en el backend con la clave `itemsKey(tipo)` (`['inventory', 'products', 'tipo', X]`);
+  indicadores y alertas siguen sobre `['inventory', 'products']` y cuentan solo productos.
 * Indicadores no dependen del selector de categoria ni de los filtros. Cada
   bloque (indicadores, categoria, tabla) carga y falla por separado: los indicadores que solo
   usan productos siguen visibles si fallan las categorias.

@@ -11,6 +11,7 @@ import { ErrorSummary } from '../components/ErrorSummary'
 import { IconButton } from '../components/IconButton'
 import { SegmentedControl } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
+import { StatusBadge } from '../components/StatusBadge'
 import { AmountField } from '../components/AmountField'
 import { TextField } from '../components/TextField'
 import { UnsavedChangesGuard } from '../components/UnsavedChangesGuard'
@@ -34,12 +35,14 @@ import {
   buildSaleRequest,
   invoiceTotals,
   isDuplicateNumberError,
+  isSellable,
+  isServiceItem,
   lineAmounts,
+  lineVatRate,
   paymentMethodLabels,
   paymentMethodsFor,
   stockWarnings,
   validateSale,
-  vatRate,
   type PaymentMethod,
   type SaleForm,
   type SaleLine,
@@ -137,14 +140,19 @@ export function NewSaleInvoicePage() {
   const dirty = JSON.stringify(form) !== JSON.stringify(initial)
 
   const rateOf = (product: Product | undefined) =>
-    vatRate(product?.categoryId == null ? undefined : categoriesById.get(product.categoryId))
+    lineVatRate(product, product?.categoryId == null ? undefined : categoriesById.get(product.categoryId))
   const pricedLines = form.lines.map((line) => ({
     quantity: Number(line.quantity) || 0,
     price: Number(amountToDecimalText(line.price)) || 0,
     rate: rateOf(line.productId === null ? undefined : productsById.get(line.productId)),
   }))
   const totals = invoiceTotals(pricedLines)
-  const totalUnits = pricedLines.reduce((sum, line) => sum + (Number.isInteger(line.quantity) ? line.quantity : 0), 0)
+  // Solo los productos descuentan inventario; los servicios no.
+  const totalUnits = pricedLines.reduce(
+    (sum, line, index) =>
+      sum + (Number.isInteger(line.quantity) && !isServiceItem(productsById.get(form.lines[index]?.productId ?? 0)) ? line.quantity : 0),
+    0,
+  )
   const warnings = stockWarnings(form.lines, productsById, categoriesById)
 
   const save = useMutation({
@@ -438,7 +446,7 @@ export function NewSaleInvoicePage() {
           </dl>
           {totalUnits > 0 && (
             <p className="mt-4 rounded-control bg-neutral-200 p-3 text-small text-text-muted">
-              Al guardar se descuentan {units(totalUnits)} del inventario
+              Al guardar se {totalUnits === 1 ? 'descuenta' : 'descuentan'} {units(totalUnits)} del inventario
               {form.paymentType === 'CREDITO'
                 ? ' y la factura queda pendiente de abono.'
                 : account
@@ -559,7 +567,7 @@ function LinesBlock({
   }
 
   const used = new Set(lines.map((line) => line.productId))
-  const available = products.data.filter((product) => (product.quantity ?? 0) > 0)
+  const available = products.data.filter(isSellable)
 
   return (
     <div>
@@ -591,19 +599,23 @@ function LinesBlock({
             .map((item) => ({
               value: item.id,
               label: item.description,
-              detail: `${item.code} · ${item.quantity ?? 0} disponibles`,
+              detail: isServiceItem(item) ? `${item.code} · Servicio` : `${item.code} · ${item.quantity ?? 0} disponibles`,
               keywords: item.code,
             }))
           const name = product?.description ?? 'línea sin producto'
+          const service = isServiceItem(product)
           return (
             <li
               key={line.key}
-              aria-label={product ? `Línea ${product.code}` : 'Línea nueva'}
+              aria-label={product ? `Línea ${product.code}${service ? ', servicio' : ''}` : 'Línea nueva'}
               className={`flex flex-col gap-3 rounded-surface border border-border p-4 xl:rounded-none xl:border-0 xl:border-b xl:px-3 xl:py-3 ${lineGrid}`}
             >
-              <span className="codigo text-small text-text xl:pt-2 xl:text-body">
-                <span className="text-text-muted xl:sr-only">Código: </span>
-                {product?.code ?? EMPTY_VALUE}
+              <span className="flex flex-wrap items-center gap-2 xl:flex-col xl:items-start xl:gap-1 xl:pt-2">
+                <span className="codigo text-small text-text xl:text-body">
+                  <span className="text-text-muted xl:sr-only">Código: </span>
+                  {product?.code ?? EMPTY_VALUE}
+                </span>
+                {service && <StatusBadge status="SERVICIO" />}
               </span>
               <ComboboxField
                 label="Producto"
@@ -621,10 +633,10 @@ function LinesBlock({
                 label="Cantidad"
                 value={line.quantity}
                 min={1}
-                max={product?.quantity ?? undefined}
+                max={service ? undefined : (product?.quantity ?? undefined)}
                 step={1}
                 onChange={(quantity) => onChange(line.key, { quantity })}
-                hint={product ? `Disponible: ${product.quantity ?? 0}` : undefined}
+                hint={product && !service ? `Disponible: ${product.quantity ?? 0}` : undefined}
                 error={lineErrors?.quantity}
               />
               <AmountField
