@@ -523,4 +523,67 @@ describe('Reportes en vivo, segunda tanda', () => {
       Element.prototype.scrollIntoView = original
     }
   })
+
+  it('los indicadores usan la tarjeta de Inicio: icono en cuadro tenue, borde de color, titulo, valor y descripcion', async () => {
+    mockApi()
+    renderRoute('/reportes')
+    await screen.findByRole('table')
+    const card = (label: string) => screen.getByText(label, { selector: 'p' }).parentElement!
+    const total = card('Total vendido')
+    expect(total).toHaveClass('border-t-2', 'border-t-success', 'px-6', 'py-4')
+    expect(total.querySelector('span[aria-hidden] svg')?.parentElement).toHaveClass('size-8', 'bg-success-bg', 'text-success-ink')
+    expect([...total.querySelectorAll('p')].map((p) => p.textContent?.replaceAll(' ', ' '))).toEqual([
+      'Total vendido',
+      '$ 358',
+      'Con IVA y sin facturas anuladas.',
+    ])
+    expect(total.querySelectorAll('p')[1]).toHaveClass('monto', 'text-figure')
+    expect(card('Anuladas')).toHaveClass('border-t-error')
+    expect(card('Facturas')).toHaveClass('border-t-neutral-400')
+    // Seis indicadores: dos columnas desde sm y tres en escritorio, sin una tarjeta sola al final.
+    expect(total.parentElement).toHaveClass('grid', 'sm:grid-cols-2', 'lg:grid-cols-3')
+    expect(total.parentElement).not.toHaveClass('grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]')
+  })
+
+  it('estado de resultados: la variacion va en la tarjeta junto al margen y la descripcion', async () => {
+    const before = { ...incomeStatement.summary, revenue: 800, grossProfit: 320 }
+    mockApi({
+      'GET /api/reporting/income-statement': (url) =>
+        jsonResponse(url.searchParams.get('desde') === '2026-10-11' ? { ...incomeStatement, summary: before } : incomeStatement),
+    })
+    renderRoute('/reportes?reporte=estado-resultados')
+    await screen.findByRole('table')
+    const card = screen.getByText('Utilidad bruta', { selector: 'p' }).parentElement!
+    await waitFor(() => expect(card).toHaveTextContent('Subió +25 %'))
+    expect([...card.querySelectorAll('p')].map((p) => p.textContent?.replaceAll(' ', ' '))).toEqual([
+      'Utilidad bruta',
+      '$ 400',
+      'Margen: 40,0 %',
+      'Ingresos menos costo de ventas.',
+    ])
+    expect(within(card).getByText('vs. 11/10/2026 a 31/10/2026')).toBeInTheDocument()
+    expect(card).toHaveClass('border-t-info')
+    // Cinco indicadores: tres y dos en escritorio; en dos columnas la ultima ocupa la fila.
+    expect(card.parentElement).toHaveClass('lg:grid-cols-3')
+    expect(screen.getByText('Utilidad neta', { selector: 'p' }).parentElement).toHaveClass('sm:max-lg:col-span-2')
+  })
+
+  it('el selector usa pildoras: areas con la activa en oscuro y reportes livianos, sin lineas grises', async () => {
+    mockApi()
+    renderRoute('/reportes?reporte=flujo-caja')
+    await screen.findByRole('table')
+    const areas = screen.getByRole('tablist', { name: 'Área del reporte' })
+    const reports = screen.getByRole('tablist', { name: 'Reportes de Finanzas' })
+    for (const list of [areas, reports]) {
+      expect(list).not.toHaveClass('border-b')
+      expect(list).toHaveClass('overflow-x-auto', 'p-1')
+    }
+    expect(within(areas).getByRole('tab', { name: 'Finanzas' })).toHaveClass('rounded-pill', 'bg-dark', 'text-text-inverse')
+    expect(within(areas).getByRole('tab', { name: 'Inventario' })).toHaveClass('rounded-pill', 'bg-surface', 'text-text')
+    const active = within(reports).getByRole('tab', { name: 'Flujo de caja' })
+    expect(active).toHaveClass('rounded-pill', 'border-brand', 'text-brand-ink', 'font-semibold', 'text-small')
+    expect(active).not.toHaveClass('-mb-px')
+    expect(within(reports).getByRole('tab', { name: 'Movimientos' })).toHaveClass('border-transparent', 'text-text-muted')
+  })
 })
+

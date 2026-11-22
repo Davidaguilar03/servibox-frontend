@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { exportPath, isFullCalendarMonth, periodTitle, previousPeriod, rangeDays, validateRange, variation } from './reports'
+import { isFullCalendarMonth, periodTitle, previousPeriod, rangeDays, validateRange, variation } from './reports'
 
 describe('validateRange', () => {
   it.each(['2026-02-30', '2026-13-01', '2026-00-01', 'ayer', '2026-1-01'])('rechaza la fecha inexistente o mal formada %s en cualquiera de los extremos', (date) => {
@@ -89,24 +89,5 @@ describe('periodTitle', () => {
     expect(periodTitle('2026-10-01', '2026-10-31')).toBe('Octubre de 2026')
     expect(periodTitle('2026-09-01', '2026-09-30')).toBe('Septiembre de 2026')
     expect(periodTitle('2026-10-01', '2026-10-19')).toBe('01/10/2026 a 19/10/2026')
-  })
-})
-
-describe('exportPath', () => {
-  const base = { desde: '2026-10-01', hasta: '2026-10-19', accountId: null }
-
-  it('estado de resultados nunca lleva accountId', () => {
-    expect(exportPath({ ...base, type: 'ESTADO_RESULTADOS', format: 'PDF', accountId: 4 })).toBe(
-      '/reporting/export?type=ESTADO_RESULTADOS&format=PDF&desde=2026-10-01&hasta=2026-10-19',
-    )
-  })
-
-  it('movimientos lleva accountId solo con una cuenta concreta', () => {
-    expect(exportPath({ ...base, type: 'MOVIMIENTOS', format: 'XLSX' })).toBe(
-      '/reporting/export?type=MOVIMIENTOS&format=XLSX&desde=2026-10-01&hasta=2026-10-19',
-    )
-    expect(exportPath({ ...base, type: 'MOVIMIENTOS', format: 'XLSX', accountId: 4 })).toBe(
-      '/reporting/export?type=MOVIMIENTOS&format=XLSX&desde=2026-10-01&hasta=2026-10-19&accountId=4',
-    )
   })
 })

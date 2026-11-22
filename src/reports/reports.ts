@@ -1,10 +1,8 @@
 import { addDays } from '../lib/businessDate'
 import { formatDate } from '../lib/format'
 
-// Rango de fechas de los reportes, periodo anterior y variacion del Estado de resultados, y ruta de exportacion que usa Tesoreria. Reglas en docs/ai-context/03-DECISIONS.md.
+// Rango de fechas de los reportes, periodo anterior y variacion del Estado de resultados. Reglas en docs/ai-context/03-DECISIONS.md.
 
-/** Valores de `type` en `GET /api/reporting/export` que el backend exporta hoy. */
-export type ReportType = 'ESTADO_RESULTADOS' | 'MOVIMIENTOS'
 export type ReportFormat = 'PDF' | 'XLSX'
 
 /** Rango maximo de un reporte, contando los dos extremos (`ReportExportService.MAX_DIAS`). */
@@ -75,20 +73,4 @@ export function periodTitle(desde: string, hasta: string): string {
     return title.charAt(0).toUpperCase() + title.slice(1)
   }
   return `${formatDate(desde)} a ${formatDate(hasta)}`
-}
-
-export interface ExportRequest {
-  type: ReportType
-  format: ReportFormat
-  desde: string
-  hasta: string
-  /** Solo en MOVIMIENTOS; null es Todas las cuentas. */
-  accountId: number | null
-}
-
-/** Ruta de `GET /api/reporting/export` (sin la base /api), con los parametros del backend. */
-export function exportPath({ type, format, desde, hasta, accountId }: ExportRequest): string {
-  const params = new URLSearchParams({ type, format, desde, hasta })
-  if (type === 'MOVIMIENTOS' && accountId !== null) params.set('accountId', String(accountId))
-  return `/reporting/export?${params.toString()}`
 }

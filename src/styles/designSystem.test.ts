@@ -61,9 +61,8 @@ const DISPLAY_FILES = ['index.css', 'pages/LandingPage.tsx']
 /** La landing usa text-title tambien en sus titulos de seccion (h2). */
 const TITLE_H2_FILES = ['pages/LandingPage.tsx']
 
-/** Desplazamientos de 1 px documentados: solapar el borde de las pestanas y centrar el icono del Alert. */
+/** Desplazamiento de 1 px documentado: centrar el icono del Alert. */
 const ONE_PX_OFFSETS: Record<string, string[]> = {
-  'components/SegmentedControl.tsx': ['-mb-px'],
   'components/Alert.tsx': ['mt-px'],
 }
 

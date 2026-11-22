@@ -1,8 +1,7 @@
 import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowDownRight, ArrowUpRight, Check, FileSpreadsheet, Landmark, Layers, Pencil, Smartphone, Wallet } from 'lucide-react'
-import { useReportedError } from '../api/reportError'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowDownRight, ArrowUpRight, Check, Landmark, Layers, Pencil, Smartphone, Wallet } from 'lucide-react'
 import { GLOSSARY } from '../copy/glossary'
 import { EditAccountModal, NewAccountModal, TransferModal } from '../accounts/AccountModals'
 import {
@@ -31,7 +30,6 @@ import {
   type OriginContext,
   type PeriodKey,
 } from '../accounts/accountsView'
-import { Alert } from '../components/Alert'
 import { Button } from '../components/Button'
 import { DataTable, type Column } from '../components/DataTable'
 import { ListHeader } from '../components/ListHeader'
@@ -40,17 +38,14 @@ import { Pagination } from '../components/Pagination'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { StatusBadge } from '../components/StatusBadge'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
-import { showToast } from '../components/toast'
 import { fetchAccounts, fetchBalance, fetchSales, type Account } from '../dashboard/dashboardApi'
 import { useBreadcrumbTail } from '../layout/breadcrumb'
 import type { AppShellContext } from '../layout/AppShell'
-import { apiDownload } from '../lib/api'
 import { businessToday } from '../lib/businessDate'
 import { formatCurrency, formatDate } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import { useElementWidth } from '../lib/useElementWidth'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
-import { REPORT_MAX_DAYS, exportPath } from '../reports/reports'
 import { iconLg, iconSm } from '../components/icons'
 import { MovementChart } from '../accounts/MovementChart'
 import { rangeLabel } from '../lib/period'
@@ -64,7 +59,7 @@ const focusRing = 'focus-ring'
 
 type ModalName = 'account' | 'transfer' | null
 
-/** Cuentas: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion. */
+/** Cuentas: saldos, movimientos del periodo, nueva cuenta y transferencia. La exportacion vive en Reportes. */
 export function AccountsPage() {
   const { menuButton } = useOutletContext<AppShellContext>()
   const [today] = useState(() => businessToday())
@@ -74,7 +69,6 @@ export function AccountsPage() {
   const [modal, setModal] = useState<ModalName>(null)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const periodRef = useRef<HTMLDivElement>(null)
-  const exporting = useRef(false)
 
   const accounts = useQuery({ queryKey: ACCOUNTS_KEY, queryFn: fetchAccounts })
   const balance = useQuery({ queryKey: BALANCE_KEY, queryFn: fetchBalance })
@@ -108,22 +102,6 @@ export function AccountsPage() {
     update(periodo === 'personalizado' ? { periodo, desde: range.desde, hasta: range.hasta } : { periodo })
   }
 
-  const download = useMutation({
-    mutationFn: () =>
-      apiDownload(exportPath({ type: 'MOVIMIENTOS', format: 'XLSX', desde: range.desde, hasta: range.hasta, accountId })),
-    onSuccess: (fileName) => showToast(`Reporte generado: ${fileName}`),
-    onSettled: () => {
-      exporting.current = false
-    },
-  })
-  const downloadError = useReportedError(download.error)
-
-  function exportExcel() {
-    if (!range.valid || exporting.current) return
-    exporting.current = true
-    download.mutate()
-  }
-
   const canTransfer = accountList.length >= 2
   const scopeMovements = range.valid && movements.data ? accountMovements(movements.data, accountId) : undefined
   const globalTotals = range.valid && movements.data ? periodTotals(movements.data) : undefined
@@ -155,26 +133,10 @@ export function AccountsPage() {
         // El primario depende del estado: sin dos cuentas no hay transferencia y el primario es Nueva cuenta.
         primary={canTransfer ? transferButton : newAccountButton}
         secondary={[
-          <Button
-            key="exportar"
-            variant="secondary"
-            onClick={exportExcel}
-            disabled={!range.valid || download.isPending}
-            aria-busy={download.isPending || undefined}
-            aria-describedby={!range.valid ? 'export-help' : undefined}
-          >
-            <FileSpreadsheet {...iconSm} aria-hidden />
-            {download.isPending ? 'Exportando…' : 'Exportar a Excel'}
-          </Button>,
           canTransfer ? <Fragment key="cuenta">{newAccountButton}</Fragment> : <Fragment key="transferencia">{transferButton}</Fragment>,
         ]}
         note={
           <>
-            {!range.valid && (
-              <p id="export-help" className="text-small text-text-muted">
-                Para exportar, elige un período válido de hasta {REPORT_MAX_DAYS} días.
-              </p>
-            )}
             {accounts.isSuccess && !canTransfer && (
               <p id="transfer-help" className="text-small text-text-muted">
                 Necesitas al menos dos cuentas para transferir.
@@ -183,12 +145,6 @@ export function AccountsPage() {
           </>
         }
       />
-
-      {downloadError && download.isError && (
-        <Alert tone="error" title="No pudimos generar el reporte">
-          {downloadError}
-        </Alert>
-      )}
 
       <section className={`${card} p-4 sm:p-6`} aria-labelledby="balance-title">
         <h2 id="balance-title" className="sr-only">Saldos actuales</h2>

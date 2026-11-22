@@ -51,6 +51,21 @@ function indicatorValue(indicator: ReportIndicator, value: number | undefined): 
   return formatInteger(value)
 }
 
+/**
+ * Columnas de los indicadores segun cuantos hay (3 a 8): una en movil, dos desde sm y tres o cuatro
+ * en escritorio, elegidas para llenar las filas (5 y 6 en tres, 4, 7 y 8 en cuatro).
+ */
+function indicatorGrid(count: number): string {
+  if (count === 4 || count >= 7) return 'sm:grid-cols-2 xl:grid-cols-4'
+  return 'sm:grid-cols-2 lg:grid-cols-3'
+}
+
+/** Con un numero impar, la ultima tarjeta ocupa la fila entera mientras hay dos columnas. */
+function lastIndicatorSpan(count: number): string | undefined {
+  if (count % 2 === 0) return undefined
+  return count === 7 ? 'sm:max-xl:col-span-2' : 'sm:max-lg:col-span-2'
+}
+
 function counterpartyOptions(list: Counterparty[] | undefined, allLabel: string): ComboboxOption[] {
   return [
     { value: 0, label: allLabel },
@@ -234,16 +249,20 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4" aria-busy={report.isPending || undefined}>
-            {definition.indicators.map((indicator) => (
+          <div className={`grid gap-4 ${indicatorGrid(definition.indicators.length)}`} aria-busy={report.isPending || undefined}>
+            {definition.indicators.map((indicator, index) => (
               <IndicatorCard
-                compact
+                dense
                 key={indicator.key}
                 label={indicator.label}
+                icon={indicator.icon}
+                accent={indicator.accent}
                 value={data ? indicatorValue(indicator, data.summary[indicator.key]) : undefined}
                 negative={indicator.signed && data ? (data.summary[indicator.key] ?? 0) < 0 : undefined}
-                detail={indicator.detail && data ? `${indicator.detail.label}: ${formatPercent(data.summary[indicator.detail.key])}` : undefined}
+                note={indicator.detail && data ? `${indicator.detail.label}: ${formatPercent(data.summary[indicator.detail.key])}` : undefined}
+                detail={indicator.description}
                 trend={trend(indicator)}
+                className={index === definition.indicators.length - 1 ? lastIndicatorSpan(definition.indicators.length) : undefined}
               />
             ))}
           </div>

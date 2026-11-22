@@ -19,6 +19,9 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - El IVA de un servicio se lee de vatApplies.
 - Las descargas de Estado de Resultados y Movimientos se hacen desde su reporte en vivo, con los mismos filtros.
+- Los indicadores de Reportes usan el mismo diseño que los del Inicio.
+- Nuevo diseño del selector de áreas y reportes.
+- La exportación a Excel se hace solo desde Reportes; se retira el botón de Tesorería.
 
 ## [1.0.0] - 2026-11-01
 

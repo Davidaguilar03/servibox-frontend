@@ -2,6 +2,33 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Pulido de diseno de Reportes y retiro de la exportacion de Tesoreria (feat/63)
+
+* Indicadores de Reportes con la tarjeta de los KPI de Inicio: `IndicatorCard dense` (no se creo un componente nuevo:
+  Inicio ya lo usaba y no cambia; comparacion de pixeles contra main identica a 1440 y 390). `IndicatorCard` suma los
+  acentos `error` (borde y tinta error) y `neutral` (borde neutral-400, icono sobre neutral-200) y la prop `className`.
+* Criterio de colores e iconos (`LOOKS` en `liveReports.ts`, un aspecto por concepto, igual en todos los reportes):
+  ventas e ingresos verde (success), costos, compras, IVA descontable, por pagar y stock bajo ambar (warning),
+  utilidades, margenes, saldos y flujo neto azul (info), salvo Utilidad neta, gastos, anuladas, salidas, cartera de 61 dias o mas, stock
+  critico y sin stock rojo (error), conteos (facturas, productos, unidades) gris (neutral). Cartera de 0 a 30 dias
+  azul y de 31 a 60 ambar. Los conceptos que tambien estan en Inicio llevan su aspecto: ventas sin IVA (TrendingUp,
+  success), costo de lo vendido (Package, warning), utilidad bruta (ChartPie, info) y utilidad neta (Wallet,
+  brand-strong). Una prueba lee los KPI de `DashboardPage.tsx` y los compara con `LOOKS`.
+* Cada indicador lleva una descripcion de una linea al estilo de Inicio. El margen pasa a `note` (pegado al valor) y la
+  variacion del Estado de resultados va debajo de la descripcion.
+* Rejilla de indicadores por cantidad: 4, 7 y 8 en cuatro columnas desde xl; 3, 5 y 6 en tres desde lg; dos desde sm y
+  una en movil. Reemplaza la rejilla auto-fit de 240 px de feat/61.
+* Selector de areas y reportes: causa de los "dos bordes en las esquinas". La fila es desplazable (`overflow-x-auto`
+  obliga `overflow-y: hidden`) y recorta en su borde interno; la pestana usaba `-mb-px` para montar su subrayado de
+  2 px sobre la linea gris, asi que ese pixel se recortaba (con posiciones de medio pixel, medidas en 111,5, o escalado
+  de Windows, el subrayado se perdia entero), y con `rounded-control` el borde inferior se curvaba hacia las esquinas,
+  que eran lo unico que quedaba a la vista. Correccion en la base: sin `-mb-px` y con `rounded-t-control`; se quita
+  `-mb-px` de `ONE_PX_OFFSETS`. Reportes usa variantes nuevas (`pill` para areas, `subtle` para reportes) sin linea
+  gris; las pildoras dejan 4 px de relleno para que el anillo de foco no se recorte. Ninguna otra pantalla usa `TabList`.
+* Tesoreria ya no exporta: el reporte de Movimientos (con filtro de cuenta) y el de Flujo de caja cubren lo que hacia
+  el boton "Exportar a Excel" y lo hacen tambien en PDF. Reemplaza la entrada del 2026-10-21 (Exportar movimientos a
+  Excel desde Cuentas). Se borraron `exportPath`, `ExportRequest` y `ReportType` de `reports/reports.ts`.
+
 ## 2026-11-21: Reportes en vivo, segunda tanda y navegacion agrupada (feat/62)
 
 * Contrato del backend feat/61-reports-inventory-cashflow: Inventario y rotacion, Flujo de caja, Estado de resultados,
@@ -2274,6 +2301,8 @@ Formato de cada entrada:
   el saldo tambien en las transferencias.
 
 ## 2026-10-21: Exportar movimientos a Excel desde Cuentas
+
+**Reemplazado el 2026-11-21 (feat/63):** el boton se retiro; la exportacion vive en Reportes.
 
 * Decision: Exportar a Excel usa `apiDownload` y `exportPath` de Reportes con
   `type=MOVIMIENTOS`, `format=XLSX`, el rango activo y `accountId` solo con una cuenta

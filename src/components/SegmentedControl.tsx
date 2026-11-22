@@ -101,17 +101,52 @@ interface TabListProps<T> extends GroupProps<T> {
   fill?: boolean
   /** Centra la pestana elegida en su fila (Reportes): asi no queda bajo el difuminado del borde. */
   centerSelected?: boolean
+  /**
+   * Aspecto: `underline` (subrayado brand sobre una linea gris), `pill` (pildoras con la activa en
+   * dark, como SegmentedControl: areas de Reportes) o `subtle` (pildoras livianas con la activa
+   * bordeada en brand: reportes de un area).
+   */
+  variant?: TabVariant
 }
+
+type TabVariant = 'underline' | 'pill' | 'subtle'
 
 /** Mascara del borde derecho: indica que hay mas pestanas al desplazar. */
 const FADE_END = '[mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)]'
+
+// La fila desplazable recorta en vertical (overflow-x obliga overflow-y): nada de la pestana puede
+// salir de ella. Las pildoras dejan 4 px de relleno para que el anillo de foco no se corte.
+const TAB_STYLES: Record<TabVariant, { list: string; gap: string; tab: string; selected: string; idle: string }> = {
+  underline: {
+    list: 'border-b border-border',
+    gap: 'gap-6',
+    tab: 'rounded-t-control border-b-2 px-1 text-small',
+    selected: 'border-brand font-semibold text-text',
+    idle: 'border-transparent text-text-muted hover:text-text',
+  },
+  pill: {
+    list: 'p-1',
+    gap: 'gap-2',
+    tab: 'rounded-pill border px-4 text-button',
+    selected: 'border-dark bg-dark text-text-inverse',
+    idle: 'border-border-control bg-surface text-text hover:bg-neutral-100',
+  },
+  subtle: {
+    list: 'p-1',
+    gap: 'gap-2',
+    tab: 'rounded-pill border px-4 text-small',
+    selected: 'border-brand bg-surface font-semibold text-brand-ink',
+    idle: 'border-transparent text-text-muted hover:bg-neutral-300 hover:text-text',
+  },
+}
 
 /**
  * Pestanas de navegacion de contenido (Configuracion, categorias de Productos): `tablist` con
  * `role="tab"` y `aria-selected`, en rol small. Si no caben se desplazan, con el borde
  * difuminado mientras haya mas a la derecha, y la seleccionada se desplaza a la vista.
  */
-export function TabList<T>({ options, value, onChange, tabId, panelId, fill = false, centerSelected = false, className = '', ...labelProps }: TabListProps<T>) {
+export function TabList<T>({ options, value, onChange, tabId, panelId, fill = false, centerSelected = false, variant = 'underline', className = '', ...labelProps }: TabListProps<T>) {
+  const styles = TAB_STYLES[variant]
   const { onKeyDown, bind } = useRoving(options, value, onChange)
   const listRef = useRef<HTMLDivElement>(null)
   const [moreToRight, setMoreToRight] = useState(false)
@@ -149,8 +184,8 @@ export function TabList<T>({ options, value, onChange, tabId, panelId, fill = fa
       role="tablist"
       {...labelProps}
       onKeyDown={onKeyDown}
-      className={`flex border-b border-border ${
-        fill ? 'gap-2' : `gap-6 overflow-x-auto overflow-y-hidden [scrollbar-width:thin] ${moreToRight ? FADE_END : ''}`
+      className={`flex ${styles.list} ${
+        fill ? 'gap-2' : `${styles.gap} overflow-x-auto overflow-y-hidden [scrollbar-width:thin] ${moreToRight ? FADE_END : ''}`
       } ${className}`}
     >
       {options.map((option, index) => {
@@ -164,9 +199,9 @@ export function TabList<T>({ options, value, onChange, tabId, panelId, fill = fa
             aria-selected={selected}
             aria-controls={panelId?.(option.value)}
             onClick={() => onChange(option.value)}
-            className={`-mb-px flex min-h-touch items-center gap-2 rounded-control border-b-2 px-1 text-small transition-colors duration-(--duration-fast) focus-ring lg:min-h-control ${
+            className={`flex min-h-touch items-center gap-2 ${styles.tab} transition-colors duration-(--duration-fast) focus-ring lg:min-h-control ${
               fill ? 'min-w-0 flex-1 justify-center py-2 text-center' : 'shrink-0 whitespace-nowrap'
-            } ${selected ? 'border-brand font-semibold text-text' : 'border-transparent text-text-muted hover:text-text'}`}
+            } ${selected ? styles.selected : styles.idle}`}
             {...bind(index)}
           >
             {option.label}
