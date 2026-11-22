@@ -25,6 +25,7 @@ const product = (id: number): InventoryProduct => ({
   categoryId: 1,
   categoryName: 'LLANTAS',
   itemType: 'PRODUCTO',
+  vatApplies: true,
 })
 
 const productsById = new Map([product(1), product(2)].map((p) => [p.id, p]))

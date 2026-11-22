@@ -106,7 +106,7 @@ describe('ReportsPage', () => {
 
   it('clasifica una perdida de diez centavos como negativa', async () => {
     mockApi({ 'GET /api/reporting/kpis': () => jsonResponse({ ...october, netProfit: -0.1 }) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await screen.findByRole('rowheader', { name: 'Utilidad neta' })
     expect(statementValue('Utilidad neta')).toHaveTextContent('$ 0')
     expect(screen.getByRole('rowheader', { name: 'Utilidad neta' }).parentElement).toHaveClass('bg-error-bg', 'text-error-ink')
@@ -114,7 +114,7 @@ describe('ReportsPage', () => {
 
   it('muestra el periodo por defecto, la vista previa y la variacion', async () => {
     const fetchMock = mockApi()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     expect(screen.getByRole('heading', { name: 'Reportes' })).toBeInTheDocument()
     expect(screen.getByText(/Las facturas anuladas no se incluyen/)).toBeInTheDocument()
@@ -173,7 +173,7 @@ describe('ReportsPage', () => {
         '2026-09-12|2026-09-30': { ...september, netProfit: -264_500 },
       }),
     })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     const preview = screen.getByRole('region', { name: 'Vista previa · Estado de resultados' })
     expect(await within(preview).findAllByText('$ 267.750')).toHaveLength(3)
@@ -205,7 +205,7 @@ describe('ReportsPage', () => {
         '2026-08-02|2026-08-31': { ...september, netSales: 0, netProfit: 0 },
       }),
     })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2026-09-01' } })
@@ -222,7 +222,7 @@ describe('ReportsPage', () => {
     const fetchMock = mockApi({
       'GET /api/reporting/kpis': kpisBy({ '2026-10-01|2026-10-19': october }),
     })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     expect(await screen.findByText(/No pudimos cargar el período anterior/)).toBeInTheDocument()
     expect(statementValue('Ventas sin IVA')).toHaveTextContent('$ 20.781.907')
@@ -235,7 +235,7 @@ describe('ReportsPage', () => {
 
   it('un error de kpis muestra el error de la vista previa con reintentar', async () => {
     mockApi({ 'GET /api/reporting/kpis': kpisBy({}) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     expect(await screen.findByText('No pudimos cargar la vista previa.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
@@ -247,7 +247,7 @@ describe('ReportsPage', () => {
     let downloadedName = ''
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { downloadedName = this.download })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     await user.click(screen.getByRole('radio', { name: 'Excel' }))
     await user.click(screen.getByRole('button', { name: 'Generar reporte' }))
@@ -262,7 +262,7 @@ describe('ReportsPage', () => {
   it('movimientos: cuenta opcional y accountId solo con una cuenta concreta', async () => {
     const fetchMock = mockApi({ 'GET /api/reporting/export': () => fileResponse('movimientos-cuentas.pdf') })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     const preview = await screen.findByRole('region', { name: 'Vista previa · Movimientos de cuentas' })
@@ -295,7 +295,7 @@ describe('ReportsPage', () => {
 
   it('movimientos ordena fecha e id ascendentes y suma transferencias con precision antes de redondear', async () => {
     mockApi()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await userEvent.setup().click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     const table = await screen.findByRole('table')
     expect(within(table).getAllByRole('row').slice(1).map((row) => row.textContent)).toEqual([
@@ -317,7 +317,7 @@ describe('ReportsPage', () => {
       'GET /api/reporting/export': (url) => fileResponse(`movimientos-cuentas.${url.searchParams.get('format') === 'PDF' ? 'pdf' : 'xlsx'}`),
     })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByLabelText('Cuenta')
     if (accountId) await user.selectOptions(screen.getByLabelText('Cuenta'), accountId)
@@ -359,7 +359,7 @@ describe('ReportsPage', () => {
     const many = Array.from({ length: 35 }, (_, index) => ({ ...movements[0], id: index + 1 }))
     mockApi({ 'GET /api/treasury/movements': () => jsonResponse(many) })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByText('1–10 de 35 movimientos')
     await user.click(screen.getByRole('button', { name: 'Página 3' }))
@@ -378,7 +378,7 @@ describe('ReportsPage', () => {
     let many = Array.from({ length: 35 }, (_, index) => ({ ...movements[0], id: index + 1, amount: 1 }))
     mockApi({ 'GET /api/treasury/movements': () => jsonResponse(many) })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByText('1–10 de 35 movimientos')
     await user.click(screen.getByRole('button', { name: 'Página 4' }))
@@ -401,7 +401,7 @@ describe('ReportsPage', () => {
     let finish: (response: Response) => void = () => undefined
     const fetchMock = mockApi({ 'GET /api/treasury/movements': (url) => url.searchParams.get('desde') === '2026-10-02' ? new Promise<Response>((resolve) => { finish = resolve }) : jsonResponse(movements) })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByText('1–3 de 3 movimientos')
     await user.selectOptions(screen.getByLabelText('Cuenta'), '11')
@@ -424,7 +424,7 @@ describe('ReportsPage', () => {
     let fail = true
     mockApi({ 'GET /api/treasury/movements': () => fail ? jsonResponse({ error: 'Fallo', status: 500 }, 500) : jsonResponse(movements) })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByText('No pudimos cargar esta información.')
     expect(within(screen.getByRole('main')).queryByText('Ingresos')).not.toBeInTheDocument()
@@ -435,7 +435,7 @@ describe('ReportsPage', () => {
 
   it('movimientos vacio conserva totales cero y no inventa filas', async () => {
     mockApi({ 'GET /api/treasury/movements': () => jsonResponse([]) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await userEvent.setup().click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     expect(await screen.findByText('Sin movimientos en el período.')).toBeInTheDocument()
     expect(within(screen.getByRole('main')).getByText('Ingresos').nextElementSibling).toHaveTextContent('$ 0')
@@ -445,7 +445,7 @@ describe('ReportsPage', () => {
 
   it('sin cuentas muestra el estado propio sin consultar movimientos', async () => {
     const fetchMock = mockApi({ 'GET /api/treasury/accounts': () => jsonResponse([]) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await userEvent.setup().click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     expect(await screen.findByText('No hay cuentas registradas.')).toBeInTheDocument()
     expect(screen.getByLabelText('Cuenta')).toHaveValue('')
@@ -455,7 +455,7 @@ describe('ReportsPage', () => {
   it('cuentas carga y error mantienen el selector y la vista sin datos ficticios', async () => {
     let finish: (response: Response) => void = () => undefined
     const fetchMock = mockApi({ 'GET /api/treasury/accounts': () => new Promise<Response>((resolve) => { finish = resolve }) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await userEvent.setup().click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     expect(screen.queryByLabelText('Cuenta')).not.toBeInTheDocument()
     expect(within(screen.getByRole('main')).queryByText('Ingresos')).not.toBeInTheDocument()
@@ -472,7 +472,7 @@ describe('ReportsPage', () => {
   ])('el periodo %s gobierna movimientos y PDF', async (period, desde, hasta) => {
     const fetchMock = mockApi()
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     await screen.findByLabelText('Cuenta')
     await user.selectOptions(screen.getByLabelText('Período'), period!)
@@ -483,7 +483,7 @@ describe('ReportsPage', () => {
 
   it('estado de resultados sin actividad conserva las seis cifras cero y el menu del contenido', async () => {
     mockApi({ 'GET /api/reporting/kpis': () => jsonResponse(Object.fromEntries(Object.keys(october).map((key) => [key, 0]))) })
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     expect(await screen.findByText('Sin actividad en el período.')).toBeInTheDocument()
     expect(statementConcepts()).toEqual(STATEMENT_ORDER)
     for (const concept of STATEMENT_ORDER) expect(statementValue(concept)).toHaveTextContent('$ 0')
@@ -494,7 +494,7 @@ describe('ReportsPage', () => {
   it('oculta cifras del estado anterior al cambiar rango y opera formatos con teclado', async () => {
     const fetchMock = mockApi()
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     await screen.findByRole('rowheader', { name: 'Ventas sin IVA' })
     screen.getByRole('radio', { name: 'PDF' }).focus()
     await user.keyboard('{ArrowRight}')
@@ -513,7 +513,7 @@ describe('ReportsPage', () => {
         jsonResponse({ error: 'El reporte tiene mas de 20000 movimientos: acota el rango de fechas', status: 400 }, 400),
     })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     await user.click(screen.getByRole('radio', { name: /Movimientos de cuentas/ }))
     fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
@@ -530,7 +530,7 @@ describe('ReportsPage', () => {
 
   it('un 401 al generar cierra la sesion', async () => {
     mockApi({ 'GET /api/reporting/export': () => jsonResponse({ error: 'No autenticado', status: 401 }, 401) })
-    const router = renderRoute('/reportes')
+    const router = renderRoute('/reportes?reporte=archivos')
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Generar reporte' }))
 
@@ -544,7 +544,7 @@ describe('ReportsPage', () => {
       'GET /api/reporting/export': () => new Promise<Response>((resolve) => (finish = resolve)),
     })
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     await user.dblClick(screen.getByRole('button', { name: 'Generar reporte' }))
     const button = await screen.findByRole('button', { name: 'Generando…' })
@@ -558,7 +558,7 @@ describe('ReportsPage', () => {
 
   it('valida el rango en el cliente sin llamar al backend', async () => {
     const fetchMock = mockApi()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
     const button = screen.getByRole('button', { name: 'Generar reporte' })
 
     fireEvent.change(screen.getByLabelText('Período'), { target: { value: 'personalizado' } })
@@ -586,7 +586,7 @@ describe('ReportsPage', () => {
   it('solo ofrece los reportes que existen, sin opciones Proximamente', async () => {
     mockApi()
     const user = userEvent.setup()
-    renderRoute('/reportes')
+    renderRoute('/reportes?reporte=archivos')
 
     const radios = within(screen.getByRole('group', { name: 'Tipo de reporte' })).getAllByRole('radio')
     expect(radios.map((radio) => radio.getAttribute('value'))).toEqual(['ESTADO_RESULTADOS', 'MOVIMIENTOS'])

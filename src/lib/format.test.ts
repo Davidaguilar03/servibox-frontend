@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_VALUE, formatCurrency, formatDate, monthToDate } from './format'
+import { EMPTY_VALUE, formatCurrency, formatDate, formatInteger, formatPercent, monthToDate } from './format'
 
 describe('formatCurrency', () => {
   it('formatea pesos sin decimales con punto de miles', () => {
@@ -51,3 +51,13 @@ describe('monthToDate', () => {
  it.each([[13.5, '$ 14'], [0.08, '$ 0'], [100.01, '$ 100'], [-0.1, '$ 0'], [-0.5, '-$ 1'], [-0.004, '$ 0'], [-0.005, '$ 0'], [NaN, EMPTY_VALUE], [0.1 + 0.2, '$ 0']])('formatea %s como %s', (value, text) => {
    expect(formatCurrency(value as number)).toBe(text)
  })
+
+describe('formatPercent y formatInteger', () => {
+  it('muestra el porcentaje con un decimal y el entero con punto de miles', () => {
+    expect(formatPercent(32.35)).toBe('32,4\u00a0%')
+    expect(formatPercent(0)).toBe('0,0\u00a0%')
+    expect(formatPercent(null)).toBe(EMPTY_VALUE)
+    expect(formatInteger(1234)).toBe('1.234')
+    expect(formatInteger(undefined)).toBe(EMPTY_VALUE)
+  })
+})

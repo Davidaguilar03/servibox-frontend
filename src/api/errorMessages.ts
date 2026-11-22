@@ -35,11 +35,13 @@ const STATUS_LABELS: Record<string, string> = { PENDIENTE: 'pendiente', PAGADA: 
 const ROLE_LABELS: Record<string, string> = { CLIENTE: 'cliente', PROVEEDOR: 'proveedor', AMBOS: 'cliente y proveedor' }
 const NOUNS: Record<string, string> = {
   Categoria: 'esa categoría',
+  Cliente: 'ese cliente',
   Compra: 'esa compra',
   Cuenta: 'esa cuenta',
   Factura: 'esa factura',
   Movimiento: 'ese movimiento',
   Producto: 'ese producto',
+  Proveedor: 'ese proveedor',
   Tercero: 'ese tercero',
 }
 
@@ -231,9 +233,16 @@ const RULES: Rule[] = [
     `El reporte tiene más de ${thousands(n)} movimientos: acorta el período.`],
   [/^El rango necesita fecha desde y fecha hasta$/, 'Elige las fechas Desde y Hasta.'],
   [/^La fecha desde no puede ser posterior a la fecha hasta$/, 'Hasta no puede ser anterior a Desde.'],
+  [/^El reporte tiene mas de (\d+) facturas: acota el rango de fechas$/, (n) =>
+    `El reporte tiene más de ${thousands(n)} facturas: acorta el período.`],
+  [/^El reporte tiene mas de (\d+) facturas pendientes: filtra por (cliente|proveedor)$/, (n, who) =>
+    `El reporte tiene más de ${thousands(n)} facturas pendientes: filtra por ${who}.`],
+  [/^Valor invalido '.*' en el parametro antiguedad\./, 'Elige una antigüedad válida: 0 a 30, 31 a 60, 61 a 90 o más de 90 días.'],
+  [/^Valor invalido '.*' en el parametro estado\./, 'Elige un estado válido: Pagada, Pendiente o Anulada.'],
+  [/^El parametro \w+ no aplica al reporte \w+$/, 'Uno de los filtros no aplica a este reporte. Recarga la página e inténtalo de nuevo.'],
 
   // No encontrado, bloqueos y errores generales.
-  [/^(Categoria|Compra|Cuenta|Factura|Movimiento|Producto|Tercero) no encontrad[ao]: \d+$/, (noun) =>
+  [/^(Categoria|Cliente|Compra|Cuenta|Factura|Movimiento|Producto|Proveedor|Tercero) no encontrad[ao]: \d+$/, (noun) =>
     `No encontramos ${NOUNS[noun] ?? 'lo que buscas'}. Puede que ya no exista.`],
   [/^Recurso no encontrado$/, MESSAGES.notFound],
   [/^El recurso esta siendo modificado por otra operacion/, 'Alguien más está modificando esto. Inténtalo de nuevo en un momento.'],

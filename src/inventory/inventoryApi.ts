@@ -33,6 +33,8 @@ export interface InventoryProduct {
   categoryId: number | null
   categoryName: string | null
   itemType: ItemType
+  /** Si el item cobra IVA; en un servicio lo eligio el usuario. */
+  vatApplies: boolean
 }
 
 /** Categoria que el backend asigna a todo servicio; no se ofrece a los productos. */

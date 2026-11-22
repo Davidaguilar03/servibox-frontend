@@ -11,6 +11,11 @@ El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y e
 
 - Versionado semántico; la versión se muestra en el menú lateral, el inicio de sesión y el pie de la landing.
 - Servicios: registro con precio fijo e IVA opcional, filtro por tipo en inventario, venta junto con productos y exclusión de alertas y valorización de inventario.
+- Reportes en vivo de Ventas, Productos y servicios vendidos, Compras, Cartera por cobrar y Cartera por pagar, con filtros, indicadores, gráfica y tabla, y descarga en PDF y Excel con los mismos filtros.
+
+### Cambiado
+
+- El IVA de un servicio se lee de vatApplies.
 
 ## [1.0.0] - 2026-11-01
 

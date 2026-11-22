@@ -74,6 +74,7 @@ describe('formulario de producto', () => {
         categoryId: 4,
         categoryName: 'REPUESTOS DEMO',
         itemType: 'PRODUCTO',
+        vatApplies: true,
       }),
     ).toEqual({ ...EMPTY_PRODUCT_FORM, code: 'DEMO-001', description: 'Aceite', categoryId: '4', purchaseCost: '30.000,5', quantity: '50' })
   })
@@ -102,10 +103,12 @@ describe('formulario de producto', () => {
     expect(buildUpdateRequest(service)).toEqual({ code: 'SV-01', description: 'Alineación', salePrice: 35000, vatApplies: true })
   })
 
-  it('carga un servicio guardado: el precio viene en suggestedPrice y el IVA se lee de taxAmount', () => {
+  it('carga un servicio guardado: el precio viene en suggestedPrice y el IVA se lee de vatApplies', () => {
     const saved = { id: 9, code: 'SV-02', description: 'Balanceo', purchaseCost: 0, quantity: 0, suggestedPrice: 20000.5, categoryId: 4, categoryName: 'SERVICIOS', itemType: 'SERVICIO' as const }
-    expect(productToForm({ ...saved, taxAmount: 0 })).toMatchObject({ itemType: 'SERVICIO', salePrice: '20.000,5', vatApplies: false })
-    expect(productToForm({ ...saved, taxAmount: 3800 }).vatApplies).toBe(true)
+    expect(productToForm({ ...saved, taxAmount: 0, vatApplies: false })).toMatchObject({ itemType: 'SERVICIO', salePrice: '20.000,5', vatApplies: false })
+    expect(productToForm({ ...saved, taxAmount: 3800, vatApplies: true }).vatApplies).toBe(true)
+    // Con IVA del tenant en 0 % el servicio sigue con IVA: manda vatApplies, no taxAmount.
+    expect(productToForm({ ...saved, taxAmount: 0, vatApplies: true }).vatApplies).toBe(true)
   })
 
   it('solo acepta ids de ruta enteros positivos', () => {

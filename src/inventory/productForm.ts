@@ -54,9 +54,9 @@ export function productToForm(product: InventoryProduct): ProductFormValues {
     categoryId: product.categoryId === null ? '' : String(product.categoryId),
     purchaseCost: formatAmountText(String(product.purchaseCost).replace('.', ',')),
     quantity: String(product.quantity ?? 0),
-    // El precio de un servicio llega como suggestedPrice y el IVA solo se ve en taxAmount.
+    // El precio de un servicio llega como suggestedPrice.
     salePrice: service && product.suggestedPrice !== null ? amountTextFromNumber(product.suggestedPrice) : '',
-    vatApplies: service ? (product.taxAmount ?? 0) > 0 : true,
+    vatApplies: service ? product.vatApplies : true,
   }
 }
 

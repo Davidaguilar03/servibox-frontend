@@ -22,6 +22,20 @@ export function formatCurrency(value: number | null | undefined): string {
   return `${sign}$ ${integerFormat.format(Math.abs(rounded))}`
 }
 
+/** Cantidad entera con punto de miles: 1.234. */
+export function formatInteger(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return EMPTY_VALUE
+  return integerFormat.format(value)
+}
+
+const percentFormat = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
+/** Porcentaje ya expresado en por ciento (32.35), con un decimal: 32,4 %. */
+export function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return EMPTY_VALUE
+  return `${percentFormat.format(value)}${String.fromCharCode(160)}%`
+}
+
 /**
  * Fecha ISO del backend (`2026-09-28`) como dd/mm/aaaa. Se parte el texto en vez de crear
  * un Date para que la zona horaria no corra el dia.
