@@ -242,8 +242,10 @@ necesite, no antes.
 
 ## Versionado
 
-* Versionado semantico (MAJOR.MINOR.PATCH). La version vive solo en `package.json` y debe
-  coincidir con la del `pom.xml` del backend.
+* Versionado semantico (MAJOR.MINOR.PATCH). La version vive solo en `package.json`. MAJOR y MINOR
+  coinciden con los del `pom.xml` del backend; PATCH puede diferir cuando una correccion afecta un
+  solo repo (por ejemplo, frontend 1.1.1 con backend 1.1.0). Una version nueva MAJOR o MINOR
+  sube los dos repos a la vez.
 * `vite.config.ts` la lee de `package.json` y la inyecta como `__APP_VERSION__`;
   `src/config/version.ts` exporta `APP_VERSION` y `APP_VERSION_LABEL` (`v1.1.0`). Ningun
   componente la escribe a mano. Se ve al pie del menu lateral, del acceso (login de serviteca y
@@ -277,7 +279,10 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   Las sumas y restas monetarias derivadas usan centavos definitivos, sin EPSILON.
 * Porcentajes: `formatPercent`, un decimal con coma (`32,4 %`); cantidades: `formatInteger`.
 * Fecha en tablas: `formatDate`, dd/mm/aaaa a partir de la fecha ISO del backend, sin pasar
-  por `Date` para que la zona horaria no corra el dia.
+  por `Date` para que la zona horaria no corra el dia. Las tablas de Reportes usan `formatShortDate`
+  (dd/mm/aa) para caber a 1440 px.
+* Monto con signo explicito: `formatSignedCurrency` (+$ 1.500, -$ 1.500); lo que redondea a cero es
+  `$ 0`, sin signo.
 * Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". Se define una sola vez con el escape
   unicode de la raya (`\u2014`) para respetar la regla 1 de [00-RULES.md](00-RULES.md);
   ningun otro archivo escribe la raya.

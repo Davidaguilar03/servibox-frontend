@@ -42,13 +42,36 @@ describe('previousPeriod', () => {
     expect(previousPeriod('2026-10-01', '2026-10-18')).toEqual({ desde: '2026-09-13', hasta: '2026-09-30' })
   })
 
-  it('cruza el fin de mes', () => {
-    expect(previousPeriod('2026-03-01', '2026-03-31')).toEqual({ desde: '2026-01-29', hasta: '2026-02-28' })
-    expect(previousPeriod('2026-09-01', '2026-09-30')).toEqual({ desde: '2026-08-02', hasta: '2026-08-31' })
+  it('un rango de varios meses que no es un mes calendario cruza el fin de mes con igual duracion', () => {
+    expect(previousPeriod('2026-03-02', '2026-03-31')).toEqual({ desde: '2026-01-31', hasta: '2026-03-01' })
+    expect(previousPeriod('2026-09-01', '2026-10-31')).toEqual({ desde: '2026-07-02', hasta: '2026-08-31' })
   })
 
   it('cruza el fin de ano', () => {
     expect(previousPeriod('2027-01-01', '2027-01-10')).toEqual({ desde: '2026-12-22', hasta: '2026-12-31' })
+  })
+
+  it('octubre completo (31 dias) se compara con septiembre completo', () => {
+    expect(previousPeriod('2026-10-01', '2026-10-31')).toEqual({ desde: '2026-09-01', hasta: '2026-09-30' })
+    expect(periodTitle('2026-09-01', '2026-09-30')).toBe('Septiembre de 2026')
+  })
+
+  it('marzo completo se compara con febrero completo', () => {
+    expect(previousPeriod('2026-03-01', '2026-03-31')).toEqual({ desde: '2026-02-01', hasta: '2026-02-28' })
+    expect(previousPeriod('2028-03-01', '2028-03-31')).toEqual({ desde: '2028-02-01', hasta: '2028-02-29' })
+    expect(previousPeriod('2026-09-01', '2026-09-30')).toEqual({ desde: '2026-08-01', hasta: '2026-08-31' })
+  })
+
+  it('enero completo se compara con diciembre completo del ano anterior', () => {
+    expect(previousPeriod('2027-01-01', '2027-01-31')).toEqual({ desde: '2026-12-01', hasta: '2026-12-31' })
+  })
+
+  it('Este mes en curso (1 al 21) no es un mes completo: compara con los 21 dias anteriores', () => {
+    expect(previousPeriod('2026-11-01', '2026-11-21')).toEqual({ desde: '2026-10-11', hasta: '2026-10-31' })
+  })
+
+  it('un rango personalizado se compara con el de igual duracion', () => {
+    expect(previousPeriod('2026-10-15', '2026-11-14')).toEqual({ desde: '2026-09-14', hasta: '2026-10-14' })
   })
 
   it('un rango de un dia se compara con el dia anterior', () => {

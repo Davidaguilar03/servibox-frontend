@@ -1,7 +1,7 @@
 import { addMoney } from '../lib/money'
 import type { Account, AccountType } from '../dashboard/dashboardApi'
 import { defaultCashAccount } from '../lib/accountPayment'
-import { formatCurrency, formatDate } from '../lib/format'
+import { formatDate, formatSignedCurrency } from '../lib/format'
 import { periodRange as sharedPeriodRange } from '../lib/period'
 import { validateRange } from '../reports/reports'
 import type { TreasuryMovement } from './accountsApi'
@@ -136,7 +136,7 @@ export function periodTotals(movements: TreasuryMovement[]) {
 
 /** "+$ 100.000" o "-$ 100.000": el signo siempre visible, no solo el color. */
 export function formatSignedAmount(movement: Pick<TreasuryMovement, 'type' | 'amount'>): string {
-  return movement.type === 'INGRESO' ? `+${formatCurrency(movement.amount)}` : formatCurrency(-movement.amount)
+  return formatSignedCurrency(movement.type === 'INGRESO' ? movement.amount : -movement.amount)
 }
 
 export interface OriginContext {

@@ -436,8 +436,9 @@ de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros
   de los KPI de Inicio: icono en cuadro tenue, borde superior del acento, titulo, valor, margen si lo hay,
   descripcion y variacion; rejilla de una columna, dos desde sm y tres o cuatro en escritorio segun la
   cantidad, y con un numero impar la ultima ocupa la fila mientras hay dos columnas), grafica (`ReportChart`) y tabla (`ReportTable`).
-* Estado de resultados (`compareWithPrevious`): pide tambien el periodo anterior de igual duracion
-  (`previousPeriod`) con los mismos filtros y muestra en cada indicador la variacion (`variation`,
+* Estado de resultados (`compareWithPrevious`): pide tambien el periodo anterior (`previousPeriod`: el
+  mes calendario completo anterior si el elegido es un mes completo; si no, el de igual duracion que
+  termina el dia anterior) con los mismos filtros y muestra en cada indicador la variacion (`variation`,
   componente `Variation`: flecha, signo y "vs. <periodTitle>"). Si esa consulta falla o el anterior es 0, sin variacion.
 * Notas: Inventario siempre ("El stock es al dia de hoy; el periodo aplica a las unidades
   vendidas"); Flujo de caja solo sin cuenta (las transferencias entre cuentas propias no cuentan).
@@ -459,7 +460,13 @@ de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros
 * Tabla propia, no `DataTable`: orden por columna en el cliente (boton en el encabezado,
   `aria-sort`; sin orden en Estado de resultados y Flujo de caja), fila de totales en `tfoot`,
   filas resaltadas, paginas de 25 y desplazamiento horizontal dentro del contenedor, tambien bajo md.
-  Formatos `direction` (badge Entrada o Salida) y `signedAmount` (+ o - explicito, rojo si resta).
+  Formatos `direction` (badge Entrada o Salida) y `signedAmount` (+ o - explicito con
+  `formatSignedCurrency`, rojo si resta, sin signo en cero).
+* Ancho (2026-11-21, fix/65): las diez tablas caben a 1440 px con la barra lateral abierta. Celdas con
+  `px-2` y `text-small`, encabezados que pueden partirse en dos lineas, fechas `formatShortDate` y
+  textos (`format: 'text'`) en una linea con puntos suspensivos (`line-clamp-1 break-all`) y el texto
+  completo en `title`: solo se cortan cuando la tabla no cabe (hoy, las descripciones de Inventario).
+  Bajo ese ancho la tabla se sigue desplazando dentro de su contenedor (excepcion de 02-CONVENTIONS).
 * Estados: skeleton de carga, vacio "No hay datos para este período y filtros." y error con
   reintentar (400 con el texto del mapa; red y 5xx tambien en el toast). La descarga muestra su
   error en un `Alert` y el exito en un toast con el nombre del archivo del backend.

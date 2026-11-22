@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { EMPTY_VALUE, formatCurrency, formatDate, formatInteger, formatPercent, monthToDate } from './format'
+import { EMPTY_VALUE, formatCurrency, formatDate, formatInteger, formatPercent, formatShortDate, formatSignedCurrency, monthToDate } from './format'
+
+describe('formatShortDate', () => {
+  it('da dd/mm/aa sin correr el dia y una raya sin fecha', () => {
+    expect(formatShortDate('2026-09-28')).toBe('28/09/26')
+    expect(formatShortDate('2027-01-01T00:00:00')).toBe('01/01/27')
+    expect(formatShortDate(null)).toBe(EMPTY_VALUE)
+  })
+})
+
+describe('formatSignedCurrency', () => {
+  it('pone + a lo positivo y - a lo negativo', () => {
+    expect(formatSignedCurrency(180000)).toBe('+$ 180.000')
+    expect(formatSignedCurrency(-3500.5)).toBe('-$ 3.501')
+  })
+
+  it('el cero y lo que se redondea a cero van sin signo', () => {
+    for (const value of [0, -0, 0.3, -0.3]) expect(formatSignedCurrency(value)).toBe('$ 0')
+  })
+})
 
 describe('formatCurrency', () => {
   it('formatea pesos sin decimales con punto de miles', () => {
