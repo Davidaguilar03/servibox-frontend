@@ -5,7 +5,7 @@ Todos los cambios relevantes del frontend de ServiBox se registran en este archi
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa
 [versionado semántico](https://semver.org/lang/es/). La versión coincide con la del backend.
 
-## [1.1.0] - En desarrollo
+## [1.1.0] - 2026-11-21
 
 ### Agregado
 
