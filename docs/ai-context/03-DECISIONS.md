@@ -2,6 +2,35 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Reportes en vivo, segunda tanda y navegacion agrupada (feat/62)
+
+* Contrato del backend feat/61-reports-inventory-cashflow: Inventario y rotacion, Flujo de caja, Estado de resultados,
+  IVA y Movimientos. Mismo modelo declarativo `LIVE_REPORTS`, sin uno paralelo.
+* Diez reportes no caben en una fila: dos filas de `TabList` (areas y reportes del area). Se eligio sobre un selector
+  agrupado (`select` con `optgroup`) porque deja ver los reportes hermanos y es el patron de pestanas que el sistema
+  ya tiene, con teclado y desplazamiento horizontal en movil. Inventario tiene un solo reporte: sin segunda fila.
+* Se retira la pestana `archivos` (reemplaza "Estado de resultados y Movimientos siguen como descargas en la pestana
+  `archivos`" de la entrada de feat/61). Un enlace viejo con `?reporte=archivos` lleva a Estado de resultados con su
+  periodo. Se borraron la vista anterior (formulario, vista previa con variacion contra el periodo anterior y
+  movimientos paginados), sus 29 pruebas, `REPORT_OPTIONS` e `incomeStatementRows` y el parametro `accountId` de
+  `fetchPeriodMovements`.
+* Variacion contra el periodo anterior recuperada en el Estado de resultados en vivo (`compareWithPrevious`):
+  `previousPeriod`, `variation`, `isFullCalendarMonth` y `periodTitle` vuelven de main sin cambios, con sus 9 pruebas.
+  Mismo calculo de la 1.0.0: periodo de igual duracion que termina el dia anterior (Este mes del 1 al 21 se compara con
+  los 21 dias anteriores, no con el mes anterior completo). Segunda consulta a `/reporting/income-statement`; si falla
+  o el anterior vale 0, el indicador va sin variacion. Flecha, signo y texto "vs. <periodo>"; en costos y gastos bajar
+  es el tono de exito (`lowerIsBetter`).
+* `TabList` gana `centerSelected` (solo Reportes): la pestana activa se centra en su fila al cargar, para que en movil no
+  quede bajo el difuminado. Productos y Configuracion no cambian.
+* `ReportChart` admite varias series (columnas agrupadas con leyenda) y valores negativos (el eje cero se mueve; en una
+  sola serie lo negativo va en rojo). Los reportes de una serie no cambian.
+* Flujo de caja y Movimientos muestran el signo explicito (+ o -) ademas del color y el badge Entrada o Salida
+  (`StatusBadge`, variantes nuevas con los tonos de Ingreso y Egreso).
+* El grafico de IVA se arma con las filas (generado y descontable por categoria y tarifa): la serie del backend solo
+  trae el neto.
+* Estado de stock con las etiquetas y badges de Inicio e Inventario. Mensajes nuevos: estadoStock y tipo invalidos.
+* Detalle en sessions/2026-11-21-live-reports-second-batch.md.
+
 ## 2026-11-21: Reportes en vivo, primera tanda (feat/61)
 
 * Responde a la evaluacion externa (reportes genericos y solo descargables). Contrato del backend feat/60-reports-sales-portfolio:

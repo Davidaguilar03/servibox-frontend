@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { FileDown } from 'lucide-react'
+import { FileDown, Info } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 import { useReportedError } from '../api/reportError'
 import { Alert } from '../components/Alert'
@@ -12,8 +12,9 @@ import { PeriodPicker } from '../components/PeriodPicker'
 import { SelectField } from '../components/SelectField'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
 import { showToast } from '../components/toast'
-import { iconMd } from '../components/icons'
+import { iconMd, iconSm } from '../components/icons'
 import { CUSTOMERS_KEY } from '../counterparties/counterpartiesApi'
+import { fetchAccounts } from '../dashboard/dashboardApi'
 import { CATEGORIES_KEY, PRODUCTS_KEY, fetchInventoryCategories, fetchInventoryProducts } from '../inventory/inventoryApi'
 import { SUPPLIERS_KEY, fetchSuppliers } from '../purchases/purchasesApi'
 import { fetchCustomers, type Counterparty } from '../sales/salesApi'
@@ -22,7 +23,8 @@ import { businessToday } from '../lib/businessDate'
 import { formatCurrency, formatDate, formatInteger, formatPercent } from '../lib/format'
 import { rangeLabel } from '../lib/period'
 import { useUrlTextParam } from '../lib/useUrlTextParam'
-import { validateRange, type ReportFormat } from './reports'
+import { periodTitle, previousPeriod, validateRange, variation, type ReportFormat } from './reports'
+import { Variation } from './Variation'
 import {
   FILTERS,
   REPORT_PERIOD_OPTIONS,
@@ -79,6 +81,7 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
   const suppliers = useQuery({ queryKey: SUPPLIERS_KEY, queryFn: fetchSuppliers, enabled: uses('supplier') })
   const items = useQuery({ queryKey: PRODUCTS_KEY, queryFn: fetchInventoryProducts, enabled: uses('item') })
   const categories = useQuery({ queryKey: CATEGORIES_KEY, queryFn: fetchInventoryCategories, enabled: uses('category') })
+  const accounts = useQuery({ queryKey: ['treasury', 'accounts'], queryFn: fetchAccounts, enabled: uses('account') })
 
   const report = useQuery({
     queryKey: ['reporting', 'live', definition.key, queryString],
@@ -86,6 +89,27 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
     enabled: apiParams !== null,
   })
   const reportError = useReportedError(report.error)
+
+  // Periodo anterior de igual duracion, con los mismos filtros. Si falla, el reporte sigue sin variacion.
+  const previous = definition.compareWithPrevious && apiParams ? previousPeriod(range.desde, range.hasta) : null
+  const previousParams = previous && apiParams ? new URLSearchParams(apiParams) : null
+  previousParams?.set('desde', previous!.desde)
+  previousParams?.set('hasta', previous!.hasta)
+  const previousQuery = previousParams?.toString() ?? null
+  const before = useQuery({
+    queryKey: ['reporting', 'live', definition.key, previousQuery],
+    queryFn: () => apiFetch<LiveReportResponse>(reportPath(definition, previousParams!)),
+    enabled: previousQuery !== null,
+  })
+  // "octubre de 2026" para un mes completo; si no, "11/10/2026 a 31/10/2026".
+  const previousTitle = previous ? periodTitle(previous.desde, previous.hasta) : ''
+  const comparedLabel = previousTitle.charAt(0).toLowerCase() + previousTitle.slice(1)
+  function trend(indicator: ReportIndicator) {
+    const data = report.data
+    if (!data || !before.data || before.isError) return undefined
+    const change = variation(data.summary[indicator.key] ?? 0, before.data.summary[indicator.key] ?? 0)
+    return change === null ? undefined : <Variation value={change} label={comparedLabel} lowerIsBetter={indicator.lowerIsBetter} />
+  }
 
   const download = useMutation({
     mutationFn: (format: ReportFormat) => apiDownload(reportExportPath(definition, format, apiParams!)),
@@ -109,13 +133,14 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
         />
       )
     }
-    if (spec.control === 'category') {
+    if (spec.control === 'category' || spec.control === 'account') {
+      const list = spec.control === 'category' ? categories.data : accounts.data
       return (
         <SelectField
           key={key}
           label={spec.label}
-          options={[{ value: '', label: spec.allLabel }, ...(categories.data ?? []).map((category) => ({ value: String(category.id), label: category.name }))]}
-          value={categories.data ? value : ''}
+          options={[{ value: '', label: spec.allLabel }, ...(list ?? []).map((item) => ({ value: String(item.id), label: item.name }))]}
+          value={list ? value : ''}
           onChange={(event) => setFilter(key, event.target.value)}
         />
       )
@@ -174,6 +199,12 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
               ? valid ? `Período: ${rangeLabel(range)}` : 'Elige un período válido.'
               : `Corte al ${formatDate(data?.corte ?? today)}`}
           </p>
+          {definition.notes?.(state.filters).map((note) => (
+            <p key={note} className="mt-1 flex items-start gap-2 text-small text-text-muted">
+              <Info {...iconSm} className="mt-1 shrink-0" aria-hidden />
+              {note}
+            </p>
+          ))}
         </div>
         <div className="flex flex-wrap gap-3">
           {(['PDF', 'XLSX'] as const).map((format) => (
@@ -210,6 +241,9 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
                 key={indicator.key}
                 label={indicator.label}
                 value={data ? indicatorValue(indicator, data.summary[indicator.key]) : undefined}
+                negative={indicator.signed && data ? (data.summary[indicator.key] ?? 0) < 0 : undefined}
+                detail={indicator.detail && data ? `${indicator.detail.label}: ${formatPercent(data.summary[indicator.detail.key])}` : undefined}
+                trend={trend(indicator)}
               />
             ))}
           </div>
@@ -224,7 +258,7 @@ export function LiveReportView({ definition }: { definition: LiveReportDefinitio
             </div>
           ) : (
             <>
-              <ReportChart spec={definition.chart} series={data.series} />
+              <ReportChart spec={definition.chart} points={definition.chart.points ? definition.chart.points(data) : data.series} />
               <ReportTable key={queryString} definition={definition} rows={data.rows} />
             </>
           )}

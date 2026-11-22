@@ -1,4 +1,7 @@
+import type { BadgeStatus } from '../components/StatusBadge'
+import { GLOSSARY } from '../copy/glossary'
 import { addMoney } from '../lib/money'
+import type { StockStatus } from '../lib/stock'
 import { periodRange, type DateRange } from '../lib/period'
 import { validateRange, type ReportFormat } from './reports'
 
@@ -6,13 +9,44 @@ import { validateRange, type ReportFormat } from './reports'
 // grafica, columnas y tipo de exportacion). La pagina solo recorre estas definiciones; un
 // reporte nuevo se agrega aqui. Contrato del backend en su nota 2026-11-21-reports-sales-portfolio.
 
-export type LiveReportKey = 'ventas' | 'productos-vendidos' | 'compras' | 'cartera-cobrar' | 'cartera-pagar'
+export type LiveReportKey =
+  | 'ventas'
+  | 'productos-vendidos'
+  | 'compras'
+  | 'cartera-cobrar'
+  | 'cartera-pagar'
+  | 'inventario'
+  | 'flujo-caja'
+  | 'estado-resultados'
+  | 'iva'
+  | 'movimientos'
 
 /** `type` de `GET /api/reporting/export` de cada reporte en vivo. */
-export type LiveExportType = 'VENTAS' | 'PRODUCTOS_VENDIDOS' | 'COMPRAS' | 'CARTERA_COBRAR' | 'CARTERA_PAGAR'
+export type LiveExportType =
+  | 'VENTAS'
+  | 'PRODUCTOS_VENDIDOS'
+  | 'COMPRAS'
+  | 'CARTERA_COBRAR'
+  | 'CARTERA_PAGAR'
+  | 'INVENTARIO'
+  | 'FLUJO_CAJA'
+  | 'ESTADO_RESULTADOS'
+  | 'IVA'
+  | 'MOVIMIENTOS'
 
 /** Nombre del filtro en la URL de la pantalla. */
-export type FilterKey = 'cliente' | 'proveedor' | 'pago' | 'estado' | 'tipo' | 'categoria' | 'item' | 'antiguedad'
+export type FilterKey =
+  | 'cliente'
+  | 'proveedor'
+  | 'pago'
+  | 'estado'
+  | 'tipo'
+  | 'categoria'
+  | 'item'
+  | 'antiguedad'
+  | 'stock'
+  | 'cuenta'
+  | 'movimiento'
 
 export type ReportPeriod = 'este-mes' | 'mes-anterior' | 'ultimos-30' | 'este-ano' | 'personalizado'
 
@@ -24,7 +58,7 @@ export const REPORT_PERIOD_OPTIONS: Array<{ value: ReportPeriod; label: string }
   { value: 'personalizado', label: 'Personalizado' },
 ]
 
-export type FilterControl = 'select' | 'customer' | 'supplier' | 'item' | 'category'
+export type FilterControl = 'select' | 'customer' | 'supplier' | 'item' | 'category' | 'account'
 
 export interface FilterSpec {
   label: string
@@ -42,6 +76,20 @@ export const AGING_LABELS: Record<string, string> = {
   '31-60': '31 a 60 días',
   '61-90': '61 a 90 días',
   '90+': 'Más de 90 días',
+}
+
+/** Etiquetas y badges del estado de stock: los mismos de Inicio e Inventario. */
+export const STOCK_LABELS: Record<StockStatus, string> = {
+  NORMAL: 'Disponible',
+  BAJO: GLOSSARY.lowStock,
+  CRITICO: GLOSSARY.criticalStock,
+  SIN_STOCK: GLOSSARY.outOfStock,
+}
+export const STOCK_BADGES: Record<StockStatus, BadgeStatus> = {
+  NORMAL: 'DISPONIBLE',
+  BAJO: 'BAJO_STOCK',
+  CRITICO: 'STOCK_CRITICO',
+  SIN_STOCK: 'SIN_STOCK',
 }
 
 export const FILTERS: Record<FilterKey, FilterSpec> = {
@@ -77,9 +125,39 @@ export const FILTERS: Record<FilterKey, FilterSpec> = {
     allLabel: 'Todas',
     options: Object.entries(AGING_LABELS).map(([value, label]) => ({ value, label })),
   },
+  stock: {
+    label: 'Estado de stock',
+    apiParam: 'estadoStock',
+    control: 'select',
+    allLabel: 'Todos',
+    options: (['NORMAL', 'BAJO', 'CRITICO', 'SIN_STOCK'] as const).map((value) => ({ value, label: STOCK_LABELS[value] })),
+  },
+  cuenta: { label: 'Cuenta', apiParam: 'cuentaId', control: 'account', allLabel: 'Todas las cuentas' },
+  movimiento: {
+    label: 'Tipo',
+    apiParam: 'tipo',
+    control: 'select',
+    allLabel: 'Todos',
+    options: [{ value: 'INGRESO', label: 'Ingreso' }, { value: 'EGRESO', label: 'Egreso' }],
+  },
 }
 
-export type ValueFormat = 'text' | 'code' | 'date' | 'currency' | 'integer' | 'percent' | 'status' | 'paymentType' | 'itemType' | 'aging'
+export type ValueFormat =
+  | 'text'
+  | 'code'
+  | 'date'
+  | 'currency'
+  | 'integer'
+  | 'percent'
+  | 'status'
+  | 'paymentType'
+  | 'itemType'
+  | 'aging'
+  | 'stockStatus'
+  /** ENTRADA o SALIDA, con etiqueta. */
+  | 'direction'
+  /** Monto positivo con signo: menos si la fila es SALIDA o EGRESO (en totales, el signo del valor). */
+  | 'signedAmount'
 
 export type ReportRow = Record<string, string | number | null>
 
@@ -97,14 +175,36 @@ export interface ReportIndicator {
   key: string
   label: string
   format: 'currency' | 'integer' | 'percent'
+  /** Puede ser negativo: la cifra va en el tono de error. */
+  signed?: boolean
+  /** Porcentaje que acompana al valor, como el margen. */
+  detail?: { key: string; label: string }
+  /** Costos y gastos: en la variacion, bajar es lo bueno. */
+  lowerIsBetter?: boolean
+}
+
+/** Un punto de la grafica: su etiqueta y un valor por serie. */
+export type ChartPoint = { label: string } & Record<string, string | number>
+
+export interface ChartSeries {
+  /** Campo del punto. */
+  key: string
+  label: string
+  tone: 'info' | 'warning' | 'success'
 }
 
 export interface ReportChartSpec {
-  /** Columnas verticales (por dia o por rango) o barras horizontales (los 10 mayores). */
+  /** Columnas verticales (por dia, mes o rango) o barras horizontales (los 10 mayores). */
   kind: 'columns' | 'bars'
   title: string
-  /** Como se leen las etiquetas de `series`. */
-  labels: 'date' | 'text' | 'aging'
+  /** Como se leen las etiquetas: fecha, texto, rango de antiguedad o mes o dia (`2026-09`). */
+  labels: 'date' | 'text' | 'aging' | 'period'
+  /** Pesos por defecto; `integer` para unidades. */
+  valueFormat?: 'currency' | 'integer'
+  /** Varias series, con leyenda. Sin ellas, una sola serie en `value`. */
+  series?: ChartSeries[]
+  /** Puntos armados de la respuesta; sin el, `series` del backend. */
+  points?: (response: LiveReportResponse) => ChartPoint[]
 }
 
 export interface LiveReportDefinition {
@@ -120,9 +220,17 @@ export interface LiveReportDefinition {
   indicators: ReportIndicator[]
   chart: ReportChartSpec
   columns: ReportColumn[]
-  rowKey: string
+  rowKey: string | ((row: ReportRow) => string)
   /** Filas que entran en la fila de totales (las anuladas no). Sin el, todas. */
   inTotals?: (row: ReportRow) => boolean
+  /** Filas resaltadas (subtotales de un estado). */
+  emphasize?: (row: ReportRow) => boolean
+  /** Sin orden por columna: las filas siguen el orden del documento. */
+  fixedOrder?: boolean
+  /** Notas cortas bajo la descripcion, segun los filtros elegidos. */
+  notes?: (filters: LiveReportState['filters']) => string[]
+  /** Indicadores con la variacion contra el periodo anterior de igual duracion (`previousPeriod`). */
+  compareWithPrevious?: boolean
 }
 
 export interface LiveReportResponse {
@@ -132,7 +240,7 @@ export interface LiveReportResponse {
   appliedFilters: string[]
   summary: Record<string, number>
   rows: ReportRow[]
-  series: Array<{ label: string; value: number }>
+  series: ChartPoint[]
 }
 
 const notAnnulled = (row: ReportRow) => row.status !== 'ANULADA'
@@ -287,7 +395,193 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
   },
 ]
 
+const negativeRow = (row: ReportRow) => row.direction === 'SALIDA' || row.type === 'EGRESO'
+const signedSum = (rows: ReportRow[]) =>
+  rows.reduce((sum, row) => addMoney(sum, negativeRow(row) ? -Number(row.amount) : Number(row.amount)), 0)
+
+/** Signo de un monto de la fila: SALIDA y EGRESO restan. */
+export function signedRowAmount(row: ReportRow | undefined, value: number): number {
+  return row && negativeRow(row) ? -value : value
+}
+
+function vatRowLabel(row: ReportRow): string {
+  return `${row.categoryName} ${String(row.ratePercent).replace('.', ',')} %`
+}
+
+LIVE_REPORTS.push(
+  {
+    key: 'inventario',
+    title: 'Inventario y rotación',
+    description: 'Stock, valor y rotación de cada producto. Los servicios no tienen stock y no salen.',
+    path: '/reporting/inventory',
+    exportType: 'INVENTARIO',
+    period: true,
+    filters: ['categoria', 'stock'],
+    indicators: [
+      { key: 'productCount', label: 'Productos', format: 'integer' },
+      { key: 'unitsInStock', label: 'Unidades en stock', format: 'integer' },
+      { key: 'costValue', label: 'Valor al costo', format: 'currency' },
+      { key: 'saleValue', label: 'Valor a precio de venta', format: 'currency' },
+      { key: 'lowStockCount', label: GLOSSARY.lowStock, format: 'integer' },
+      { key: 'criticalStockCount', label: GLOSSARY.criticalStock, format: 'integer' },
+      { key: 'outOfStockCount', label: GLOSSARY.outOfStock, format: 'integer' },
+      { key: 'unitsSoldInPeriod', label: 'Unidades vendidas', format: 'integer' },
+    ],
+    chart: { kind: 'bars', title: 'Los 10 más vendidos por unidades', labels: 'text', valueFormat: 'integer' },
+    columns: [
+      { key: 'code', header: 'Código', format: 'code' },
+      { key: 'description', header: 'Descripción', format: 'text' },
+      { key: 'categoryName', header: 'Categoría', format: 'text' },
+      { key: 'stock', header: 'Stock', format: 'integer', total: 'sum' },
+      { key: 'stockStatus', header: 'Estado', format: 'stockStatus' },
+      { key: 'unitCost', header: 'Costo unitario', format: 'currency' },
+      { key: 'costValue', header: 'Valor al costo', format: 'currency', total: 'sum' },
+      { key: 'salePrice', header: 'Precio de venta', format: 'currency' },
+      { key: 'unitsSold', header: 'Vendidas', format: 'integer', total: 'sum' },
+      { key: 'lastSaleDate', header: 'Última venta', format: 'date' },
+      { key: 'daysWithoutSale', header: 'Días sin vender', format: 'integer' },
+    ],
+    rowKey: 'productId',
+    notes: () => ['El stock es al día de hoy; el período aplica a las unidades vendidas.'],
+  },
+  {
+    key: 'flujo-caja',
+    title: 'Flujo de caja',
+    description: 'Lo que entró y salió de tus cuentas en el período, por concepto.',
+    path: '/reporting/cash-flow',
+    exportType: 'FLUJO_CAJA',
+    period: true,
+    filters: ['cuenta'],
+    indicators: [
+      { key: 'openingBalance', label: 'Saldo inicial', format: 'currency', signed: true },
+      { key: 'inflows', label: 'Entradas', format: 'currency' },
+      { key: 'outflows', label: 'Salidas', format: 'currency' },
+      { key: 'netFlow', label: 'Flujo neto', format: 'currency', signed: true },
+      { key: 'closingBalance', label: 'Saldo final', format: 'currency', signed: true },
+    ],
+    chart: { kind: 'columns', title: 'Flujo neto por día', labels: 'date' },
+    columns: [
+      { key: 'label', header: 'Concepto', format: 'text' },
+      { key: 'direction', header: 'Dirección', format: 'direction' },
+      { key: 'movementCount', header: 'Movimientos', format: 'integer', total: 'sum' },
+      { key: 'amount', header: 'Valor', format: 'signedAmount', total: signedSum },
+    ],
+    rowKey: 'concept',
+    fixedOrder: true,
+    notes: (filters) => (filters.cuenta ? [] : ['Las transferencias entre tus cuentas no se cuentan como entradas ni salidas.']),
+  },
+  {
+    key: 'estado-resultados',
+    title: 'Estado de resultados',
+    description: 'Ventas, costo de lo vendido, gastos y utilidad del período.',
+    path: '/reporting/income-statement',
+    exportType: 'ESTADO_RESULTADOS',
+    period: true,
+    filters: [],
+    indicators: [
+      { key: 'revenue', label: 'Ingresos', format: 'currency' },
+      { key: 'costOfSales', label: 'Costo de ventas', format: 'currency', lowerIsBetter: true },
+      { key: 'grossProfit', label: 'Utilidad bruta', format: 'currency', signed: true, detail: { key: 'grossMarginPercent', label: 'Margen' } },
+      { key: 'operatingExpenses', label: 'Gastos operativos', format: 'currency', lowerIsBetter: true },
+      { key: 'netProfit', label: 'Utilidad neta', format: 'currency', signed: true, detail: { key: 'netMarginPercent', label: 'Margen neto' } },
+    ],
+    chart: {
+      kind: 'columns',
+      title: 'Ingresos, costos y utilidad',
+      labels: 'period',
+      series: [
+        { key: 'revenue', label: 'Ingresos', tone: 'info' },
+        { key: 'cost', label: 'Costos', tone: 'warning' },
+        { key: 'profit', label: 'Utilidad', tone: 'success' },
+      ],
+    },
+    columns: [
+      { key: 'label', header: 'Concepto', format: 'text' },
+      { key: 'amount', header: 'Valor', format: 'currency' },
+      { key: 'percentOfRevenue', header: '% de ingresos', format: 'percent' },
+    ],
+    rowKey: 'line',
+    fixedOrder: true,
+    compareWithPrevious: true,
+    emphasize: (row) => row.line === 'UTILIDAD_BRUTA' || row.line === 'UTILIDAD_NETA',
+  },
+  {
+    key: 'iva',
+    title: 'IVA',
+    description: 'IVA generado en ventas y descontable en compras, por categoría y tarifa.',
+    path: '/reporting/vat',
+    exportType: 'IVA',
+    period: true,
+    filters: [],
+    indicators: [
+      { key: 'ivaGenerado', label: 'IVA generado', format: 'currency' },
+      { key: 'ivaDescontable', label: 'IVA descontable', format: 'currency' },
+      { key: 'ivaNeto', label: 'Saldo por pagar', format: 'currency', signed: true },
+    ],
+    chart: {
+      kind: 'columns',
+      title: 'IVA generado y descontable por tarifa',
+      labels: 'text',
+      series: [
+        { key: 'ivaGenerado', label: 'Generado', tone: 'info' },
+        { key: 'ivaDescontable', label: 'Descontable', tone: 'warning' },
+      ],
+      points: (response) => response.rows.map((row) => ({
+        label: vatRowLabel(row),
+        ivaGenerado: Number(row.ivaGenerado),
+        ivaDescontable: Number(row.ivaDescontable),
+      })),
+    },
+    columns: [
+      { key: 'categoryName', header: 'Categoría', format: 'text' },
+      { key: 'ratePercent', header: 'Tarifa', format: 'percent' },
+      { key: 'taxableBase', header: 'Base gravable', format: 'currency', total: 'sum' },
+      { key: 'ivaGenerado', header: 'IVA generado', format: 'currency', total: 'sum' },
+      { key: 'ivaDescontable', header: 'IVA descontable', format: 'currency', total: 'sum' },
+      { key: 'ivaNeto', header: 'Saldo', format: 'currency', total: 'sum' },
+    ],
+    rowKey: vatRowLabel,
+  },
+  {
+    key: 'movimientos',
+    title: 'Movimientos',
+    description: 'Cada ingreso y egreso de tus cuentas en el período.',
+    path: '/reporting/movements-report',
+    exportType: 'MOVIMIENTOS',
+    period: true,
+    filters: ['cuenta', 'movimiento'],
+    indicators: [
+      { key: 'inflows', label: 'Entradas', format: 'currency' },
+      { key: 'outflows', label: 'Salidas', format: 'currency' },
+      { key: 'net', label: 'Neto', format: 'currency', signed: true },
+    ],
+    chart: { kind: 'columns', title: 'Neto por día', labels: 'date' },
+    columns: [
+      { key: 'date', header: 'Fecha', format: 'date' },
+      { key: 'accountName', header: 'Cuenta', format: 'text' },
+      { key: 'concept', header: 'Concepto', format: 'text' },
+      { key: 'reference', header: 'Referencia', format: 'text' },
+      { key: 'type', header: 'Tipo', format: 'status' },
+      { key: 'amount', header: 'Valor', format: 'signedAmount', total: signedSum },
+    ],
+    rowKey: 'movementId',
+  },
+)
+
+/** Areas de la navegacion: cada reporte pertenece a una. */
+export const REPORT_GROUPS: Array<{ key: string; label: string; reports: LiveReportKey[] }> = [
+  { key: 'ventas-cartera', label: 'Ventas y cartera', reports: ['ventas', 'productos-vendidos', 'cartera-cobrar'] },
+  { key: 'compras-proveedores', label: 'Compras y proveedores', reports: ['compras', 'cartera-pagar'] },
+  { key: 'inventario', label: 'Inventario', reports: ['inventario'] },
+  { key: 'finanzas', label: 'Finanzas', reports: ['estado-resultados', 'flujo-caja', 'iva', 'movimientos'] },
+]
+
+export function reportGroup(key: LiveReportKey) {
+  return REPORT_GROUPS.find((group) => group.reports.includes(key))!
+}
+
 export const DEFAULT_REPORT: LiveReportKey = 'ventas'
+
 
 export function liveReport(key: string | null): LiveReportDefinition | undefined {
   return LIVE_REPORTS.find((report) => report.key === key)

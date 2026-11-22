@@ -45,8 +45,8 @@ src/
                       modal compartido de crear y editar tercero
   trash/              papelera compartida de ventas y compras (TrashPage.tsx) y su logica
                       de filtros (trashList.ts)
-  reports/            logica pura de Reportes (reports.ts), definiciones de los reportes en
-                      vivo (liveReports.ts), su vista, grafica SVG y tabla
+  reports/            definiciones de los reportes en vivo y sus areas (liveReports.ts), su
+                      vista, grafica SVG y tabla; validacion del rango (reports.ts)
   settings/           Configuracion: pagina unificada, formularios de datos y finanzas y consultas
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
@@ -391,89 +391,73 @@ validacion del abono) en `src/sales/saleDetail.ts`; reglas en
 
 ## Reportes
 
-`ReportsPage` (`/reportes`): encabezado y una pestana (`TabList`) por reporte. El reporte va en la
-URL como `reporte` (sin el parametro, Ventas). Cinco pestanas son reportes en vivo; la sexta,
-`reporte=archivos` ("Estado de resultados y movimientos"), conserva las descargas descritas mas
-abajo hasta que pasen a reportes en vivo (tarea 8 del plan 1.1.0).
+`ReportsPage` (`/reportes`): encabezado, navegacion agrupada y el reporte elegido. El reporte va en la
+URL como `reporte` (sin el parametro, Ventas). Los diez son reportes en vivo.
 
-### Reportes en vivo (2026-11-21)
+* Navegacion: una fila de pestanas (`TabList`, "Area del reporte") con las cuatro areas de
+  `REPORT_GROUPS` (Ventas y cartera, Compras y proveedores, Inventario, Finanzas) y, si el area tiene
+  mas de un reporte, una segunda fila con sus reportes. Elegir un area abre su primer reporte. Las dos
+  filas se desplazan en horizontal en movil y se usan con flechas, Inicio y Fin (activacion automatica).
+  Cambiar de reporte conserva `periodo`, `desde` y `hasta` y descarta los demas filtros.
+* Las dos filas usan `centerSelected`: la pestana activa se centra en su fila al cargar o cambiar.
+* `?reporte=archivos` (pestana retirada el 2026-11-21) redirige con `replace` a Estado de resultados,
+  conservando el periodo.
+
+### Reportes en vivo
 
 Modelo declarativo en `src/reports/liveReports.ts`: cada `LiveReportDefinition` trae `key` (valor
 de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros (claves de
-`FILTERS`), indicadores (campo de `summary` y formato), grafica (`columns` o `bars` y como leer
-las etiquetas), columnas (campo, formato y total) y `inTotals` (las anuladas no suman). Un
-reporte nuevo es una definicion mas en `LIVE_REPORTS`; la vista no cambia salvo un control o
-formato que no exista.
+`FILTERS`), indicadores (campo de `summary`, formato, `signed` para cifras que pueden ser negativas y
+`detail` para un porcentaje como el margen), grafica, columnas (campo, formato y total), `rowKey`
+(campo o funcion), `inTotals` (las anuladas no suman), `emphasize` (filas de subtotal), `fixedOrder`
+(sin orden por columna) y `notes` (notas segun los filtros). Un reporte nuevo es una definicion mas.
 
-| Reporte (`reporte`) | Endpoint | Filtros en la URL (parametro del backend) | Grafica | Exportacion |
-|-|-|-|-|-|
-| `ventas` | `GET /api/reporting/sales` | periodo, `cliente` (clienteId), `pago` (formaPago), `estado` | columnas por dia | `VENTAS` |
-| `productos-vendidos` | `GET /api/reporting/products-sold` | periodo, `tipo` (itemType), `categoria` (categoriaId), `item` (productoId) | barras, 10 mayores | `PRODUCTOS_VENDIDOS` |
-| `compras` | `GET /api/reporting/purchases` | periodo, `proveedor` (proveedorId), `categoria`, `estado` | barras, 10 proveedores | `COMPRAS` |
-| `cartera-cobrar` | `GET /api/reporting/receivables` | `cliente`, `antiguedad` | columnas por rango | `CARTERA_COBRAR` |
-| `cartera-pagar` | `GET /api/reporting/payables` | `proveedor`, `antiguedad` | columnas por rango | `CARTERA_PAGAR` |
+| Area | Reporte (`reporte`) | Endpoint | Filtros en la URL (parametro del backend) | Grafica | Exportacion |
+|-|-|-|-|-|-|
+| Ventas y cartera | `ventas` | `/api/reporting/sales` | periodo, `cliente` (clienteId), `pago` (formaPago), `estado` | columnas por dia | `VENTAS` |
+| Ventas y cartera | `productos-vendidos` | `/api/reporting/products-sold` | periodo, `tipo` (itemType), `categoria` (categoriaId), `item` (productoId) | barras, 10 mayores | `PRODUCTOS_VENDIDOS` |
+| Ventas y cartera | `cartera-cobrar` | `/api/reporting/receivables` | `cliente`, `antiguedad` | columnas por rango | `CARTERA_COBRAR` |
+| Compras y proveedores | `compras` | `/api/reporting/purchases` | periodo, `proveedor` (proveedorId), `categoria`, `estado` | barras, 10 proveedores | `COMPRAS` |
+| Compras y proveedores | `cartera-pagar` | `/api/reporting/payables` | `proveedor`, `antiguedad` | columnas por rango | `CARTERA_PAGAR` |
+| Inventario | `inventario` | `/api/reporting/inventory` | periodo (rotacion), `categoria`, `stock` (estadoStock) | barras, 10 mas vendidos en unidades | `INVENTARIO` |
+| Finanzas | `estado-resultados` | `/api/reporting/income-statement` | periodo | columnas de tres series por mes o dia | `ESTADO_RESULTADOS` |
+| Finanzas | `flujo-caja` | `/api/reporting/cash-flow` | periodo, `cuenta` (cuentaId) | flujo neto por dia, negativos bajo el eje | `FLUJO_CAJA` |
+| Finanzas | `iva` | `/api/reporting/vat` | periodo | generado y descontable por categoria y tarifa | `IVA` |
+| Finanzas | `movimientos` | `/api/reporting/movements-report` | periodo, `cuenta`, `movimiento` (tipo) | neto por dia | `MOVIMIENTOS` |
 
 * `LiveReportView` (`src/reports/LiveReportView.tsx`) arma, en orden: `FilterBar` (PeriodPicker y
-  los controles), descripcion con el periodo o "Corte al dd/mm/aaaa" (carteras, del campo `corte`),
+  los controles), descripcion con el periodo o "Corte al dd/mm/aaaa" (carteras) y las notas,
   Descargar PDF y Descargar Excel (secundarios), indicadores (`IndicatorCard` compacto, rejilla
   auto-fit de minimo 240 px), grafica (`ReportChart`) y tabla (`ReportTable`).
+* Estado de resultados (`compareWithPrevious`): pide tambien el periodo anterior de igual duracion
+  (`previousPeriod`) con los mismos filtros y muestra en cada indicador la variacion (`variation`,
+  componente `Variation`: flecha, signo y "vs. <periodTitle>"). Si esa consulta falla o el anterior es 0, sin variacion.
+* Notas: Inventario siempre ("El stock es al dia de hoy; el periodo aplica a las unidades
+  vendidas"); Flujo de caja solo sin cuenta (las transferencias entre cuentas propias no cuentan).
 * URL: `periodo` (Este mes por defecto; `desde` y `hasta` solo en Personalizado, con
   `useUrlTextParam`) y los filtros del reporte; solo lo no predeterminado. Valores desconocidos o
-  de otro reporte se ignoran. Cambiar de pestana conserva el periodo y descarta los filtros.
+  de otro reporte se ignoran.
 * `reportApiParams` arma los parametros del backend una sola vez; la consulta
   (`['reporting', 'live', key, query]`) y `reportExportPath` (`/reporting/export?type&format&...`)
   usan los mismos. `URLSearchParams` codifica `90+` como `90%2B`. Rango invalido: no consulta.
 * Selectores con busqueda (`ComboboxField`, opcion "Todos..." con valor 0) para cliente, proveedor
-  e item (nombre o documento; descripcion o codigo), con las claves compartidas
-  `['counterparties', rol]` y `['inventory', 'products']`. Categoria es un `SelectField` sobre
-  `['inventory', 'categories']`. El item se limita al tipo elegido.
+  e item, con las claves compartidas `['counterparties', rol]` y `['inventory', 'products']`.
+  Categoria y Cuenta son `SelectField` sobre `['inventory', 'categories']` y `['treasury', 'accounts']`.
+  Estado de stock usa las etiquetas y los badges de Inicio e Inventario (`STOCK_LABELS`, `STOCK_BADGES`).
+* Grafica (`ReportChart`, SVG y HTML propios): `bars` horizontales de una serie; `columns` de una o
+  varias series (`chart.series`, con leyenda) agrupadas por punto. Con valores negativos el eje cero
+  sube y las columnas negativas bajan desde el; en una sola serie van en rojo. `chart.points` arma
+  los puntos desde la respuesta (IVA, desde las filas); sin el, `series` del backend.
+  `valueFormat: 'integer'` para unidades. Etiquetas `period`: mes (`2026-09`) o dia.
 * Tabla propia, no `DataTable`: orden por columna en el cliente (boton en el encabezado,
-  `aria-sort`), fila de totales en `tfoot`, paginas de 25 (`paginate`) y desplazamiento horizontal
-  dentro del contenedor, tambien bajo md (sin tarjetas).
+  `aria-sort`; sin orden en Estado de resultados y Flujo de caja), fila de totales en `tfoot`,
+  filas resaltadas, paginas de 25 y desplazamiento horizontal dentro del contenedor, tambien bajo md.
+  Formatos `direction` (badge Entrada o Salida) y `signedAmount` (+ o - explicito, rojo si resta).
 * Estados: skeleton de carga, vacio "No hay datos para este período y filtros." y error con
   reintentar (400 con el texto del mapa; red y 5xx tambien en el toast). La descarga muestra su
   error en un `Alert` y el exito en un toast con el nombre del archivo del backend.
-
-### Descargas (Estado de resultados y Movimientos)
-
-Logica pura (tipos, validacion del rango, periodo anterior,
-variacion, titulo del periodo, ruta de exportacion y filas del estado de resultados) en
-`src/reports/reports.ts`; reglas en [03-DECISIONS.md](03-DECISIONS.md).
-
-| Bloque | Endpoint |
-|-|-|
-| Selector de cuenta (solo Movimientos de cuentas) | `GET /api/treasury/accounts` |
-| Vista previa del Estado de resultados | `GET /api/reporting/kpis?desde&hasta` del rango |
-| Variacion | `GET /api/reporting/kpis` del periodo anterior de igual duracion |
-| Vista previa de Movimientos | `GET /api/treasury/movements?desde&hasta[&accountId]`, conjunto completo de movimientos activos |
-| Generar reporte | `apiDownload` de `GET /api/reporting/export?type&format&desde&hasta[&accountId]` |
-
-* `type` es `ESTADO_RESULTADOS` o `MOVIMIENTOS`; `format` es `PDF` o `XLSX`; `desde` y
-  `hasta` en `AAAA-MM-DD`; `accountId` solo con `MOVIMIENTOS` y una cuenta concreta (con
-  `ESTADO_RESULTADOS` el backend responde 400).
-* El backend responde `Content-Disposition: attachment; filename="<tipo>_<desde>_<hasta>.<ext>"`
-  con `estado-resultados` o `movimientos-cuentas` y `pdf` o `xlsx`.
-* Vista previa y variacion cargan y fallan por separado, con skeleton y reintentar. La
-  vista previa sigue al rango con una espera de 400 ms (`PREVIEW_DEBOUNCE_MS`) y solo si es
-  valido. Mientras cambia el rango se retiran los datos anteriores, tambien durante la
-  espera; no se presentan como datos del filtro nuevo.
-* Un error del backend al generar queda en un `Alert` en la pantalla, con lo digitado
-  intacto; el exito es un toast con el nombre del archivo.
-* Dentro de la pestana `archivos`, bajo el encabezado comun. Dos columnas 3/5 (37,5/62,5 por ciento)
-  desde 960 px disponibles en el contenedor; debajo se apilan. PeriodPicker usa variante
-  form con fechas en auto-fit de minimo 160 px, sin cambiar los demas consumidores.
-* Movimientos comparte fetchPeriodMovements con Cuentas, agregando accountId opcional.
-  Consulta propia ['treasury', 'report-movements', desde, hasta, accountId]. Fecha e id
-  ascendentes como el archivo, paginacion local de 10 sobre el conjunto completo y
-  periodTotals compartido antes de paginar. Transferencias incluidas en ingresos/egresos.
-  Cambio de tipo, cuenta o periodo reinicia pagina, incluso con el mismo rango de fechas.
-  paginate ajusta la pagina visible si disminuye el conjunto; exportacion sin pagina.
-  DataTable con tarjetas moviles, sin edicion; cuenta solo en global. Concepto y categoria
-  de origen reales, sin pedir numeros de factura adicionales. No muestra saldos de apertura,
-  cierre o acumulados. Estados propios de carga, error, vacio y ausencia de cuentas.
-* Sin limite local de filas: el endpoint JSON no pagina ni trunca. La descarga conserva el
-  limite configurado en backend (20000 por defecto), independiente de la paginacion visual.
-  La carga de grandes volumenes en memoria queda como limitacion, sin endpoint nuevo.
+* `src/reports/reports.ts`: validacion del rango (`validateRange`, que usan los listados), periodo
+  anterior, variacion y titulo del periodo, y `exportPath` (exportacion de Movimientos de Tesoreria).
 
 ## Inventario
 

@@ -5,13 +5,32 @@ import { StatusBadge, type BadgeStatus } from '../components/StatusBadge'
 import { iconSm } from '../components/icons'
 import { EMPTY_VALUE, formatCurrency, formatDate, formatInteger, formatPercent } from '../lib/format'
 import { paginate } from '../lib/pagination'
-import { AGING_LABELS, reportTotals, sortRows, type LiveReportDefinition, type ReportColumn, type ReportRow, type SortDirection } from './liveReports'
+import {
+  AGING_LABELS,
+  STOCK_BADGES,
+  reportTotals,
+  signedRowAmount,
+  sortRows,
+  type LiveReportDefinition,
+  type ReportColumn,
+  type ReportRow,
+  type SortDirection,
+} from './liveReports'
+import type { StockStatus } from '../lib/stock'
 
-const PAYMENT_LABELS: Record<string, string> = { CONTADO: 'Contado', CREDITO: 'Crédito' }
+const PAYMENT_LABELS: Record<string, string> = { CONTADO: 'Contado', CREDITO: 'CrÃ©dito' }
 const ITEM_TYPE_LABELS: Record<string, string> = { PRODUCTO: 'Producto', SERVICIO: 'Servicio' }
-const NUMERIC = new Set(['currency', 'integer', 'percent'])
+const NUMERIC = new Set(['currency', 'integer', 'percent', 'signedAmount'])
 
-function cell(column: ReportColumn, value: string | number | null | undefined): ReactNode {
+/** Monto con signo explicito (+ o -): el color acompana, no es la unica senal. */
+function signedAmount(value: number) {
+  const text = formatCurrency(Math.abs(value))
+  return value < 0
+    ? <span className="monto whitespace-nowrap text-error">-{text}</span>
+    : <span className="monto whitespace-nowrap">+{text}</span>
+}
+
+function cell(column: ReportColumn, value: string | number | null | undefined, row?: ReportRow): ReactNode {
   if (value === null || value === undefined || value === '') return EMPTY_VALUE
   switch (column.format) {
     case 'currency':
@@ -32,6 +51,12 @@ function cell(column: ReportColumn, value: string | number | null | undefined): 
       return ITEM_TYPE_LABELS[String(value)] ?? value
     case 'aging':
       return <span className="whitespace-nowrap">{AGING_LABELS[String(value)] ?? value}</span>
+    case 'stockStatus':
+      return <StatusBadge status={STOCK_BADGES[String(value) as StockStatus] ?? (String(value) as BadgeStatus)} />
+    case 'direction':
+      return <StatusBadge status={value === 'SALIDA' ? 'SALIDA' : 'ENTRADA'} />
+    case 'signedAmount':
+      return signedAmount(signedRowAmount(row, Number(value)))
     default:
       return value
   }
@@ -44,7 +69,8 @@ function cell(column: ReportColumn, value: string | number | null | undefined): 
 export function ReportTable({ definition, rows }: { definition: LiveReportDefinition; rows: ReportRow[] }) {
   const [sort, setSort] = useState<{ key: string | null; direction: SortDirection }>({ key: null, direction: 'asc' })
   const [pageNumber, setPageNumber] = useState(1)
-  const sorted = sortRows(rows, sort.key, sort.direction)
+  const sorted = definition.fixedOrder ? rows : sortRows(rows, sort.key, sort.direction)
+  const keyOf = (row: ReportRow) => (typeof definition.rowKey === 'function' ? definition.rowKey(row) : String(row[definition.rowKey]))
   const page = paginate(sorted, pageNumber)
   const totals = reportTotals(definition, rows)
   const align = (column: ReportColumn) => (NUMERIC.has(column.format) ? 'text-right' : 'text-left')
@@ -63,6 +89,13 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
               {definition.columns.map((column) => {
                 const active = sort.key === column.key
                 const Icon = !active ? ArrowUpDown : sort.direction === 'asc' ? ArrowUp : ArrowDown
+                if (definition.fixedOrder) {
+                  return (
+                    <th key={column.key} scope="col" className={`bg-canvas px-3 py-3 text-label whitespace-nowrap text-text-muted uppercase ${align(column)}`}>
+                      {column.header}
+                    </th>
+                  )
+                }
                 return (
                   <th
                     key={column.key}
@@ -85,10 +118,13 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
           </thead>
           <tbody>
             {page.rows.map((row) => (
-              <tr key={String(row[definition.rowKey])} className="h-row border-b border-border even:bg-row-alt hover:bg-neutral-100">
+              <tr
+                key={keyOf(row)}
+                className={`h-row border-b border-border ${definition.emphasize?.(row) ? 'bg-canvas font-semibold' : 'even:bg-row-alt hover:bg-neutral-100'}`}
+              >
                 {definition.columns.map((column) => (
                   <td key={column.key} className={`px-3 text-body text-text ${align(column)} ${column.format === 'text' ? 'min-w-48' : ''}`}>
-                    {cell(column, row[column.key])}
+                    {cell(column, row[column.key], row)}
                   </td>
                 ))}
               </tr>

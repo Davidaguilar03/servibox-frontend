@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  FILTERS,
   LIVE_REPORTS,
+  REPORT_GROUPS,
   liveReport,
   parseReportState,
   reportApiParams,
@@ -27,7 +29,56 @@ describe('definiciones de reportes en vivo', () => {
       ['compras', '/reporting/purchases', 'COMPRAS', true],
       ['cartera-cobrar', '/reporting/receivables', 'CARTERA_COBRAR', false],
       ['cartera-pagar', '/reporting/payables', 'CARTERA_PAGAR', false],
+      ['inventario', '/reporting/inventory', 'INVENTARIO', true],
+      ['flujo-caja', '/reporting/cash-flow', 'FLUJO_CAJA', true],
+      ['estado-resultados', '/reporting/income-statement', 'ESTADO_RESULTADOS', true],
+      ['iva', '/reporting/vat', 'IVA', true],
+      ['movimientos', '/reporting/movements-report', 'MOVIMIENTOS', true],
     ])
+  })
+
+  it('cada reporte esta en una sola area y las areas cubren los diez', () => {
+    const grouped = REPORT_GROUPS.flatMap((group) => group.reports)
+    expect([...grouped].sort()).toEqual(LIVE_REPORTS.map((item) => item.key).sort())
+    expect(REPORT_GROUPS.map((group) => group.label)).toEqual(['Ventas y cartera', 'Compras y proveedores', 'Inventario', 'Finanzas'])
+  })
+
+  it('arma la ruta y la exportacion de los reportes de la segunda tanda', () => {
+    expect(apiPathFor('inventario', 'categoria=3&stock=SIN_STOCK')).toBe(
+      '/reporting/inventory?desde=2026-11-01&hasta=2026-11-21&categoriaId=3&estadoStock=SIN_STOCK',
+    )
+    expect(apiPathFor('flujo-caja', 'cuenta=2')).toBe('/reporting/cash-flow?desde=2026-11-01&hasta=2026-11-21&cuentaId=2')
+    expect(apiPathFor('estado-resultados', 'periodo=este-ano')).toBe('/reporting/income-statement?desde=2026-01-01&hasta=2026-11-21')
+    expect(apiPathFor('iva', 'cuenta=2')).toBe('/reporting/vat?desde=2026-11-01&hasta=2026-11-21')
+    expect(apiPathFor('movimientos', 'cuenta=1&movimiento=EGRESO')).toBe(
+      '/reporting/movements-report?desde=2026-11-01&hasta=2026-11-21&cuentaId=1&tipo=EGRESO',
+    )
+    const definition = report('movimientos')
+    const params = reportApiParams(definition, parseReportState(definition, new URLSearchParams('cuenta=1&movimiento=INGRESO')), TODAY)!
+    expect(reportExportPath(definition, 'PDF', params)).toBe('/reporting/export?type=MOVIMIENTOS&format=PDF&desde=2026-11-01&hasta=2026-11-21&cuentaId=1&tipo=INGRESO')
+  })
+
+  it('el estado de stock admite los cuatro valores con las etiquetas de Inicio e Inventario', () => {
+    expect(FILTERS.stock.options).toEqual([
+      { value: 'NORMAL', label: 'Disponible' },
+      { value: 'BAJO', label: 'Stock bajo' },
+      { value: 'CRITICO', label: 'Stock crítico' },
+      { value: 'SIN_STOCK', label: 'Sin stock' },
+    ])
+  })
+
+  it('la nota de transferencias del flujo de caja sale solo sin cuenta', () => {
+    const notes = report('flujo-caja').notes!
+    expect(notes({})).toEqual(['Las transferencias entre tus cuentas no se cuentan como entradas ni salidas.'])
+    expect(notes({ cuenta: '2' })).toEqual([])
+  })
+
+  it('el total del flujo de caja resta las salidas', () => {
+    const rows = [
+      { concept: 'VENTAS_CONTADO', direction: 'ENTRADA', movementCount: 2, amount: 1000.5 },
+      { concept: 'GASTOS_OPERATIVOS', direction: 'SALIDA', movementCount: 1, amount: 3000 },
+    ]
+    expect(reportTotals(report('flujo-caja'), rows)).toEqual({ movementCount: 3, amount: -1999.5 })
   })
 
   it('arma la ruta del backend con el rango y los filtros de cada reporte', () => {

@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  exportPath,
-  incomeStatementRows,
-  isFullCalendarMonth,
-  periodTitle,
-  previousPeriod,
-  rangeDays,
-  validateRange,
-  variation,
-} from './reports'
+import { exportPath, isFullCalendarMonth, periodTitle, previousPeriod, rangeDays, validateRange, variation } from './reports'
 
 describe('validateRange', () => {
   it.each(['2026-02-30', '2026-13-01', '2026-00-01', 'ayer', '2026-1-01'])('rechaza la fecha inexistente o mal formada %s en cualquiera de los extremos', (date) => {
@@ -117,44 +108,5 @@ describe('exportPath', () => {
     expect(exportPath({ ...base, type: 'MOVIMIENTOS', format: 'XLSX', accountId: 4 })).toBe(
       '/reporting/export?type=MOVIMIENTOS&format=XLSX&desde=2026-10-01&hasta=2026-10-19&accountId=4',
     )
-  })
-})
-
-describe('incomeStatementRows', () => {
-  it('seis filas como el archivo: costo de lo vendido y gastos en negativo, otros ingresos en positivo', () => {
-    const rows = incomeStatementRows({
-      totalSales: 24_730_469,
-      totalPurchases: 29_310_000,
-      netSales: 20_781_907,
-      costOfSales: 14_055_000,
-      grossProfit: 6_726_907,
-      operatingExpenses: 5_192_200,
-      otherIncome: 250_000,
-      netProfit: 1_784_707,
-    })
-    expect(rows.map((row) => [row.concept, row.value])).toEqual([
-      ['Ventas sin IVA', 20_781_907],
-      ['Costo de lo vendido', -14_055_000],
-      ['Utilidad bruta', 6_726_907],
-      ['Otros ingresos', 250_000],
-      ['Gastos operativos', -5_192_200],
-      ['Utilidad neta', 1_784_707],
-    ])
-  })
-
-  it('la utilidad neta es la de kpis y otros ingresos en cero tambien es una fila', () => {
-    const rows = incomeStatementRows({
-      totalSales: 318_622,
-      totalPurchases: 0,
-      netSales: 267_750,
-      costOfSales: 0,
-      grossProfit: 267_750,
-      operatingExpenses: 450_000,
-      otherIncome: 0,
-      netProfit: 267_750 + 50_000 - 450_000,
-    })
-    expect(rows).toHaveLength(6)
-    expect(rows[3]).toEqual({ concept: 'Otros ingresos', value: 0 })
-    expect(rows[5]).toEqual({ concept: 'Utilidad neta', value: -132_250, total: true })
   })
 })

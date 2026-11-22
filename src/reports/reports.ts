@@ -1,27 +1,11 @@
-import type { Kpis } from '../dashboard/dashboardApi'
 import { addDays } from '../lib/businessDate'
 import { formatDate } from '../lib/format'
 
-// Logica de la pantalla Reportes. Reglas en docs/ai-context/03-DECISIONS.md.
+// Rango de fechas de los reportes, periodo anterior y variacion del Estado de resultados, y ruta de exportacion que usa Tesoreria. Reglas en docs/ai-context/03-DECISIONS.md.
 
 /** Valores de `type` en `GET /api/reporting/export` que el backend exporta hoy. */
 export type ReportType = 'ESTADO_RESULTADOS' | 'MOVIMIENTOS'
 export type ReportFormat = 'PDF' | 'XLSX'
-
-export interface ReportOption {
-  type: ReportType
-  title: string
-  description: string
-}
-
-export const REPORT_OPTIONS: ReportOption[] = [
-  {
-    type: 'ESTADO_RESULTADOS',
-    title: 'Estado de resultados',
-    description: 'Ventas, costo de lo vendido, gastos y utilidad del período.',
-  },
-  { type: 'MOVIMIENTOS', title: 'Movimientos de cuentas', description: 'Ingresos y egresos por cuenta' },
-]
 
 /** Rango maximo de un reporte, contando los dos extremos (`ReportExportService.MAX_DIAS`). */
 export const REPORT_MAX_DAYS = 366
@@ -107,22 +91,4 @@ export function exportPath({ type, format, desde, hasta, accountId }: ExportRequ
   const params = new URLSearchParams({ type, format, desde, hasta })
   if (type === 'MOVIMIENTOS' && accountId !== null) params.set('accountId', String(accountId))
   return `/reporting/export?${params.toString()}`
-}
-
-export interface StatementRow {
-  concept: string
-  value: number
-  total?: boolean
-}
-
-/** Las seis filas del archivo exportado, con el costo de lo vendido y los gastos en negativo. */
-export function incomeStatementRows(kpis: Kpis): StatementRow[] {
-  return [
-    { concept: 'Ventas sin IVA', value: kpis.netSales },
-    { concept: 'Costo de lo vendido', value: -kpis.costOfSales },
-    { concept: 'Utilidad bruta', value: kpis.grossProfit },
-    { concept: 'Otros ingresos', value: kpis.otherIncome },
-    { concept: 'Gastos operativos', value: -kpis.operatingExpenses },
-    { concept: 'Utilidad neta', value: kpis.netProfit, total: true },
-  ]
 }
