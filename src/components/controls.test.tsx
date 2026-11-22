@@ -199,9 +199,8 @@ describe('casillas y radios', () => {
     expect(label).toHaveTextContent('Acepto la Política de tratamiento de datos personales y los Términos y condiciones')
   })
 
-  it('impuestos de categoria y tarjetas de reporte envuelven su control en el rotulo', () => {
+  it('impuestos de categoria envuelven su control en el rotulo', () => {
     expect(source('pages/CategoriesPage.tsx')).toMatch(/<label className="flex min-h-touch[^"]*">\s*<input\s+type="checkbox"/)
-    expect(source('pages/ReportsPage.tsx')).toMatch(/<label[\s\S]{0,400}<input\s+type="radio"\s+name="report-type"/)
   })
 })
 
@@ -225,14 +224,12 @@ function source(file: string) {
 
 /**
  * Excepciones con comportamiento propio (no son segmentados de texto): las tarjetas de cuenta
- * con su saldo (aria-pressed), las paletas de cuenta/categoria y las tarjetas de tipo de
- * reporte con descripcion (radios nativos).
+ * con su saldo (aria-pressed) y las paletas de cuenta/categoria (radios nativos).
  */
 const OWN_SELECTION: Record<string, string[]> = {
   'accounts/AccountColorField.tsx': ['aria-pressed'],
   'pages/AccountsPage.tsx': ['aria-pressed', 'aria-pressed'],
   'pages/CategoriesPage.tsx': ['type="radio"'],
-  'pages/ReportsPage.tsx': ['type="radio"'],
 }
 
 describe('un solo segmentado', () => {
@@ -248,7 +245,7 @@ describe('un solo segmentado', () => {
   })
 
   it('las pantallas migradas usan el componente unico', () => {
-    for (const file of ['pages/NewSaleInvoicePage.tsx', 'pages/NewPurchaseInvoicePage.tsx', 'pages/ReportsPage.tsx']) {
+    for (const file of ['pages/NewSaleInvoicePage.tsx', 'pages/NewPurchaseInvoicePage.tsx']) {
       expect(source(file)).toContain('<SegmentedControl')
     }
     expect(source('pages/ProductsPage.tsx')).toContain('<SelectField')

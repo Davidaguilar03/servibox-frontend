@@ -43,6 +43,53 @@ const products = [
   { id: 10, code: 'SV-01', description: 'Alineación', purchaseCost: 0, quantity: 0, taxAmount: 0, suggestedPrice: 1, categoryId: 4, categoryName: 'SERVICIOS', itemType: 'SERVICIO', vatApplies: true },
 ]
 
+const accounts = [
+  { id: 1, name: 'Caja General', type: 'EFECTIVO', initialBalance: 0, currentBalance: 0, color: null },
+  { id: 2, name: 'Bancolombia', type: 'BANCO', initialBalance: 0, currentBalance: 0, color: null },
+]
+const range = { desde: '2026-11-01', hasta: '2026-11-21', corte: null, appliedFilters: [] }
+const inventory = {
+  ...range,
+  corte: '2026-11-21',
+  summary: { productCount: 1, unitsInStock: 2, costValue: 200, saleValue: 300, lowStockCount: 0, criticalStockCount: 1, outOfStockCount: 0, unitsSoldInPeriod: 7 },
+  rows: [{ productId: 9, code: 'LL-010', description: 'Llanta 175/70 R13', categoryName: 'LLANTAS', stock: 2, stockStatus: 'CRITICO', unitCost: 100, costValue: 200, salePrice: 150, unitsSold: 7, lastSaleDate: '2026-11-20', daysWithoutSale: 1 }],
+  series: [{ label: 'Llanta 175/70 R13', value: 7 }],
+}
+const cashFlow = {
+  ...range,
+  summary: { openingBalance: 500, inflows: 1000, outflows: 3000, netFlow: -2000, closingBalance: -1500 },
+  rows: [
+    { concept: 'VENTAS_CONTADO', label: 'Ventas de contado', direction: 'ENTRADA', movementCount: 2, amount: 1000 },
+    { concept: 'GASTOS_OPERATIVOS', label: 'Gastos operativos', direction: 'SALIDA', movementCount: 1, amount: 3000 },
+  ],
+  series: [{ label: '2026-11-01', value: 1000 }, { label: '2026-11-02', value: -3000 }],
+}
+const incomeStatement = {
+  ...range,
+  summary: { revenue: 1000, costOfSales: 600, grossProfit: 400, grossMarginPercent: 40, operatingExpenses: 500, otherIncome: 0, netProfit: -100, netMarginPercent: -10 },
+  rows: [
+    { line: 'VENTAS', label: 'Ventas sin IVA', amount: 1000, percentOfRevenue: 100 },
+    { line: 'COSTO_VENTAS', label: 'Costo de lo vendido', amount: -600, percentOfRevenue: -60 },
+    { line: 'UTILIDAD_BRUTA', label: 'Utilidad bruta', amount: 400, percentOfRevenue: 40 },
+    { line: 'OTROS_INGRESOS', label: 'Otros ingresos', amount: 0, percentOfRevenue: 0 },
+    { line: 'GASTOS_OPERATIVOS', label: 'Gastos operativos', amount: -500, percentOfRevenue: -50 },
+    { line: 'UTILIDAD_NETA', label: 'Utilidad neta', amount: -100, percentOfRevenue: -10 },
+  ],
+  series: [{ label: '2026-11-01', revenue: 600, cost: 400, profit: -50 }, { label: '2026-11-02', revenue: 400, cost: 200, profit: -50 }],
+}
+const vat = {
+  ...range,
+  summary: { ivaGenerado: 190, ivaDescontable: 50, ivaNeto: 140, invoicesWithIva: 2 },
+  rows: [{ categoryName: 'LLANTAS', ratePercent: 19, taxableBase: 1000, ivaGenerado: 190, ivaDescontable: 50, ivaNeto: 140 }],
+  series: [{ label: 'LLANTAS 19 %', value: 140 }],
+}
+const movements = {
+  ...range,
+  summary: { inflows: 0, outflows: 300, net: -300, movementCount: 1 },
+  rows: [{ movementId: 4, date: '2026-11-03', accountName: 'Caja General', concept: 'Arriendo', reference: 'GASTO OPERATIVO', type: 'EGRESO', category: 'GASTO_OPERATIVO', amount: 300 }],
+  series: [{ label: '2026-11-03', value: -300 }],
+}
+
 function fileResponse(name: string) {
   return new Response(new Blob(['%PDF-1.7']), { status: 200, headers: { 'Content-Disposition': `attachment; filename="${name}"` } })
 }
@@ -58,6 +105,12 @@ function mockApi(change: Record<string, Handler> = {}) {
     'GET /api/counterparties': (url) => jsonResponse(url.searchParams.get('role') === 'PROVEEDOR' ? suppliers : customers),
     'GET /api/inventory/categories': () => jsonResponse(categories),
     'GET /api/inventory/products': () => jsonResponse(products),
+    'GET /api/treasury/accounts': () => jsonResponse(accounts),
+    'GET /api/reporting/inventory': () => jsonResponse(inventory),
+    'GET /api/reporting/cash-flow': () => jsonResponse(cashFlow),
+    'GET /api/reporting/income-statement': () => jsonResponse(incomeStatement),
+    'GET /api/reporting/vat': () => jsonResponse(vat),
+    'GET /api/reporting/movements-report': () => jsonResponse(movements),
     ...change,
   }
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
@@ -149,7 +202,7 @@ describe('Reportes en vivo', () => {
     const user = userEvent.setup()
     const router = renderRoute('/reportes?periodo=mes-anterior&pago=CREDITO')
     await screen.findByRole('table')
-    await user.click(screen.getByRole('tab', { name: 'Compras' }))
+    await user.click(screen.getByRole('tab', { name: 'Compras y proveedores' }))
     expect(router.state.location.search).toBe('?reporte=compras&periodo=mes-anterior')
     expect(screen.getByLabelText('Período')).toHaveValue('mes-anterior')
   })
@@ -251,13 +304,223 @@ describe('Reportes en vivo', () => {
     expect(within(footer).getByRole('rowheader')).toHaveTextContent('Total')
     expect([...(footer as HTMLTableRowElement).cells].map((cell) => cell.textContent)).toEqual(['Total', '', '', '', '', '$ 301', '$ 57', '$ 358', '$ 239'])
   })
+})
 
-  it('Estado de resultados y movimientos sigue en su pestana', async () => {
-    mockApi({ 'GET /api/reporting/kpis': () => jsonResponse({}), 'GET /api/treasury/accounts': () => jsonResponse([]) })
+describe('Reportes en vivo, segunda tanda', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-11-21T17:00:00Z'))
+    saveToken(validToken())
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:reporte'), revokeObjectURL: vi.fn() }))
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it.each([
+    ['inventario', 'categoria=3&stock=CRITICO', '/api/reporting/inventory?desde=2026-11-01&hasta=2026-11-21&categoriaId=3&estadoStock=CRITICO', 'INVENTARIO'],
+    ['flujo-caja', 'cuenta=2', '/api/reporting/cash-flow?desde=2026-11-01&hasta=2026-11-21&cuentaId=2', 'FLUJO_CAJA'],
+    ['estado-resultados', 'periodo=mes-anterior', '/api/reporting/income-statement?desde=2026-10-01&hasta=2026-10-31', 'ESTADO_RESULTADOS'],
+    ['iva', '', '/api/reporting/vat?desde=2026-11-01&hasta=2026-11-21', 'IVA'],
+    ['movimientos', 'cuenta=1&movimiento=EGRESO', '/api/reporting/movements-report?desde=2026-11-01&hasta=2026-11-21&cuentaId=1&tipo=EGRESO', 'MOVIMIENTOS'],
+  ])('%s pide su ruta con los filtros y descarga con su ReportType', async (key, query, expected, type) => {
+    const fetchMock = mockApi()
     const user = userEvent.setup()
-    const router = renderRoute('/reportes')
-    await user.click(screen.getByRole('tab', { name: 'Estado de resultados y movimientos' }))
-    expect(router.state.location.search).toBe('?reporte=archivos')
-    expect(screen.getByRole('button', { name: 'Generar reporte' })).toBeInTheDocument()
+    renderRoute(`/reportes?reporte=${key}${query ? `&${query}` : ''}`)
+    await screen.findByRole('table')
+    // El primero es el del periodo; Estado de resultados pide despues el periodo anterior.
+    expect(calls(fetchMock, '/api/reporting/')[0]).toBe(expected)
+    await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
+    const apiQuery = expected.split('?')[1]
+    await waitFor(() => expect(calls(fetchMock, '/api/reporting/export')).toEqual([`/api/reporting/export?type=${type}&format=PDF&${apiQuery}`]))
+  })
+
+  it('inventario: el estado de stock usa las etiquetas y badges de Inicio y la nota del corte', async () => {
+    const fetchMock = mockApi()
+    const user = userEvent.setup()
+    const router = renderRoute('/reportes?reporte=inventario')
+    await screen.findByRole('table')
+    const select = screen.getByLabelText('Estado de stock')
+    expect(within(select).getAllByRole('option').map((option) => [option.getAttribute('value'), option.textContent])).toEqual([
+      ['', 'Todos'], ['NORMAL', 'Disponible'], ['BAJO', 'Stock bajo'], ['CRITICO', 'Stock crítico'], ['SIN_STOCK', 'Sin stock'],
+    ])
+    for (const value of ['NORMAL', 'BAJO', 'CRITICO', 'SIN_STOCK']) {
+      await user.selectOptions(screen.getByLabelText('Estado de stock'), value)
+      expect(router.state.location.search).toBe(`?reporte=inventario&stock=${value}`)
+      await waitFor(() => expect(calls(fetchMock, '/api/reporting/inventory').at(-1)).toContain(`estadoStock=${value}`))
+    }
+    expect(within(await screen.findByRole('table')).getByText('Stock crítico')).toBeInTheDocument()
+    expect(screen.getByText('El stock es al día de hoy; el período aplica a las unidades vendidas.')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Los 10 más vendidos por unidades' })).toHaveTextContent('Llanta 175/70 R13')
+  })
+
+  it('estado de resultados: grafica de tres series con leyenda, margenes y subtotales resaltados', async () => {
+    mockApi()
+    renderRoute('/reportes?reporte=estado-resultados')
+    const table = await screen.findByRole('table')
+    const legend = screen.getByRole('list', { name: 'Leyenda' })
+    expect(within(legend).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['Ingresos', 'Costos', 'Utilidad'])
+    const chart = screen.getByRole('img', { name: /Ingresos, costos y utilidad/ })
+    expect(chart.querySelectorAll('rect[data-series="revenue"]')).toHaveLength(2)
+    expect(chart.querySelectorAll('rect[data-series="profit"]')).toHaveLength(2)
+    expect(screen.getByText('Utilidad bruta', { selector: 'p' }).parentElement).toHaveTextContent('Margen: 40,0 %')
+    expect(screen.getByText('Utilidad neta', { selector: 'p' }).parentElement!.querySelector('.text-error')).toHaveTextContent('-$ 100')
+    const row = (name: string) => within(table).getByText(name).closest('tr')!
+    expect(row('Utilidad bruta')).toHaveClass('bg-canvas', 'font-semibold')
+    expect(row('Utilidad neta')).toHaveClass('bg-canvas')
+    expect(row('Otros ingresos')).not.toHaveClass('bg-canvas')
+    expect(within(table).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('una grafica de una sola serie no lleva leyenda', async () => {
+    mockApi()
+    renderRoute('/reportes')
+    await screen.findByRole('table')
+    expect(screen.queryByRole('list', { name: 'Leyenda' })).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /Total vendido por día/ }).querySelectorAll('rect[data-series="value"]')).toHaveLength(2)
+  })
+
+  it('flujo de caja: los negativos llevan signo, van bajo el eje y la nota sale solo sin cuenta', async () => {
+    const fetchMock = mockApi()
+    const user = userEvent.setup()
+    const router = renderRoute('/reportes?reporte=flujo-caja')
+    const table = await screen.findByRole('table')
+    const note = 'Las transferencias entre tus cuentas no se cuentan como entradas ni salidas.'
+    expect(screen.getByText(note)).toBeInTheDocument()
+
+    const outflow = within(table).getByText('Gastos operativos').closest('tr')!
+    expect(outflow).toHaveTextContent('Salida')
+    expect(within(outflow).getByText('-$ 3.000')).toHaveClass('text-error')
+    expect(within(table).getByText('Ventas de contado').closest('tr')).toHaveTextContent('+$ 1.000')
+    expect(within(table).getAllByRole('row').at(-1)).toHaveTextContent('-$ 2.000')
+    expect(screen.getByText('Flujo neto', { selector: 'p' }).parentElement!.querySelector('.text-error')).toHaveTextContent('-$ 2.000')
+
+    const chart = screen.getByRole('img', { name: /menor valor el 02\/11\/2026: -\$ 3\.000/ })
+    const [positive, negative] = [...chart.querySelectorAll('rect')]
+    expect(negative).toHaveClass('fill-error')
+    expect(positive).toHaveClass('fill-info')
+    // La columna positiva termina en el eje y la negativa empieza ahi.
+    expect(Number(negative!.getAttribute('y'))).toBeCloseTo(Number(positive!.getAttribute('y')) + Number(positive!.getAttribute('height')))
+
+    await user.selectOptions(screen.getByLabelText('Cuenta'), '2')
+    expect(router.state.location.search).toBe('?reporte=flujo-caja&cuenta=2')
+    await waitFor(() => expect(calls(fetchMock, '/api/reporting/cash-flow').at(-1)).toContain('cuentaId=2'))
+    expect(screen.queryByText(note)).not.toBeInTheDocument()
+  })
+
+  it('iva: generado frente a descontable por tarifa', async () => {
+    mockApi()
+    renderRoute('/reportes?reporte=iva')
+    await screen.findByRole('table')
+    expect(screen.getByRole('img', { name: /LLANTAS 19 %: generado \$ 190, descontable \$ 50/ })).toBeInTheDocument()
+    expect(screen.getByText('Saldo por pagar', { selector: 'p' }).parentElement).toHaveTextContent('$ 140')
+  })
+
+  it('?reporte=archivos lleva a Estado de resultados conservando el periodo', async () => {
+    const fetchMock = mockApi()
+    const router = renderRoute('/reportes?reporte=archivos&periodo=personalizado&desde=2026-09-01&hasta=2026-10-15')
+    await screen.findByRole('table')
+    expect(router.state.location.search).toBe('?reporte=estado-resultados&periodo=personalizado&desde=2026-09-01&hasta=2026-10-15')
+    expect(screen.getByRole('tab', { name: 'Finanzas' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Estado de resultados' })).toHaveAttribute('aria-selected', 'true')
+    expect(calls(fetchMock, '/api/reporting/')[0]).toBe('/api/reporting/income-statement?desde=2026-09-01&hasta=2026-10-15')
+  })
+
+  it('la navegacion agrupada se usa con el teclado y conserva el periodo', async () => {
+    mockApi()
+    const user = userEvent.setup()
+    const router = renderRoute('/reportes?periodo=mes-anterior')
+    await screen.findByRole('table')
+    const areas = screen.getByRole('tablist', { name: 'Área del reporte' })
+    expect(within(areas).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Ventas y cartera', 'Compras y proveedores', 'Inventario', 'Finanzas'])
+    expect(within(screen.getByRole('tablist', { name: 'Reportes de Ventas y cartera' })).getAllByRole('tab').map((tab) => tab.textContent))
+      .toEqual(['Ventas', 'Productos y servicios vendidos', 'Cartera por cobrar'])
+
+    within(areas).getByRole('tab', { name: 'Ventas y cartera' }).focus()
+    await user.keyboard('{End}')
+    expect(router.state.location.search).toBe('?reporte=estado-resultados&periodo=mes-anterior')
+    expect(within(areas).getByRole('tab', { name: 'Finanzas' })).toHaveFocus()
+
+    within(screen.getByRole('tablist', { name: 'Reportes de Finanzas' })).getByRole('tab', { name: 'Estado de resultados' }).focus()
+    await user.keyboard('{ArrowRight}')
+    expect(router.state.location.search).toBe('?reporte=flujo-caja&periodo=mes-anterior')
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', 'reporte-flujo-caja')
+
+    within(areas).getByRole('tab', { name: 'Finanzas' }).focus()
+    await user.keyboard('{ArrowLeft}')
+    expect(router.state.location.search).toBe('?reporte=inventario&periodo=mes-anterior')
+    // Inventario tiene un solo reporte: sin segunda fila de pestanas.
+    expect(screen.queryByRole('tablist', { name: /Reportes de/ })).not.toBeInTheDocument()
+    // En movil la fila de areas se desplaza en horizontal dentro de su ancho.
+    expect(areas).toHaveClass('overflow-x-auto')
+  })
+
+  it.each([
+    ['mes completo', 'periodo=personalizado&desde=2026-08-01&hasta=2026-08-31', 'desde=2026-07-01&hasta=2026-07-31', 'vs. julio de 2026'],
+    ['mes anterior', 'periodo=mes-anterior', 'desde=2026-08-31&hasta=2026-09-30', 'vs. 31/08/2026 a 30/09/2026'],
+    ['rango personalizado', 'periodo=personalizado&desde=2026-11-10&hasta=2026-11-19', 'desde=2026-10-31&hasta=2026-11-09', 'vs. 31/10/2026 a 09/11/2026'],
+  ])('estado de resultados pide el periodo anterior de igual duracion (%s)', async (_, query, previous, label) => {
+    const fetchMock = mockApi()
+    renderRoute(`/reportes?reporte=estado-resultados&${query}`)
+    await screen.findByRole('table')
+    await waitFor(() => expect(calls(fetchMock, '/api/reporting/')).toContain(`/api/reporting/income-statement?${previous}`))
+    expect(calls(fetchMock, '/api/reporting/')).toHaveLength(2)
+    expect((await screen.findAllByText(label)).length).toBeGreaterThan(0)
+  })
+
+  it('estado de resultados muestra la variacion con signo y flecha en cada indicador', async () => {
+    const before = { ...incomeStatement.summary, revenue: 800, costOfSales: 750, grossProfit: 400, operatingExpenses: 400, netProfit: -50 }
+    mockApi({
+      'GET /api/reporting/income-statement': (url) =>
+        jsonResponse(url.searchParams.get('desde') === '2026-10-11' ? { ...incomeStatement, summary: before } : incomeStatement),
+    })
+    renderRoute('/reportes?reporte=estado-resultados')
+    await screen.findByRole('table')
+    const card = (label: string) => screen.getByText(label, { selector: 'p' }).parentElement!
+    await waitFor(() => expect(card('Ingresos')).toHaveTextContent('Subió +25 %'))
+    expect(within(card('Ingresos')).getByText('vs. 11/10/2026 a 31/10/2026')).toBeInTheDocument()
+    // Costos que bajan son buena noticia: tono de exito aunque la cifra baje.
+    expect(card('Costo de ventas')).toHaveTextContent('Bajó -20 %')
+    expect(within(card('Costo de ventas')).getByText('-20 %')).toHaveClass('text-success-ink')
+    expect(card('Gastos operativos')).toHaveTextContent('Subió +25 %')
+    expect(within(card('Gastos operativos')).getByText('+25 %')).toHaveClass('text-error')
+    expect(card('Utilidad bruta')).toHaveTextContent('Sin cambio, 0 %')
+    expect(card('Utilidad neta')).toHaveTextContent('Bajó -100 %')
+  })
+
+  it('si el periodo anterior falla, el estado de resultados se muestra sin variacion', async () => {
+    mockApi({
+      'GET /api/reporting/income-statement': (url) =>
+        url.searchParams.get('desde') === '2026-10-11' ? jsonResponse({ error: 'Error interno del servidor', status: 500 }, 500) : jsonResponse(incomeStatement),
+    })
+    renderRoute('/reportes?reporte=estado-resultados')
+    await screen.findByRole('table')
+    await waitFor(() => expect(screen.getByText('Ingresos', { selector: 'p' }).parentElement).toHaveTextContent('$ 1.000'))
+    expect(screen.queryByText(/^vs\./)).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('las pestanas activas se centran en su fila al abrir el reporte desde la URL', async () => {
+    const original = Element.prototype.scrollIntoView
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    try {
+      mockApi()
+      renderRoute('/reportes?reporte=movimientos')
+      await screen.findByRole('table')
+      const centered = scrollIntoView.mock.calls
+        .map((call, index) => [call[0], scrollIntoView.mock.contexts[index]] as const)
+        .filter(([options]) => options?.inline === 'center')
+        .map(([options, element]) => [options, (element as HTMLElement).textContent])
+      expect(centered).toEqual(expect.arrayContaining([
+        [{ block: 'nearest', inline: 'center' }, 'Finanzas'],
+        [{ block: 'nearest', inline: 'center' }, 'Movimientos'],
+      ]))
+    } finally {
+      Element.prototype.scrollIntoView = original
+    }
   })
 })

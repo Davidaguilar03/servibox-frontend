@@ -159,10 +159,9 @@ necesite, no antes.
 * Barra lateral desde lg: contraida (72 px, solo iconos con `aria-label` y `title`) de 1024 a
   1279 px y expandida (240) desde 1280. El boton Expandir o Contraer menu guarda la eleccion en
   `localStorage` (`servibox.sidebar`, con try/catch) y la eleccion manda sobre el ancho.
-* El panel y la vista previa de Reportes leen `netSales` (ventas sin IVA) y `costOfSales` de
-  `GET /api/reporting/kpis`; `totalSales` y `totalPurchases` (con IVA) quedan para los
-  listados de Ventas y Compras. Las seis filas del Estado de resultados son las del archivo
-  exportado (`incomeStatementRows`).
+* El panel lee `netSales` (ventas sin IVA) y `costOfSales` de `GET /api/reporting/kpis`;
+  `totalSales` y `totalPurchases` (con IVA) quedan para los listados de Ventas y Compras. El
+  Estado de resultados de Reportes trae sus filas del backend (`/reporting/income-statement`).
 * El primer enfocable de `AppShell` es "Saltar al contenido" (`SkipLink`, el mismo
   componente de la landing); lleva el foco al `main#contenido` (`tabIndex -1`).
 * Todo control interactivo cumple el area minima: 44 x 44 bajo lg; desde lg 40 de alto en

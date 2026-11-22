@@ -279,7 +279,7 @@ describe('listados', () => {
       'trash/TrashPage.tsx',
       'manualMovements/ManualMovementsPage.tsx',
       'pages/AccountsPage.tsx',
-      'pages/ReportsPage.tsx',
+      'reports/LiveReportView.tsx',
     ]) {
       expect(source(file), file).toContain('<PeriodPicker')
     }

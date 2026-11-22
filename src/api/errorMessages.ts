@@ -238,6 +238,8 @@ const RULES: Rule[] = [
   [/^El reporte tiene mas de (\d+) facturas pendientes: filtra por (cliente|proveedor)$/, (n, who) =>
     `El reporte tiene más de ${thousands(n)} facturas pendientes: filtra por ${who}.`],
   [/^Valor invalido '.*' en el parametro antiguedad\./, 'Elige una antigüedad válida: 0 a 30, 31 a 60, 61 a 90 o más de 90 días.'],
+  [/^Valor invalido '.*' en el parametro estadoStock\./, 'Elige un estado de stock válido: Disponible, Stock bajo, Stock crítico o Sin stock.'],
+  [/^Valor invalido '.*' en el parametro tipo\./, 'Elige un tipo válido: Ingreso o Egreso.'],
   [/^Valor invalido '.*' en el parametro estado\./, 'Elige un estado válido: Pagada, Pendiente o Anulada.'],
   [/^El parametro \w+ no aplica al reporte \w+$/, 'Uno de los filtros no aplica a este reporte. Recarga la página e inténtalo de nuevo.'],
 

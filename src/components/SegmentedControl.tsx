@@ -99,6 +99,8 @@ interface TabListProps<T> extends GroupProps<T> {
    * falta (Configuracion). Sin `fill` se desplazan en horizontal (categorias de Productos).
    */
   fill?: boolean
+  /** Centra la pestana elegida en su fila (Reportes): asi no queda bajo el difuminado del borde. */
+  centerSelected?: boolean
 }
 
 /** Mascara del borde derecho: indica que hay mas pestanas al desplazar. */
@@ -109,7 +111,7 @@ const FADE_END = '[mask-image:linear-gradient(to_right,black_calc(100%-32px),tra
  * `role="tab"` y `aria-selected`, en rol small. Si no caben se desplazan, con el borde
  * difuminado mientras haya mas a la derecha, y la seleccionada se desplaza a la vista.
  */
-export function TabList<T>({ options, value, onChange, tabId, panelId, fill = false, className = '', ...labelProps }: TabListProps<T>) {
+export function TabList<T>({ options, value, onChange, tabId, panelId, fill = false, centerSelected = false, className = '', ...labelProps }: TabListProps<T>) {
   const { onKeyDown, bind } = useRoving(options, value, onChange)
   const listRef = useRef<HTMLDivElement>(null)
   const [moreToRight, setMoreToRight] = useState(false)
@@ -130,8 +132,16 @@ export function TabList<T>({ options, value, onChange, tabId, panelId, fill = fa
 
   // La pestana seleccionada siempre a la vista.
   useEffect(() => {
-    listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
-  }, [value])
+    const reveal = () =>
+      listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]')?.scrollIntoView?.({ block: 'nearest', inline: centerSelected ? 'center' : 'nearest' })
+    reveal()
+    // Las fuentes web cambian el ancho de las pestanas al cargar: centrada, se vuelve a ubicar.
+    let active = true
+    if (centerSelected) void document.fonts?.ready.then(() => active && reveal())
+    return () => {
+      active = false
+    }
+  }, [value, centerSelected])
 
   return (
     <div
