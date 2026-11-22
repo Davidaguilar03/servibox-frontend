@@ -54,11 +54,6 @@ function fullRoutes(list: unknown[] = october): Routes {
     'GET /api/purchases': () => jsonResponse([{ id: 7, invoiceNumber: 'PROV-1001' }]),
     'POST /api/treasury/accounts': (_, body) => jsonResponse({ id: 9, currentBalance: 0, ...(body as object) }, 201),
     'POST /api/treasury/transfers': () => jsonResponse({ outgoingMovementId: 10, incomingMovementId: 11 }, 201),
-    'GET /api/reporting/export': () =>
-      new Response(new Blob(['xlsx']), {
-        status: 200,
-        headers: { 'Content-Disposition': 'attachment; filename="movimientos-cuentas_2026-10-01_2026-10-18.xlsx"' },
-      }),
   }
 }
 
@@ -432,7 +427,6 @@ describe('cuentas', () => {
     expect(await screen.findByText('Hasta no puede ser anterior a Desde.')).toBeInTheDocument()
     expect(screen.getByText('Corrige el período para ver los movimientos.')).toBeInTheDocument()
     expect(calls(fetchMock, '/api/treasury/movements')).toHaveLength(before)
-    expect(screen.getByRole('button', { name: 'Exportar a Excel' })).toBeDisabled()
   })
 
   it('las fechas personalizadas se escriben en la URL tras la espera, reemplazando la entrada', async () => {
@@ -553,34 +547,13 @@ describe('cuentas', () => {
     expect(screen.getByRole('button', { name: 'Nueva cuenta' })).toHaveAttribute('data-variant', 'secondary')
   })
 
-  it('exporta a Excel con accountId de la cuenta y sin el con Todas', async () => {
-    const createObjectURL = vi.fn(() => 'blob:x')
-    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() }))
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
-    const { fetchMock, user } = await setup()
+  it('ya no ofrece exportar: la exportacion vive en Reportes', async () => {
+    const { fetchMock } = await setup()
     await screen.findByRole('table')
 
-    await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
-    expect(await screen.findByText('Reporte generado: movimientos-cuentas_2026-10-01_2026-10-18.xlsx')).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Ver todas las cuentas' }))
-    await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
-    await waitFor(() => expect(calls(fetchMock, '/api/reporting/export')).toHaveLength(2))
-    expect(calls(fetchMock, '/api/reporting/export')).toEqual([
-      '/api/reporting/export?type=MOVIMIENTOS&format=XLSX&desde=2026-10-01&hasta=2026-10-18&accountId=1',
-      '/api/reporting/export?type=MOVIMIENTOS&format=XLSX&desde=2026-10-01&hasta=2026-10-18',
-    ])
-  })
-
-  it('un error al exportar va en un toast con el mensaje generico', async () => {
-    await setup('/cuentas', {
-      ...fullRoutes(),
-      'GET /api/reporting/export': () => new Response('<html>Bad gateway</html>', { status: 502 }),
-    })
-    const user = userEvent.setup()
-    await screen.findByRole('table')
-    await user.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos completar la acción. Revisa tu conexión e inténtalo de nuevo')
+    expect(screen.queryByRole('button', { name: /Exportar/ })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Para exportar/)).not.toBeInTheDocument()
+    expect(calls(fetchMock, '/api/reporting/export')).toHaveLength(0)
   })
 
   it('nueva cuenta: valida, muestra el 409 bajo Nombre y envia el cuerpo exacto', async () => {

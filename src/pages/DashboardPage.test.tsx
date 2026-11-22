@@ -152,6 +152,28 @@ describe('panel de control', () => {
     expect(salesRows[1]).toContain('Pendiente')
   })
 
+  it('los KPI de Inicio conservan su tarjeta: acentos, iconos, relleno y rejilla', async () => {
+    mockApi(fullRoutes())
+    renderRoute('/inicio')
+    await screen.findByText('$ 20.781.907')
+    const cards = [...(screen.getByText('Ventas sin IVA').closest('div')?.parentElement as HTMLElement).children] as HTMLElement[]
+    expect(cards[0]!.parentElement).toHaveClass('grid', 'gap-6', 'sm:grid-cols-2', '2xl:grid-cols-4')
+    expect(cards.map((card) => [...card.classList].filter((name) => name.startsWith('border-t-')).join(' '))).toEqual([
+      'border-t-2 border-t-success',
+      'border-t-2 border-t-warning',
+      'border-t-2 border-t-info',
+      'border-t-2 border-t-brand',
+    ])
+    expect(cards.map((card) => card.querySelector('span[aria-hidden]')?.className)).toEqual([
+      'flex size-8 shrink-0 items-center justify-center rounded-control bg-success-bg text-success-ink',
+      'flex size-8 shrink-0 items-center justify-center rounded-control bg-warning-bg text-warning-ink',
+      'flex size-8 shrink-0 items-center justify-center rounded-control bg-info-bg text-info-ink',
+      'flex size-8 shrink-0 items-center justify-center rounded-control bg-error-bg text-brand-ink',
+    ])
+    for (const card of cards) expect(card.className).toBe(card.className.trim())
+    expect(cards.every((card) => card.classList.contains('px-6') && card.classList.contains('py-4'))).toBe(true)
+  })
+
   it('Inicio conserva usuario lateral, titulo y serviteca sin barra redundante', async () => {
     mockApi(fullRoutes())
     saveToken(validToken(), { username: 'laura.gomez', role: 'ADMIN', tenantName: 'Autollantas A&C', tenantSlug: 'autollantas' })

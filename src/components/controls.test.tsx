@@ -141,6 +141,39 @@ describe('TabList', () => {
   })
 })
 
+describe('TabList, aspecto', () => {
+  function Variant({ variant }: { variant?: 'underline' | 'pill' | 'subtle' }) {
+    return <TabList aria-label="Vista" variant={variant} options={[{ value: 'a', label: 'Uno' }, { value: 'b', label: 'Dos' }]} value="a" onChange={() => {}} />
+  }
+
+  it('el subrayado no sale de la fila que recorta ni se curva en las esquinas', () => {
+    render(<Variant />)
+    const list = screen.getByRole('tablist')
+    expect(list).toHaveClass('border-b', 'border-border', 'overflow-x-auto', 'overflow-y-hidden')
+    const tab = screen.getByRole('tab', { name: 'Uno' })
+    expect(tab).toHaveClass('border-b-2', 'border-brand', 'rounded-t-control')
+    expect(tab).not.toHaveClass('-mb-px')
+    expect(tab).not.toHaveClass('rounded-control')
+  })
+
+  it('pill y subtle no dibujan lineas grises y dejan aire para el anillo de foco', () => {
+    render(
+      <>
+        <Variant variant="pill" />
+        <Variant variant="subtle" />
+      </>,
+    )
+    const [pill, subtle] = screen.getAllByRole('tablist')
+    for (const list of [pill!, subtle!]) {
+      expect(list).toHaveClass('p-1')
+      expect(list).not.toHaveClass('border-b')
+    }
+    expect(within(pill!).getByRole('tab', { name: 'Uno' })).toHaveClass('rounded-pill', 'border-dark', 'bg-dark', 'text-text-inverse')
+    expect(within(subtle!).getByRole('tab', { name: 'Uno' })).toHaveClass('rounded-pill', 'border-brand', 'text-brand-ink')
+    expect(within(subtle!).getByRole('tab', { name: 'Dos' })).toHaveClass('border-transparent', 'text-text-muted')
+  })
+})
+
 describe('campos', () => {
   it('usan el anillo de foco compartido y 44 de alto bajo lg', () => {
     render(

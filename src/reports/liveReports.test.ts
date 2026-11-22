@@ -1,7 +1,11 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
+import * as lucide from 'lucide-react'
 import { describe, expect, it } from 'vitest'
 import {
   FILTERS,
   LIVE_REPORTS,
+  LOOKS,
   REPORT_GROUPS,
   liveReport,
   parseReportState,
@@ -158,3 +162,53 @@ describe('totales y orden de la tabla', () => {
     expect(sortRows(rows, null, 'asc')).toBe(rows)
   })
 })
+
+describe('indicadores con el diseno de Inicio', () => {
+  const all = LIVE_REPORTS.flatMap((definition) => definition.indicators.map((indicator) => ({ report: definition.key, ...indicator })))
+
+  it('cada indicador declara icono, color y una descripcion corta de una linea', () => {
+    const looks = Object.values(LOOKS)
+    for (const indicator of all) {
+      expect(looks, `${indicator.report} ${indicator.label}`).toContainEqual({ icon: indicator.icon, accent: indicator.accent })
+      expect(indicator.description, `${indicator.report} ${indicator.label}`).toMatch(/^[A-ZÁÉÍÓÚ].{8,55}\.$/)
+    }
+  })
+
+  it('el mismo concepto lleva el mismo icono y color en todos los reportes', () => {
+    const byLabel = new Map<string, { icon: unknown; accent: string }>()
+    for (const indicator of all) {
+      const seen = byLabel.get(indicator.label)
+      if (seen) expect({ icon: indicator.icon, accent: indicator.accent }, indicator.label).toEqual(seen)
+      else byLabel.set(indicator.label, { icon: indicator.icon, accent: indicator.accent })
+    }
+    const look = (key: LiveReportKey, label: string) => report(key).indicators.find((indicator) => indicator.label === label)!
+    expect(look('productos-vendidos', 'Costo de lo vendido')).toMatchObject(LOOKS.cost)
+    expect(look('estado-resultados', 'Costo de ventas')).toMatchObject(LOOKS.cost)
+    expect(look('ventas', 'Total vendido')).toMatchObject({ accent: 'success' })
+    expect(look('ventas', 'Anuladas')).toMatchObject({ accent: 'error' })
+    expect(look('estado-resultados', 'Gastos operativos')).toMatchObject({ accent: 'error' })
+    expect(look('estado-resultados', 'Utilidad neta')).toMatchObject({ accent: 'brand-strong' })
+    expect(look('compras', 'Total comprado')).toMatchObject({ accent: 'warning' })
+    expect(look('cartera-cobrar', 'Más de 90 días')).toMatchObject({ accent: 'error' })
+    expect(look('inventario', 'Stock crítico')).toMatchObject({ accent: 'error' })
+    expect(look('inventario', 'Productos')).toMatchObject({ accent: 'neutral' })
+  })
+  it('los indicadores que tambien estan en Inicio se ven igual que alla', () => {
+    // Etiqueta, acento e icono de cada KPI de Inicio, leidos del codigo de la pantalla.
+    const source = readFileSync('src/pages/DashboardPage.tsx', 'utf-8')
+    const home = [...source.matchAll(/label="([^"]+)"\s+accent="([^"]+)"\s+icon=\{(\w+)\}/g)]
+      .map(([, label, accent, icon]) => ({ label, accent, icon: lucide[icon as keyof typeof lucide] }))
+    expect(home.map((kpi) => kpi.label)).toEqual(['Ventas sin IVA', 'Costo de lo vendido', 'Utilidad bruta', 'Utilidad neta'])
+    const same = { 'Ventas sin IVA': LOOKS.sales, 'Costo de lo vendido': LOOKS.cost, 'Utilidad bruta': LOOKS.grossProfit, 'Utilidad neta': LOOKS.netProfit }
+    for (const kpi of home) expect(same[kpi.label as keyof typeof same], kpi.label).toEqual({ icon: kpi.icon, accent: kpi.accent })
+    // Y los reportes usan esos aspectos en esos conceptos.
+    const look = (key: LiveReportKey, label: string) => report(key).indicators.find((indicator) => indicator.label === label)!
+    expect(look('productos-vendidos', 'Ingresos sin IVA')).toMatchObject(LOOKS.sales)
+    expect(look('estado-resultados', 'Ingresos')).toMatchObject(LOOKS.sales)
+    expect(look('productos-vendidos', 'Costo de lo vendido')).toMatchObject(LOOKS.cost)
+    expect(look('productos-vendidos', 'Utilidad bruta')).toMatchObject(LOOKS.grossProfit)
+    expect(look('estado-resultados', 'Utilidad bruta')).toMatchObject(LOOKS.grossProfit)
+    expect(look('estado-resultados', 'Utilidad neta')).toMatchObject(LOOKS.netProfit)
+  })
+})
+

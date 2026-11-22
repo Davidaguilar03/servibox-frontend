@@ -41,13 +41,14 @@ export function ReportsPage() {
   return (
     <div className="flex min-w-0 flex-col gap-6">
       <ListHeader leading={menuButton} title="Reportes" subtitle="Consulta tus reportes en pantalla y descárgalos en PDF o Excel." />
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-2">
         <TabList
           aria-label="Área del reporte"
           options={REPORT_GROUPS.map((item) => ({ value: item.key, label: item.label }))}
           value={group.key}
           onChange={(key) => choose(REPORT_GROUPS.find((item) => item.key === key)!.reports[0]!)}
           tabId={(key) => `area-${key}`}
+          variant="pill"
           centerSelected
         />
         {group.reports.length > 1 && (
@@ -58,6 +59,7 @@ export function ReportsPage() {
             onChange={choose}
             tabId={(key) => `reporte-${key}`}
             panelId={() => 'panel-reporte'}
+            variant="subtle"
             centerSelected
           />
         )}

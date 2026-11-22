@@ -20,12 +20,14 @@ interface IndicatorCardProps {
   error?: boolean
   onRetry?: () => void
   /** El acento identifica el contexto; no cambia el significado ni el signo del valor. */
-  accent?: 'brand' | 'brand-strong' | 'success' | 'warning' | 'info'
+  accent?: IndicatorAccent
   icon?: LucideIcon
   /** Variante de Productos: icono a la izquierda y texto alineado en un bloque. */
   compact?: boolean
-  /** Menor relleno vertical, usado solo por los cuatro KPI de Inicio. */
+  /** Menor relleno vertical: KPI de Inicio e indicadores de Reportes. */
   dense?: boolean
+  /** Ubicacion en la rejilla del contenedor (por ejemplo `col-span-2`). */
+  className?: string
 }
 
 const accents = {
@@ -34,10 +36,14 @@ const accents = {
   success: { border: 'border-t-success', icon: 'bg-success-bg text-success-ink' },
   warning: { border: 'border-t-warning', icon: 'bg-warning-bg text-warning-ink' },
   info: { border: 'border-t-info', icon: 'bg-info-bg text-info-ink' },
+  error: { border: 'border-t-error', icon: 'bg-error-bg text-error-ink' },
+  neutral: { border: 'border-t-neutral-400', icon: 'bg-neutral-200 text-text' },
 }
 
+export type IndicatorAccent = 'brand' | 'brand-strong' | 'success' | 'warning' | 'info' | 'error' | 'neutral'
+
 /** Tarjeta de indicador: etiqueta, valor y, si la hay, la variacion contra el periodo anterior. */
-export function IndicatorCard({ label, value, negative, note, detail, trend, error, onRetry, accent = 'brand', icon: Icon, compact, dense }: IndicatorCardProps) {
+export function IndicatorCard({ label, value, negative, note, detail, trend, error, onRetry, accent = 'brand', icon: Icon, compact, dense, className = '' }: IndicatorCardProps) {
   const body = error ? (
     <div role="alert" className="mt-2 flex flex-wrap items-center gap-2">
       <TriangleAlert {...iconSm} className="text-error" aria-hidden />
@@ -60,7 +66,7 @@ export function IndicatorCard({ label, value, negative, note, detail, trend, err
   )
 
   return (
-    <div className={`min-w-0 rounded-surface border border-t-2 border-border bg-surface ${compact ? 'flex items-center p-4' : dense ? 'px-6 py-4' : 'p-6'} ${accents[accent].border}`}>
+    <div className={`min-w-0 rounded-surface border border-t-2 border-border bg-surface ${compact ? 'flex items-center p-4' : dense ? 'px-6 py-4' : 'p-6'} ${accents[accent].border}${className ? ` ${className}` : ''}`}>
       {compact ? (
         <div className="flex w-full items-center gap-3">
           {Icon && <span className={`flex size-12 shrink-0 items-center justify-center rounded-control ${accents[accent].icon}`} aria-hidden><Icon {...iconLg} /></span>}

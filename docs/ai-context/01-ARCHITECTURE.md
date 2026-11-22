@@ -87,7 +87,7 @@ src/
 | `/inventario/nuevo` | privada | Ruta hija de `/inventario`: `ProductFormPage`, modal Nuevo producto sobre el listado |
 | `/inventario/:id/editar` | privada | Ruta hija de `/inventario`: `ProductFormPage`, modal Editar producto; un id no numerico o un 404 muestran el modal "Producto no encontrado" |
 | `/inventario/categorias` | privada | `CategoriesPage`, Categorias, con el modal de crear y editar |
-| `/cuentas` | privada | `AccountsPage`, Tesoreria: saldos, movimientos del periodo, nueva cuenta, transferencia y exportacion |
+| `/cuentas` | privada | `AccountsPage`, Tesoreria: saldos, movimientos del periodo, nueva cuenta y transferencia (la exportacion vive en Reportes) |
 | `/compras` | privada | `PurchaseInvoicesPage`, Facturas de compra, dentro de `AppShell` |
 | `/compras/nueva` | privada | `NewPurchaseInvoicePage`, Nueva factura de compra |
 | `/compras/:id` | privada | `PurchaseDetailPage`, Detalle de factura de compra; un id no numerico o un 404 muestran "Factura no encontrada" |
@@ -400,6 +400,10 @@ URL como `reporte` (sin el parametro, Ventas). Los diez son reportes en vivo.
   filas se desplazan en horizontal en movil y se usan con flechas, Inicio y Fin (activacion automatica).
   Cambiar de reporte conserva `periodo`, `desde` y `hasta` y descarta los demas filtros.
 * Las dos filas usan `centerSelected`: la pestana activa se centra en su fila al cargar o cambiar.
+* Aspecto (2026-11-21, feat/63): areas con `TabList variant="pill"` (pildoras, la activa en `dark` como
+  `SegmentedControl`) y reportes del area con `variant="subtle"` (pildoras livianas en `small`, la activa con borde
+  `brand`, fondo `surface` y texto `brand-ink`). Sin lineas grises entre filas. La variante `underline` (por defecto)
+  queda para otros usos; ver [05-DESIGN-SYSTEM](05-DESIGN-SYSTEM.md), SegmentedControl y TabList.
 * `?reporte=archivos` (pestana retirada el 2026-11-21) redirige con `replace` a Estado de resultados,
   conservando el periodo.
 
@@ -407,8 +411,9 @@ URL como `reporte` (sin el parametro, Ventas). Los diez son reportes en vivo.
 
 Modelo declarativo en `src/reports/liveReports.ts`: cada `LiveReportDefinition` trae `key` (valor
 de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros (claves de
-`FILTERS`), indicadores (campo de `summary`, formato, `signed` para cifras que pueden ser negativas y
-`detail` para un porcentaje como el margen), grafica, columnas (campo, formato y total), `rowKey`
+`FILTERS`), indicadores (campo de `summary`, formato, `signed` para cifras que pueden ser negativas,
+`detail` para un porcentaje como el margen, `description` de una linea e `icon` y `accent` tomados de
+`LOOKS`, un aspecto por concepto), grafica, columnas (campo, formato y total), `rowKey`
 (campo o funcion), `inTotals` (las anuladas no suman), `emphasize` (filas de subtotal), `fixedOrder`
 (sin orden por columna) y `notes` (notas segun los filtros). Un reporte nuevo es una definicion mas.
 
@@ -427,8 +432,10 @@ de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros
 
 * `LiveReportView` (`src/reports/LiveReportView.tsx`) arma, en orden: `FilterBar` (PeriodPicker y
   los controles), descripcion con el periodo o "Corte al dd/mm/aaaa" (carteras) y las notas,
-  Descargar PDF y Descargar Excel (secundarios), indicadores (`IndicatorCard` compacto, rejilla
-  auto-fit de minimo 240 px), grafica (`ReportChart`) y tabla (`ReportTable`).
+  Descargar PDF y Descargar Excel (secundarios), indicadores (`IndicatorCard dense`, la misma tarjeta
+  de los KPI de Inicio: icono en cuadro tenue, borde superior del acento, titulo, valor, margen si lo hay,
+  descripcion y variacion; rejilla de una columna, dos desde sm y tres o cuatro en escritorio segun la
+  cantidad, y con un numero impar la ultima ocupa la fila mientras hay dos columnas), grafica (`ReportChart`) y tabla (`ReportTable`).
 * Estado de resultados (`compareWithPrevious`): pide tambien el periodo anterior de igual duracion
   (`previousPeriod`) con los mismos filtros y muestra en cada indicador la variacion (`variation`,
   componente `Variation`: flecha, signo y "vs. <periodTitle>"). Si esa consulta falla o el anterior es 0, sin variacion.
@@ -457,7 +464,7 @@ de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros
   reintentar (400 con el texto del mapa; red y 5xx tambien en el toast). La descarga muestra su
   error en un `Alert` y el exito en un toast con el nombre del archivo del backend.
 * `src/reports/reports.ts`: validacion del rango (`validateRange`, que usan los listados), periodo
-  anterior, variacion y titulo del periodo, y `exportPath` (exportacion de Movimientos de Tesoreria).
+  anterior, variacion y titulo del periodo. `exportPath` se borro el 2026-11-21 con el boton de Tesoreria.
 
 ## Inventario
 
@@ -508,7 +515,6 @@ del PUT) y `categoryForm.ts` (paleta, validacion, porcentaje y fraccion). Reglas
 | Nueva cuenta | `POST /api/treasury/accounts` |
 | Editar cuenta | `PUT /api/treasury/accounts/{id}` |
 | Nueva transferencia | `POST /api/treasury/transfers` |
-| Exportar a Excel | `apiDownload` de `GET /api/reporting/export?type=MOVIMIENTOS&format=XLSX&desde&hasta[&accountId]` |
 
 * Query string: `cuenta` (id o `todas`; sin el parametro, la primera EFECTIVO por id),
   `periodo` (`hoy`, `esta-semana`, `mes-anterior`, `este-ano`, `personalizado`; sin el

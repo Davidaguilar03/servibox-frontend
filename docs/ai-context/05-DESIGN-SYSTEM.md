@@ -453,8 +453,8 @@ se sale de estas reglas. Colores y pares de contraste: ver 02-CONVENTIONS y `tok
 * Superficies: blanco surface sobre canvas, radio surface, borde border. DataTable agrega
   contorno y borde superior de 2 px border-accent (#f4ccc8), encabezado canvas y separadores
   border. Estados vacio y error conservan sus mensajes; no se agregan estados ficticios.
-* IndicatorCard: borde superior de 2 px, acentos brand (border-accent), success, warning o
-  info; icono opcional sobre fondo tenue con tinta de contraste. Inicio usa ventas success,
+* IndicatorCard: borde superior de 2 px, acentos brand (border-accent), brand-strong, success, warning,
+  info, error o neutral (neutral-400, icono sobre neutral-200; los dos ultimos desde 2026-11-21 para Reportes); icono opcional sobre fondo tenue con tinta de contraste. Inicio usa ventas success,
   costo warning, bruta info y neta brand. Son contextos, no una clasificacion del resultado:
   el signo y el texto no cambian y una perdida sigue en error aunque el borde sea otro.
 * Sin degradados, glassmorphism, brillos, sombras en tarjetas, iconos repetidos sin utilidad
@@ -534,8 +534,8 @@ sombra (`FLOATING_SHADOWS`). Los anillos de seleccion (`ring-*`) no son sombra.
 * `--spacing: 4px`: `p-1` 4, `p-2` 8, `p-3` 12, `p-4` 16, `p-5` 20, `p-6` 24...
 * Prohibidos los medios pasos (`*-0.5`, `*-1.5`, `*-2.5`, `*-3.5`) y los px arbitrarios que no
   sean multiplo de 4 (`w-[110px]`). Excepciones: bordes de 1 px, anillos y desplazamientos de
-  foco (`outline-offset-2`), `-mb-px` de las pestanas de `TabList` (solapa el borde) y
-  `mt-px` del icono de `Alert` (lo centra con la primera linea). Estan en `ONE_PX_OFFSETS`.
+  foco (`outline-offset-2`) y `mt-px` del icono de `Alert` (lo centra con la primera linea),
+  en `ONE_PX_OFFSETS`. El `-mb-px` de `TabList` se retiro el 2026-11-21: la fila desplazable lo recortaba.
 
 ## Radios
 
@@ -622,7 +622,11 @@ La revision manual Docker sigue aplazada y obligatoria antes de publicar.
   opciones en pildora (`rounded-pill`), seleccionada en `dark`, 44 bajo lg y 40 desde lg;
   envuelve (`flex-wrap`) o recibe la disposicion por `className` (`grid grid-cols-2`).
 * `TabList`: `role="tablist"` con `role="tab"`, `aria-selected` y `aria-controls` opcional;
-  subrayado `brand`; desplazamiento horizontal si no cabe.
+  desplazamiento horizontal si no cabe. Variantes: `underline` (por defecto, subrayado `brand` dentro de la pestana,
+  `rounded-t-control`, sobre una linea `border`), `pill` (pildoras como `SegmentedControl`, la activa en `dark`: areas
+  de Reportes) y `subtle` (pildoras en `small`, la activa con borde `brand`, fondo `surface` y texto `brand-ink`;
+  las demas sin borde en `text-muted`: reportes del area). `pill` y `subtle` no llevan linea gris y tienen `p-1` para
+  que el anillo de foco no se recorte. Nada de la pestana puede salir de la fila: recorta en vertical.
 * Los dos: flechas (con vuelta), Inicio y Fin mueven el foco y eligen (activacion
   automatica); un solo elemento en el orden de tabulacion (roving tabindex).
 * Excepciones con comportamiento propio (no son segmentados de texto): tarjetas de cuenta con

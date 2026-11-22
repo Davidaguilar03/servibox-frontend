@@ -1,3 +1,36 @@
+import {
+  ArrowDownRight,
+  ArrowLeftRight,
+  ArrowUpRight,
+  Ban,
+  Banknote,
+  Boxes,
+  CalendarClock,
+  ChartPie,
+  CircleAlert,
+  Clock,
+  Coins,
+  CreditCard,
+  FileText,
+  HandCoins,
+  Hourglass,
+  Landmark,
+  Layers,
+  Package,
+  PackageX,
+  Percent,
+  Receipt,
+  ReceiptText,
+  ShoppingBag,
+  ShoppingCart,
+  Tag,
+  TrendingDown,
+  TrendingUp,
+  TriangleAlert,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react'
+import type { IndicatorAccent } from '../components/IndicatorCard'
 import type { BadgeStatus } from '../components/StatusBadge'
 import { GLOSSARY } from '../copy/glossary'
 import { addMoney } from '../lib/money'
@@ -170,10 +203,55 @@ export interface ReportColumn {
   total?: 'sum' | ((rows: ReportRow[]) => number)
 }
 
-export interface ReportIndicator {
+/** Aspecto de un indicador (el de los KPI de Inicio): un mismo concepto lleva el mismo en todos los reportes. */
+export interface IndicatorLook {
+  icon: LucideIcon
+  accent: IndicatorAccent
+}
+
+// Criterio de colores en 03-DECISIONS (2026-11-21): ventas e ingresos verde, costos y compras ambar,
+// utilidades y saldos azul, gastos, anuladas, cartera vieja y estados criticos rojo, conteos gris. Los
+// indicadores que tambien estan en Inicio llevan su aspecto: Utilidad neta en brand-strong.
+export const LOOKS = {
+  sales: { icon: TrendingUp, accent: 'success' },
+  invoices: { icon: FileText, accent: 'neutral' },
+  ticket: { icon: Receipt, accent: 'success' },
+  cash: { icon: Banknote, accent: 'success' },
+  credit: { icon: CreditCard, accent: 'success' },
+  annulled: { icon: Ban, accent: 'error' },
+  units: { icon: ShoppingCart, accent: 'neutral' },
+  cost: { icon: Package, accent: 'warning' },
+  grossProfit: { icon: ChartPie, accent: 'info' },
+  netProfit: { icon: Wallet, accent: 'brand-strong' },
+  margin: { icon: Percent, accent: 'info' },
+  purchases: { icon: ShoppingBag, accent: 'warning' },
+  deductibleVat: { icon: ReceiptText, accent: 'warning' },
+  generatedVat: { icon: ReceiptText, accent: 'success' },
+  payable: { icon: CalendarClock, accent: 'warning' },
+  balance: { icon: Landmark, accent: 'info' },
+  portfolio: { icon: HandCoins, accent: 'info' },
+  agingCurrent: { icon: Clock, accent: 'info' },
+  agingLate: { icon: Hourglass, accent: 'warning' },
+  agingOld: { icon: CircleAlert, accent: 'error' },
+  products: { icon: Boxes, accent: 'neutral' },
+  stock: { icon: Layers, accent: 'neutral' },
+  stockCost: { icon: Coins, accent: 'warning' },
+  stockSale: { icon: Tag, accent: 'success' },
+  lowStock: { icon: TriangleAlert, accent: 'warning' },
+  criticalStock: { icon: CircleAlert, accent: 'error' },
+  outOfStock: { icon: PackageX, accent: 'error' },
+  inflows: { icon: ArrowUpRight, accent: 'success' },
+  outflows: { icon: ArrowDownRight, accent: 'error' },
+  netFlow: { icon: ArrowLeftRight, accent: 'info' },
+  expenses: { icon: TrendingDown, accent: 'error' },
+} satisfies Record<string, IndicatorLook>
+
+export interface ReportIndicator extends IndicatorLook {
   /** Campo de `summary`. */
   key: string
   label: string
+  /** Una linea bajo el valor que explica que cuenta, como en Inicio. */
+  description: string
   format: 'currency' | 'integer' | 'percent'
   /** Puede ser negativo: la cifra va en el tono de error. */
   signed?: boolean
@@ -245,14 +323,23 @@ export interface LiveReportResponse {
 
 const notAnnulled = (row: ReportRow) => row.status !== 'ANULADA'
 
-const portfolioIndicators: ReportIndicator[] = [
-  { key: 'totalBalance', label: 'Saldo total', format: 'currency' },
-  { key: 'invoiceCount', label: 'Facturas', format: 'integer' },
-  { key: 'balance0To30', label: AGING_LABELS['0-30']!, format: 'currency' },
-  { key: 'balance31To60', label: AGING_LABELS['31-60']!, format: 'currency' },
-  { key: 'balance61To90', label: AGING_LABELS['61-90']!, format: 'currency' },
-  { key: 'balanceOver90', label: AGING_LABELS['90+']!, format: 'currency' },
-]
+function portfolioIndicators(side: 'cobrar' | 'pagar'): ReportIndicator[] {
+  const aging = 'Saldo de facturas con'
+  return [
+    {
+      key: 'totalBalance',
+      label: 'Saldo total',
+      format: 'currency',
+      ...LOOKS.portfolio,
+      description: side === 'cobrar' ? 'Lo que tus clientes te deben hoy.' : 'Lo que debes hoy a tus proveedores.',
+    },
+    { key: 'invoiceCount', label: 'Facturas', format: 'integer', ...LOOKS.invoices, description: 'Facturas pendientes con saldo.' },
+    { key: 'balance0To30', label: AGING_LABELS['0-30']!, format: 'currency', ...LOOKS.agingCurrent, description: `${aging} hasta 30 días de emitidas.` },
+    { key: 'balance31To60', label: AGING_LABELS['31-60']!, format: 'currency', ...LOOKS.agingLate, description: `${aging} 31 a 60 días de emitidas.` },
+    { key: 'balance61To90', label: AGING_LABELS['61-90']!, format: 'currency', ...LOOKS.agingOld, description: `${aging} 61 a 90 días de emitidas.` },
+    { key: 'balanceOver90', label: AGING_LABELS['90+']!, format: 'currency', ...LOOKS.agingOld, description: `${aging} más de 90 días de emitidas.` },
+  ]
+}
 
 function portfolioColumns(counterparty: string): ReportColumn[] {
   return [
@@ -280,12 +367,12 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
     period: true,
     filters: ['cliente', 'pago', 'estado'],
     indicators: [
-      { key: 'totalSold', label: 'Total vendido', format: 'currency' },
-      { key: 'invoiceCount', label: 'Facturas', format: 'integer' },
-      { key: 'averageTicket', label: 'Ticket promedio', format: 'currency' },
-      { key: 'cashTotal', label: 'De contado', format: 'currency' },
-      { key: 'creditTotal', label: 'A crédito', format: 'currency' },
-      { key: 'annulledCount', label: 'Anuladas', format: 'integer' },
+      { key: 'totalSold', label: 'Total vendido', format: 'currency', ...LOOKS.sales, description: 'Con IVA y sin facturas anuladas.' },
+      { key: 'invoiceCount', label: 'Facturas', format: 'integer', ...LOOKS.invoices, description: 'Facturas emitidas, sin las anuladas.' },
+      { key: 'averageTicket', label: 'Ticket promedio', format: 'currency', ...LOOKS.ticket, description: 'Total vendido entre el número de facturas.' },
+      { key: 'cashTotal', label: 'De contado', format: 'currency', ...LOOKS.cash, description: 'Ventas pagadas al momento.' },
+      { key: 'creditTotal', label: 'A crédito', format: 'currency', ...LOOKS.credit, description: 'Ventas que el cliente paga después.' },
+      { key: 'annulledCount', label: 'Anuladas', format: 'integer', ...LOOKS.annulled, description: 'Facturas anuladas en el período.' },
     ],
     chart: { kind: 'columns', title: 'Total vendido por día', labels: 'date' },
     columns: [
@@ -311,11 +398,11 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
     period: true,
     filters: ['tipo', 'categoria', 'item'],
     indicators: [
-      { key: 'unitsSold', label: 'Unidades vendidas', format: 'integer' },
-      { key: 'revenue', label: 'Ingresos sin IVA', format: 'currency' },
-      { key: 'cost', label: 'Costo de lo vendido', format: 'currency' },
-      { key: 'grossMargin', label: 'Utilidad bruta', format: 'currency' },
-      { key: 'marginPercent', label: 'Margen', format: 'percent' },
+      { key: 'unitsSold', label: 'Unidades vendidas', format: 'integer', ...LOOKS.units, description: 'Productos y servicios, sin facturas anuladas.' },
+      { key: 'revenue', label: 'Ingresos sin IVA', format: 'currency', ...LOOKS.sales, description: 'Sin IVA y sin facturas anuladas.' },
+      { key: 'cost', label: 'Costo de lo vendido', format: 'currency', ...LOOKS.cost, description: 'Costo de lo que vendiste.' },
+      { key: 'grossMargin', label: 'Utilidad bruta', format: 'currency', ...LOOKS.grossProfit, description: 'Ingresos menos costo de lo vendido.' },
+      { key: 'marginPercent', label: 'Margen', format: 'percent', ...LOOKS.margin, description: 'Utilidad bruta sobre los ingresos.' },
     ],
     chart: { kind: 'bars', title: 'Los 10 con más ingresos', labels: 'text' },
     columns: [
@@ -348,10 +435,10 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
     period: true,
     filters: ['proveedor', 'categoria', 'estado'],
     indicators: [
-      { key: 'totalPurchased', label: 'Total comprado', format: 'currency' },
-      { key: 'invoiceCount', label: 'Facturas', format: 'integer' },
-      { key: 'deductibleVat', label: 'IVA descontable', format: 'currency' },
-      { key: 'pendingTotal', label: 'Por pagar', format: 'currency' },
+      { key: 'totalPurchased', label: 'Total comprado', format: 'currency', ...LOOKS.purchases, description: 'Con IVA y sin facturas anuladas.' },
+      { key: 'invoiceCount', label: 'Facturas', format: 'integer', ...LOOKS.invoices, description: 'Facturas de compra, sin las anuladas.' },
+      { key: 'deductibleVat', label: 'IVA descontable', format: 'currency', ...LOOKS.deductibleVat, description: 'IVA pagado en tus compras.' },
+      { key: 'pendingTotal', label: 'Por pagar', format: 'currency', ...LOOKS.payable, description: 'Saldo pendiente de estas compras.' },
     ],
     chart: { kind: 'bars', title: 'Los 10 proveedores con más compras', labels: 'text' },
     columns: [
@@ -375,7 +462,7 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
     exportType: 'CARTERA_COBRAR',
     period: false,
     filters: ['cliente', 'antiguedad'],
-    indicators: portfolioIndicators,
+    indicators: portfolioIndicators('cobrar'),
     chart: agingChart,
     columns: portfolioColumns('Cliente'),
     rowKey: 'invoiceId',
@@ -388,7 +475,7 @@ export const LIVE_REPORTS: LiveReportDefinition[] = [
     exportType: 'CARTERA_PAGAR',
     period: false,
     filters: ['proveedor', 'antiguedad'],
-    indicators: portfolioIndicators,
+    indicators: portfolioIndicators('pagar'),
     chart: agingChart,
     columns: portfolioColumns('Proveedor'),
     rowKey: 'invoiceId',
@@ -418,14 +505,14 @@ LIVE_REPORTS.push(
     period: true,
     filters: ['categoria', 'stock'],
     indicators: [
-      { key: 'productCount', label: 'Productos', format: 'integer' },
-      { key: 'unitsInStock', label: 'Unidades en stock', format: 'integer' },
-      { key: 'costValue', label: 'Valor al costo', format: 'currency' },
-      { key: 'saleValue', label: 'Valor a precio de venta', format: 'currency' },
-      { key: 'lowStockCount', label: GLOSSARY.lowStock, format: 'integer' },
-      { key: 'criticalStockCount', label: GLOSSARY.criticalStock, format: 'integer' },
-      { key: 'outOfStockCount', label: GLOSSARY.outOfStock, format: 'integer' },
-      { key: 'unitsSoldInPeriod', label: 'Unidades vendidas', format: 'integer' },
+      { key: 'productCount', label: 'Productos', format: 'integer', ...LOOKS.products, description: 'Productos con los filtros elegidos.' },
+      { key: 'unitsInStock', label: 'Unidades en stock', format: 'integer', ...LOOKS.stock, description: 'Suma del stock actual.' },
+      { key: 'costValue', label: 'Valor al costo', format: 'currency', ...LOOKS.stockCost, description: 'Stock actual por su costo.' },
+      { key: 'saleValue', label: 'Valor a precio de venta', format: 'currency', ...LOOKS.stockSale, description: 'Stock actual por su precio de venta.' },
+      { key: 'lowStockCount', label: GLOSSARY.lowStock, format: 'integer', ...LOOKS.lowStock, description: 'Productos que conviene reponer pronto.' },
+      { key: 'criticalStockCount', label: GLOSSARY.criticalStock, format: 'integer', ...LOOKS.criticalStock, description: 'Productos a punto de agotarse.' },
+      { key: 'outOfStockCount', label: GLOSSARY.outOfStock, format: 'integer', ...LOOKS.outOfStock, description: 'Productos sin unidades disponibles.' },
+      { key: 'unitsSoldInPeriod', label: 'Unidades vendidas', format: 'integer', ...LOOKS.units, description: 'Vendidas en el período, sin anuladas.' },
     ],
     chart: { kind: 'bars', title: 'Los 10 más vendidos por unidades', labels: 'text', valueFormat: 'integer' },
     columns: [
@@ -453,11 +540,11 @@ LIVE_REPORTS.push(
     period: true,
     filters: ['cuenta'],
     indicators: [
-      { key: 'openingBalance', label: 'Saldo inicial', format: 'currency', signed: true },
-      { key: 'inflows', label: 'Entradas', format: 'currency' },
-      { key: 'outflows', label: 'Salidas', format: 'currency' },
-      { key: 'netFlow', label: 'Flujo neto', format: 'currency', signed: true },
-      { key: 'closingBalance', label: 'Saldo final', format: 'currency', signed: true },
+      { key: 'openingBalance', label: 'Saldo inicial', format: 'currency', signed: true, ...LOOKS.balance, description: 'Saldo al empezar el período.' },
+      { key: 'inflows', label: 'Entradas', format: 'currency', ...LOOKS.inflows, description: 'Dinero que entró a tus cuentas.' },
+      { key: 'outflows', label: 'Salidas', format: 'currency', ...LOOKS.outflows, description: 'Dinero que salió de tus cuentas.' },
+      { key: 'netFlow', label: 'Flujo neto', format: 'currency', signed: true, ...LOOKS.netFlow, description: 'Entradas menos salidas.' },
+      { key: 'closingBalance', label: 'Saldo final', format: 'currency', signed: true, ...LOOKS.balance, description: 'Saldo inicial más el flujo neto.' },
     ],
     chart: { kind: 'columns', title: 'Flujo neto por día', labels: 'date' },
     columns: [
@@ -479,11 +566,27 @@ LIVE_REPORTS.push(
     period: true,
     filters: [],
     indicators: [
-      { key: 'revenue', label: 'Ingresos', format: 'currency' },
-      { key: 'costOfSales', label: 'Costo de ventas', format: 'currency', lowerIsBetter: true },
-      { key: 'grossProfit', label: 'Utilidad bruta', format: 'currency', signed: true, detail: { key: 'grossMarginPercent', label: 'Margen' } },
-      { key: 'operatingExpenses', label: 'Gastos operativos', format: 'currency', lowerIsBetter: true },
-      { key: 'netProfit', label: 'Utilidad neta', format: 'currency', signed: true, detail: { key: 'netMarginPercent', label: 'Margen neto' } },
+      { key: 'revenue', label: 'Ingresos', format: 'currency', ...LOOKS.sales, description: 'Ventas sin IVA y sin facturas anuladas.' },
+      { key: 'costOfSales', label: 'Costo de ventas', format: 'currency', lowerIsBetter: true, ...LOOKS.cost, description: 'Costo de lo que vendiste.' },
+      {
+        key: 'grossProfit',
+        label: 'Utilidad bruta',
+        format: 'currency',
+        signed: true,
+        detail: { key: 'grossMarginPercent', label: 'Margen' },
+        ...LOOKS.grossProfit,
+        description: 'Ingresos menos costo de ventas.',
+      },
+      { key: 'operatingExpenses', label: 'Gastos operativos', format: 'currency', lowerIsBetter: true, ...LOOKS.expenses, description: 'Gastos del negocio en el período.' },
+      {
+        key: 'netProfit',
+        label: 'Utilidad neta',
+        format: 'currency',
+        signed: true,
+        detail: { key: 'netMarginPercent', label: 'Margen neto' },
+        ...LOOKS.netProfit,
+        description: 'Utilidad bruta más otros ingresos, menos gastos.',
+      },
     ],
     chart: {
       kind: 'columns',
@@ -514,9 +617,9 @@ LIVE_REPORTS.push(
     period: true,
     filters: [],
     indicators: [
-      { key: 'ivaGenerado', label: 'IVA generado', format: 'currency' },
-      { key: 'ivaDescontable', label: 'IVA descontable', format: 'currency' },
-      { key: 'ivaNeto', label: 'Saldo por pagar', format: 'currency', signed: true },
+      { key: 'ivaGenerado', label: 'IVA generado', format: 'currency', ...LOOKS.generatedVat, description: 'IVA cobrado en tus ventas.' },
+      { key: 'ivaDescontable', label: 'IVA descontable', format: 'currency', ...LOOKS.deductibleVat, description: 'IVA pagado en tus compras.' },
+      { key: 'ivaNeto', label: 'Saldo por pagar', format: 'currency', signed: true, ...LOOKS.balance, description: 'IVA generado menos descontable.' },
     ],
     chart: {
       kind: 'columns',
@@ -551,9 +654,9 @@ LIVE_REPORTS.push(
     period: true,
     filters: ['cuenta', 'movimiento'],
     indicators: [
-      { key: 'inflows', label: 'Entradas', format: 'currency' },
-      { key: 'outflows', label: 'Salidas', format: 'currency' },
-      { key: 'net', label: 'Neto', format: 'currency', signed: true },
+      { key: 'inflows', label: 'Entradas', format: 'currency', ...LOOKS.inflows, description: 'Dinero que entró a tus cuentas.' },
+      { key: 'outflows', label: 'Salidas', format: 'currency', ...LOOKS.outflows, description: 'Dinero que salió de tus cuentas.' },
+      { key: 'net', label: 'Neto', format: 'currency', signed: true, ...LOOKS.netFlow, description: 'Entradas menos salidas.' },
     ],
     chart: { kind: 'columns', title: 'Neto por día', labels: 'date' },
     columns: [
