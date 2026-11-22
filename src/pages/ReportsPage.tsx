@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, ChartNoAxesCombined, Coins, FileDown, FileText, Info, Minus } from 'lucide-react'
-import { useOutletContext } from 'react-router'
+import { useOutletContext, useSearchParams } from 'react-router'
 import { fetchPeriodMovements, type TreasuryMovement } from '../accounts/accountsApi'
 import { formatSignedAmount, periodTotals } from '../accounts/accountsView'
 import { useReportedError } from '../api/reportError'
@@ -12,7 +12,7 @@ import { DataTable, type Column } from '../components/DataTable'
 import { ListHeader } from '../components/ListHeader'
 import { Pagination } from '../components/Pagination'
 import { StatusBadge } from '../components/StatusBadge'
-import { SegmentedControl } from '../components/SegmentedControl'
+import { SegmentedControl, TabList } from '../components/SegmentedControl'
 import { SelectField } from '../components/SelectField'
 import { PeriodPicker } from '../components/PeriodPicker'
 import { EmptyState, ErrorState, Skeleton } from '../components/states'
@@ -37,6 +37,8 @@ import {
 } from '../reports/reports'
 import { periodRange, type DateRange } from '../lib/period'
 import { iconMd, iconSm } from '../components/icons'
+import { DEFAULT_REPORT, LIVE_REPORTS, liveReport } from '../reports/liveReports'
+import { LiveReportView } from '../reports/LiveReportView'
 
 const card = 'rounded-surface border border-t-2 border-border border-t-border-accent bg-surface p-4 sm:p-6'
 const focusWithin = 'focus-ring-within'
@@ -68,9 +70,53 @@ function useDebounced<T>(value: T, delay: number): T {
   return debounced
 }
 
-/** Reportes: el usuario elige tipo, periodo y formato, y descarga el archivo del backend. */
+/** Pestana de las descargas que aun no son reportes en vivo (Estado de resultados y Movimientos). */
+export const FILE_REPORTS = 'archivos'
+
+const REPORT_TABS = [
+  ...LIVE_REPORTS.map((report) => ({ value: report.key as string, label: report.title })),
+  { value: FILE_REPORTS, label: 'Estado de resultados y movimientos' },
+]
+
+/** Reportes: una pestana por reporte en vivo y una con las descargas de siempre. El reporte va en la URL. */
 export function ReportsPage() {
   const { menuButton } = useOutletContext<AppShellContext>()
+  const [params, setParams] = useSearchParams()
+  const requested = params.get('reporte')
+  const selected = requested === FILE_REPORTS ? FILE_REPORTS : (liveReport(requested)?.key ?? DEFAULT_REPORT)
+  const definition = liveReport(selected)
+
+  function choose(next: string) {
+    // El periodo sigue al cambiar de reporte; los demas filtros son de cada reporte.
+    const kept = new URLSearchParams()
+    if (next !== DEFAULT_REPORT) kept.set('reporte', next)
+    for (const key of ['periodo', 'desde', 'hasta']) {
+      const value = params.get(key)
+      if (value && next !== FILE_REPORTS) kept.set(key, value)
+    }
+    setParams(kept)
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-6">
+      <ListHeader leading={menuButton} title="Reportes" subtitle="Consulta tus reportes en pantalla y descárgalos en PDF o Excel." />
+      <TabList
+        aria-label="Reporte"
+        options={REPORT_TABS}
+        value={selected}
+        onChange={choose}
+        tabId={(value) => `tab-${value}`}
+        panelId={(value) => `panel-${value}`}
+      />
+      <div role="tabpanel" id={`panel-${selected}`} aria-labelledby={`tab-${selected}`} className="min-w-0">
+        {definition ? <LiveReportView key={definition.key} definition={definition} /> : <FileReports />}
+      </div>
+    </div>
+  )
+}
+
+/** Estado de resultados y Movimientos: el usuario elige tipo, periodo y formato, y descarga el archivo. */
+function FileReports() {
   const [today] = useState(() => businessToday())
   const [type, setType] = useState<ReportType>('ESTADO_RESULTADOS')
   // Por defecto Este mes: del primero del mes a hoy, como antes. Personalizado parte del rango visto.
@@ -131,8 +177,6 @@ export function ReportsPage() {
 
   return (
     <div className="@container flex flex-col gap-6">
-      <ListHeader leading={menuButton} title="Reportes" subtitle="Tus resultados, listos para consultar y descargar." />
-
       <div className="grid items-start gap-6 @min-[960px]:grid-cols-[minmax(0,3fr)_minmax(0,5fr)]">
         <form
           className={`${card} flex min-w-0 flex-col gap-5`}

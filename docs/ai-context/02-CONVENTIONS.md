@@ -220,6 +220,9 @@ necesite, no antes.
   en el DOM y el cambio es solo por CSS (`hidden md:block` la tabla, `md:hidden` la lista). Con
   `DataTable` basta pasar `card` (render de la tarjeta) y `cardsLabel`; los listados con
   paginacion tienen su propia lista.
+  Excepcion: las tablas de Reportes en vivo no pasan a tarjetas bajo md; se desplazan en
+  horizontal dentro de su contenedor, porque son tablas de analisis con muchas columnas
+  numericas, y la pagina nunca se desborda.
 * Una rejilla de columnas fijas solo se activa desde el ancho donde cabe con la barra lateral
   abierta (240 px). Las lineas de factura suman 666 px fijos: rejilla y resumen al lado desde
   xl (1280 px); por debajo, tarjetas apiladas y el resumen debajo del formulario.
@@ -235,6 +238,8 @@ necesite, no antes.
   build y lint, entrega comandos de arranque, URL y lista de revision. La revision tecnica
   y la aprobacion visual de David son necesarias para el cierre; no se declara ausencia de
   desbordes ni aprobacion visual sin esa revision. AGENTS.md no se modifica.
+  Excepcion: la verificacion en navegador con capturas se permite cuando el prompt de la tarea
+  la pide explicitamente.
 
 ## Versionado
 
@@ -271,6 +276,7 @@ En `src/lib/format.ts`, nunca a mano en un componente:
   sin ese rechazo de precision.
 * No recalcular documentos historicos: detalles y listados usan cifras guardadas de API.
   Las sumas y restas monetarias derivadas usan centavos definitivos, sin EPSILON.
+* Porcentajes: `formatPercent`, un decimal con coma (`32,4 %`); cantidades: `formatInteger`.
 * Fecha en tablas: `formatDate`, dd/mm/aaaa a partir de la fecha ISO del backend, sin pasar
   por `Date` para que la zona horaria no corra el dia.
 * Sin valor: `EMPTY_VALUE`, una raya; nunca "N/A". Se define una sola vez con el escape

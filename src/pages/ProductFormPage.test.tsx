@@ -579,6 +579,7 @@ describe('servicios en el modal', () => {
     categoryId: 7,
     categoryName: 'SERVICIOS',
     itemType: 'SERVICIO',
+    vatApplies: false,
   }
   const serviceRoutes = (): Routes => ({
     ...fullRoutes(),
@@ -622,6 +623,13 @@ describe('servicios en el modal', () => {
     expect(bodies(fetchMock, 'POST')).toEqual([
       { itemType: 'SERVICIO', code: 'SV-02', description: 'Balanceo', salePrice: 20000, vatApplies: false },
     ])
+  })
+
+  it('al editar un servicio el interruptor Aplica IVA sale de vatApplies, no de taxAmount', async () => {
+    mockApi({ ...serviceRoutes(), 'GET /api/inventory/products/2': () => jsonResponse({ ...alignment, taxAmount: 0, vatApplies: true }) })
+    renderRoute('/inventario/2/editar')
+    const dialog = await screen.findByRole('dialog', { name: 'Editar servicio' })
+    expect(within(dialog).getByRole('switch', { name: 'Aplica IVA' })).toBeChecked()
   })
 
   it('al editar un servicio el tipo es fijo, el formulario abre en modo servicio y el PUT no lleva tipo', async () => {

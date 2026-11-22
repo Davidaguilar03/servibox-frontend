@@ -45,7 +45,8 @@ src/
                       modal compartido de crear y editar tercero
   trash/              papelera compartida de ventas y compras (TrashPage.tsx) y su logica
                       de filtros (trashList.ts)
-  reports/            logica pura de Reportes (reports.ts)
+  reports/            logica pura de Reportes (reports.ts), definiciones de los reportes en
+                      vivo (liveReports.ts), su vista, grafica SVG y tabla
   settings/           Configuracion: pagina unificada, formularios de datos y finanzas y consultas
   accounts/           consultas de Cuentas (accountsApi.ts), logica de periodos, totales y
                       origen (accountsView.ts), formularios (accountForms.ts) y los modales
@@ -390,7 +391,52 @@ validacion del abono) en `src/sales/saleDetail.ts`; reglas en
 
 ## Reportes
 
-`ReportsPage` (`/reportes`). Logica pura (tipos, validacion del rango, periodo anterior,
+`ReportsPage` (`/reportes`): encabezado y una pestana (`TabList`) por reporte. El reporte va en la
+URL como `reporte` (sin el parametro, Ventas). Cinco pestanas son reportes en vivo; la sexta,
+`reporte=archivos` ("Estado de resultados y movimientos"), conserva las descargas descritas mas
+abajo hasta que pasen a reportes en vivo (tarea 8 del plan 1.1.0).
+
+### Reportes en vivo (2026-11-21)
+
+Modelo declarativo en `src/reports/liveReports.ts`: cada `LiveReportDefinition` trae `key` (valor
+de `reporte`), titulo, ruta del backend, `exportType`, si tiene periodo, filtros (claves de
+`FILTERS`), indicadores (campo de `summary` y formato), grafica (`columns` o `bars` y como leer
+las etiquetas), columnas (campo, formato y total) y `inTotals` (las anuladas no suman). Un
+reporte nuevo es una definicion mas en `LIVE_REPORTS`; la vista no cambia salvo un control o
+formato que no exista.
+
+| Reporte (`reporte`) | Endpoint | Filtros en la URL (parametro del backend) | Grafica | Exportacion |
+|-|-|-|-|-|
+| `ventas` | `GET /api/reporting/sales` | periodo, `cliente` (clienteId), `pago` (formaPago), `estado` | columnas por dia | `VENTAS` |
+| `productos-vendidos` | `GET /api/reporting/products-sold` | periodo, `tipo` (itemType), `categoria` (categoriaId), `item` (productoId) | barras, 10 mayores | `PRODUCTOS_VENDIDOS` |
+| `compras` | `GET /api/reporting/purchases` | periodo, `proveedor` (proveedorId), `categoria`, `estado` | barras, 10 proveedores | `COMPRAS` |
+| `cartera-cobrar` | `GET /api/reporting/receivables` | `cliente`, `antiguedad` | columnas por rango | `CARTERA_COBRAR` |
+| `cartera-pagar` | `GET /api/reporting/payables` | `proveedor`, `antiguedad` | columnas por rango | `CARTERA_PAGAR` |
+
+* `LiveReportView` (`src/reports/LiveReportView.tsx`) arma, en orden: `FilterBar` (PeriodPicker y
+  los controles), descripcion con el periodo o "Corte al dd/mm/aaaa" (carteras, del campo `corte`),
+  Descargar PDF y Descargar Excel (secundarios), indicadores (`IndicatorCard` compacto, rejilla
+  auto-fit de minimo 240 px), grafica (`ReportChart`) y tabla (`ReportTable`).
+* URL: `periodo` (Este mes por defecto; `desde` y `hasta` solo en Personalizado, con
+  `useUrlTextParam`) y los filtros del reporte; solo lo no predeterminado. Valores desconocidos o
+  de otro reporte se ignoran. Cambiar de pestana conserva el periodo y descarta los filtros.
+* `reportApiParams` arma los parametros del backend una sola vez; la consulta
+  (`['reporting', 'live', key, query]`) y `reportExportPath` (`/reporting/export?type&format&...`)
+  usan los mismos. `URLSearchParams` codifica `90+` como `90%2B`. Rango invalido: no consulta.
+* Selectores con busqueda (`ComboboxField`, opcion "Todos..." con valor 0) para cliente, proveedor
+  e item (nombre o documento; descripcion o codigo), con las claves compartidas
+  `['counterparties', rol]` y `['inventory', 'products']`. Categoria es un `SelectField` sobre
+  `['inventory', 'categories']`. El item se limita al tipo elegido.
+* Tabla propia, no `DataTable`: orden por columna en el cliente (boton en el encabezado,
+  `aria-sort`), fila de totales en `tfoot`, paginas de 25 (`paginate`) y desplazamiento horizontal
+  dentro del contenedor, tambien bajo md (sin tarjetas).
+* Estados: skeleton de carga, vacio "No hay datos para este período y filtros." y error con
+  reintentar (400 con el texto del mapa; red y 5xx tambien en el toast). La descarga muestra su
+  error en un `Alert` y el exito en un toast con el nombre del archivo del backend.
+
+### Descargas (Estado de resultados y Movimientos)
+
+Logica pura (tipos, validacion del rango, periodo anterior,
 variacion, titulo del periodo, ruta de exportacion y filas del estado de resultados) en
 `src/reports/reports.ts`; reglas en [03-DECISIONS.md](03-DECISIONS.md).
 
@@ -413,7 +459,7 @@ variacion, titulo del periodo, ruta de exportacion y filas del estado de resulta
   espera; no se presentan como datos del filtro nuevo.
 * Un error del backend al generar queda en un `Alert` en la pantalla, con lo digitado
   intacto; el exito es un toast con el nombre del archivo.
-* Encabezado propio con menu movil de AppShell. Dos columnas 3/5 (37,5/62,5 por ciento)
+* Dentro de la pestana `archivos`, bajo el encabezado comun. Dos columnas 3/5 (37,5/62,5 por ciento)
   desde 960 px disponibles en el contenedor; debajo se apilan. PeriodPicker usa variante
   form con fechas en auto-fit de minimo 160 px, sin cambiar los demas consumidores.
 * Movimientos comparte fetchPeriodMovements con Cuentas, agregando accountId opcional.

@@ -2,6 +2,32 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Reportes en vivo, primera tanda (feat/61)
+
+* Responde a la evaluacion externa (reportes genericos y solo descargables). Contrato del backend feat/60-reports-sales-portfolio:
+  Ventas, Productos y servicios vendidos, Compras, Cartera por cobrar y Cartera por pagar.
+* Una pagina `/reportes` con pestanas (`TabList`, ya del sistema: se desplaza en horizontal en movil y admite las diez
+  pestanas de la version 1.1.0) en vez de una lista lateral, que en movil pide otro patron. El reporte va en `reporte`.
+* Cada reporte es una definicion declarativa (`src/reports/liveReports.ts`); la segunda tanda (Inventario y rotacion,
+  Flujo de caja, Estado de resultados, IVA y Movimientos) solo agrega definiciones y, si hace falta, un formato o control.
+* Graficas en SVG y HTML propios, sin libreria: son barras y columnas de una sola serie, como `MovementChart` de
+  Tesoreria. Una libreria (Recharts u otra) agregaria peso al bundle y colores fuera de los tokens. Color `info` (azul):
+  el rojo de marca se lee como perdida.
+* Vista y descarga comparten los parametros (`reportApiParams`); el nombre del archivo es el del backend
+  (`ventas_<desde>_<hasta>`, `cartera-por-cobrar_<corte>`). Los botones de descarga son secundarios: la pantalla no
+  tiene una accion primaria.
+* Tabla propia con orden en el cliente, fila de totales (anuladas fuera, margen total = utilidad sobre ingresos) y
+  paginas de 25. Excepcion a "toda tabla tiene tarjetas bajo md" (02-CONVENTIONS, Responsive): el prompt pide que en
+  movil la tabla se desplace dentro de su contenedor; con nueve columnas las tarjetas no comparan filas.
+* Indicadores con `IndicatorCard` compacto y minimo 240 px: con 200 px las cifras de ocho digitos partian el numero.
+* Estado de resultados y Movimientos siguen como descargas en la pestana `archivos` hasta la tarea 8. Sus pruebas solo
+  cambiaron la ruta de entrada.
+* `formatPercent` (un decimal, espacio duro antes de %) y `formatInteger` en `lib/format.ts`.
+* Servicios: "Aplica IVA" se carga de `vatApplies` (ya viene en `ProductResponse`); reemplaza la deduccion por
+  `taxAmount` de la entrada del 2026-11-21 de Servicios y su limitacion del IVA del tenant en 0 %.
+* Mensajes nuevos en el mapa: cliente y proveedor no encontrados, antiguedad y estado invalidos, parametro que no aplica
+  y los topes de facturas. Detalle en sessions/2026-11-21-live-reports.md.
+
 ## 2026-11-21: Servicios en inventario, ventas y compras (feat/60)
 
 * Contrato del backend feat/59-services (V15): `itemType` PRODUCTO o SERVICIO en cada item. El tipo se elige al crear con
@@ -11,7 +37,7 @@ Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
   "Aplica IVA" (casilla con `role="switch"` y el patron de casillas del sistema; no hay componente interruptor). POST con
   `itemType: 'SERVICIO'`; PUT sin `itemType`. El POST de producto no cambia (sin `itemType`).
 * La respuesta no trae `salePrice` ni `vatApplies`: el precio llega en `suggestedPrice` y el IVA se deduce de `taxAmount`
-  (mayor que 0 es con IVA). Al editar se envia siempre `vatApplies` con ese valor deducido.
+  (mayor que 0 es con IVA). Al editar se envia siempre `vatApplies` con ese valor deducido. (Reemplazado el 2026-11-21, feat/61: se lee `vatApplies`.)
 * La categoria SERVICIOS la crea el backend y trae el IVA del tenant; se oculta del selector de categoria de productos
   por nombre (`SERVICES_CATEGORY_NAME`). Sigue visible en Categorias y en el filtro del listado.
 * Listado: filtro Tipo (Todos, Productos, Servicios) en la URL (`tipo`) y con `?itemType=` en el backend. Indicadores y

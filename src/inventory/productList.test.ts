@@ -33,6 +33,7 @@ const product = (id: number, fields: Partial<InventoryProduct>): InventoryProduc
   categoryId: 1,
   categoryName: 'LLANTAS',
   itemType: 'PRODUCTO',
+  vatApplies: true,
   ...fields,
 })
 

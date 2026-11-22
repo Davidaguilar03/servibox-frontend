@@ -152,6 +152,15 @@ const BACKEND: Array<[string, string]> = [
   ['El reporte tiene mas de 20000 movimientos: acota el rango de fechas', 'El reporte tiene más de 20.000 movimientos: acorta el período.'],
   ['El rango necesita fecha desde y fecha hasta', 'Elige las fechas Desde y Hasta.'],
   ['La fecha desde no puede ser posterior a la fecha hasta', 'Hasta no puede ser anterior a Desde.'],
+  // reporting/service/LiveReportService, ReportingController (reportes en vivo)
+  ['El reporte tiene mas de 20000 facturas: acota el rango de fechas', 'El reporte tiene más de 20.000 facturas: acorta el período.'],
+  ['El reporte tiene mas de 20000 facturas pendientes: filtra por cliente', 'El reporte tiene más de 20.000 facturas pendientes: filtra por cliente.'],
+  ['El reporte tiene mas de 20000 facturas pendientes: filtra por proveedor', 'El reporte tiene más de 20.000 facturas pendientes: filtra por proveedor.'],
+  ["Valor invalido '15' en el parametro antiguedad. Valores permitidos: 0-30, 31-60, 61-90, 90+", 'Elige una antigüedad válida: 0 a 30, 31 a 60, 61 a 90 o más de 90 días.'],
+  ["Valor invalido 'X' en el parametro estado. Valores permitidos: PAGADA, PENDIENTE, ANULADA", 'Elige un estado válido: Pagada, Pendiente o Anulada.'],
+  ['El parametro clienteId no aplica al reporte COMPRAS', 'Uno de los filtros no aplica a este reporte. Recarga la página e inténtalo de nuevo.'],
+  ['Cliente no encontrado: 77', 'No encontramos ese cliente. Puede que ya no exista.'],
+  ['Proveedor no encontrado: 77', 'No encontramos ese proveedor. Puede que ya no exista.'],
   // shared/ResourceNotFoundException (servicios), GlobalExceptionHandler
   ['Factura no encontrada: 999', 'No encontramos esa factura. Puede que ya no exista.'],
   ['Producto no encontrado: 9', 'No encontramos ese producto. Puede que ya no exista.'],
@@ -165,6 +174,7 @@ const FALLBACK: Array<[string, number, string]> = [
   ['El rol de un tercero nuevo es CLIENTE o PROVEEDOR', 400, MESSAGES.invalid],
   ['El tercero necesita un rol', 400, 'El tercero necesita un rol.'],
   ['Falta el parametro format: PDF o XLSX', 400, MESSAGES.invalid],
+  ['Falta el parametro type: ESTADO_RESULTADOS, MOVIMIENTOS, VENTAS, PRODUCTOS_VENDIDOS, COMPRAS, CARTERA_COBRAR, CARTERA_PAGAR', 400, MESSAGES.invalid],
   ['accountId solo aplica al reporte MOVIMIENTOS', 400, MESSAGES.invalid],
   ['Un movimiento necesita tipo y categoria', 400, MESSAGES.invalid],
   ["Valor invalido 'X' en el campo paymentType. Valores permitidos: CONTADO, CREDITO", 400, MESSAGES.invalid],
