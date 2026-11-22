@@ -253,12 +253,12 @@ describe('productos', () => {
 
     await loaded()
     expect(codes()).toHaveLength(25)
-    expect(screen.getByText('1 a 25 de 30 productos')).toBeInTheDocument()
+    expect(screen.getByText('1 a 25 de 30 ítems')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Página 2' }))
     expect(router.state.location.search).toBe('?pagina=2')
     expect(codes()).toEqual(['P-26', 'P-27', 'P-28', 'P-29', 'P-30'])
-    expect(screen.getByText('26 a 30 de 30 productos')).toBeInTheDocument()
+    expect(screen.getByText('26 a 30 de 30 ítems')).toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Estado de stock'), 'NORMAL')
     expect(router.state.location.search).toBe('?estado=NORMAL')
@@ -422,5 +422,21 @@ describe('servicios en el listado', () => {
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     await waitFor(() => expect(codes()).toHaveLength(5))
     expect(router.state.location.search).toBe('')
+  })
+
+  it('el pie dice items con Todos y Servicios y productos solo con Productos', async () => {
+    mockTyped()
+    const user = userEvent.setup()
+    renderRoute('/inventario')
+    await loaded()
+    expect(screen.getByText('1 a 5 de 5 ítems')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'Servicios' }))
+    expect(await screen.findByText('1 a 1 de 1 ítems')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'Productos' }))
+    expect(await screen.findByText('1 a 4 de 4 productos')).toBeInTheDocument()
+    // La tarjeta mide el inventario, sin servicios.
+    expect(within(indicator('Total de productos')).getByText('4')).toBeInTheDocument()
   })
 })

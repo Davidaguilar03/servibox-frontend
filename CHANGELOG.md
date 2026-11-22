@@ -3,7 +3,17 @@
 Todos los cambios relevantes del frontend de ServiBox se registran en este archivo.
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa
-[versionado semántico](https://semver.org/lang/es/). La versión coincide con la del backend.
+[versionado semántico](https://semver.org/lang/es/). MAJOR y MINOR coinciden con los del backend; PATCH puede diferir.
+
+## [1.1.1] - 2026-11-22
+
+### Corregido
+
+- La forma de pago Crédito se veía como "CrÃ©dito" en la tabla del reporte de Ventas; una prueba detecta texto mal codificado en todo el código.
+- El Estado de Resultados de un mes completo se compara con el mes completo anterior (octubre con septiembre, no con el 31 de agosto al 30 de septiembre).
+- Las tablas de Reportes caben completas a 1440 px: encabezados en dos líneas, fecha corta, cifras en tamaño pequeño y nombres largos truncados con el nombre completo al pasar el puntero.
+- Un valor cero con signo se muestra "$ 0", sin "+" ni "-", en Flujo de caja, Movimientos y Tesorería.
+- El pie del listado de Inventario dice "ítems" con los filtros Todos y Servicios, y "productos" solo con Productos.
 
 ## [1.1.0] - 2026-11-21
 

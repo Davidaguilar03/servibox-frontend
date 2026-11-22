@@ -304,6 +304,20 @@ describe('Reportes en vivo', () => {
     expect(within(footer).getByRole('rowheader')).toHaveTextContent('Total')
     expect([...(footer as HTMLTableRowElement).cells].map((cell) => cell.textContent)).toEqual(['Total', '', '', '', '', '$ 301', '$ 57', '$ 358', '$ 239'])
   })
+
+  it('ventas: forma de pago con tilde, fecha corta y cliente truncado con el nombre completo en el titulo', async () => {
+    mockApi()
+    renderRoute('/reportes')
+    const table = await screen.findByRole('table')
+    const row = within(table).getByText('FV-0001').closest('tr')!
+    expect(row).toHaveTextContent('Crédito')
+    expect(within(row).getByText('01/11/26')).toBeInTheDocument()
+    const customer = within(row).getByText('Ana Ruiz')
+    expect(customer).toHaveClass('line-clamp-1')
+    expect(customer).toHaveAttribute('title', 'Ana Ruiz')
+    // Los encabezados pueden partirse en dos lineas para que la tabla quepa sin desplazarse.
+    expect(within(table).getByRole('columnheader', { name: /Forma de pago/ })).not.toHaveClass('whitespace-nowrap')
+  })
 })
 
 describe('Reportes en vivo, segunda tanda', () => {
@@ -460,9 +474,9 @@ describe('Reportes en vivo, segunda tanda', () => {
 
   it.each([
     ['mes completo', 'periodo=personalizado&desde=2026-08-01&hasta=2026-08-31', 'desde=2026-07-01&hasta=2026-07-31', 'vs. julio de 2026'],
-    ['mes anterior', 'periodo=mes-anterior', 'desde=2026-08-31&hasta=2026-09-30', 'vs. 31/08/2026 a 30/09/2026'],
+    ['mes anterior', 'periodo=mes-anterior', 'desde=2026-09-01&hasta=2026-09-30', 'vs. septiembre de 2026'],
     ['rango personalizado', 'periodo=personalizado&desde=2026-11-10&hasta=2026-11-19', 'desde=2026-10-31&hasta=2026-11-09', 'vs. 31/10/2026 a 09/11/2026'],
-  ])('estado de resultados pide el periodo anterior de igual duracion (%s)', async (_, query, previous, label) => {
+  ])('estado de resultados pide el mes completo anterior o el periodo anterior de igual duracion (%s)', async (_, query, previous, label) => {
     const fetchMock = mockApi()
     renderRoute(`/reportes?reporte=estado-resultados&${query}`)
     await screen.findByRole('table')
@@ -584,6 +598,20 @@ describe('Reportes en vivo, segunda tanda', () => {
     expect(active).toHaveClass('rounded-pill', 'border-brand', 'text-brand-ink', 'font-semibold', 'text-small')
     expect(active).not.toHaveClass('-mb-px')
     expect(within(reports).getByRole('tab', { name: 'Movimientos' })).toHaveClass('border-transparent', 'text-text-muted')
+  })
+
+  it('flujo de caja: un valor cero va sin signo, "$ 0" y no "+$ 0"', async () => {
+    mockApi({
+      'GET /api/reporting/cash-flow': () => jsonResponse({
+        ...cashFlow,
+        rows: [...cashFlow.rows, { concept: 'PAGOS_PROVEEDORES', label: 'Pagos a proveedores', direction: 'SALIDA', movementCount: 0, amount: 0 }],
+      }),
+    })
+    renderRoute('/reportes?reporte=flujo-caja')
+    const table = await screen.findByRole('table')
+    const zero = within(table).getByText('Pagos a proveedores').closest('tr')!
+    expect(within(zero).getByText('$ 0')).not.toHaveClass('text-error')
+    expect(zero).not.toHaveTextContent(/[+-]\$ 0/)
   })
 })
 

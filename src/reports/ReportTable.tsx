@@ -3,7 +3,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 import { Pagination } from '../components/Pagination'
 import { StatusBadge, type BadgeStatus } from '../components/StatusBadge'
 import { iconSm } from '../components/icons'
-import { EMPTY_VALUE, formatCurrency, formatDate, formatInteger, formatPercent } from '../lib/format'
+import { EMPTY_VALUE, formatCurrency, formatInteger, formatPercent, formatShortDate, formatSignedCurrency } from '../lib/format'
 import { paginate } from '../lib/pagination'
 import {
   AGING_LABELS,
@@ -18,16 +18,14 @@ import {
 } from './liveReports'
 import type { StockStatus } from '../lib/stock'
 
-const PAYMENT_LABELS: Record<string, string> = { CONTADO: 'Contado', CREDITO: 'CrÃ©dito' }
+const PAYMENT_LABELS: Record<string, string> = { CONTADO: 'Contado', CREDITO: 'Crédito' }
 const ITEM_TYPE_LABELS: Record<string, string> = { PRODUCTO: 'Producto', SERVICIO: 'Servicio' }
 const NUMERIC = new Set(['currency', 'integer', 'percent', 'signedAmount'])
 
-/** Monto con signo explicito (+ o -): el color acompana, no es la unica senal. */
+/** Monto con signo explicito (+ o -, sin signo en cero): el color acompana, no es la unica senal. */
 function signedAmount(value: number) {
-  const text = formatCurrency(Math.abs(value))
-  return value < 0
-    ? <span className="monto whitespace-nowrap text-error">-{text}</span>
-    : <span className="monto whitespace-nowrap">+{text}</span>
+  const text = formatSignedCurrency(value)
+  return <span className={`monto whitespace-nowrap ${text.startsWith('-') ? 'text-error' : ''}`}>{text}</span>
 }
 
 function cell(column: ReportColumn, value: string | number | null | undefined, row?: ReportRow): ReactNode {
@@ -40,7 +38,7 @@ function cell(column: ReportColumn, value: string | number | null | undefined, r
     case 'percent':
       return <span className="tabular whitespace-nowrap">{formatPercent(Number(value))}</span>
     case 'date':
-      return <span className="whitespace-nowrap">{formatDate(String(value))}</span>
+      return <span className="whitespace-nowrap">{formatShortDate(String(value))}</span>
     case 'code':
       return <span className="codigo whitespace-nowrap">{value}</span>
     case 'status':
@@ -51,6 +49,10 @@ function cell(column: ReportColumn, value: string | number | null | undefined, r
       return ITEM_TYPE_LABELS[String(value)] ?? value
     case 'aging':
       return <span className="whitespace-nowrap">{AGING_LABELS[String(value)] ?? value}</span>
+    case 'text':
+      // Una linea con puntos suspensivos y el texto completo en el titulo: un nombre largo cede ancho
+      // cuando la tabla no cabe y se ve entero cuando sobra espacio.
+      return <span className="line-clamp-1 break-all" title={String(value)}>{value}</span>
     case 'stockStatus':
       return <StatusBadge status={STOCK_BADGES[String(value) as StockStatus] ?? (String(value) as BadgeStatus)} />
     case 'direction':
@@ -91,7 +93,7 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
                 const Icon = !active ? ArrowUpDown : sort.direction === 'asc' ? ArrowUp : ArrowDown
                 if (definition.fixedOrder) {
                   return (
-                    <th key={column.key} scope="col" className={`bg-canvas px-3 py-3 text-label whitespace-nowrap text-text-muted uppercase ${align(column)}`}>
+                    <th key={column.key} scope="col" className={`bg-canvas px-2 py-3 text-label text-text-muted uppercase ${align(column)}`}>
                       {column.header}
                     </th>
                   )
@@ -101,12 +103,12 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
                     key={column.key}
                     scope="col"
                     aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-                    className={`bg-canvas px-3 py-2 text-label whitespace-nowrap text-text-muted uppercase ${align(column)}`}
+                    className={`bg-canvas px-2 py-2 text-label text-text-muted uppercase ${align(column)}`}
                   >
                     <button
                       type="button"
                       onClick={() => toggle(column.key)}
-                      className={`inline-flex min-h-touch items-center gap-1 rounded-control uppercase focus-ring lg:min-h-control ${active ? 'text-text' : 'hover:text-text'}`}
+                      className={`inline-flex min-h-touch items-center gap-1 rounded-control uppercase focus-ring lg:min-h-control ${align(column)} ${active ? 'text-text' : 'hover:text-text'}`}
                     >
                       {column.header}
                       <Icon {...iconSm} aria-hidden className={active ? '' : 'text-text-subtle'} />
@@ -123,7 +125,7 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
                 className={`h-row border-b border-border ${definition.emphasize?.(row) ? 'bg-canvas font-semibold' : 'even:bg-row-alt hover:bg-neutral-100'}`}
               >
                 {definition.columns.map((column) => (
-                  <td key={column.key} className={`px-3 text-body text-text ${align(column)} ${column.format === 'text' ? 'min-w-48' : ''}`}>
+                  <td key={column.key} className={`px-2 text-small text-text ${align(column)}`}>
                     {cell(column, row[column.key], row)}
                   </td>
                 ))}
@@ -135,9 +137,9 @@ export function ReportTable({ definition, rows }: { definition: LiveReportDefini
               <tr className="h-row bg-canvas font-semibold">
                 {definition.columns.map((column, index) => (
                   index === 0 ? (
-                    <th key={column.key} scope="row" className="px-3 text-left text-body text-text">Total</th>
+                    <th key={column.key} scope="row" className="px-2 text-left text-small text-text">Total</th>
                   ) : (
-                    <td key={column.key} className={`px-3 text-body text-text ${align(column)}`}>
+                    <td key={column.key} className={`px-2 text-small text-text ${align(column)}`}>
                       {column.key in totals ? cell(column, totals[column.key]) : null}
                     </td>
                   )

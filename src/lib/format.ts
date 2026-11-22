@@ -22,6 +22,12 @@ export function formatCurrency(value: number | null | undefined): string {
   return `${sign}$ ${integerFormat.format(Math.abs(rounded))}`
 }
 
+/** Monto con signo explicito: +$ 1.500, -$ 1.500; lo que se redondea a cero va sin signo, $ 0. */
+export function formatSignedCurrency(value: number): string {
+  const text = formatCurrency(value)
+  return roundInteger(decimal(value)) > 0 ? `+${text}` : text
+}
+
 /** Cantidad entera con punto de miles: 1.234. */
 export function formatInteger(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return EMPTY_VALUE
@@ -44,6 +50,12 @@ export function formatDate(value: string | null | undefined): string {
   const match = value ? /^(\d{4})-(\d{2})-(\d{2})/.exec(value) : null
   if (!match) return EMPTY_VALUE
   return `${match[3]}/${match[2]}/${match[1]}`
+}
+
+/** dd/mm/aa para las tablas de Reportes, que necesitan el ancho: 2026-09-28 a 28/09/26. */
+export function formatShortDate(value: string | null | undefined): string {
+  const text = formatDate(value)
+  return text === EMPTY_VALUE ? text : `${text.slice(0, 6)}${text.slice(8)}`
 }
 
 /** Fecha local como `yyyy-MM-dd`, el formato ISO que esperan desde y hasta en la API. */

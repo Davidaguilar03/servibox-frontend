@@ -406,7 +406,7 @@ function ProductsTable({ products, byId, loading, error, onRetry, filters, listS
             ))}
           </ul>
           <div className="mt-4 border-t border-border pt-4">
-            <Pagination page={page} itemLabel="productos" onPageChange={onPageChange} />
+            <Pagination page={page} itemLabel={filters.tipo === 'PRODUCTO' ? 'productos' : 'ítems'} onPageChange={onPageChange} />
           </div>
         </>
       )

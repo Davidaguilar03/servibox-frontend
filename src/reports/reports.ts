@@ -42,9 +42,13 @@ export function validateRange(desde: string, hasta: string) {
   return { errors, valid: Object.keys(errors).length === 0 }
 }
 
-/** El periodo de igual duracion que termina el dia anterior a desde. */
+/**
+ * Un mes calendario completo se compara con el mes completo anterior; cualquier otro rango,
+ * con el de igual duracion que termina el dia anterior a desde.
+ */
 export function previousPeriod(desde: string, hasta: string) {
   const previousHasta = addDays(desde, -1)
+  if (isFullCalendarMonth(desde, hasta)) return { desde: `${previousHasta.slice(0, 7)}-01`, hasta: previousHasta }
   return { desde: addDays(previousHasta, 1 - rangeDays(desde, hasta)), hasta: previousHasta }
 }
 

@@ -2,6 +2,27 @@
 
 Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
 
+## 2026-11-21: Correcciones de Reportes e Inventario, version 1.1.1 (fix/65)
+
+* Comparacion de periodos del Estado de resultados: si el periodo elegido es un mes calendario completo
+  (`isFullCalendarMonth`), el anterior es el mes calendario completo anterior (octubre contra septiembre, marzo
+  contra febrero, enero contra diciembre del ano anterior); en cualquier otro caso, el periodo de igual duracion
+  que termina el dia anterior (Este mes del 1 al 21 sigue contra los 21 dias anteriores). Reemplaza "Mismo calculo
+  de la 1.0.0: periodo de igual duracion que termina el dia anterior" de la entrada de feat/62, que con Mes anterior
+  de 31 dias comparaba contra el 31/08 al 30/09.
+* Signo del cero: `formatSignedCurrency` (`lib/format.ts`) da +$ y -$ y deja sin signo lo que redondea a $ 0. La
+  usan las tablas de Reportes (`signedAmount`) y `formatSignedAmount` de Tesoreria.
+* Tablas de Reportes a 1440 px: celdas `px-2` y `text-small`, encabezados que se parten en dos lineas, fecha
+  `formatShortDate` (dd/mm/aa) y textos en una linea (`line-clamp-1`) con el texto completo en `title`. Se descarto un
+  tope fijo de ancho (160 px) porque cortaba nombres en tablas con espacio de sobra; con `line-clamp-1` el texto solo
+  cede cuando la tabla no cabe. No se abreviaron montos (millones con M): el reporte se compara cifra a cifra con la
+  API y los archivos. En movil sigue el desplazamiento horizontal dentro del contenedor (excepcion de 02-CONVENTIONS).
+* Pie del listado de Inventario: "items" con Todos y Servicios, "productos" solo con Productos. La tarjeta "Total de
+  productos" no cambia: mide inventario, sin servicios.
+* Guarda de codificacion `src/copy/encoding.test.ts`: falla si un archivo de texto de src trae secuencias de UTF-8
+  releido como Windows-1252 o el caracter de reemplazo.
+* Version 1.1.1 solo en el frontend; el backend sigue en 1.1.0 (02-CONVENTIONS, Versionado).
+
 ## 2026-11-21: Pulido de diseno de Reportes y retiro de la exportacion de Tesoreria (feat/63)
 
 * Indicadores de Reportes con la tarjeta de los KPI de Inicio: `IndicatorCard dense` (no se creo un componente nuevo:
@@ -43,7 +64,7 @@ Una entrada por decision, en orden cronologico inverso (la mas reciente arriba).
   `fetchPeriodMovements`.
 * Variacion contra el periodo anterior recuperada en el Estado de resultados en vivo (`compareWithPrevious`):
   `previousPeriod`, `variation`, `isFullCalendarMonth` y `periodTitle` vuelven de main sin cambios, con sus 9 pruebas.
-  Mismo calculo de la 1.0.0: periodo de igual duracion que termina el dia anterior (Este mes del 1 al 21 se compara con
+  (Reemplazado el 2026-11-21 por fix/65: un mes completo se compara con el mes completo anterior.) Mismo calculo de la 1.0.0: periodo de igual duracion que termina el dia anterior (Este mes del 1 al 21 se compara con
   los 21 dias anteriores, no con el mes anterior completo). Segunda consulta a `/reporting/income-statement`; si falla
   o el anterior vale 0, el indicador va sin variacion. Flecha, signo y texto "vs. <periodo>"; en costos y gastos bajar
   es el tono de exito (`lowerIsBetter`).
